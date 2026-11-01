@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.3.2: Landing marker is back (2 Nov 2026)
+
+- The landing marker is back to the original small ring with a centre dot, just slightly less exact (a few centimetres off).
+
 ## 1.3.1: Clearer landing marker (2 Nov 2026)
 
 - The landing marker is a bright solid ring with a dark outline that gently pulses. It’s still deliberately a little off, so it won’t settle close line calls.

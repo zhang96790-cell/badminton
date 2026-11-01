@@ -352,11 +352,11 @@ export const VISUAL = {
   /** Shuttle drawn this many times real size so it reads on a laptop screen. */
   shuttleScale: 2.6,
   /**
-   * Landing marker is deliberately rough so it doesn't give away line calls: its centre is off by a
-   * random amount (std-dev, m) each shot, and it's drawn as a wide ring.
+   * Landing marker: a small ring with a centre dot, just slightly off (random std-dev in m, per shot)
+   * so it's a strong guide without settling line calls to the centimetre.
    */
-  markerError: 0.2,
-  markerRadius: 0.3,
+  markerError: 0.08,
+  markerRadius: 0.22,
   colors: {
     bgTop: '#070b12',
     bgBottom: '#111a26',

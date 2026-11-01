@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.3.2',
+    title: 'Landing marker is back',
+    date: '2 Nov 2026',
+    changes: [
+      'The landing marker is back to the original small ring with a centre dot, just slightly less exact (a few centimetres off).',
+    ],
+  },
+  {
     version: '1.3.1',
     title: 'Clearer landing marker',
     date: '2 Nov 2026',

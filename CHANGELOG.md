@@ -2,6 +2,10 @@
 
 Newest first. The same list appears in the game's menu under "What's new".
 
+## 1.7.1 (2 Nov 2026)
+
+- Clearer landing marker: a bright solid ring with a dark outline that gently pulses. It’s still deliberately a little off, so it won’t settle close line calls.
+
 ## 1.7 (2 Nov 2026)
 
 - New control mode, Keys + trackpad aim: hit with J/K/L/E and aim with the cursor.

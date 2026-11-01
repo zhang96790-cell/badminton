@@ -1,6 +1,13 @@
 /** Shown on the menu under "What's new". Newest first. Also mirrored in CHANGELOG.md. */
 export const CHANGELOG: { version: string; date: string; changes: string[] }[] = [
   {
+    version: '1.7.1',
+    date: '2 Nov 2026',
+    changes: [
+      'Clearer landing marker: a bright solid ring with a dark outline that gently pulses. It\u2019s still deliberately a little off, so it won\u2019t settle close line calls.',
+    ],
+  },
+  {
     version: '1.7',
     date: '2 Nov 2026',
     changes: [

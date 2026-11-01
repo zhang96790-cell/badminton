@@ -75,7 +75,7 @@ export class Renderer {
       this.shadows(scene, officials);
       if (scene.live) {
         for (const r of game.rings) this.targetRing(r, time);
-        if (game.settings.guides) this.guides(game);
+        if (game.settings.guides) this.guides(game, time);
         if (game.landing) this.landingMark(game.landing);
         this.reticle(game);
       }
@@ -255,7 +255,7 @@ export class Renderer {
   // ── Overlays on the floor ──────────────────────────────────────────────────
 
   /** Predicted landing spot plus a dotted line from the shuttle to the floor, to help read depth. */
-  private guides(game: Game) {
+  private guides(game: Game, time: number) {
     const s = game.shuttle;
     if (!s.inFlight || game.state !== 'rally') return;
     const ctx = this.ctx;
@@ -268,21 +268,27 @@ export class Renderer {
     ctx.lineTo(b.x, b.y);
     ctx.stroke();
     ctx.setLineDash([]);
-    // Rough area, not an exact spot: no centre dot, wide soft ring around a jittered centre.
+    // Rough area, not an exact spot (its centre is jittered), but drawn to stand out on the green:
+    // dark outline under a bright solid ring, a filled disc, and a gentle pulse.
     const p = game.marker;
     if (!p || !game.predicted) return;
     const R = VISUAL.markerRadius;
-    this.poly(this.floorCircle(p, R), 'rgba(255,209,102,0.1)');
-    this.poly(this.floorCircle(p, R * 0.55), 'rgba(255,209,102,0.08)');
-    const ring = this.cam.projectPoly(this.floorCircle(p, R));
-    ctx.beginPath();
-    ring.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
-    ctx.closePath();
-    ctx.setLineDash([6, 5]);
-    ctx.strokeStyle = 'rgba(255,209,102,0.6)';
-    ctx.lineWidth = 1.5;
+    const pulse = 0.5 + 0.5 * Math.sin(time * 6);
+    this.poly(this.floorCircle(p, R), `rgba(255,209,102,${(0.22 + 0.1 * pulse).toFixed(3)})`);
+    const ring = this.cam.projectPoly(this.floorCircle(p, R, 36));
+    const path = () => {
+      ctx.beginPath();
+      ring.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+      ctx.closePath();
+    };
+    path();
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+    ctx.lineWidth = 5;
     ctx.stroke();
-    ctx.setLineDash([]);
+    path();
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
   }
 
   /** Pulsing yellow ring to run to (tutorial). */

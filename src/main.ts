@@ -122,7 +122,7 @@ const modal = document.getElementById('changelogModal')!;
 const wnBadge = document.getElementById('wnBadge')!;
 document.getElementById('wnTitle')!.textContent = `What’s new in v${latest}`;
 document.getElementById('changelog')!.innerHTML = CHANGELOG.map((v) =>
-  `<h4>v${v.version} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
+  `<h4>v${v.version}: ${esc(v.title)} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
 try { wnBadge.classList.toggle('hidden', localStorage.getItem(SEEN) === latest); } catch { /* storage unavailable */ }
 const closeChangelog = () => modal.classList.add('hidden');
 document.getElementById('whatsnewBtn')!.addEventListener('click', (e) => {

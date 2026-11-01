@@ -15,7 +15,8 @@ Then open http://localhost:5173 (or the port Vite prints).
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md). When you ship an update, add an entry at the top of `src/changelog.ts` (shown in the
-menu) and mirror it in `CHANGELOG.md`.
+What's new pop-up) and mirror it in `CHANGELOG.md`. Bump the middle number (1.4) for a batch of new features; use a
+patch number (1.3.2) for small changes and fixes, grouped together.
 
 ## Publishing
 

@@ -1,5 +1,5 @@
 import { Sound } from './audio';
-import { Camera, broadcastCamera, sideCamera } from './camera';
+import { Camera, broadcastCamera, setView, sideCamera } from './camera';
 import { RULES, UI_KEYS } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
@@ -25,14 +25,39 @@ const voice = new Voice();
 const STORE = 'badminton.settings';
 const settings: Settings = {
   opponent: 'medium', style: 'allround', p1Control: 'mouse', games: 3, points: 15, guides: true, timingLight: true, aim: 'realistic', voice: true,
+  view: 'close',
 };
 try {
   Object.assign(settings, JSON.parse(localStorage.getItem(STORE) ?? '{}'));
 } catch { /* no saved settings */ }
+setView(broadcast, settings.view);
 function saveSettings() {
   try { localStorage.setItem(STORE, JSON.stringify(settings)); } catch { /* storage unavailable */ }
 }
 let game: Game | null = null;
+
+// Bottom-right buttons: camera view and fullscreen. Blur after clicking so Space doesn't re-press them.
+const viewBtn = document.getElementById('viewBtn') as HTMLButtonElement;
+const fsBtn = document.getElementById('fsBtn') as HTMLButtonElement;
+function syncViewbar() {
+  viewBtn.textContent = `View: ${settings.view === 'close' ? 'Close' : 'Broadcast'}`;
+  fsBtn.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+}
+function toggleView() {
+  settings.view = settings.view === 'close' ? 'broadcast' : 'close';
+  if (game) game.settings.view = settings.view;
+  saveSettings();
+  setView(broadcast, settings.view);
+  resize();
+  syncViewbar();
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement) void document.exitFullscreen();
+  else void document.documentElement.requestFullscreen?.().catch(() => {});
+}
+viewBtn.addEventListener('click', () => { toggleView(); viewBtn.blur(); });
+fsBtn.addEventListener('click', () => { toggleFullscreen(); fsBtn.blur(); });
+document.addEventListener('fullscreenchange', () => { syncViewbar(); resize(); });
 
 function resize() {
   const dpr = window.devicePixelRatio || 1;
@@ -44,6 +69,7 @@ function resize() {
 }
 addEventListener('resize', resize);
 resize();
+syncViewbar();
 
 // ── Menu ─────────────────────────────────────────────────────────────────────
 
@@ -160,6 +186,7 @@ function frame(now: number) {
       voice.enabled = !sound.muted && settings.voice;
       if (!voice.enabled) voice.stop();
     }
+    if (game && input.tapped(['KeyF'])) toggleFullscreen();
     if (game && input.tapped(UI_KEYS.guides)) {
       settings.guides = game.settings.guides = !game.settings.guides;
       saveSettings();

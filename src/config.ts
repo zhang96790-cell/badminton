@@ -328,6 +328,8 @@ export const UI_KEYS = {
 export const CAMERA = {
   /** TV-broadcast position: high behind the near baseline. */
   broadcast: { pos: { x: 0, y: -14.2, z: 8.6 }, target: { x: 0, y: 0.8, z: 0.3 } },
+  /** Closer, lower broadcast view: the court fills more of the screen. */
+  close: { pos: { x: 0, y: -11.6, z: 6.4 }, target: { x: 0, y: 0.4, z: 0.6 } },
   /** Side-on replay camera. */
   side: { pos: { x: 15.5, y: 0, z: 5.2 }, target: { x: 0, y: 0, z: 1.1 } },
 };

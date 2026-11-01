@@ -433,6 +433,6 @@ export class Hud {
         ? 'WASD move · J high · K / E fast · L soft · Space jump · hold a direction to aim'
         : 'P1: WASD · C high · V fast · B soft · Space jump';
     const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · R-Shift jump';
-    return `${p1}${p2}   ·   H challenge · R replay · G marker · M mute · Esc pause`;
+    return `${p1}${p2}   ·   H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;
   }
 }

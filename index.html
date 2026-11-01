@@ -10,6 +10,10 @@
       html, body { margin: 0; height: 100%; overflow: hidden; background: #0c121c; color: var(--fg);
         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
       canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+      #viewbar { position: fixed; right: 14px; bottom: 12px; display: flex; gap: 6px; z-index: 2; }
+      #viewbar button { padding: 6px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: rgba(8,12,18,0.72);
+        color: var(--fg); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+      #viewbar button:hover { background: rgba(255,255,255,0.12); }
       #menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
         background: radial-gradient(ellipse at center, rgba(12,18,28,0.55), rgba(12,18,28,0.9)); }
       #menu.hidden { display: none; }
@@ -50,6 +54,10 @@
   </head>
   <body>
     <canvas id="game"></canvas>
+    <div id="viewbar">
+      <button id="viewBtn" title="Switch camera view">View: Close</button>
+      <button id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+    </div>
     <div id="menu">
       <div class="card">
         <h1>Badminton</h1>

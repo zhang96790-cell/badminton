@@ -1,5 +1,5 @@
 import { AIController } from './ai';
-import type { Camera } from './camera';
+import type { Camera, View } from './camera';
 import { COURT, KEYS, OFFICIALS, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type Level, type Style } from './config';
 import { KeyboardController, MouseController, type Command, type Controller, type Observation } from './controllers';
 import { isIn, netHeightAt, rightCourtSign, signedInside, singlesRect, singlesServiceBox, type Rect } from './court';
@@ -30,6 +30,8 @@ export interface Settings {
   timingLight: boolean;
   aim: 'realistic' | 'casual';
   voice: boolean;
+  /** Camera: 'close' fills the screen with the court, 'broadcast' is the wider TV view. */
+  view: View;
 }
 
 /** 'feed' = practice/tutorial: you move freely while the coach gets the next shuttle ready. */

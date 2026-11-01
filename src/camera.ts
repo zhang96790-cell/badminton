@@ -11,8 +11,15 @@ export class Camera {
   private cx = 0;
   private cy = 0;
 
-  constructor(pos?: V3, target?: V3, private fitPoints: V3[] = [], private centerY = 0.53) {
+  constructor(pos?: V3, target?: V3, private fitPoints: V3[] = [], private centerY = 0.53, private fill = { w: 0.94, h: 0.84 }) {
     if (pos && target) this.look(pos, target);
+  }
+
+  /** Change what this camera fits to the screen (call fit() afterwards). */
+  setFit(points: V3[], centerY: number, fill: { w: number; h: number }) {
+    this.fitPoints = points;
+    this.centerY = centerY;
+    this.fill = fill;
   }
 
   look(pos: V3, target: V3) {
@@ -54,7 +61,7 @@ export class Camera {
       minX = Math.min(minX, x); maxX = Math.max(maxX, x);
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
-    this.F = Math.min((w * 0.94) / (maxX - minX), (h * 0.84) / (maxY - minY));
+    this.F = Math.min((w * this.fill.w) / (maxX - minX), (h * this.fill.h) / (maxY - minY));
     this.cx = w / 2 - (this.F * (minX + maxX)) / 2;
     this.cy = h * this.centerY - (this.F * (minY + maxY)) / 2;
   }
@@ -96,14 +103,35 @@ export class Camera {
   }
 }
 
-/** TV-broadcast view: court, run-off and the far player's head fit the screen, plus most clears. */
-export function broadcastCamera(): Camera {
-  const W = COURT.doublesHalfWidth + 0.8, L = COURT.halfLength + 1.0;
-  return new Camera(CAMERA.broadcast.pos, CAMERA.broadcast.target, [
-    { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 },
-    { x: 0, y: L - 0.4, z: 2.6 }, { x: -W, y: -L, z: 1.0 }, { x: W, y: -L, z: 1.0 },
-    { x: 0, y: 1.5, z: 5.2 },
-  ]);
+export type View = 'broadcast' | 'close';
+
+/**
+ * Point the main camera for a view. Broadcast: court, run-off and most clears fit the screen.
+ * Close: just the court and both players, so everything is bigger (high clears leave the top edge).
+ */
+export function setView(cam: Camera, view: View) {
+  if (view === 'broadcast') {
+    const W = COURT.doublesHalfWidth + 0.8, L = COURT.halfLength + 1.0;
+    cam.look(CAMERA.broadcast.pos, CAMERA.broadcast.target);
+    cam.setFit([
+      { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 },
+      { x: 0, y: L - 0.4, z: 2.6 }, { x: -W, y: -L, z: 1.0 }, { x: W, y: -L, z: 1.0 },
+      { x: 0, y: 1.5, z: 5.2 },
+    ], 0.53, { w: 0.94, h: 0.84 });
+  } else {
+    const W = COURT.doublesHalfWidth + 0.15, L = COURT.halfLength + 0.35;
+    cam.look(CAMERA.close.pos, CAMERA.close.target);
+    cam.setFit([
+      { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 },
+      { x: 0, y: L - 0.3, z: 2.3 },
+    ], 0.5, { w: 0.98, h: 0.84 });
+  }
+}
+
+export function broadcastCamera(view: View = 'broadcast'): Camera {
+  const cam = new Camera();
+  setView(cam, view);
+  return cam;
 }
 
 /** Side-on replay camera. */

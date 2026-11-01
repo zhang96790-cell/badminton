@@ -85,11 +85,11 @@ function describeControls() {
     ['Drop', 'Shuttle high above you', 'Tap right-click', S],
     ['Net shot', 'At the net, shuttle below the tape', 'Tap right-click', S],
     ['Block', 'Defending a smash', 'Tap right-click', S],
-    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', F],
-    ['Jump smash', 'High shuttle coming down', `${k('Space')}, then release left-click at the top`, `${k('Space')}, then ${twoP ? F : k('K')} at the top`],
-    ['Drive', 'Shuttle at shoulder height', 'Tap left-click', F],
-    ['Push', 'Shuttle low, front or mid-court', 'Tap left-click', F],
-    ['Net kill', 'At the net, shuttle above the tape', k('E'), twoP ? F : `${k('K')} or ${k('E')}`],
+    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', `Hold ${twoP ? F : k('K')}, let go on green`],
+    ['Jump smash', 'High shuttle coming down', `${k('Space')}, then release left-click at the top`, `Hold ${twoP ? F : k('K')}, ${k('Space')}, let go at the top`],
+    ['Drive', 'Shuttle at shoulder height', 'Tap left-click', `Tap ${twoP ? F : k('K')}`],
+    ['Push', 'Shuttle low, front or mid-court', 'Tap left-click', `Tap ${twoP ? F : k('K')}`],
+    ['Net kill', 'At the net, shuttle above the tape', k('E'), twoP ? `Hold ${F}` : k('E')],
     ['Short serve', 'Serving', 'Left-click', S],
     ['High serve', 'Serving', 'Hold right-click', H],
     ['Flick serve', 'Serving', 'Tap right-click', F],
@@ -98,7 +98,7 @@ function describeControls() {
   const mouseOn = settings.p1Control === 'mouse';
   controlsBox.innerHTML = `
     <b>Move</b> ${k('W')}${k('A')}${k('S')}${k('D')}${twoP ? ` <span class="dim">(P2: arrow keys)</span>` : ''} · <b>Jump</b> ${k('Space')}${twoP ? ` <span class="dim">(P2: R-Shift)</span>` : ''}
-    · swing just before the shuttle reaches you${mouseOn ? ' (mouse swings happen when you <b>release</b>)' : ''}
+    · swing just before the shuttle reaches you. Left-click and ${twoP ? 'the fast keys' : k('K')} swing when you <b>let go</b>, so holding them hits harder
     <table class="shots">
       <thead><tr><th>Shot</th><th>When</th><th class="${mouseOn ? 'on' : ''}">Mouse</th><th class="${mouseOn ? '' : 'on'}">Keyboard</th></tr></thead>
       <tbody>${rows.map(([shot, when, m, key]) => `<tr><td><b>${shot}</b></td><td class="dim">${when}</td><td>${m}</td><td>${key}</td></tr>`).join('')}</tbody>

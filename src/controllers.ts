@@ -3,7 +3,7 @@ import { SWING, type KeyMap } from './config';
 import type { Input } from './input';
 import { clamp, type Side, type V2 } from './math';
 import type { Player } from './player';
-import type { Contact, Intent, ShotRequest } from './shots';
+import type { Contact, ShotRequest } from './shots';
 
 export interface Command { move: V2; jump: boolean; shot: ShotRequest | null }
 
@@ -27,22 +27,39 @@ function moveDir(input: Input, k: KeyMap): V2 {
   };
 }
 
-/** No-mouse mode: three intent buttons, aim with the direction held at contact. */
+/**
+ * No-mouse mode: three intent buttons, aim with the direction held at contact. High and soft swing
+ * the moment you press. Fast charges while held and swings on release: a tap is a drive, holding
+ * gives a harder shot up to a full smash. The kill key is instant full power.
+ */
 export class KeyboardController implements Controller {
+  private chargeT: number | null = null;
+
   constructor(private input: Input, private keys: KeyMap, private player: Player) {}
 
-  poll(): Command {
+  poll(dt: number): Command {
     const move = moveDir(this.input, this.keys);
     const jump = this.input.tapped(this.keys.jump);
+    const aim = { aimX: move.x, aimDepth: move.y * -this.player.side };
     let shot: ShotRequest | null = null;
-    for (const intent of ['high', 'fast', 'soft'] as Intent[]) {
-      if (this.input.tapped(this.keys[intent])) {
-        shot = { kind: 'intent', intent, aimX: move.x, aimDepth: move.y * -this.player.side };
-        break;
+    if (this.input.tapped(this.keys.kill)) {
+      this.chargeT = null;
+      shot = { kind: 'intent', intent: 'fast', ...aim };
+    } else if (this.input.tapped(this.keys.high)) shot = { kind: 'intent', intent: 'high', ...aim };
+    else if (this.input.tapped(this.keys.soft)) shot = { kind: 'intent', intent: 'soft', ...aim };
+    if (!shot && this.input.tapped(this.keys.fast)) this.chargeT = 0;
+    if (this.chargeT !== null && !shot) {
+      this.chargeT += dt;
+      if (!this.input.held(this.keys.fast)) {
+        shot = { kind: 'intent', intent: 'fast', ...aim, power: this.power() };
+        this.chargeT = null;
       }
     }
+    this.player.charge = this.chargeT !== null ? this.power() : null;
     return { move, jump, shot };
   }
+
+  private power(): number { return clamp((this.chargeT ?? 0) / SWING.chargeTime, 0, 1); }
 
   aimAtContact(req: ShotRequest): ShotRequest {
     if (req.kind !== 'intent') return req;

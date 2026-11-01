@@ -9,7 +9,7 @@ export type Intent = 'high' | 'fast' | 'soft';
 
 export type ShotRequest =
   /** Keyboard / AI. aimX: -1 left, 0 centre, 1 right (screen). aimDepth: 1 deeper, -1 shorter. target overrides both. */
-  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number }
+  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number }
   /** Mouse. low (left) = drive → smash, high (right) = drop on a tap, lob when held. power 0..1 from charge. target = cursor. */
   | { kind: 'mouse'; arc: 'low' | 'high'; power: number; target: V2 };
 
@@ -150,7 +150,15 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1): Shot {
       const base = zone === 'overhead' ? SHOTS.clearAngle : zone === 'mid' ? SHOTS.midHighAngle : SHOTS.liftAngle;
       plan = { type: 'angle', angle: base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0) };
     } else if (req.intent === 'fast') {
-      plan = { type: 'speed', speed: vMax, extra: SHOTS.netAssistMaxExtraDepthHard };
+      // Keyboard can charge K like the mouse's left button: a tap is a drive, a full hold a full smash.
+      const Mo = SHOTS.mouse, p = req.power;
+      plan = p === undefined
+        ? { type: 'speed', speed: vMax, extra: SHOTS.netAssistMaxExtraDepthHard }
+        : {
+          type: 'speed',
+          speed: vMax * lerp(Mo.drivePace, 1, Math.min(1, p / Mo.smashPower)),
+          extra: p >= Mo.smashPower ? SHOTS.netAssistMaxExtraDepthHard : SHOTS.netAssistMaxExtraDepth,
+        };
     } else {
       plan = { type: 'soft' };
     }

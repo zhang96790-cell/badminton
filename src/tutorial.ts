@@ -28,7 +28,7 @@ const STEPS: Step[] = [
     title: 'Timing', kind: 'hit', feed: 'liftMid', goal: 2, okHit: (h) => h.timing === 'perfect',
     text: [
       'The coach feeds you shuttles. Get under the yellow landing ring, then watch the light beside your player: yellow = wait, green = swing now, red = too late. Tap left-click on green. Get 2 Perfect hits.',
-      'The coach feeds you shuttles. Get under the yellow landing ring, then watch the light beside your player: yellow = wait, green = swing now, red = too late. Press K on green. Get 2 Perfect hits.',
+      'The coach feeds you shuttles. Get under the yellow landing ring, then watch the light beside your player: yellow = wait, green = swing now, red = too late. Tap K on green (K swings when you let go). Get 2 Perfect hits.',
     ],
   },
   {
@@ -49,28 +49,28 @@ const STEPS: Step[] = [
     title: 'Smash', kind: 'hit', feed: 'liftMid', goal: 2, ok: (l) => l.inCourt && /smash/i.test(l.label),
     text: [
       'Start holding left-click early. When the label on the court says SMASH, release on green. Land 2 smashes in.',
-      'When the shuttle is high above you, press K on green to smash. Land 2 smashes in.',
+      'Hold K while the shuttle drops toward you. The longer you hold, the harder the shot: once the ring above your head turns gold it’s a full smash. Let go on green. Land 2 smashes in.',
     ],
   },
   {
     title: 'Drive', kind: 'hit', feed: 'drive', goal: 2, ok: (l) => l.inCourt && /Drive|Push|Half smash|Flat clear|Smash/.test(l.label),
     text: [
       'A tap of left-click is a drive: flat and fast. These feeds come at shoulder height. Land 2 in.',
-      'Press K on a shuttle at shoulder height for a flat, fast drive. Land 2 in.',
+      'A quick tap of K is a drive: flat and fast. These feeds come at shoulder height. Land 2 in.',
     ],
   },
   {
     title: 'Net kill', kind: 'hit', feed: 'netLoose', goal: 2, ok: (l) => l.inCourt && /kill/i.test(l.label),
     text: [
       'Loose shuttles above the tape can be killed. Rush the net and press E for instant full power (no charging). Land 2 kills.',
-      'Loose shuttles above the tape can be killed. Rush the net and press K (or E) while it’s still above the tape. Land 2 kills.',
+      'Loose shuttles above the tape can be killed. Rush the net and press E for instant full power (no holding). Land 2 kills.',
     ],
   },
   {
     title: 'Jump smash', kind: 'hit', feed: 'liftMid', goal: 1, ok: (l) => l.inCourt && /Jump smash/.test(l.label),
     text: [
       'Press Space to jump as the shuttle drops toward you, then release your smash (left-click) at the top. Land 1 jump smash.',
-      'Press Space to jump as the shuttle drops toward you, then K at the top. Land 1 jump smash.',
+      'Hold K, press Space to jump as the shuttle drops toward you, and let go of K at the top. Land 1 jump smash.',
     ],
   },
   {

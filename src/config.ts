@@ -303,8 +303,8 @@ export interface KeyMap {
 const WASD = { up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'] };
 
 export const KEYS: Record<'solo' | 'p1Shared' | 'p2Shared' | 'mouse', KeyMap> = {
-  /** One player on the keyboard. E works as kill too (same as K: full power). */
-  solo: { ...WASD, high: ['KeyJ'], fast: ['KeyK', 'KeyE'], soft: ['KeyL'], jump: ['Space'], kill: [] },
+  /** One player on the keyboard. K charges while held (tap = drive, hold = smash); E = instant full power. */
+  solo: { ...WASD, high: ['KeyJ'], fast: ['KeyK'], soft: ['KeyL'], jump: ['Space'], kill: ['KeyE'] },
   /** Player 1 sharing the keyboard. */
   p1Shared: { ...WASD, high: ['KeyC'], fast: ['KeyV'], soft: ['KeyB'], jump: ['Space'], kill: [] },
   /** Player 2 sharing the keyboard. */

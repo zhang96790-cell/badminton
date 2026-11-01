@@ -430,8 +430,8 @@ export class Hud {
     const p1 = game.settings.p1Control === 'mouse'
       ? 'WASD move · Space jump · cursor = direction · left: tap drive, hold smash · right: tap drop, hold lob · E kill'
       : vsAI
-        ? 'WASD move · J high · K / E fast · L soft · Space jump · hold a direction to aim'
-        : 'P1: WASD · C high · V fast · B soft · Space jump';
+        ? 'WASD move · J high · K fast (hold = harder) · L soft · E kill · Space jump · hold a direction to aim'
+        : 'P1: WASD · C high · V fast (hold = harder) · B soft · Space jump';
     const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · R-Shift jump';
     return `${p1}${p2}   ·   H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;
   }

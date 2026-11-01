@@ -203,6 +203,11 @@ export class Player implements PlayerView {
     return PLAYER.reach + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0);
   }
 
+  /** The shuttle is within reach now but won't be next step. */
+  aboutToMiss(s: V3, v: V3, dt: number): boolean {
+    return this.inReach(s) && !this.inReach({ x: s.x + v.x * dt, y: s.y + v.y * dt, z: s.z + v.z * dt });
+  }
+
   private inReach(p: V3): boolean {
     const d = Math.hypot(p.x - this.pos.x, p.y - this.pos.y);
     return d <= this.reachFor(p.z) && p.z >= PLAYER.reachMinZ && p.z <= PLAYER.reachMaxZ + this.z;

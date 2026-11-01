@@ -86,6 +86,10 @@ export const SWING = {
   recovery: 0.18,
   /** Mouse mode: hold time to reach full power. */
   chargeTime: 0.5,
+  /** Keyboard fast key: hold time to reach its extra-power bonus. */
+  keyChargeTime: 0.35,
+  /** Keyboard fast key: a tap is full normal power; holding adds up to this much on top. */
+  keyChargeBonus: 1.08,
 };
 
 export const SHOTS = {
@@ -156,8 +160,10 @@ export const SHOTS = {
   /** Holding toward the opponent at contact = deeper, away = shorter. */
   depthToward: 1.1,
   depthAway: -1.0,
-  /** Holding left/right at contact aims this far from the centre line. */
-  aimLateral: 2.0,
+  /** Holding left/right at contact aims this far from the centre line (singles sideline is 2.59). */
+  aimLateral: 1.65,
+  /** Keyboard with no direction held: aim this far toward the open side, away from the opponent. */
+  autoAimLateral: 1.3,
 };
 
 export const SERVE = {
@@ -298,22 +304,25 @@ export interface KeyMap {
   high: string[]; fast: string[]; soft: string[]; jump: string[];
   /** Instant full-power flat/downward shot (net kill at the net, smash overhead). */
   kill: string[];
+  /** Aim the next shot left / right (separate from movement). Neither = toward the open side. */
+  aimLeft: string[];
+  aimRight: string[];
 }
 
 const WASD = { up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'] };
 
 export const KEYS: Record<'solo' | 'p1Shared' | 'p2Shared' | 'mouse', KeyMap> = {
   /** One player on the keyboard. K charges while held (tap = drive, hold = smash); E = instant full power. */
-  solo: { ...WASD, high: ['KeyJ'], fast: ['KeyK'], soft: ['KeyL'], jump: ['Space'], kill: ['KeyE'] },
+  solo: { ...WASD, high: ['KeyJ'], fast: ['KeyK'], soft: ['KeyL'], jump: ['Space'], kill: ['KeyE'], aimLeft: ['KeyU'], aimRight: ['KeyO'] },
   /** Player 1 sharing the keyboard. */
-  p1Shared: { ...WASD, high: ['KeyC'], fast: ['KeyV'], soft: ['KeyB'], jump: ['Space'], kill: [] },
+  p1Shared: { ...WASD, high: ['KeyC'], fast: ['KeyV'], soft: ['KeyB'], jump: ['Space'], kill: [], aimLeft: ['KeyX'], aimRight: ['KeyN'] },
   /** Player 2 sharing the keyboard. */
   p2Shared: {
     up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'],
-    high: ['KeyJ'], fast: ['KeyK'], soft: ['KeyL'], jump: ['ShiftRight', 'Slash'], kill: [],
+    high: ['KeyJ'], fast: ['KeyK'], soft: ['KeyL'], jump: ['ShiftRight', 'Slash'], kill: [], aimLeft: ['KeyU'], aimRight: ['KeyO'],
   },
   /** Mouse mode: keyboard moves, mouse aims and hits. */
-  mouse: { ...WASD, high: [], fast: [], soft: [], jump: ['Space'], kill: ['KeyE'] },
+  mouse: { ...WASD, high: [], fast: [], soft: [], jump: ['Space'], kill: ['KeyE'], aimLeft: [], aimRight: [] },
 };
 
 /** Keys that work in every control mode. */

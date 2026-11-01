@@ -20,7 +20,8 @@ import type { Speaker } from './voice';
 export interface Settings {
   opponent: Level | 'human';
   style: Style;
-  p1Control: 'mouse' | 'keyboard';
+  /** hybrid = keys to hit, cursor (trackpad) to aim. */
+  p1Control: 'mouse' | 'keyboard' | 'hybrid';
   /** 1 = single game, 3 = best of three. */
   games: 1 | 3;
   points: 15 | 21;
@@ -116,7 +117,7 @@ export class Game {
     this.players = [p1, p2];
     const c1: Controller = settings.p1Control === 'mouse'
       ? new MouseController(input, KEYS.mouse, p1, camera)
-      : new KeyboardController(input, vsAI ? KEYS.solo : KEYS.p1Shared, p1);
+      : new KeyboardController(input, vsAI ? KEYS.solo : KEYS.p1Shared, p1, settings.p1Control === 'hybrid' ? camera : undefined);
     const c2: Controller = drill
       ? { poll: () => ({ move: { x: 0, y: 0 }, jump: false, shot: null }) } // the coach only feeds
       : vsAI
@@ -124,7 +125,7 @@ export class Game {
         : new KeyboardController(input, KEYS.p2Shared, p2);
     this.controllers = [c1, c2];
     if (drill) {
-      this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control);
+      this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard');
       p1.place(0, -PLAYER.baseDepth);
       p2.place(0, 2.2);
       this.shuttle.hold({ x: 0, y: 1.6, z: 0.8 });
@@ -389,6 +390,16 @@ export class Game {
       }
     }
 
+    // Holding a charge too long: swing for them before the shuttle gets past (it'll be a late hit).
+    if (sh.inFlight && !sh.touchedNet) {
+      this.players.forEach((p, i) => {
+        if (p.charge === null || p.swing || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
+        if (!p.aboutToMiss(sh.pos, sh.vel, dt)) return;
+        const req = this.controllers[i].forceRelease?.();
+        if (req) p.startSwing(req);
+      });
+    }
+
     // Contact
     if (sh.inFlight) {
       for (let i = 0; i < 2; i++) {
@@ -397,7 +408,13 @@ export class Game {
         const c = p.tryContact(sh.pos, sh.vel, dt);
         if (!c) continue;
         const ctrl = this.controllers[i];
-        const req = ctrl.aimAtContact ? ctrl.aimAtContact(p.swing.req) : p.swing.req;
+        let req = ctrl.aimAtContact ? ctrl.aimAtContact(p.swing.req) : p.swing.req;
+        if (req.kind === 'intent' && !req.target && req.aimX === 0 && this.isHuman(i)) {
+          // Keyboard with no direction held: play into the open side rather than straight at the opponent.
+          const ox = this.players[1 - i].pos.x;
+          const side = Math.abs(ox) > 0.25 ? -Math.sign(ox) : Math.sign(c.point.x) || 1;
+          req = { ...req, aimX: (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
+        }
         const incomingKmh = Math.hypot(sh.vel.x, sh.vel.y, sh.vel.z) * 3.6;
         const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1);
         sh.launch(c.point, shot.velocity, p.side, false);

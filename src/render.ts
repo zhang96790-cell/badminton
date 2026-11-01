@@ -1,6 +1,6 @@
 import type { Camera } from './camera';
 import { ARENA, COURT, SHOTS, VISUAL } from './config';
-import { MouseController } from './controllers';
+import { KeyboardController, MouseController } from './controllers';
 import { courtLineRects, inSinglesHalf, isIn, netHeightAt, singlesServiceBox, type Rect } from './court';
 import type { Game } from './game';
 import { add3, clamp, len3, mul3, norm3, rng, sub3, type V2, type V3 } from './math';
@@ -315,9 +315,9 @@ export class Renderer {
 
   private reticle(game: Game) {
     const ctrl = game.controllers[0];
-    if (!(ctrl instanceof MouseController) || (game.state !== 'serve' && game.state !== 'rally')) return;
-    const t = ctrl.target();
-    if (t.y * game.players[0].side > 0) return;
+    if (game.state !== 'serve' && game.state !== 'rally') return;
+    const t = ctrl instanceof MouseController ? ctrl.target() : ctrl instanceof KeyboardController ? ctrl.target() : null;
+    if (!t || t.y * game.players[0].side > 0) return;
     const ok = game.state === 'serve' && game.server === game.players[0]
       ? isIn(t, singlesServiceBox(game.receiver.side, game.match.serverInRightCourt()))
       : inSinglesHalf(t, 1);
@@ -329,7 +329,7 @@ export class Renderer {
     ctx.lineWidth = 2;
     ctx.stroke();
     const charge = game.players[0].charge;
-    if (charge !== null && ctrl.arc && game.state === 'rally') {
+    if (ctrl instanceof MouseController && charge !== null && ctrl.arc && game.state === 'rally') {
       // Where this swing will actually go: drops pulled short, lobs pushed deep.
       const kind = mouseShotKind(ctrl.arc, charge);
       const e = mouseTarget(ctrl.arc, charge, t, 1);

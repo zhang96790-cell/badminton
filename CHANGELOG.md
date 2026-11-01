@@ -2,9 +2,19 @@
 
 Newest first. The same list appears in the game's menu under "What's new".
 
+## 1.7 (2 Nov 2026)
+
+- New control mode, Keys + trackpad aim: hit with J/K/L/E and aim with the cursor.
+- Keyboard aiming has its own keys: hold U (left) or O (right) as you hit. Movement keys no longer aim.
+- With no aim key held, keyboard shots go to the open side, away from your opponent.
+- Aimed shots land a little further inside the sideline, so fewer go out.
+- Fixed: tapping K is a full smash again; holding K adds extra power on top.
+- If you hold a shot too long, the game swings for you (a late hit) instead of letting the shuttle go past.
+- What’s new opens in its own pop-up.
+
 ## 1.6 (2 Nov 2026)
 
-- Keyboard: hold K to hit harder. A tap is a drive, a full hold is a full smash. E is an instant net kill.
+- Keyboard: hold K to hit harder. E is an instant net kill.
 - Menu shows a table of every shot with its mouse and keyboard input.
 - Landing marker is less precise, so it no longer gives away close line calls.
 - This "What’s new" list.

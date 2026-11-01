@@ -86,20 +86,24 @@ function describeControls() {
     ['Drop', 'Shuttle high above you', 'Tap right-click', S],
     ['Net shot', 'At the net, shuttle below the tape', 'Tap right-click', S],
     ['Block', 'Defending a smash', 'Tap right-click', S],
-    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', `Hold ${twoP ? F : k('K')}, let go on green`],
-    ['Jump smash', 'High shuttle coming down', `${k('Space')}, then release left-click at the top`, `Hold ${twoP ? F : k('K')}, ${k('Space')}, let go at the top`],
+    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', `Tap ${twoP ? F : k('K')} (hold for extra power)`],
+    ['Jump smash', 'High shuttle coming down', `${k('Space')}, then release left-click at the top`, `${k('Space')}, then tap ${twoP ? F : k('K')} at the top`],
     ['Drive', 'Shuttle at shoulder height', 'Tap left-click', `Tap ${twoP ? F : k('K')}`],
     ['Push', 'Shuttle low, front or mid-court', 'Tap left-click', `Tap ${twoP ? F : k('K')}`],
     ['Net kill', 'At the net, shuttle above the tape', k('E'), twoP ? `Hold ${F}` : k('E')],
     ['Short serve', 'Serving', 'Left-click', S],
     ['High serve', 'Serving', 'Hold right-click', H],
     ['Flick serve', 'Serving', 'Tap right-click', F],
-    ['Aim', 'Any shot', 'Point the cursor', `Hold ${k('A')}/${k('D')} left/right, ${k('W')} deeper, ${k('S')} shorter`],
+    ['Aim', 'Any shot', 'Point the cursor', twoP
+      ? `Hold ${k('X')}/${k('N')} <span class="dim">P1</span> · ${k('U')}/${k('O')} <span class="dim">P2</span> for left/right; neither = open side`
+      : settings.p1Control === 'hybrid'
+        ? `Point the cursor (trackpad); ${k('U')}/${k('O')} also work`
+        : `Hold ${k('U')} left / ${k('O')} right as you hit; neither = open side`],
   ];
   const mouseOn = settings.p1Control === 'mouse';
   controlsBox.innerHTML = `
     <b>Move</b> ${k('W')}${k('A')}${k('S')}${k('D')}${twoP ? ` <span class="dim">(P2: arrow keys)</span>` : ''} · <b>Jump</b> ${k('Space')}${twoP ? ` <span class="dim">(P2: R-Shift)</span>` : ''}
-    · swing just before the shuttle reaches you. Left-click and ${twoP ? 'the fast keys' : k('K')} swing when you <b>let go</b>, so holding them hits harder
+    · swing just before the shuttle reaches you. Left-click and ${twoP ? 'the fast keys' : k('K')} swing when you <b>let go</b>: a quick tap is a normal shot, holding adds power
     <table class="shots">
       <thead><tr><th>Shot</th><th>When</th><th class="${mouseOn ? 'on' : ''}">Mouse</th><th class="${mouseOn ? '' : 'on'}">Keyboard</th></tr></thead>
       <tbody>${rows.map(([shot, when, m, key]) => `<tr><td><b>${shot}</b></td><td class="dim">${when}</td><td>${m}</td><td>${key}</td></tr>`).join('')}</tbody>
@@ -110,19 +114,27 @@ function describeControls() {
   styleRow.classList.toggle('disabled', twoP);
 }
 
-// What's new: newest version first, with a NEW badge until you open it.
+// What's new pop-up: newest version first, with a NEW badge on the button until you've opened it.
 const SEEN = 'badminton.seenVersion';
 const latest = CHANGELOG[0].version;
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const modal = document.getElementById('changelogModal')!;
+const wnBadge = document.getElementById('wnBadge')!;
 document.getElementById('wnTitle')!.textContent = `What’s new in v${latest}`;
 document.getElementById('changelog')!.innerHTML = CHANGELOG.map((v) =>
   `<h4>v${v.version} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
-const wnBadge = document.getElementById('wnBadge')!;
 try { wnBadge.classList.toggle('hidden', localStorage.getItem(SEEN) === latest); } catch { /* storage unavailable */ }
-document.getElementById('whatsnew')!.addEventListener('toggle', () => {
+const closeChangelog = () => modal.classList.add('hidden');
+document.getElementById('whatsnewBtn')!.addEventListener('click', (e) => {
+  modal.classList.remove('hidden');
   wnBadge.classList.add('hidden');
   try { localStorage.setItem(SEEN, latest); } catch { /* storage unavailable */ }
+  (e.currentTarget as HTMLElement).blur();
+  document.getElementById('wnClose')!.focus();
 });
+document.getElementById('wnClose')!.addEventListener('click', closeChangelog);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeChangelog(); });
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !modal.classList.contains('hidden')) closeChangelog(); });
 
 const tag = document.getElementById('tag')!;
 function describeFormat() {

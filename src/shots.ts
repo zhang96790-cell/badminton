@@ -1,6 +1,6 @@
 // Turns "what the player asked for" + "how and where they made contact" into a launch velocity.
 // The button only expresses intent; contact height, net distance, timing, hand and stretch decide the shot.
-import { SERVE, SHOTS } from './config';
+import { SERVE, SHOTS, SWING } from './config';
 import { netHeightAt, type Rect } from './court';
 import { DEG, clamp, gauss, lerp, table, type Side, type V2, type V3 } from './math';
 import { angleForSpeed, clearNetAngle, fly2d, softShot, speedForAngle } from './solver';
@@ -150,15 +150,9 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1): Shot {
       const base = zone === 'overhead' ? SHOTS.clearAngle : zone === 'mid' ? SHOTS.midHighAngle : SHOTS.liftAngle;
       plan = { type: 'angle', angle: base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0) };
     } else if (req.intent === 'fast') {
-      // Keyboard can charge K like the mouse's left button: a tap is a drive, a full hold a full smash.
-      const Mo = SHOTS.mouse, p = req.power;
-      plan = p === undefined
-        ? { type: 'speed', speed: vMax, extra: SHOTS.netAssistMaxExtraDepthHard }
-        : {
-          type: 'speed',
-          speed: vMax * lerp(Mo.drivePace, 1, Math.min(1, p / Mo.smashPower)),
-          extra: p >= Mo.smashPower ? SHOTS.netAssistMaxExtraDepthHard : SHOTS.netAssistMaxExtraDepth,
-        };
+      // Keyboard K: a tap is full normal power; holding it adds a little extra.
+      const bonus = req.power === undefined ? 1 : lerp(1, SWING.keyChargeBonus, req.power);
+      plan = { type: 'speed', speed: vMax * bonus, extra: SHOTS.netAssistMaxExtraDepthHard };
     } else {
       plan = { type: 'soft' };
     }

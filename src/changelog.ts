@@ -1,10 +1,23 @@
 /** Shown on the menu under "What's new". Newest first. Also mirrored in CHANGELOG.md. */
 export const CHANGELOG: { version: string; date: string; changes: string[] }[] = [
   {
+    version: '1.7',
+    date: '2 Nov 2026',
+    changes: [
+      'New control mode, Keys + trackpad aim: hit with J/K/L/E and aim with the cursor.',
+      'Keyboard aiming has its own keys: hold U (left) or O (right) as you hit. Movement keys no longer aim.',
+      'With no aim key held, keyboard shots go to the open side, away from your opponent.',
+      'Aimed shots land a little further inside the sideline, so fewer go out.',
+      'Fixed: tapping K is a full smash again; holding K adds extra power on top.',
+      'If you hold a shot too long, the game swings for you (a late hit) instead of letting the shuttle go past.',
+      'What\u2019s new opens in its own pop-up.',
+    ],
+  },
+  {
     version: '1.6',
     date: '2 Nov 2026',
     changes: [
-      'Keyboard: hold K to hit harder. A tap is a drive, a full hold is a full smash. E is an instant net kill.',
+      'Keyboard: hold K to hit harder. E is an instant net kill.',
       'Menu shows a table of every shot with its mouse and keyboard input.',
       'Landing marker is less precise, so it no longer gives away close line calls.',
       'This "What’s new" list.',

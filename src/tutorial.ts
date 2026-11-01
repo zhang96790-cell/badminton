@@ -35,7 +35,7 @@ const STEPS: Step[] = [
     title: 'Clear', kind: 'hit', feed: 'liftBack', goal: 2, ok: (l) => l.inCourt && l.depth >= 4.5,
     text: [
       'Hold right-click, release on green: a clear always goes deep. The cursor picks left or right, and holding longer goes higher. Land 2 in the back of the court.',
-      'Press J on green for a clear, deep to the back. Hold A or D as you hit to aim left or right. Land 2 in the back of the court.',
+      'Press J on green for a clear, deep to the back. To aim, point the cursor (trackpad mode) or hold U (left) / O (right) as you hit; otherwise it goes to the open side. Land 2 in the back of the court.',
     ],
   },
   {
@@ -49,7 +49,7 @@ const STEPS: Step[] = [
     title: 'Smash', kind: 'hit', feed: 'liftMid', goal: 2, ok: (l) => l.inCourt && /smash/i.test(l.label),
     text: [
       'Start holding left-click early. When the label on the court says SMASH, release on green. Land 2 smashes in.',
-      'Hold K while the shuttle drops toward you. The longer you hold, the harder the shot: once the ring above your head turns gold it’s a full smash. Let go on green. Land 2 smashes in.',
+      'When the shuttle is high above you, tap K on green to smash. For extra power, start holding K early and let go on green. Land 2 smashes in.',
     ],
   },
   {
@@ -70,7 +70,7 @@ const STEPS: Step[] = [
     title: 'Jump smash', kind: 'hit', feed: 'liftMid', goal: 1, ok: (l) => l.inCourt && /Jump smash/.test(l.label),
     text: [
       'Press Space to jump as the shuttle drops toward you, then release your smash (left-click) at the top. Land 1 jump smash.',
-      'Hold K, press Space to jump as the shuttle drops toward you, and let go of K at the top. Land 1 jump smash.',
+      'Press Space to jump as the shuttle drops toward you, then tap K at the top of the jump. Land 1 jump smash.',
     ],
   },
   {

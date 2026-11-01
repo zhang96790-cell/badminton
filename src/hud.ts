@@ -422,17 +422,18 @@ export class Hud {
     }
     const k = s === game.players[1] ? KEYS.p2Shared : opp === 'human' ? KEYS.p1Shared : KEYS.solo;
     const key = (c: string[]) => c[0].replace('Key', '');
-    return `${s.name} to serve (${court} court): ${key(k.soft)} short · ${key(k.high)} high · ${key(k.fast)} flick · hold left/right to aim`;
+    return `${s.name} to serve (${court} court): ${key(k.soft)} short · ${key(k.high)} high · ${key(k.fast)} flick · hold ${key(k.aimLeft)}/${key(k.aimRight)} to aim`;
   }
 
   private controlsHint(game: Game): string {
     const vsAI = game.settings.opponent !== 'human';
+    const hybrid = game.settings.p1Control === 'hybrid';
     const p1 = game.settings.p1Control === 'mouse'
       ? 'WASD move · Space jump · cursor = direction · left: tap drive, hold smash · right: tap drop, hold lob · E kill'
       : vsAI
-        ? 'WASD move · J high · K fast (hold = harder) · L soft · E kill · Space jump · hold a direction to aim'
-        : 'P1: WASD · C high · V fast (hold = harder) · B soft · Space jump';
-    const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · R-Shift jump';
+        ? `WASD move · J high · K fast (hold = extra power) · L soft · E kill · ${hybrid ? 'cursor aims' : 'U/O aim'} · Space jump`
+        : 'P1: WASD · C high · V fast (hold = extra power) · B soft · X/N aim · Space jump';
+    const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · U/O aim · R-Shift jump';
     return `${p1}${p2}   ·   H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;
   }
 }

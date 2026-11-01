@@ -12,6 +12,11 @@ npm run dev
 
 Then open http://localhost:5173 (or the port Vite prints).
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md). When you ship an update, add an entry at the top of `src/changelog.ts` (shown in the
+menu) and mirror it in `CHANGELOG.md`.
+
 ## Publishing
 
 `netlify.toml` tells Netlify to run `npm run build` and serve `dist/`. Connect the GitHub repo once in Netlify

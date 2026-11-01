@@ -1,5 +1,6 @@
 import { Sound } from './audio';
 import { Camera, broadcastCamera, setView, sideCamera } from './camera';
+import { CHANGELOG } from './changelog';
 import { RULES, UI_KEYS } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
@@ -108,6 +109,20 @@ function describeControls() {
     + (settings.timingLight ? `<br>Timing light beside your player: <b style="color:#facc15">yellow</b> = too early, <b style="color:#4ade80">green</b> = swing now, <b style="color:#f87171">red</b> = too late.` : '');
   styleRow.classList.toggle('disabled', twoP);
 }
+
+// What's new: newest version first, with a NEW badge until you open it.
+const SEEN = 'badminton.seenVersion';
+const latest = CHANGELOG[0].version;
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+document.getElementById('wnTitle')!.textContent = `What’s new in v${latest}`;
+document.getElementById('changelog')!.innerHTML = CHANGELOG.map((v) =>
+  `<h4>v${v.version} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
+const wnBadge = document.getElementById('wnBadge')!;
+try { wnBadge.classList.toggle('hidden', localStorage.getItem(SEEN) === latest); } catch { /* storage unavailable */ }
+document.getElementById('whatsnew')!.addEventListener('toggle', () => {
+  wnBadge.classList.add('hidden');
+  try { localStorage.setItem(SEEN, latest); } catch { /* storage unavailable */ }
+});
 
 const tag = document.getElementById('tag')!;
 function describeFormat() {

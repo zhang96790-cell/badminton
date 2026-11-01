@@ -5,7 +5,7 @@ import { KeyboardController, MouseController, type Command, type Controller, typ
 import { isIn, netHeightAt, rightCourtSign, signedInside, singlesRect, singlesServiceBox, type Rect } from './court';
 import { REVIEW_TIME, type Review } from './hawkeye';
 import type { Input } from './input';
-import { chance, clamp, type Side, type V2, type V3 } from './math';
+import { chance, clamp, gauss, type Side, type V2, type V3 } from './math';
 import { createOfficials, gameStartCall, gameWonCall, judgeFor, matchWonCall, scoreCall, type LineCall, type Official } from './officials';
 import { Player } from './player';
 import { Practice, feedShot, type FeedType, type Session } from './practice';
@@ -70,6 +70,8 @@ export class Game {
   serveBox: Rect | null = null;
   /** Where the shuttle in flight will land (null if it's going into the net). */
   predicted: V2 | null = null;
+  /** The rough version shown on court: off by a random amount so it doesn't settle line calls. */
+  marker: V2 | null = null;
   /** Predicted flight of the shuttle in the air, and how long it's been flying along it. */
   private path: PathSample[] = [];
   private flightT = 0;
@@ -430,6 +432,8 @@ export class Game {
   private predict() {
     const p = predictPath(this.shuttle.pos, this.shuttle.vel);
     this.predicted = p.netFault ? null : { x: p.landing.x, y: p.landing.y };
+    const e = VISUAL.markerError;
+    this.marker = this.predicted && { x: this.predicted.x + gauss() * e, y: this.predicted.y + gauss() * e * 1.3 };
     this.path = p.samples;
     this.flightT = 0;
   }

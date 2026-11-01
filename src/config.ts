@@ -342,6 +342,12 @@ export const ARENA = {
 export const VISUAL = {
   /** Shuttle drawn this many times real size so it reads on a laptop screen. */
   shuttleScale: 2.6,
+  /**
+   * Landing marker is deliberately rough so it doesn't give away line calls: its centre is off by a
+   * random amount (std-dev, m) each shot, and it's drawn as a wide ring.
+   */
+  markerError: 0.3,
+  markerRadius: 0.55,
   colors: {
     bgTop: '#070b12',
     bgBottom: '#111a26',

@@ -268,18 +268,21 @@ export class Renderer {
     ctx.lineTo(b.x, b.y);
     ctx.stroke();
     ctx.setLineDash([]);
-    const p = game.predicted;
-    if (!p) return;
-    const ring = this.cam.projectPoly(this.floorCircle(p, 0.22));
+    // Rough area, not an exact spot: no centre dot, wide soft ring around a jittered centre.
+    const p = game.marker;
+    if (!p || !game.predicted) return;
+    const R = VISUAL.markerRadius;
+    this.poly(this.floorCircle(p, R), 'rgba(255,209,102,0.1)');
+    this.poly(this.floorCircle(p, R * 0.55), 'rgba(255,209,102,0.08)');
+    const ring = this.cam.projectPoly(this.floorCircle(p, R));
     ctx.beginPath();
     ring.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(255,209,102,0.16)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,209,102,0.75)';
+    ctx.setLineDash([6, 5]);
+    ctx.strokeStyle = 'rgba(255,209,102,0.6)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    this.dotAt(v3(p.x, p.y), 0.02, 'rgba(255,209,102,0.9)', 2);
+    ctx.setLineDash([]);
   }
 
   /** Pulsing yellow ring to run to (tutorial). */

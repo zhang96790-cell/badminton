@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Badminton</title>
+    <style>
+      :root { color-scheme: dark; --fg: #f2f4ef; --dim: rgba(242,244,239,0.6); --accent: #ffd166; --panel: rgba(10,15,22,0.86); }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0c121c; color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+      #menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+        background: radial-gradient(ellipse at center, rgba(12,18,28,0.55), rgba(12,18,28,0.9)); }
+      #menu.hidden { display: none; }
+      .card { max-height: calc(100vh - 32px); overflow-y: auto; width: min(600px, 100%); background: var(--panel); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+      h1 { margin: 0 0 4px; font-size: 34px; letter-spacing: -0.02em; }
+      .tag { margin: 0 0 22px; color: var(--dim); font-size: 14px; }
+      .label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--dim); margin: 16px 0 8px; text-transform: uppercase; }
+      .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+      .row { display: grid; grid-template-columns: 1.1fr 0.9fr 1.2fr; gap: 12px; }
+      .row.two { grid-template-columns: 1fr 1fr; }
+      .row.three { grid-template-columns: 1fr 1fr 1fr; }
+      #styleRow.disabled { opacity: 0.35; pointer-events: none; }
+      .row .seg button { min-width: 0; padding: 10px 6px; }
+      @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+      .seg button { flex: 1 1 0; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.04); color: var(--fg); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+      .seg button:hover { background: rgba(255,255,255,0.09); }
+      .seg button.on { background: var(--fg); color: #0c121c; border-color: var(--fg); }
+      .controls { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.04);
+        font-size: 13px; line-height: 1.65; color: var(--dim); }
+      .controls b { color: var(--fg); font-weight: 600; }
+      .controls kbd { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: rgba(255,255,255,0.12);
+        color: var(--fg); font: 600 12px ui-monospace, monospace; text-align: center; }
+      #start { margin-top: 20px; width: 100%; padding: 14px; border: 0; border-radius: 12px; background: var(--accent); color: #0c121c;
+        font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+      #start:hover { filter: brightness(1.05); }
+      .alt { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+      .alt button { padding: 11px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05);
+        color: var(--fg); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+      .alt button:hover { background: rgba(255,255,255,0.1); }
+      .alt button.suggest { border-color: var(--accent); color: var(--accent); }
+      #newHint { margin-top: 16px; padding: 10px 14px; border-radius: 10px; background: rgba(255,209,102,0.1); color: var(--accent); font-size: 13px; }
+      #newHint.hidden, #touchNote.hidden { display: none; }
+      #touchNote { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: rgba(255,91,91,0.12); color: #ff9a9a; font-size: 13px; }
+      .foot { margin-top: 12px; text-align: center; font-size: 12px; color: var(--dim); }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div id="menu">
+      <div class="card">
+        <h1>Badminton</h1>
+        <p class="tag" id="tag">Singles</p>
+
+        <div class="label">Opponent</div>
+        <div class="seg" data-group="opponent">
+          <button data-value="easy">Easy</button>
+          <button data-value="medium">Medium</button>
+          <button data-value="hard">Hard</button>
+          <button data-value="expert">Expert</button>
+          <button data-value="human">2 Players</button>
+        </div>
+
+        <div id="styleRow">
+          <div class="label">CPU style</div>
+          <div class="seg" data-group="style">
+            <button data-value="allround">All-rounder</button>
+            <button data-value="attacker">Attacker</button>
+            <button data-value="defender">Defender</button>
+            <button data-value="net">Net player</button>
+          </div>
+        </div>
+
+        <div class="label">Player 1 controls</div>
+        <div class="seg" data-group="p1Control">
+          <button data-value="mouse">Keyboard + Mouse</button>
+          <button data-value="keyboard">Keyboard only</button>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="label">Match</div>
+            <div class="seg" data-group="games">
+              <button data-value="1">1 game</button>
+              <button data-value="3">Best of 3</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Points</div>
+            <div class="seg" data-group="points">
+              <button data-value="15">15</button>
+              <button data-value="21">21</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Accuracy</div>
+            <div class="seg" data-group="aim">
+              <button data-value="realistic">Realistic</button>
+              <button data-value="casual">Casual</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row three">
+          <div>
+            <div class="label">Landing marker</div>
+            <div class="seg" data-group="guides">
+              <button data-value="true">On</button>
+              <button data-value="false">Off</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Timing light</div>
+            <div class="seg" data-group="timingLight">
+              <button data-value="true">On</button>
+              <button data-value="false">Off</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Umpire voice</div>
+            <div class="seg" data-group="voice">
+              <button data-value="true">On</button>
+              <button data-value="false">Off</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="newHint">New here? Start with the <b>tutorial</b>. It takes about 5 minutes.</div>
+        <button id="start">Start match</button>
+        <div class="alt">
+          <button id="tutorial">Tutorial</button>
+          <button id="practice">Practice drills</button>
+        </div>
+        <div id="touchNote">This game needs a keyboard (and ideally a mouse). It’s best on a laptop or desktop.</div>
+        <div class="controls" id="controls"></div>
+        <div class="foot">H challenge · R replay · G landing marker · M mute · Esc pause · Enter skips pauses</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

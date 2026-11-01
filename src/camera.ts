@@ -1,0 +1,115 @@
+import { CAMERA, COURT } from './config';
+import type { V2, V3 } from './math';
+
+/** Perspective camera. Fixed views fit themselves to the screen; Hawk-Eye animates one by hand. */
+export class Camera {
+  private pos: V3 = { x: 0, y: 0, z: 1 };
+  private f: V3 = { x: 0, y: 1, z: 0 };
+  private r: V3 = { x: 1, y: 0, z: 0 };
+  private u: V3 = { x: 0, y: 0, z: 1 };
+  private F = 1;
+  private cx = 0;
+  private cy = 0;
+
+  constructor(pos?: V3, target?: V3, private fitPoints: V3[] = [], private centerY = 0.53) {
+    if (pos && target) this.look(pos, target);
+  }
+
+  look(pos: V3, target: V3) {
+    this.pos = { ...pos };
+    const fx = target.x - pos.x, fy = target.y - pos.y, fz = target.z - pos.z;
+    const fl = Math.hypot(fx, fy, fz) || 1;
+    this.f = { x: fx / fl, y: fy / fl, z: fz / fl };
+    let rx = this.f.y, ry = -this.f.x; // f × up
+    let rl = Math.hypot(rx, ry);
+    if (rl < 1e-4) { rx = 1; ry = 0; rl = 1; } // looking straight down
+    this.r = { x: rx / rl, y: ry / rl, z: 0 };
+    const { f, r } = this;
+    this.u = { x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x };
+  }
+
+  setLens(F: number, cx: number, cy: number) {
+    this.F = F;
+    this.cx = cx;
+    this.cy = cy;
+  }
+
+  get forward(): V3 { return this.f; }
+
+  private cam(p: V3) {
+    const dx = p.x - this.pos.x, dy = p.y - this.pos.y, dz = p.z - this.pos.z;
+    return {
+      x: dx * this.r.x + dy * this.r.y + dz * this.r.z,
+      y: dx * this.u.x + dy * this.u.y + dz * this.u.z,
+      z: dx * this.f.x + dy * this.f.y + dz * this.f.z,
+    };
+  }
+
+  /** Scale and centre so the fit points fill the screen. */
+  fit(w: number, h: number) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of this.fitPoints) {
+      const c = this.cam(p), zc = Math.max(0.1, c.z);
+      const x = c.x / zc, y = -c.y / zc;
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    }
+    this.F = Math.min((w * 0.94) / (maxX - minX), (h * 0.84) / (maxY - minY));
+    this.cx = w / 2 - (this.F * (minX + maxX)) / 2;
+    this.cy = h * this.centerY - (this.F * (minY + maxY)) / 2;
+  }
+
+  /** Distance in front of the camera (for painter's ordering). */
+  depth(p: V3): number { return this.cam(p).z; }
+
+  /** Screen position plus pixels-per-metre at that depth. */
+  project(p: V3): { x: number; y: number; s: number } {
+    const c = this.cam(p), zc = Math.max(0.1, c.z);
+    return { x: this.cx + (this.F * c.x) / zc, y: this.cy - (this.F * c.y) / zc, s: this.F / zc };
+  }
+
+  /** Project a polygon, clipping it against the near plane so parts behind the camera don't wrap. */
+  projectPoly(pts: V3[], near = 0.05): { x: number; y: number }[] {
+    const cs = pts.map((p) => this.cam(p));
+    const out: { x: number; y: number; z: number }[] = [];
+    for (let i = 0; i < cs.length; i++) {
+      const a = cs[i], b = cs[(i + 1) % cs.length];
+      const ain = a.z >= near, bin = b.z >= near;
+      if (ain) out.push(a);
+      if (ain !== bin) {
+        const t = (near - a.z) / (b.z - a.z);
+        out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: near });
+      }
+    }
+    return out.map((c) => ({ x: this.cx + (this.F * c.x) / c.z, y: this.cy - (this.F * c.y) / c.z }));
+  }
+
+  /** Floor point under a screen position, or null if the ray points at the sky. */
+  groundAt(sx: number, sy: number): V2 | null {
+    const a = (sx - this.cx) / this.F, b = -(sy - this.cy) / this.F;
+    const dx = this.f.x + this.r.x * a + this.u.x * b;
+    const dy = this.f.y + this.r.y * a + this.u.y * b;
+    const dz = this.f.z + this.r.z * a + this.u.z * b;
+    if (dz >= -1e-4) return null;
+    const t = -this.pos.z / dz;
+    return { x: this.pos.x + dx * t, y: this.pos.y + dy * t };
+  }
+}
+
+/** TV-broadcast view: court, run-off and the far player's head fit the screen, plus most clears. */
+export function broadcastCamera(): Camera {
+  const W = COURT.doublesHalfWidth + 0.8, L = COURT.halfLength + 1.0;
+  return new Camera(CAMERA.broadcast.pos, CAMERA.broadcast.target, [
+    { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 },
+    { x: 0, y: L - 0.4, z: 2.6 }, { x: -W, y: -L, z: 1.0 }, { x: W, y: -L, z: 1.0 },
+    { x: 0, y: 1.5, z: 5.2 },
+  ]);
+}
+
+/** Side-on replay camera. */
+export function sideCamera(): Camera {
+  const L = COURT.halfLength + 0.8;
+  return new Camera(CAMERA.side.pos, CAMERA.side.target, [
+    { x: 0, y: -L, z: 0 }, { x: 0, y: L, z: 0 }, { x: 0, y: -L, z: 2.4 }, { x: 0, y: L, z: 2.4 }, { x: 0, y: 0, z: 5.5 },
+  ], 0.56);
+}

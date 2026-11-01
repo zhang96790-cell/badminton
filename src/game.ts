@@ -29,6 +29,8 @@ export interface Settings {
   guides: boolean;
   /** Light next to your player: yellow = too early to swing, green = swing now, red = too late. */
   timingLight: boolean;
+  /** If you don't swing at all, the game swings for you as the shuttle reaches you (a late hit). */
+  swingAssist: boolean;
   aim: 'realistic' | 'casual';
   voice: boolean;
   /** Camera: 'close' fills the screen with the court, 'broadcast' is the wider TV view. */
@@ -124,6 +126,7 @@ export class Game {
         ? new AIController(this, p2, p1, settings.opponent as Level, settings.style)
         : new KeyboardController(input, KEYS.p2Shared, p2);
     this.controllers = [c1, c2];
+    this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard');
       p1.place(0, -PLAYER.baseDepth);
@@ -398,6 +401,16 @@ export class Game {
         const req = this.controllers[i].forceRelease?.();
         if (req) p.startSwing(req);
       });
+      // Swing assist: you didn't swing at all, so get it back with a high shot (a late hit). It lands
+      // mid-court rather than deep, so the opponent can still attack it.
+      if (this.settings.swingAssist && this.mode !== 'tutorial') {
+        this.players.forEach((p, i) => {
+          if (!this.isHuman(i) || p.swing || p.charge !== null || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
+          // Attacking shots slow down a lot in the air, so judge by what was hit, not current speed.
+          if (/smash|kill|drive|push/i.test(this.lastShot?.label ?? '')) return;
+          if (p.aboutToMiss(sh.pos, sh.vel, dt)) p.startSwing({ kind: 'intent', intent: 'high', aimX: 0, aimDepth: -1 }, true);
+        });
+      }
     }
 
     // Contact
@@ -428,7 +441,7 @@ export class Game {
         this.lastShot = { label: shot.label, hand: c.hand, netCord: false };
         this.stats.shots.push({ by: i as 0 | 1, label: shot.label, speedKmh: shot.speedKmh, hand: c.hand, landing: this.predicted });
         this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted });
-        this.announce(p, shot, `${c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}`);
+        this.announce(p, shot, `${c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`);
         this.events.push({ type: 'hit', strength: Math.min(1, shot.speedKmh / 300) });
         break;
       }
@@ -466,7 +479,7 @@ export class Game {
     let tIn = -1, tOut = -1, best: PathSample | null = null;
     for (const s of this.path) {
       if (s.t < this.flightT || s.p.y * p.side <= 0) continue;
-      const reach = PLAYER.reach + (s.p.z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0);
+      const reach = p.reachFor(s.p.z);
       const ok = Math.hypot(s.p.x - p.pos.x, s.p.y - p.pos.y) <= reach && s.p.z >= PLAYER.reachMinZ && s.p.z <= PLAYER.reachMaxZ + p.z;
       if (ok) {
         if (tIn < 0) tIn = s.t;

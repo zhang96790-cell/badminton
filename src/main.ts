@@ -25,7 +25,7 @@ const voice = new Voice();
 
 const STORE = 'badminton.settings';
 const settings: Settings = {
-  opponent: 'medium', style: 'allround', p1Control: 'mouse', games: 3, points: 15, guides: true, timingLight: true, aim: 'realistic', voice: true,
+  opponent: 'beginner', style: 'allround', p1Control: 'mouse', games: 3, points: 15, guides: true, timingLight: true, swingAssist: true, aim: 'realistic', voice: true,
   view: 'close',
 };
 try {

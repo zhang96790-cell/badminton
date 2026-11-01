@@ -50,6 +50,8 @@ export const PLAYER = {
   swingMoveFactor: 0.55,
   /** Horizontal distance from body centre the racket can reach (arm + racket + lean). */
   reach: 1.15,
+  /** Extra reach for human players, so near misses become (stretched) hits. */
+  humanExtraReach: 0.2,
   /** Lunging adds reach for low shuttles, then slows you while you recover. */
   lungeReach: 0.25,
   lungeMaxZ: 1.2,
@@ -78,10 +80,10 @@ export const SWING = {
   window: 0.34,
   /** Press-to-contact time for a perfectly timed hit. */
   idealDelay: 0.11,
-  perfectTolerance: 0.05,
+  perfectTolerance: 0.08,
   /** Timing error beyond the tolerance at which quality bottoms out. */
-  falloff: 0.17,
-  minQuality: 0.45,
+  falloff: 0.24,
+  minQuality: 0.55,
   /** Lockout after a whiff. */
   recovery: 0.18,
   /** Mouse mode: hold time to reach full power. */
@@ -228,7 +230,7 @@ export const REPLAY = {
   autoCooldown: 5,
 };
 
-export type Level = 'easy' | 'medium' | 'hard' | 'expert';
+export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert';
 
 export interface AILevel {
   /** Seconds before reacting to a shot. */
@@ -264,6 +266,12 @@ export interface AILevel {
 }
 
 export const AI: Record<Level, AILevel> = {
+  // Slow, soft, safe: keeps rallies going so new players can learn.
+  beginner: {
+    reaction: 0.45, speed: 0.72, strength: 0.6, aimNoise: 0.2, timingError: 0.04, margin: 1.1, caution: 0.8,
+    decisiveness: 0.4, anticipation: 0, adapt: 0, smash: 0.08, drop: 0.3, net: 0.4, kill: 0.2, jumpSmash: 0,
+    judgesOut: false, outMargin: 0, serveShort: 0.3, serveDelay: 1.3, challengeSkill: 0.1,
+  },
   easy: {
     reaction: 0.36, speed: 0.8, strength: 0.72, aimNoise: 0.35, timingError: 0.05, margin: 0.7, caution: 0.6,
     decisiveness: 0.6, anticipation: 0, adapt: 0, smash: 0.3, drop: 0.5, net: 0.6, kill: 0.5, jumpSmash: 0,

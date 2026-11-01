@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.4: Easier to play (2 Nov 2026)
+
+- New Beginner CPU: slower, softer and safer. It’s the default for new players.
+- Wider timing window: the green "Perfect" moment lasts longer, and mistimed hits lose less power and accuracy.
+- You can reach shuttles about 20 cm further from your body.
+- Swing assist (on by default): if you don’t swing at a slower shuttle (lift, drop or clear), your player gets it back with a high shot. Smashes still need a real swing. Turn it off on the menu.
+
 ## 1.3.2: Landing marker is back (2 Nov 2026)
 
 - The landing marker is back to the original small ring with a centre dot, just slightly less exact (a few centimetres off).

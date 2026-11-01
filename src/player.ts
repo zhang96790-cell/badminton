@@ -58,6 +58,10 @@ export class Player implements PlayerView {
   swing: { t: number; req: ShotRequest } | null = null;
   frozen = false;
   speedMult = 1;
+  /** Extra reach on top of PLAYER.reach (human players get a little more). */
+  extraReach = 0;
+  /** The current swing was started by swing assist. */
+  assisted = false;
   charge: number | null = null;
   hand: V3;
   rdir: V3 = { x: 0, y: 0, z: 1 };
@@ -97,9 +101,10 @@ export class Player implements PlayerView {
     this.lunge = 9;
   }
 
-  startSwing(req: ShotRequest): boolean {
+  startSwing(req: ShotRequest, assisted = false): boolean {
     if (this.swing || this.recover > 0) return false;
     this.swing = { t: 0, req };
+    this.assisted = assisted;
     return true;
   }
 
@@ -199,8 +204,8 @@ export class Player implements PlayerView {
     return result;
   }
 
-  private reachFor(z: number): number {
-    return PLAYER.reach + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0);
+  reachFor(z: number): number {
+    return PLAYER.reach + this.extraReach + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0);
   }
 
   /** The shuttle is within reach now but won't be next step. */

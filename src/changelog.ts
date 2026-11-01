@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.4',
+    title: 'Easier to play',
+    date: '2 Nov 2026',
+    changes: [
+      'New Beginner CPU: slower, softer and safer. It’s the default for new players.',
+      'Wider timing window: the green "Perfect" moment lasts longer, and mistimed hits lose less power and accuracy.',
+      'You can reach shuttles about 20 cm further from your body.',
+      'Swing assist (on by default): if you don’t swing at a slower shuttle (lift, drop or clear), your player gets it back with a high shot. Smashes still need a real swing. Turn it off on the menu.',
+    ],
+  },
+  {
     version: '1.3.2',
     title: 'Landing marker is back',
     date: '2 Nov 2026',

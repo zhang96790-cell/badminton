@@ -25,7 +25,7 @@
       .seg { display: flex; gap: 6px; flex-wrap: wrap; }
       .row { display: grid; grid-template-columns: 1.1fr 0.9fr 1.2fr; gap: 12px; }
       .row.two { grid-template-columns: 1fr 1fr; }
-      .row.three { grid-template-columns: 1fr 1fr 1fr; }
+      .row.three { grid-template-columns: 1fr 1fr 1fr 1fr; }
       #styleRow.disabled { opacity: 0.35; pointer-events: none; }
       .row .seg button { min-width: 0; padding: 10px 6px; }
       @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
@@ -88,6 +88,7 @@
 
         <div class="label">Opponent</div>
         <div class="seg" data-group="opponent">
+          <button data-value="beginner">Beginner</button>
           <button data-value="easy">Easy</button>
           <button data-value="medium">Medium</button>
           <button data-value="hard">Hard</button>
@@ -147,6 +148,13 @@
           <div>
             <div class="label">Timing light</div>
             <div class="seg" data-group="timingLight">
+              <button data-value="true">On</button>
+              <button data-value="false">Off</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Swing assist</div>
+            <div class="seg" data-group="swingAssist">
               <button data-value="true">On</button>
               <button data-value="false">Off</button>
             </div>

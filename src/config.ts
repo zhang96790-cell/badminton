@@ -346,8 +346,8 @@ export const VISUAL = {
    * Landing marker is deliberately rough so it doesn't give away line calls: its centre is off by a
    * random amount (std-dev, m) each shot, and it's drawn as a wide ring.
    */
-  markerError: 0.3,
-  markerRadius: 0.55,
+  markerError: 0.2,
+  markerRadius: 0.3,
   colors: {
     bgTop: '#070b12',
     bgBottom: '#111a26',

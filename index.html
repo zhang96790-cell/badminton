@@ -17,7 +17,7 @@
       #menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
         background: radial-gradient(ellipse at center, rgba(12,18,28,0.55), rgba(12,18,28,0.9)); }
       #menu.hidden { display: none; }
-      .card { max-height: calc(100vh - 32px); overflow-y: auto; width: min(600px, 100%); background: var(--panel); border: 1px solid rgba(255,255,255,0.08);
+      .card { max-height: calc(100vh - 32px); overflow-y: auto; width: min(700px, 100%); background: var(--panel); border: 1px solid rgba(255,255,255,0.08);
         border-radius: 18px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
       h1 { margin: 0 0 4px; font-size: 34px; letter-spacing: -0.02em; }
       .tag { margin: 0 0 22px; color: var(--dim); font-size: 14px; }
@@ -36,6 +36,13 @@
       .controls { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.04);
         font-size: 13px; line-height: 1.65; color: var(--dim); }
       .controls b { color: var(--fg); font-weight: 600; }
+      .controls .dim { color: var(--dim); }
+      table.shots { width: 100%; border-collapse: collapse; margin: 10px 0 10px; font-size: 12.5px; }
+      table.shots th { text-align: left; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim);
+        padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.14); }
+      table.shots th.on { color: var(--accent); }
+      table.shots td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--fg); vertical-align: top; }
+      table.shots tr:nth-child(even) td { background: rgba(255,255,255,0.025); }
       .controls kbd { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: rgba(255,255,255,0.12);
         color: var(--fg); font: 600 12px ui-monospace, monospace; text-align: center; }
       #start { margin-top: 20px; width: 100%; padding: 14px; border: 0; border-radius: 12px; background: var(--accent); color: #0c121c;

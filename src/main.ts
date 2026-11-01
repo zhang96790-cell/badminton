@@ -75,28 +75,38 @@ syncViewbar();
 
 const k = (s: string) => `<kbd>${s}</kbd>`;
 function describeControls() {
-  const p1 = settings.p1Control === 'mouse'
-    ? `<b>Player 1 — keyboard + mouse</b><br>
-       ${k('W')}${k('A')}${k('S')}${k('D')} move · ${k('Space')} jump · the cursor is where you want it to land<br>
-       <b>Left-click</b>: attack. Tap = <b>drive</b>, hold = <b>smash</b> (the label on the court switches from DRIVE to SMASH)<br>
-       <b>Right-click</b> (or Shift/Ctrl-click): touch. Tap = <b>drop</b> (always lands short), hold = <b>lob / clear</b> (always deep, higher the longer you hold)<br>
-       ${k('E')} <b>kill</b>: instant full power at the cursor, no charging (net kills, snap smashes)<br>
-       The swing happens when you <b>release</b> (or press E), so time it just before the shuttle reaches you`
-    : settings.opponent === 'human'
-      ? `<b>Player 1 — keyboard</b><br>${k('W')}${k('A')}${k('S')}${k('D')} move · ${k('C')} high · ${k('V')} fast · ${k('B')} soft · ${k('Space')} jump`
-      : `<b>Player 1 — keyboard</b><br>
-         ${k('W')}${k('A')}${k('S')}${k('D')} move · ${k('Space')} jump<br>
-         ${k('J')} <b>high</b>: clear from overhead, lift from low<br>
-         ${k('K')} or ${k('E')} <b>fast</b>: smash overhead, drive at mid height, kill above the tape, push from below it<br>
-         ${k('L')} <b>soft</b>: drop overhead, net shot at the net, block in mid-court<br>
-         Hold a direction as you hit to aim: left/right picks the side, toward the net goes deeper, away goes shorter`;
-  const p2 = settings.opponent === 'human'
-    ? `<br><br><b>Player 2 — keyboard</b><br>${k('←')}${k('↑')}${k('↓')}${k('→')} move · ${k('J')} high · ${k('K')} fast · ${k('L')} soft · ${k('R-Shift')} jump`
-    : '';
-  controlsBox.innerHTML = `${p1}${p2}<br><br>Timing, contact height, which hand you use and how far you're stretching decide the shot. `
-    + `Longer and harder shots are less accurate. ${k('H')} challenges a line call, ${k('R')} replays the last rally.`
+  const twoP = settings.opponent === 'human';
+  // Keyboard keys for high / fast / soft: solo J K L; sharing a keyboard, P1 uses C V B and P2 J K L.
+  const kb = (solo: string, p1: string) => (twoP ? `${k(p1)} <span class="dim">P1</span> · ${k(solo)} <span class="dim">P2</span>` : k(solo));
+  const H = kb('J', 'C'), F = kb('K', 'V'), S = kb('L', 'B');
+  const rows: [string, string, string, string][] = [
+    ['Clear', 'Shuttle high above you', 'Hold right-click', H],
+    ['Lift', 'Shuttle low: at the net or defending', 'Hold right-click', H],
+    ['Drop', 'Shuttle high above you', 'Tap right-click', S],
+    ['Net shot', 'At the net, shuttle below the tape', 'Tap right-click', S],
+    ['Block', 'Defending a smash', 'Tap right-click', S],
+    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', F],
+    ['Jump smash', 'High shuttle coming down', `${k('Space')}, then release left-click at the top`, `${k('Space')}, then ${twoP ? F : k('K')} at the top`],
+    ['Drive', 'Shuttle at shoulder height', 'Tap left-click', F],
+    ['Push', 'Shuttle low, front or mid-court', 'Tap left-click', F],
+    ['Net kill', 'At the net, shuttle above the tape', k('E'), twoP ? F : `${k('K')} or ${k('E')}`],
+    ['Short serve', 'Serving', 'Left-click', S],
+    ['High serve', 'Serving', 'Hold right-click', H],
+    ['Flick serve', 'Serving', 'Tap right-click', F],
+    ['Aim', 'Any shot', 'Point the cursor', `Hold ${k('A')}/${k('D')} left/right, ${k('W')} deeper, ${k('S')} shorter`],
+  ];
+  const mouseOn = settings.p1Control === 'mouse';
+  controlsBox.innerHTML = `
+    <b>Move</b> ${k('W')}${k('A')}${k('S')}${k('D')}${twoP ? ` <span class="dim">(P2: arrow keys)</span>` : ''} · <b>Jump</b> ${k('Space')}${twoP ? ` <span class="dim">(P2: R-Shift)</span>` : ''}
+    · swing just before the shuttle reaches you${mouseOn ? ' (mouse swings happen when you <b>release</b>)' : ''}
+    <table class="shots">
+      <thead><tr><th>Shot</th><th>When</th><th class="${mouseOn ? 'on' : ''}">Mouse</th><th class="${mouseOn ? '' : 'on'}">Keyboard</th></tr></thead>
+      <tbody>${rows.map(([shot, when, m, key]) => `<tr><td><b>${shot}</b></td><td class="dim">${when}</td><td>${m}</td><td>${key}</td></tr>`).join('')}</tbody>
+    </table>
+    The button is your intent; contact height, timing, hand and stretch decide the exact shot. Longer and harder shots are less accurate.
+    ${k('H')} challenge a line call · ${k('R')} replay · ${k('F')} fullscreen · ${k('G')} landing marker · ${k('M')} mute`
     + (settings.timingLight ? `<br>Timing light beside your player: <b style="color:#facc15">yellow</b> = too early, <b style="color:#4ade80">green</b> = swing now, <b style="color:#f87171">red</b> = too late.` : '');
-  styleRow.classList.toggle('disabled', settings.opponent === 'human');
+  styleRow.classList.toggle('disabled', twoP);
 }
 
 const tag = document.getElementById('tag')!;

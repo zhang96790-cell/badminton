@@ -15,6 +15,7 @@ import { Input } from './input';
 import { Tour } from './tour';
 import { CODE_PATTERN, QueueConnection, RoomConnection, newRoomCode, type GameMsg, type QueueEvent, type ServerMsg } from './net';
 import { tierOf } from './rating';
+import { addCareer, careerDelta, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
@@ -210,7 +211,7 @@ type AccountModule = typeof import('./account');
 let accountModule: Promise<AccountModule> | null = null;
 const loadAccount = () => (accountModule ??= import('./account'));
 const accountModal = document.getElementById('accountModal')!;
-const acForm = document.getElementById('acForm') as HTMLFormElement, acSignedIn = document.getElementById('acSignedIn')!;
+const acForm = document.getElementById('acForm') as HTMLFormElement;
 const acUser = document.getElementById('acUser') as HTMLInputElement, acPass = document.getElementById('acPass') as HTMLInputElement;
 const acNewPass = document.getElementById('acNewPass') as HTMLInputElement;
 const acError = document.getElementById('acError')!, acMsg = document.getElementById('acMsg')!;
@@ -227,27 +228,48 @@ function queueAccountSave() {
 /** Your rating and record, once loaded (logged in only). */
 let myRating: { rating: number; wins: number; losses: number } | null = null;
 
+/** Your career stats: from your account when logged in, otherwise kept on this computer. */
+let career: Career = loadLocalCareer();
+
 function syncAccountUi() {
   document.getElementById('accountLabel')!.textContent = account ? `${account.username}${myRating ? ` · ${myRating.rating}` : ''}` : 'Log in';
   document.getElementById('accountBtn')!.classList.toggle('in', !!account);
-  acForm.hidden = !!account;
-  acSignedIn.hidden = !account;
-  document.getElementById('acTitle')!.textContent = account ? 'Player hub' : 'Your account';
-  if (!account) return;
-  document.getElementById('acName')!.textContent = account.username;
-  const tier = document.getElementById('acTier')!;
-  if (myRating) {
-    const t = tierOf(myRating.rating);
-    tier.textContent = t.name;
-    tier.style.color = t.color === '#cbd5e1' ? '#64748b' : t.color;
-    document.getElementById('acRating')!.textContent = String(myRating.rating);
-    document.getElementById('acRecord')!.textContent = `${myRating.wins}–${myRating.losses}`;
-  }
+  // Social screen: who you are, your tier and rating, and what needs a login.
+  document.getElementById('socialName')!.textContent = account ? account.username : 'Guest';
+  document.getElementById('socialKicker')!.textContent = account ? 'Player profile' : 'Not logged in · stats on this computer';
+  const tierEl = document.getElementById('socialTier')!;
+  const t = myRating ? tierOf(myRating.rating) : null;
+  tierEl.textContent = t ? t.name : account ? '' : 'Log in to get a rating';
+  tierEl.style.setProperty('--tier', t?.color ?? '#8ea6d8');
+  document.getElementById('heroRating')!.textContent = myRating ? String(myRating.rating) : '–';
+  document.getElementById('heroRecord')!.textContent = myRating ? `${myRating.wins}–${myRating.losses}` : '–';
+  const played = career.matches ?? 0;
+  document.getElementById('heroWinPct')!.textContent = played ? `${Math.round((100 * (career.wins ?? 0)) / played)}%` : '–';
+  document.getElementById('accountTab')!.hidden = !account;
+  document.getElementById('friendsLogin')!.hidden = !!account;
+  document.getElementById('friendsArea')!.hidden = !account;
+  document.getElementById('matchesLogin')!.hidden = !!account;
+  document.getElementById('acMatches')!.hidden = !account;
+  if (account) document.getElementById('acName')!.textContent = account.username;
+  renderStats();
+}
+
+/** The Stats tab: your career in groups of tiles. */
+function renderStats() {
+  document.getElementById('statsScope')!.innerHTML = account
+    ? `Every finished match against the CPU or online counts. <b>${(career.matches ?? 0).toLocaleString('en-GB')}</b> so far.`
+    : 'These stats are saved on this computer only. <button type="button" class="inline-link" data-login>Log in</button> to keep them on your account and play ranked.';
+  document.getElementById('statGroups')!.innerHTML = statGroups(career).map((g) => `
+    <div class="stat-group${g.title === 'Highlights' ? ' highlights' : ''}">
+      <h3>${g.title}</h3>
+      <div class="tiles">${g.tiles.map((t) => `<div class="tile${t.big ? ' big' : ''}"><b>${t.value}</b><span>${t.label}</span>${t.hint ? `<em>${t.hint}</em>` : ''}</div>`).join('')}</div>
+    </div>`).join('');
 }
 
 /** Reload your rating (after logging in, opening the hub, or a ranked match). */
 async function refreshStats() {
-  if (!account) return;
+  if (!account) { career = loadLocalCareer(); syncAccountUi(); return; }
+  void loadAccount().then(async (m) => { const c = await m.myCareer(); if (c) { career = c; syncAccountUi(); } });
   const m = await loadAccount();
   const s = await m.myStats();
   if (s) myRating = { rating: s.rating, wins: s.wins, losses: s.losses };
@@ -278,16 +300,46 @@ async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
   }
 }
 
+/** The account chip: log in (or, when you're logged in, your Social profile). */
 function openAccount(note?: string) {
+  if (account) { openSocial('overview'); return; }
   acError.classList.remove('ok');
   acError.textContent = note ?? '';
   acMsg.textContent = '';
+  closeSocial();
   accountModal.classList.remove('hidden');
   syncAccountUi();
-  if (account) { showHubTab('profile'); void refreshStats(); void renderMatches(); void renderFriends(); }
-  else acUser.focus();
+  acUser.focus();
   void loadAccount();
 }
+
+/** Add a finished match to your career: on your account if you're logged in, otherwise on this computer. */
+function recordCareer(g: Game) {
+  if (g.mode !== 'match' && g.mode !== 'online') return;
+  const delta = careerDelta(g, career);
+  career = addCareer(career, delta);
+  if (!account) { saveLocalCareer(career); return; }
+  void loadAccount().then(async (m) => { const saved = await m.addCareer(delta); if (saved) career = saved; });
+}
+
+// ── Social screen ────────────────────────────────────────────────────────────
+const social = document.getElementById('social')!;
+function openSocial(tab = 'overview') {
+  social.classList.remove('hidden');
+  syncAccountUi();
+  showHubTab(tab);
+  void refreshStats();
+  if (account) { void renderMatches(); void renderFriends(); }
+  document.getElementById('socialClose')!.focus();
+}
+function closeSocial() { social.classList.add('hidden'); }
+document.getElementById('socialBtn')!.addEventListener('click', () => openSocial());
+document.getElementById('socialClose')!.addEventListener('click', () => { closeSocial(); document.getElementById('socialBtn')!.focus(); });
+social.addEventListener('click', (e) => {
+  if (e.target === social) closeSocial();
+  if ((e.target as HTMLElement).closest('[data-login]')) openAccount('Log in or sign up to save your stats, add friends and play ranked.');
+});
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !social.classList.contains('hidden')) closeSocial(); });
 const closeAccount = () => { accountModal.classList.add('hidden'); document.getElementById('accountBtn')!.focus(); };
 document.getElementById('accountBtn')!.addEventListener('click', () => openAccount());
 document.getElementById('acClose')!.addEventListener('click', closeAccount);
@@ -305,6 +357,9 @@ async function submitAccount(kind: 'login' | 'signup') {
   if (!r.ok) { acError.textContent = r.error; return; }
   acPass.value = '';
   await afterLogin(r.account, kind === 'signup');
+  // Straight to your profile.
+  accountModal.classList.add('hidden');
+  openSocial('overview');
   acMsg.classList.add('ok');
   acMsg.textContent = kind === 'signup' ? 'Account created. Your settings are saved to it.' : 'Welcome back. Your saved settings are loaded.';
 }
@@ -333,6 +388,7 @@ document.getElementById('acLogout')!.addEventListener('click', async () => {
   await m.logOut();
   account = null;
   myRating = null;
+  career = loadLocalCareer();
   stopPresence();
   acError.textContent = '';
   syncAccountUi();
@@ -349,17 +405,7 @@ function showHubTab(name: string) {
 }
 document.querySelectorAll<HTMLButtonElement>('[data-hub]').forEach((t) => t.addEventListener('click', () => showHubTab(t.dataset.hub!)));
 
-// Footer link: the leaderboard on its own, no login needed.
-const leadersModal = document.getElementById('leadersModal')!;
-const closeLeaders = () => { leadersModal.classList.add('hidden'); document.getElementById('leadersBtn')!.focus(); };
-document.getElementById('leadersBtn')!.addEventListener('click', () => {
-  leadersModal.classList.remove('hidden');
-  document.getElementById('leadersClose')!.focus();
-  void renderLeaders('leaderListPublic');
-});
-document.getElementById('leadersClose')!.addEventListener('click', closeLeaders);
-leadersModal.addEventListener('click', (e) => { if (e.target === leadersModal) closeLeaders(); });
-addEventListener('keydown', (e) => { if (e.code === 'Escape' && !leadersModal.classList.contains('hidden')) closeLeaders(); });
+
 
 async function renderMatches() {
   const m = await loadAccount();
@@ -490,7 +536,8 @@ const tour = new Tour([
   { target: '#kitBtn', title: 'Assists & controls', text: 'This tab on the left edge slides out a panel with your assists and controls. Click it again to put it away.' },
   { target: '#kitcard', title: 'Assists', text: 'Turn help on or off: the landing marker (on by default), the timing light, swing assist, doubles auto-switch and the umpire’s voice.', before: () => openDrawer('kit', 'assists') },
   { target: '#kitcard', title: 'Controls and keys', text: 'Choose mouse, trackpad or keyboard-only play, change any key under Your keys, and see how to play every shot.', before: () => openDrawer('kit', 'controls') },
-  { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to save your settings and keys, so they follow you to any computer.', before: closeDrawers },
+  { target: '#socialBtn', title: 'Social', text: 'Your career stats (fastest smash, longest rally, streaks and lots more), friends, the leaderboard and your ranked matches.', before: closeDrawers },
+  { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to save your settings, keys and stats, play ranked and add friends.' },
   { target: '#whatsnewBtn', title: 'What’s new', text: 'Every update is listed here. A NEW badge appears when there’s something you haven’t seen.' },
   { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
   { target: '#start', title: 'Ready?', text: 'That’s everything. Press Walk on to start your match, or come back to this tour any time from the bottom of the board.' },
@@ -636,6 +683,7 @@ function startOnline(host: boolean) {
   peerRematch = false;
   const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
   game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21 }, input, broadcast, 'online', { conn: room, host, opponentName: opp.name, ranked });
+  game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
   roomModal.classList.add('hidden');
@@ -911,6 +959,7 @@ function startMatch(mode: Mode = 'match') {
   voice.enabled = settings.voice;
   voice.unlock();
   game = new Game({ ...settings }, input, broadcast, mode);
+  game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
   menu.classList.add('hidden');
@@ -987,7 +1036,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && leadersModal.classList.contains('hidden') && !tour.isOpen) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 

@@ -770,3 +770,91 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 #leadersModal { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 20px; background: rgba(4, 10, 28, 0.72); }
 #leadersModal.hidden { display: none; }
 #leadersModal .hub-list { max-height: min(60vh, 460px); }
+
+/* ── 2.2: header pills, footer, Social screen ───────────────────────────── */
+.head-pills { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
+.head-pills .account-btn { margin-bottom: 0; }
+.social-btn { border-color: rgba(255, 181, 31, 0.55); color: var(--amber); }
+.social-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.social-btn:hover { border-color: var(--amber); background: rgba(255, 181, 31, 0.1); }
+.board-foot .whatsnew { margin-left: auto; }
+
+.social { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 24px; background: rgba(4, 10, 28, 0.78); }
+.social.hidden { display: none; }
+.social-panel {
+  width: min(1040px, 100%);
+  height: min(860px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--card-ink);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+/* Hero: the tournament board's blue, with your rating up in lights. */
+.social-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 36px 26px;
+  background-color: var(--board);
+  background-image: radial-gradient(rgba(214, 228, 255, 0.06) 1px, transparent 1.3px);
+  background-size: 6px 6px;
+  color: var(--ink);
+}
+.hero-kicker { font: 700 12px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.hero-id h2 { margin-top: 8px; font: 800 52px/0.95 var(--display); text-transform: uppercase; letter-spacing: 0.01em; overflow-wrap: anywhere; }
+.hero-tier { display: inline-block; margin-top: 10px; padding: 5px 10px; border: 1px solid var(--tier, var(--ink-3)); border-radius: 4px; font: 800 13px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--tier, var(--ink-3)); }
+.hero-tier:empty { display: none; }
+.hero-nums { display: flex; gap: 30px; }
+.hero-nums div { display: grid; justify-items: end; }
+.hero-nums b { font: 800 46px/1 var(--display); color: var(--amber); font-variant-numeric: tabular-nums; }
+.hero-nums span { margin-top: 4px; font: 600 11px/1.3 var(--text); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
+.social-close { position: absolute; top: 18px; right: 18px; color: var(--ink); }
+.social-tabs { display: flex; gap: 28px; padding: 0 36px; border-bottom: 1px solid var(--card-rule); }
+.social-tabs button { padding: 16px 0 13px; border: 0; border-bottom: 3px solid transparent; background: none; font: 700 14px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--card-ink-2); }
+.social-tabs button[aria-selected='true'] { color: var(--card-ink); border-bottom-color: var(--amber); }
+.social-tabs button[hidden] { display: none; }
+.social-body { flex: 1; overflow-y: auto; padding: 24px 36px 32px; scrollbar-width: thin; }
+.social-body section { display: grid; gap: 14px; align-content: start; }
+.social-body section[hidden] { display: none; }
+.social-body .hub-list { max-height: none; }
+.scope { font: 500 15px/1.4 var(--text); color: var(--card-ink-2); }
+.inline-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--card-ink); text-decoration: underline; text-underline-offset: 2px; }
+.pane-note { font: 500 14px/1.4 var(--text); color: var(--card-ink-2); }
+.stat-groups { display: grid; gap: 22px; }
+.stat-group h3 { margin-bottom: 10px; font: 700 13px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--card-ink-2); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.tile { display: grid; align-content: start; gap: 4px; padding: 14px 14px 12px; border: 1px solid var(--card-rule); border-radius: 8px; background: #fff; }
+.tile b { font: 800 30px/1 var(--display); color: var(--card-ink); font-variant-numeric: tabular-nums; }
+.tile span { font: 700 12px/1.3 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--card-ink-2); }
+.tile em { font: 500 12px/1.3 var(--text); font-style: normal; color: var(--card-ink-2); }
+.highlights .tiles { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.tile.big { padding: 18px 18px 16px; border: 0; background: var(--card-ink); }
+.tile.big b { font-size: 44px; color: var(--amber); }
+.tile.big span { color: rgba(244, 247, 252, 0.75); }
+.tile.big em { color: rgba(244, 247, 252, 0.6); }
+.social-cta { display: grid; justify-items: start; gap: 12px; padding: 22px; border: 1px dashed var(--card-rule); border-radius: 8px; }
+.social-cta[hidden], #friendsArea[hidden] { display: none; }
+.social-cta p { font: 600 16px/1.4 var(--text); }
+.social-cta button, .social-body .pass-actions button { padding: 11px 18px; border: 1px solid var(--card-ink); border-radius: 5px; background: var(--card-ink); color: var(--card); font: 800 16px/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
+.social-body .pass-actions button:not(.primary) { background: transparent; color: var(--card-ink); }
+#friendsArea { display: grid; gap: 12px; }
+
+@media (max-width: 760px) {
+  .social { padding: 0; }
+  .social-panel { height: 100vh; border-radius: 0; }
+  .social-hero { flex-direction: column; align-items: flex-start; padding: 22px 18px 18px; }
+  .hero-id h2 { font-size: 38px; }
+  .hero-nums { gap: 18px; }
+  .hero-nums div { justify-items: start; }
+  .hero-nums b { font-size: 32px; }
+  .social-tabs { gap: 16px; padding: 0 18px; overflow-x: auto; }
+  .social-body { padding: 18px; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .board-foot { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .head-pills { justify-content: flex-start; }
+}

@@ -143,6 +143,8 @@ export class Game {
   rematchAsked = false;
   /** Ranked online match: the result the room saved (new ratings), once it arrives. */
   rankedResult: import('./net').RankedResult | null = null;
+  /** Called once when the match ends (main uses it to add the match to your career stats). */
+  onMatchOver: ((g: Game) => void) | null = null;
   private unsubscribe: (() => void) | null = null;
   private posT = 0;
   private jumped = false;
@@ -589,6 +591,11 @@ export class Game {
         this.announce(p, shot, detail);
         if (this.online) this.sendHit(c.point, shot.velocity, shot.label, shot.speedKmh, c.hand, detail, false);
         if (perfectJump) { this.cheer = Math.max(this.cheer, 0.6); this.events.push({ type: 'applause', intensity: 0.5 }); }
+        if (i === 0) {
+          this.stats.you.hits++;
+          if (p.timingFlash.kind === 'perfect') this.stats.you.perfect++;
+          if (perfectJump) this.stats.you.perfectJumps++;
+        }
         this.events.push({ type: 'hit', strength: Math.min(1, shot.speedKmh / 300) });
         break;
       }
@@ -767,6 +774,7 @@ export class Game {
     if (this.state === 'point' && o?.matchOver) {
       const wi = (m.games[0] > m.games[1] ? 0 : 1) as 0 | 1;
       this.state = 'matchOver';
+      this.onMatchOver?.(this);
       this.banner = null;
       this.clockRunning = false;
       this.stats.finish();
@@ -1124,6 +1132,7 @@ export class Game {
     this.paused = false;
     this.pausedBy = null;
     this.state = 'matchOver';
+    this.onMatchOver?.(this);
     this.banner = null;
     this.stats.finish();
     this.say('umpire', `${this.players[1].voiceName} retired. Match won by player.`, true);

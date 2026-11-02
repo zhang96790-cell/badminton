@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.2: Social and career stats (2 Nov 2026)
+
+- Social: a big new screen (the Social button at the top of the start screen, or your name once you’re logged in) with your stats, friends, the leaderboard, your ranked matches and your account.
+- Career stats from every finished match against the CPU or online: fastest smash, longest rally, best and current win streak, matches, wins and win rate, games, points, winners, aces, smashes, jump and perfect jump smashes, net kills, errors, perfect-timing rate, Hawk-Eye challenges, time on court and more.
+- Stats are saved to your account when you’re logged in (so they follow you), or on this computer when you’re not.
+- Tidier start screen: the keyboard shortcuts line is gone, How to play and Take the tour are on the left, and What’s new is on the right.
+
 ## 2.1.1: Leaderboard link (2 Nov 2026)
 
 - Leaderboard link at the bottom of the start screen: see the top 50 ranked players without logging in (your row is highlighted when you are).

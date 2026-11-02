@@ -117,3 +117,7 @@ export const dismissInvite = (invite: number) => rpc('dismiss_invite', { invite 
 export const sendFriendRequest = (target: string) => rpc<string>('send_friend_request', { target: normalise(target) });
 /** 'sent' or 'not_friends' (or null on error). */
 export const sendInvite = (friend: string, room: string) => rpc<string>('send_invite', { friend, room });
+
+// ── 2.2: career stats ─────────────────────────────────────────────────────────
+export const myCareer = async () => (await rpc<Record<string, number>>('my_career')) ?? null;
+export const addCareer = (delta: Record<string, number>) => rpc<Record<string, number>>('add_career', { delta });

@@ -37,6 +37,8 @@ export class MatchStats {
   shots: ShotStat[] = [];
   rallies: RallyStat[] = [];
   challenges = [{ made: 0, won: 0 }, { made: 0, won: 0 }];
+  /** Your own hits (the player you control): how many, how many timed Perfect, perfect jump smashes. */
+  you = { hits: 0, perfect: 0, perfectJumps: 0 };
   /** Match time in real seconds, excluding pauses. */
   seconds = 0;
   private ended = false;

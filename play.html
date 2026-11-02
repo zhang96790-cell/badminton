@@ -35,7 +35,13 @@
             <h1 id="wordmark">Skyline<br />Smash</h1>
           </div>
           <div class="head-meta">
-            <button id="accountBtn" class="account-btn" aria-haspopup="dialog"><i></i><span id="accountLabel">Log in</span></button>
+            <div class="head-pills">
+              <button id="socialBtn" class="account-btn social-btn" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2.5 19c.6-3.1 2.8-5 5.5-5s4.9 1.9 5.5 5M13.8 14.6c.8-.4 1.7-.6 2.7-.6 2.4 0 4.3 1.6 5 4.4" /></svg>
+                Social
+              </button>
+              <button id="accountBtn" class="account-btn" aria-haspopup="dialog"><i></i><span id="accountLabel">Log in</span></button>
+            </div>
             <p class="oop">Order of play</p>
             <p id="today" class="today"></p>
           </div>
@@ -100,13 +106,11 @@
         <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>
 
         <footer class="board-foot">
-          <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
           <div class="foot-links">
-            <button id="leadersBtn" class="link">Leaderboard</button>
-            <button id="tourBtn" class="link">Take the tour</button>
             <button id="howBtn" class="link">How to play</button>
-            <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
+            <button id="tourBtn" class="link">Take the tour</button>
           </div>
+          <button id="whatsnewBtn" class="link whatsnew">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
         </footer>
       </main>
 
@@ -284,39 +288,6 @@
           </div>
           <p class="pass-note">There’s no email, so a forgotten passcode can’t be reset. Keep it somewhere safe.</p>
         </form>
-        <div id="acSignedIn" class="hub" hidden>
-          <nav class="mc-tabs hub-tabs" role="tablist">
-            <button role="tab" data-hub="profile" aria-selected="true">Profile</button>
-            <button role="tab" data-hub="friends" aria-selected="false">Friends <span id="friendBadge" class="hub-badge" hidden></span></button>
-            <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
-          </nav>
-          <section class="pass-body" data-hubpane="profile">
-            <div class="stat-card">
-              <div><p class="pass-name"><b id="acName"></b></p><p class="tier" id="acTier"></p></div>
-              <div class="stat-nums"><b id="acRating">–</b><span>rating</span></div>
-              <div class="stat-nums"><b id="acRecord">–</b><span>won–lost</span></div>
-            </div>
-            <h3 class="hub-h">Recent ranked matches</h3>
-            <ol id="acMatches" class="hub-list"><li class="empty">No ranked matches yet. Try Quick match on Court 4.</li></ol>
-            <p class="help" id="acSync">Your settings and key binds are saved to this account and follow you to any computer.</p>
-            <label class="pass-field">New passcode<input id="acNewPass" type="password" autocomplete="new-password" /></label>
-            <p id="acMsg" class="pass-msg" aria-live="polite"></p>
-            <div class="pass-actions">
-              <button type="button" id="acChange" class="primary">Change passcode</button>
-              <button type="button" id="acLogout">Log out</button>
-            </div>
-          </section>
-          <section class="pass-body" data-hubpane="friends" hidden>
-            <form id="friendForm" class="friend-add">
-              <input id="friendName" placeholder="Add a friend by username" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" />
-              <button type="submit" class="primary">Add</button>
-            </form>
-            <p id="friendMsg" class="pass-msg" aria-live="polite"></p>
-            <ol id="friendList" class="hub-list"></ol>
-          </section>
-          <section class="pass-body" data-hubpane="leaders" hidden>
-            <ol id="leaderList" class="hub-list leaders"></ol>
-          </section>
         </div>
       </div>
     </div>
@@ -357,18 +328,68 @@
         </div>
       </div>
     </div>
-    <div id="leadersModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="leadersTitle">
-      <div class="pass">
-        <header class="pass-head">
-          <div>
-            <p class="pass-kicker">Ranked · top 50</p>
-            <h2 id="leadersTitle">Leaderboard</h2>
+    <div id="social" class="social hidden" role="dialog" aria-modal="true" aria-labelledby="socialName">
+      <div class="social-panel">
+        <header class="social-hero">
+          <div class="hero-id">
+            <p class="hero-kicker" id="socialKicker">Player profile</p>
+            <h2 id="socialName">Guest</h2>
+            <p class="hero-tier" id="socialTier"></p>
           </div>
-          <button id="leadersClose" class="mc-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+          <div class="hero-nums">
+            <div><b id="heroRating">–</b><span>Rating</span></div>
+            <div><b id="heroRecord">–</b><span>Ranked won–lost</span></div>
+            <div><b id="heroWinPct">–</b><span>Win rate</span></div>
+          </div>
+          <button id="socialClose" class="mc-close social-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
         </header>
-        <div class="pass-body">
-          <ol id="leaderListPublic" class="hub-list leaders"><li class="empty">Loading…</li></ol>
-          <p class="pass-note">Ratings come from ranked quick matches (Court 4). Everyone starts at 1000.</p>
+        <nav class="social-tabs" role="tablist">
+          <button role="tab" data-hub="overview" aria-selected="true">Stats</button>
+          <button role="tab" data-hub="friends" aria-selected="false">Friends <span id="friendBadge" class="hub-badge" hidden></span></button>
+          <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
+          <button role="tab" data-hub="matches" aria-selected="false">Matches</button>
+          <button role="tab" data-hub="account" aria-selected="false" id="accountTab">Account</button>
+        </nav>
+        <div class="social-body">
+          <section data-hubpane="overview">
+            <div class="scope" id="statsScope"></div>
+            <div id="statGroups" class="stat-groups"></div>
+          </section>
+          <section data-hubpane="friends" hidden>
+            <div class="social-cta" id="friendsLogin" hidden>
+              <p>Log in to add friends, see who’s online and invite them to play.</p>
+              <button type="button" class="primary" data-login>Log in or sign up</button>
+            </div>
+            <div id="friendsArea">
+              <form id="friendForm" class="friend-add">
+                <input id="friendName" placeholder="Add a friend by username" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" />
+                <button type="submit" class="primary">Add</button>
+              </form>
+              <p id="friendMsg" class="pass-msg" aria-live="polite"></p>
+              <ol id="friendList" class="hub-list"></ol>
+            </div>
+          </section>
+          <section data-hubpane="leaders" hidden>
+            <p class="pane-note">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
+            <ol id="leaderList" class="hub-list leaders"></ol>
+          </section>
+          <section data-hubpane="matches" hidden>
+            <div class="social-cta" id="matchesLogin" hidden>
+              <p>Log in and play Quick match on Court 4 to build your ranked history.</p>
+              <button type="button" class="primary" data-login>Log in or sign up</button>
+            </div>
+            <ol id="acMatches" class="hub-list"></ol>
+          </section>
+          <section data-hubpane="account" hidden>
+            <p class="pass-name">Logged in as <b id="acName"></b></p>
+            <p class="help" id="acSync">Your settings, key binds and stats are saved to this account and follow you to any computer.</p>
+            <label class="pass-field">New passcode<input id="acNewPass" type="password" autocomplete="new-password" /></label>
+            <p id="acMsg" class="pass-msg" aria-live="polite"></p>
+            <div class="pass-actions">
+              <button type="button" id="acChange" class="primary">Change passcode</button>
+              <button type="button" id="acLogout">Log out</button>
+            </div>
+          </section>
         </div>
       </div>
     </div>

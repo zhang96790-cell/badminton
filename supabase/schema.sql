@@ -272,3 +272,51 @@ end;
 $$;
 revoke execute on function public.record_match(uuid, uuid, text, boolean) from public, anon, authenticated;
 grant execute on function public.record_match(uuid, uuid, text, boolean) to service_role;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 2.2: career stats (fastest smash, longest rally, streaks, totals)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+alter table public.profiles add column if not exists career jsonb not null default '{}'::jsonb;
+
+-- Add one finished match to your career. Keys starting max_ keep the best, now_ replace, the rest add up
+-- (same rule as src/career.ts). Values outside sensible limits are ignored.
+create or replace function public.add_career(delta jsonb)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare
+  cur jsonb;
+  res jsonb;
+  k text;
+  v jsonb;
+  n numeric;
+begin
+  select career into cur from public.profiles where id = auth.uid() for update;
+  if cur is null then raise exception 'not logged in'; end if;
+  res := cur;
+  for k, v in select * from jsonb_each(delta) loop
+    if jsonb_typeof(v) <> 'number' or k !~ '^[a-z_]{1,32}$' then continue; end if;
+    n := (v #>> '{}')::numeric;
+    -- One match can't add more than this: a match is at most a few hundred points.
+    if n < 0 or n > 20000 or (k = 'max_smash' and n > 650) then continue; end if;
+    if k like 'max\_%' then
+      res := jsonb_set(res, array[k], to_jsonb(greatest(coalesce((cur ->> k)::numeric, 0), n)));
+    elsif k like 'now\_%' then
+      res := jsonb_set(res, array[k], to_jsonb(n));
+    else
+      res := jsonb_set(res, array[k], to_jsonb(coalesce((cur ->> k)::numeric, 0) + n));
+    end if;
+  end loop;
+  update public.profiles set career = res where id = auth.uid();
+  return res;
+end;
+$$;
+
+create or replace function public.my_career()
+returns jsonb language sql security definer set search_path = '' stable as $$
+  select career from public.profiles where id = auth.uid();
+$$;
+
+revoke execute on function public.add_career(jsonb) from public, anon;
+revoke execute on function public.my_career() from public, anon;
+grant execute on function public.add_career(jsonb) to authenticated;
+grant execute on function public.my_career() to authenticated;

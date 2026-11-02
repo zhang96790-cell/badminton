@@ -66,7 +66,7 @@ export type GameEvent =
   | { type: 'say'; who: Speaker; text: string; interrupt?: boolean };
 
 export interface Callout { label: string; detail: string; color: string; t: number }
-export interface Banner { title: string; sub: string; color: string; t: number }
+export interface Banner { title: string; sub: string; color: string; t: number; card?: 'red' }
 
 export class Game {
   /** 0 = you (near), 1 = far player. Doubles adds 2 = your partner and 3 = the far partner (team = index % 2). */
@@ -128,7 +128,6 @@ export class Game {
   private autoReplayed = false;
   private pointsSinceReplay = 99;
   private aiChallengeAt: number | null = null;
-  private warnings: [number, number] = [0, 0];
   private lastContact: (Contact & { incomingKmh: number }) | null = null;
   private lastShot: { label: string; hand: Contact['hand'] | 'serve'; netCord: boolean } | null = null;
   /** Index (and stable id) of whoever hit last, for per-player stats. */
@@ -139,8 +138,14 @@ export class Game {
   readonly online: OnlineLink | null;
   /** Online: the other player's connection dropped (play waits for them). */
   peerAway = false;
-  /** Online: who paused. */
-  pausedBy: 'you' | 'opponent' | null = null;
+  /**
+   * Online pause: each player has their own Esc. Play waits until both have resumed, and any pause ends
+   * on its own after ONLINE.pauseMax seconds so nobody can stall.
+   */
+  pauseMine = false;
+  pauseTheirs = false;
+  /** When the current online pause began (performance.now()), or null. */
+  pauseSince: number | null = null;
   /** Online: set when the other player left or forfeited (index of the winner). */
   forfeitWinner: 0 | 1 | null = null;
   /** Online: you've asked for a rematch and are waiting for the other player. */
@@ -157,6 +162,8 @@ export class Game {
   /** Online lag hiding: how long the shuttle has hovered on the other side, for which hit. */
   private hoverT = 0;
   private hoverHit = -1;
+  /** Online: how far (game seconds) the other player's latest shot still lags behind its true position. */
+  private catchUp = 0;
   /** Online: gap between where the shuttle was drawn and where their hit put it, shrinking to nothing. */
   private drawOffset: V3 | null = null;
   private drawOffsetT = 0;
@@ -333,6 +340,7 @@ export class Game {
   }
 
   update(realDt: number) {
+    if (this.online && this.paused && this.pauseLeft <= 0) this.endOnlinePause(true);
     if (this.paused || this.peerAway) return;
     const real = Math.min(realDt, 0.05);
     const dt = real * PHYSICS.gameSpeed;
@@ -361,7 +369,7 @@ export class Game {
     if (this.session) this.clockRunning = false;
     if (this.clockRunning && (this.state === 'point' || this.state === 'serve')) {
       this.clock -= real;
-      if (this.state === 'serve' && this.clock <= 0) this.timeViolation();
+      if (this.state === 'serve' && this.clock <= 0 && this.clockRunning) this.timeViolation();
     }
 
     switch (this.state) {
@@ -414,7 +422,7 @@ export class Game {
     this.greatPoint = false;
     this.autoReplayed = false;
     for (const o of this.officials) o.signal = 'none';
-    if (!this.clockRunning && !this.session && !this.online) { this.clock = OFFICIALS.shotClock; this.clockRunning = true; }
+    if (!this.clockRunning && !this.session) { this.clock = OFFICIALS.shotClock; this.clockRunning = true; }
     if (this.controllers[1] instanceof RemoteController) this.controllers[1].reset();
     const right = this.match.serverInRightCourt();
     const srv = this.server, rcv = this.receiver;
@@ -488,22 +496,29 @@ export class Game {
 
   private step(dt: number, cmds: Command[], first: boolean) {
     this.players.forEach((p, i) => {
-      if (first && cmds[i].shot) p.startSwing(cmds[i].shot!);
+      if (first && cmds[i].shot) p.startSwing(cmds[i].shot!, false, this.isHuman(i));
       if (p.update(dt, cmds[i].move, first && cmds[i].jump) === 'whiff') this.events.push({ type: 'whiff' });
     });
     if (this.doubles) this.keepApart();
 
     const sh = this.shuttle;
     const prev = { ...sh.pos };
-    // Online, after your shot: on the other player's half the shuttle is for show here, so slow it a
-    // little while their reply is on its way, and hover near the floor rather than land early.
+    // Online: the other player's shot arrived late, so play it a little faster until it catches up.
+    // After your own shot, on their half the shuttle is for show here: near the floor it hovers for
+    // about as long as their reply takes to arrive, rather than landing before you know if they hit it.
     let fdt = dt;
-    if (this.online && sh.inFlight && !sh.touchedNet && sh.lastHitter === this.players[0].side && sh.pos.y > 0) {
-      if (this.hoverHit !== sh.hits) { this.hoverHit = sh.hits; this.hoverT = 0; }
-      fdt = dt * clamp(1 - this.online.conn.latency * ONLINE.slowPerMs, ONLINE.slowMin, 1);
-      if (sh.pos.z < ONLINE.hoverHeight && sh.vel.z < 0 && this.hoverT < ONLINE.hoverMax) {
-        this.hoverT += dt;
-        fdt = dt * ONLINE.hoverRate;
+    if (this.online && sh.inFlight && !sh.touchedNet) {
+      if (sh.lastHitter !== this.players[0].side) {
+        const extra = Math.min(this.catchUp, dt * ONLINE.catchUpRate);
+        fdt = dt + extra;
+        this.catchUp -= extra;
+      } else if (sh.pos.y > 0) {
+        if (this.hoverHit !== sh.hits) { this.hoverHit = sh.hits; this.hoverT = 0; }
+        const hold = Math.min(ONLINE.hoverMax, ONLINE.hoverScale * this.online.conn.latency / 1000 * PHYSICS.gameSpeed + ONLINE.hoverPad);
+        if (sh.pos.z < ONLINE.hoverHeight && sh.vel.z < 0 && this.hoverT < hold) {
+          this.hoverT += dt;
+          fdt = dt * ONLINE.hoverRate;
+        }
       }
     }
     stepFlight(sh.pos, sh.vel, fdt);
@@ -754,7 +769,7 @@ export class Game {
     this.pointT = 0;
     this.timer = RULES.pointPause + (this.challengeWait(line) ? RULES.challengeWindow : 0);
     this.clock = OFFICIALS.shotClock;
-    this.clockRunning = !this.online;
+    this.clockRunning = true;
     this.aiChallengeAt = null;
     if (this.online?.host) {
       this.online.conn.send({
@@ -772,15 +787,13 @@ export class Game {
   }
 
   /**
-   * Touching the net: only a hard shot from right on top of it can, never a gentle net shot, and the
-   * risk rises the closer the player is (see RULES.netFault).
+   * Touching the net: a hard shot played while standing right up against it always does (see
+   * RULES.netFault); a gentle net shot never does.
    */
   private touchesNet(p: Player, req: ShotRequest, c: Contact): boolean {
     const N = RULES.netFault, dist = Math.abs(p.pos.y);
     if (dist >= N.within || Math.abs(c.point.y) > N.within + 0.4) return false;
-    const hard = req.kind === 'intent' ? req.intent === 'fast' : req.arc === 'low' && req.power > 0.4;
-    if (!hard) return false;
-    return chance(N.maxChance * Math.min(1, (N.within - dist) / (N.within - N.closest)));
+    return req.kind === 'intent' ? req.intent === 'fast' : req.arc === 'low' && req.power > 0.4;
   }
 
   /** Why the last shot didn't get over, e.g. "Smash mistimed (late), hit too low". */
@@ -968,31 +981,46 @@ export class Game {
 
   // ── Shot clock ─────────────────────────────────────────────────────────────
 
+  /**
+   * The server ran out the shot clock. Online, only the server's own screen calls this (its clock is the
+   * one that counts) and the host awards the point, so a guest server tells the host.
+   */
   private timeViolation() {
     const s = this.match.server;
-    if (this.warnings[s] === 0) {
-      this.warnings[s]++;
-      this.clock = OFFICIALS.shotClockAfterWarning;
-      this.banner = { title: 'Warning — delay of game', sub: `${this.server.name}: serve before the shot clock runs out`, color: VISUAL.colors.accent, t: 0 };
-      this.say('umpire', `${this.server.voiceName}, warning for delaying the game.`, true);
-      return;
+    if (this.online) {
+      if (s !== 0) return;
+      this.clockRunning = false;
+      // Guest: no serving now; the host's point message comes straight back.
+      if (!this.online.host) { this.online.conn.send({ type: 'delay' }); this.state = 'wait'; return; }
     }
-    const winner = (1 - s) as 0 | 1;
+    this.redCard(s);
+  }
+
+  /** Red card for delaying the serve: the point goes to the receiver. */
+  private redCard(s: 0 | 1) {
+    const winner = (1 - s) as 0 | 1, late = this.server;
+    const title = 'Red card — delay of service';
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
     this.outcome = this.match.award(winner);
-    this.stats.rallies.push({ shots: 0, winner, hitter: s, hitterPid: this.server.id, kind: 'delay', forced: false, lastLabel: '', lastHand: 'serve' });
+    this.stats.rallies.push({ shots: 0, winner, hitter: s, hitterPid: late.id, kind: 'delay', forced: false, lastLabel: '', lastHand: 'serve' });
     this.call = null;
     this.landing = null;
+    this.predicted = null;
     this.greatPoint = false;
-    this.banner = { title: 'Fault — delay of game', sub: `Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
-    this.say('service', 'Fault.', true);
+    this.banner = { title, sub: `${late.name} took more than ${OFFICIALS.shotClock} seconds to serve · Point ${this.teamName(winner)}`, color: VISUAL.colors.callOut, t: 0, card: 'red' };
+    this.say('umpire', `${late.voiceName}, red card, delay of service.`, true);
     this.events.push({ type: 'point' });
     this.state = 'point';
     this.pointT = 0;
-    this.timer = RULES.pointPause;
+    this.timer = RULES.pointPause + 1;
     this.clock = OFFICIALS.shotClock;
+    this.clockRunning = true;
+    if (this.online?.host) {
+      this.online.conn.send({ type: 'point', winner, land: null, title, why: null, callIn: null, call: null, scores: [...this.match.scores], games: [...this.match.games] });
+    }
   }
+
 
   // ── Misc ───────────────────────────────────────────────────────────────────
 
@@ -1052,11 +1080,11 @@ export class Game {
 
   // ── Online ─────────────────────────────────────────────────────────────────
 
-  /** Tell the other screen where you are (about 15 times a second, only when something changed). */
+  /** Tell the other screen where you are (ONLINE.posRate times a second, only when something changed). */
   private sendPos(dt: number, jump: boolean) {
     if (jump) this.jumped = true;
     this.posT += dt;
-    if (this.posT < PHYSICS.gameSpeed / 15) return;
+    if (this.posT < PHYSICS.gameSpeed / ONLINE.posRate) return;
     this.posT = 0;
     if (this.state !== 'rally' && this.state !== 'wait') return;
     const p = this.players[0];
@@ -1103,6 +1131,8 @@ export class Game {
         break;
       }
       case 'point': if (!o.host) this.applyRemotePoint(m); break;
+      // Host only: the guest was serving and ran out their shot clock.
+      case 'delay': if (o.host && this.state === 'serve' && this.match.server === 1) this.redCard(1); break;
       case 'challenge':
         // The other player asked for Hawk-Eye on the last call (it went against them).
         if (this.state === 'replay') this.endReplay();
@@ -1112,7 +1142,12 @@ export class Game {
         if (!o.host) { this.match.scores = [m.scores[1], m.scores[0]]; this.match.games = [m.games[1], m.games[0]]; }
         break;
       case 'chat': if (CHAT[m.i]) this.shout(this.players[1], CHAT[m.i], 2.5); break;
-      case 'pause': this.paused = m.on; this.pausedBy = m.on ? 'opponent' : null; break;
+      case 'pause':
+        this.pauseTheirs = m.on;
+        // Their pause ran out of time: it ends for both.
+        if (!m.on && m.all) this.pauseMine = false;
+        this.syncPause();
+        break;
       case 'forfeit': this.winByForfeit(); break;
       case 'peer':
         if (m.status === 'away') this.peerAway = true;
@@ -1148,6 +1183,8 @@ export class Game {
     }
     sh.trail = [];
     this.predict();
+    // The message took about one trip to get here: make that up by playing this shot a little fast.
+    this.catchUp = Math.min(ONLINE.catchUpMax, this.online!.conn.latency / 1000 * PHYSICS.gameSpeed);
     sh.tumbling = /tumbling/.test(m.label);
     opp.onHit(pos, m.serve);
     me.splitStep();
@@ -1196,6 +1233,11 @@ export class Game {
     this.match.scores = [m.scores[1], m.scores[0]];
     this.match.games = [m.games[1], m.games[0]];
     this.banner = { title: m.title, sub: `${m.why ? `${m.why} · ` : ''}Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
+    if (/^Red card/.test(m.title)) {
+      const late = this.players[1 - winner];
+      this.banner = { ...this.banner, sub: `${late.name} took more than ${OFFICIALS.shotClock} seconds to serve · Point ${this.teamName(winner)}`, color: VISUAL.colors.callOut, card: 'red' };
+      this.say('umpire', `${late.voiceName}, red card, delay of service.`, true);
+    }
     this.events.push({ type: 'point' });
     const intensity = clamp((this.rallyHits - 3) / 14, 0.12, 1);
     this.cheer = intensity;
@@ -1206,6 +1248,8 @@ export class Game {
     this.state = 'point';
     this.pointT = 0;
     this.timer = RULES.pointPause + (this.challengeWait(this.call) ? RULES.challengeWindow : 0);
+    this.clock = OFFICIALS.shotClock;
+    this.clockRunning = true;
   }
 
   /** Online: seconds until the server may serve (0 once they can). */
@@ -1216,8 +1260,7 @@ export class Game {
     if (this.state === 'matchOver') return;
     this.forfeitWinner = 0;
     this.peerAway = false;
-    this.paused = false;
-    this.pausedBy = null;
+    this.endOnlinePause(false);
     this.state = 'matchOver';
     this.onMatchOver?.(this);
     this.banner = null;
@@ -1233,19 +1276,41 @@ export class Game {
     this.online.conn.send({ type: 'chat', i });
   }
 
-  /** Online pause: only between points, so both screens stop in the same place. */
+  /** Online pause (Esc): only between points, so both screens stop in the same place. */
   setOnlinePause(on: boolean): boolean {
     if (!this.online) return false;
     if (on && (this.state === 'rally' || this.state === 'wait')) {
       this.banner = { title: 'Pause between points', sub: 'You can pause once this rally is over', color: VISUAL.colors.hud, t: 0 };
       return false;
     }
-    if (!on && this.pausedBy === 'opponent') return false;
-    this.paused = on;
-    this.pausedBy = on ? 'you' : null;
+    this.pauseMine = on;
     this.online.conn.send({ type: 'pause', on });
+    this.syncPause();
     return true;
   }
+
+  /** Seconds left before an online pause ends on its own. */
+  get pauseLeft(): number {
+    return this.pauseSince === null ? ONLINE.pauseMax : ONLINE.pauseMax - (performance.now() - this.pauseSince) / 1000;
+  }
+
+  private syncPause() {
+    const was = this.paused;
+    this.paused = this.pauseMine || this.pauseTheirs;
+    if (this.paused && !was) this.pauseSince = performance.now();
+    if (!this.paused) this.pauseSince = null;
+  }
+
+  /** The pause ran out of time (timeUp) or the match ended: everyone plays on. */
+  private endOnlinePause(timeUp: boolean) {
+    this.pauseMine = this.pauseTheirs = false;
+    this.syncPause();
+    if (timeUp) {
+      this.online?.conn.send({ type: 'pause', on: false, all: true });
+      this.banner = { title: 'Play on', sub: `Pauses last at most ${ONLINE.pauseMax / 60 === 1 ? 'a minute' : `${ONLINE.pauseMax} seconds`}`, color: VISUAL.colors.hud, t: 0 };
+    }
+  }
+
 
   private observe(o: Observation) {
     for (const c of this.controllers) c.observe?.(o);

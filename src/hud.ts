@@ -110,17 +110,30 @@ export class Hud {
       ctx.fillStyle = 'rgba(5,8,12,0.6)';
       ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = C.hud;
+      const them = game.players[1].name;
       const [title, sub] = game.peerAway
-        ? [`${game.players[1].name} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, you win.']
-        : game.pausedBy === 'opponent'
-          ? [`Paused by ${game.players[1].name}`, 'Play carries on when they resume']
-          : game.online
-            ? ['Paused', 'Esc to resume  ·  Q to forfeit and leave']
-            : ['Paused', 'Esc to resume  ·  Q to quit to menu'];
+        ? [`${them} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, you win.']
+        : !game.online
+          ? ['Paused', 'Esc to resume  ·  Q to quit to menu']
+          : game.pauseMine && game.pauseTheirs
+            ? ['Both paused', 'Esc when you’re ready  ·  play starts once you’ve both resumed  ·  Q to forfeit']
+            : game.pauseMine
+              ? ['Paused', `${them} is ready  ·  Esc to resume  ·  Q to forfeit and leave`]
+              : [`Paused by ${them}`, `Play carries on when ${them} resumes  ·  Esc to pause too`];
       ctx.font = font(34, 800);
       ctx.fillText(title, w / 2, h / 2 - 10);
       ctx.font = font(15, 500);
       ctx.fillText(sub, w / 2, h / 2 + 22);
+      if (game.online && game.paused && !game.peerAway) {
+        // The warning: pauses are capped so nobody can stall a match.
+        const left = Math.max(0, Math.ceil(game.pauseLeft));
+        ctx.fillStyle = left <= 15 ? C.callOut : C.accent;
+        ctx.font = font(15, 700);
+        ctx.fillText(`Play resumes automatically in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`, w / 2, h / 2 + 58);
+        ctx.fillStyle = C.hudDim;
+        ctx.font = font(13, 500);
+        ctx.fillText('Pauses last at most a minute, so nobody can stall the match', w / 2, h / 2 + 80);
+      }
     }
   }
 
@@ -183,6 +196,21 @@ export class Hud {
     ctx.fillStyle = C.hud;
     ctx.font = font(16, 600);
     ctx.fillText(bn.sub, w / 2, y + 74);
+    if (bn.card) {
+      // The umpire's card, held up above the banner.
+      const pop = Math.min(1, bn.t / 0.25), cw = 38, ch = 54;
+      ctx.save();
+      ctx.translate(w / 2, y - 12 - ch / 2 + (1 - pop) * 20);
+      ctx.rotate(-0.14);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(-cw / 2 + 3, -ch / 2 + 4, cw, ch);
+      ctx.fillStyle = '#d7263d';
+      ctx.fillRect(-cw / 2, -ch / 2, cw, ch);
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-cw / 2 + 1, -ch / 2 + 1, cw - 2, ch - 2);
+      ctx.restore();
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -235,7 +263,7 @@ export class Hud {
   private clock(game: Game) {
     if (!(game.state === 'serve' || game.state === 'point') || !game.clockRunning) return;
     const ctx = this.ctx, s = Math.max(0, game.clock);
-    const x = 16, y = 116, urgent = s <= 5;
+    const x = 16, y = 116, urgent = s <= 10;
     panel(ctx, x, y, 132, 40, 10);
     ctx.beginPath();
     ctx.arc(x + 22, y + 20, 11, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (s / 25));

@@ -1091,9 +1091,9 @@ function onlineKeys(g: Game, over: boolean) {
   for (let i = 0; i < 6; i++) if (input.tapped([`Digit${i + 1}`])) g.sendChat(i);
   if (input.tapped(['Escape'])) {
     if (over) { leaveRoom(); showMenu(); return; }
-    if (!g.peerAway) g.setOnlinePause(!(g.paused && g.pausedBy === 'you'));
+    if (!g.peerAway) g.setOnlinePause(!g.pauseMine);
   }
-  if (g.paused && g.pausedBy === 'you' && input.tapped(['KeyQ'])) {
+  if (g.pauseMine && input.tapped(['KeyQ'])) {
     room?.send({ type: 'forfeit' });
     leaveRoom();
     showMenu();

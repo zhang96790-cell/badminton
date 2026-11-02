@@ -24,7 +24,7 @@ export const flip2 = (x: number, y: number): V2 => ({ x: -x, y: -y });
 export const flip3 = (a: [number, number, number]): V3 => ({ x: -a[0], y: -a[1], z: a[2] });
 
 /**
- * Drives the opponent's player from their position updates (about 15 a second). It steers toward
+ * Drives the opponent's player from their position updates (ONLINE.posRate a second). It steers toward
  * the latest position like a player running there, so movement looks smooth between updates, and
  * snaps if it falls far behind.
  */

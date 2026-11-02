@@ -38,8 +38,10 @@ export type GameMsg =
   | { type: 'land'; p: [number, number]; net: boolean; wide: boolean }
   | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number]; call?: WireCall | null }
   | { type: 'challenge' }
+  /** Guest to host: I was serving and ran out the shot clock. */
+  | { type: 'delay' }
   | { type: 'review'; scores: [number, number]; games: [number, number] }
-  | { type: 'pause'; on: boolean }
+  | { type: 'pause'; on: boolean; all?: boolean }
   | { type: 'chat'; i: number }
   | { type: 'rtt'; ms: number }
   | { type: 'rematch' }

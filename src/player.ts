@@ -84,6 +84,8 @@ export class Player implements PlayerView {
   /** Result of the last hit, for the timing light. */
   timingFlash: { kind: 'perfect' | 'early' | 'late'; t: number } | null = null;
   private recover = 0;
+  /** A click made during recovery, played as soon as it ends. */
+  private queued: { req: ShotRequest; assisted: boolean } | null = null;
   private landLag = 0;
 
   constructor(public side: Side, public name: string, public color: string, public voiceName: string) {
@@ -107,6 +109,7 @@ export class Player implements PlayerView {
     this.swing = null;
     this.anim = null;
     this.recover = 0;
+    this.queued = null;
     this.landLag = 0;
     this.split = 9;
     this.lunge = 9;
@@ -114,7 +117,12 @@ export class Player implements PlayerView {
     this.jumpSmashed = false;
   }
 
-  startSwing(req: ShotRequest, assisted = false): boolean {
+  /**
+   * queue: a click during recovery swings as soon as recovery ends instead of being dropped (players
+   * only; the CPU waits for the right moment itself).
+   */
+  startSwing(req: ShotRequest, assisted = false, queue = false): boolean {
+    if (!this.swing && this.recover > 0 && queue) this.queued = { req, assisted };
     if (this.swing || this.recover > 0) return false;
     this.swing = { t: 0, req };
     this.assisted = assisted;
@@ -199,6 +207,11 @@ export class Player implements PlayerView {
 
     this.landLag = Math.max(0, this.landLag - dt);
     this.recover = Math.max(0, this.recover - dt);
+    if (this.queued && this.recover <= 0 && !this.swing) {
+      this.swing = { t: 0, req: this.queued.req };
+      this.assisted = this.queued.assisted;
+      this.queued = null;
+    }
     this.split += dt;
     this.lunge += dt;
     this.boost = Math.max(0, this.boost - dt);

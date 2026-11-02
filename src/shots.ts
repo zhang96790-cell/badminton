@@ -135,9 +135,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const z0 = c.point.z;
   const zone = zoneOf(z0);
   const netArea = Math.abs(c.point.y) < SHOTS.nearNet;
-  // Already behind you overhead: you can't attack it, only scramble it back high (and not as well).
+  // Already behind you overhead: it's still the shot you chose, just weaker and less accurate.
   const scrambled = zone === 'overhead' && c.behind > SHOTS.behindLimit;
-  if (scrambled) req = req.kind === 'intent' ? { ...req, intent: 'high', aimDepth: 0 } : { ...req, arc: 'high', power: 1 };
   const B = SHOTS.backCourt, T = SHOTS.tumble, perfect = c.timing >= 1;
   const deep = Math.abs(c.point.y) > B.deepFrom;
   // What this swing is, for the back-court and tumbling rules below.

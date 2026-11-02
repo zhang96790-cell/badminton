@@ -5,6 +5,16 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.10: Fair play and smoother online (2 Nov 2026)
+
+- A smash is always a smash and a lob is always a lob. Hitting a shuttle that’s already behind you no longer turns your smash into a clear: it’s just a weaker, less accurate smash.
+- Clicks aren’t lost any more: if you swing while still recovering from your last swing, it plays the moment you can. Recovery after a miss is also shorter (0.25 s, was 0.45 s).
+- Touching the net is no longer random: a hard shot played while you’re right up against the net always touches it, and anything else never does.
+- Net shots tumble even more rarely: perfectly timed and within 2 cm of the tape (about 1 in 20 net shots).
+- Smoother online play: shots coming at you catch up to where they really are, so both screens show the shuttle in nearly the same place. The shuttle only hangs near the floor for as long as your connection needs (about 0.05 s on a good one, was up to 0.3 s), and your opponent moves twice as smoothly.
+- 25-second service clock: take longer than 25 seconds to serve and the umpire shows you a red card, and the point goes to your opponent. Now online too; the clock turns red for the last 10 seconds.
+- Online pause: both players can press Esc, and play only carries on once you’ve both resumed. Any pause ends on its own after a minute (with a countdown on screen), so nobody can stall a match.
+
 ## 2.1.9: Welcome card fix (2 Nov 2026)
 
 - Fixed: the welcome card no longer pops up on every reload. Logged-in players never see it; newcomers see it once, and logged-out players get the short sign-up reminder at most once a day.

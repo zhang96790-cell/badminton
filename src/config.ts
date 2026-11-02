@@ -90,9 +90,9 @@ export const SWING = {
   minQuality: 0.55,
   /**
    * Swings are a commitment: after a miss you can't swing again for this long, and after a hit for
-   * hitRecovery. Mashing the button leaves you mid-recovery when the shuttle actually arrives.
+   * hitRecovery. A player's click during recovery isn't lost: it swings the moment recovery ends.
    */
-  recovery: 0.45,
+  recovery: 0.25,
   hitRecovery: 0.25,
   /** Mouse mode: hold time to reach full power. */
   chargeTime: 0.5,
@@ -159,8 +159,8 @@ export const SHOTS = {
    * Tumbling: only a perfectly timed net shot that crosses within margin (m) of the tape tumbles. Netting it
    * back or hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.
    */
-  tumble: { margin: 0.03, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
-  /** An overhead more than this far behind the body (m) can't be attacked: it's scrambled back as a weaker clear. */
+  tumble: { margin: 0.02, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
+  /** An overhead more than this far behind the body (m) is hit weaker (behindPower) and less accurately (behindNoise), whatever the shot. */
   behindLimit: 0.3,
   behindPower: 0.8,
   behindNoise: 1.5,
@@ -228,20 +228,27 @@ export const SERVE = {
 };
 
 /**
- * Online lag hiding. After your shot, the shuttle on the other player's half is only for show on your
- * screen (their screen decides what happens there), so it can bend time a little while their reply
- * travels to you: it plays slower the more lag there is, and near the floor it hovers instead of
- * landing until you know whether they hit it.
+ * Online lag hiding. A shot from the other player reaches you a little late, so it plays slightly
+ * faster until it has caught up with where it really is: both screens then show the shuttle in about
+ * the same place. After your shot, the shuttle on their half is only for show on your screen (theirs
+ * decides what happens there), so near the floor it hovers just long enough for their reply to arrive.
  */
 export const ONLINE = {
-  /** Slow-motion: 1 − lag × this (lag in ms, one way), but never slower than slowMin. */
-  slowPerMs: 1 / 900,
-  slowMin: 0.8,
-  /** Hover below this height (m) while falling... */
+  /** Incoming shots play this much faster (0.3 = 30%) until they've made up the delay... */
+  catchUpRate: 0.3,
+  /** ...which is never counted as more than this (game seconds). */
+  catchUpMax: 0.15,
+  /** Hover below this height (m) while falling, for about one message's trip (hoverScale × the lag, plus hoverPad)... */
   hoverHeight: 0.35,
-  /** ...for at most this long (game seconds), at this fraction of normal speed. */
+  hoverScale: 1.3,
+  hoverPad: 0.02,
+  /** ...but never longer than this (game seconds), at this fraction of normal speed. */
   hoverMax: 0.25,
   hoverRate: 0.08,
+  /** Position updates sent per second. */
+  posRate: 30,
+  /** An online pause ends on its own after this long (s), even if someone hasn't resumed. */
+  pauseMax: 60,
   /** When their hit arrives, the drawn shuttle glides onto its true path over this long (game seconds). */
   smoothTime: 0.12,
 };
@@ -278,10 +285,10 @@ export const RULES = {
   } as Record<15 | 21, ScoringFormat>,
   pointPause: 1.8,
   /**
-   * Touching the net is a fault. Only hard shots (kill, smash, drive, push) hit from within `within`
-   * metres of the net risk it: no chance at that distance, rising to maxChance at `closest` (right on it).
+   * Touching the net is a fault: a hard shot (kill, smash, drive, push) hit while standing within `within`
+   * metres of the net always touches it. Never random, never for a gentle net shot.
    */
-  netFault: { within: 0.5, closest: 0.25, maxChance: 0.5 },
+  netFault: { within: 0.35 },
   /** Online: after each point the server waits this long (s) before they can serve, so the receiver is ready. */
   onlineServeWait: 2.2,
   /** Extra pause after a line call the human could challenge. */
@@ -307,9 +314,8 @@ export const OFFICIALS = {
   challengeRange: 0.35,
   /** Unsuccessful challenges allowed per game (successful ones are kept). */
   challengesPerGame: 2,
-  /** Seconds from the end of a rally to the next serve before the umpire warns, then faults, the server. */
+  /** Seconds from the end of a rally to the next serve. Run out and the umpire shows the server a red card: point to the receiver. */
   shotClock: 25,
-  shotClockAfterWarning: 10,
 };
 
 export const REPLAY = {

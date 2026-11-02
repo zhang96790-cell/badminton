@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.6.1',
+    title: 'Physics revision page',
+    date: '2 Nov 2026',
+    changes: [
+      'New Air Physics Revision page at /physics: a working projectile simulator (shuttlecock, tennis ball or no air) using the game’s drag model, key ideas, equations and a quick quiz.',
+      'Its menu (☰) has a Badminton simulator button that opens the game at /play. The physics page loads none of the game, so the game starts fresh and runs on its own.',
+    ],
+  },
+  {
     version: '1.6',
     title: 'Doubles',
     date: '2 Nov 2026',

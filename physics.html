@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Air Physics Revision</title>
+    <meta name="description" content="Revise projectile motion and air resistance with a working simulator, key ideas, equations and a quick quiz." />
+  </head>
+  <body>
+    <header class="top">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="brand">
+        <h1>Air Physics Revision</h1>
+        <p>Projectiles and air resistance</p>
+      </div>
+    </header>
+
+    <div id="scrim" class="scrim" hidden></div>
+    <nav id="sidebar" class="sidebar" aria-label="Menu" aria-hidden="true">
+      <p class="side-label">Contents</p>
+      <a href="#simulator">Simulator</a>
+      <a href="#ideas">Key ideas</a>
+      <a href="#equations">Equations</a>
+      <a href="#quiz">Quick quiz</a>
+      <hr />
+      <p class="side-label">Apply it</p>
+      <a id="playBtn" class="play" href="/play">Badminton simulator</a>
+      <p class="side-note">A badminton game that uses this same drag model for the shuttlecock. It opens in place of this page.</p>
+    </nav>
+
+    <main>
+      <p class="lead">
+        Without air, a thrown object follows a symmetric parabola. With air resistance, it slows down, falls more
+        steeply than it rose, and lands much shorter. Try it below, then revise the ideas behind it.
+      </p>
+
+      <section id="simulator" class="card">
+        <h2>Simulator</h2>
+        <canvas id="plot" aria-label="Trajectory plot: height against horizontal distance"></canvas>
+        <div class="controls">
+          <div class="control">
+            <span class="label">Object</span>
+            <div class="seg" id="object">
+              <button data-vt="6.8" class="on">Shuttlecock</button>
+              <button data-vt="22">Tennis ball</button>
+              <button data-vt="0">No air resistance</button>
+            </div>
+          </div>
+          <label class="control">
+            <span class="label">Launch speed <b id="speedOut">30 m/s</b></span>
+            <input id="speed" type="range" min="5" max="90" step="1" value="30" />
+          </label>
+          <label class="control">
+            <span class="label">Launch angle <b id="angleOut">45°</b></span>
+            <input id="angle" type="range" min="5" max="85" step="1" value="45" />
+          </label>
+          <label class="check"><input id="ghost" type="checkbox" checked /> Show the no-air path for comparison</label>
+          <div class="buttons">
+            <button id="launch" class="primary">Launch</button>
+            <button id="clear">Clear</button>
+          </div>
+        </div>
+        <dl class="readouts">
+          <div><dt>Range</dt><dd id="rRange">–</dd></div>
+          <div><dt>Max height</dt><dd id="rHeight">–</dd></div>
+          <div><dt>Flight time</dt><dd id="rTime">–</dd></div>
+          <div><dt>Landing speed</dt><dd id="rLand">–</dd></div>
+          <div><dt>Terminal velocity</dt><dd id="rVt">–</dd></div>
+        </dl>
+      </section>
+
+      <section id="ideas" class="card">
+        <h2>Key ideas</h2>
+        <ul>
+          <li><b>Two forces act in flight:</b> weight (down, constant) and drag (opposite to the velocity, growing with speed).</li>
+          <li><b>Drag grows with speed squared</b> at everyday speeds: double the speed and the drag is four times bigger.</li>
+          <li><b>Terminal velocity</b> is reached when drag equals weight. The resultant force is zero, so the object stops accelerating.</li>
+          <li><b>Horizontal speed only ever falls</b> with air resistance, because drag always has a backward component. That is why the path is lopsided and the fall is steep.</li>
+          <li><b>Light, draggy objects</b> (a shuttlecock has a terminal velocity of about 6.8 m/s) lose speed fast: a smash leaving at 80 m/s is under 20 m/s by the time it lands.</li>
+          <li><b>Without air resistance</b>, horizontal and vertical motion are independent, the path is a parabola, and the best angle for range on flat ground is 45°.</li>
+        </ul>
+      </section>
+
+      <section id="equations" class="card">
+        <h2>Equations</h2>
+        <div class="eqs">
+          <div class="eq"><span>Weight</span><code>W = mg</code></div>
+          <div class="eq"><span>Newton’s second law</span><code>F = ma</code></div>
+          <div class="eq"><span>Drag force</span><code>F<sub>d</sub> = ½ρC<sub>d</sub>Av²</code></div>
+          <div class="eq"><span>Terminal velocity</span><code>v<sub>t</sub> = √(2mg ÷ ρC<sub>d</sub>A)</code></div>
+          <div class="eq"><span>No air: range on flat ground</span><code>R = u²sin2θ ÷ g</code></div>
+          <div class="eq"><span>No air: time of flight</span><code>t = 2u sinθ ÷ g</code></div>
+          <div class="eq"><span>SUVAT</span><code>v = u + at · s = ut + ½at² · v² = u² + 2as</code></div>
+        </div>
+        <div class="worked">
+          <h3>Worked example</h3>
+          <p>
+            A shuttlecock has mass 5.0 g and a terminal velocity of 6.8 m/s. At terminal velocity, drag = weight, so
+            F<sub>d</sub> = mg = 0.005 × 9.81 = <b>0.049 N</b>. Because drag ∝ v², at 13.6 m/s (twice v<sub>t</sub>) the drag is
+            4 × 0.049 = <b>0.196 N</b>. Falling straight down at that speed, the resultant force is 0.196 − 0.049 = 0.147 N
+            upward, so it decelerates at 0.147 ÷ 0.005 = <b>29 m/s²</b> (about 3g).
+          </p>
+        </div>
+      </section>
+
+      <section id="quiz" class="card">
+        <h2>Quick quiz</h2>
+        <ol id="questions" class="questions"></ol>
+        <p id="score" class="score" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>Simulator: g = 9.81 m/s², drag proportional to v², launched from 1 m above the ground.</p>
+    </footer>
+    <script type="module" src="/src/physics/main.ts"></script>
+  </body>
+</html>

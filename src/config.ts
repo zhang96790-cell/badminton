@@ -319,10 +319,14 @@ export const OFFICIALS = {
 };
 
 export const REPLAY = {
-  speed: 0.5,
-  /** The last moments before the shuttle lands play even slower. */
-  finalSlowmo: 0.25,
-  finalSeconds: 0.9,
+  /** Replay speeds T cycles through (the default is the second, half speed). */
+  speeds: [1, 0.5, 0.25],
+  /** The winning shot (its last moments before landing) plays at this fraction of the chosen speed. */
+  finalSlowmo: 0.35,
+  finalSeconds: 1.0,
+  /** Saved highlights: the last this-many seconds of the rally, and at most this many kept. */
+  highlightSeconds: 7,
+  highlightsKept: 10,
   /** Keep at most this much of a rally (game seconds). */
   maxSeconds: 60,
   /** Automatic replays show only the end of the rally. */
@@ -441,6 +445,8 @@ export const UI_KEYS = {
   challenge: ['KeyH'],
   replay: ['KeyR'],
   replayCamera: ['KeyV'],
+  replaySpeed: ['KeyT'],
+  saveHighlight: ['KeyP'],
   guides: ['KeyG'],
   mute: ['KeyM'],
 };
@@ -450,6 +456,10 @@ export const CAMERA = {
   broadcast: { pos: { x: 0, y: -14.2, z: 8.6 }, target: { x: 0, y: 0.8, z: 0.3 } },
   /** Closer, lower broadcast view: the court fills more of the screen. */
   close: { pos: { x: 0, y: -11.6, z: 6.4 }, target: { x: 0, y: 0.4, z: 0.6 } },
+  /** Low, just behind and above your end, like a camera on the baseline. */
+  player: { pos: { x: 0, y: -10.4, z: 3.3 }, target: { x: 0, y: 2.0, z: 0.9 } },
+  /** High overhead, almost looking straight down: the easiest view for judging depth. */
+  overhead: { pos: { x: 0, y: -4.2, z: 17 }, target: { x: 0, y: 0.2, z: 0 } },
   /** Side-on replay camera. */
   side: { pos: { x: 15.5, y: 0, z: 5.2 }, target: { x: 0, y: 0, z: 1.1 } },
 };

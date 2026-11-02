@@ -2,18 +2,24 @@
 
 Newest first. The same list appears in the game under "What's new".
 
-Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
-small changes and fixes, grouped together rather than bumped for each one.
+Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
+of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
-## 2.2: Online doubles (2 Nov 2026)
+## 2.5: Major improvements (part 1 of 3) (2 Nov 2026)
 
-- Online doubles: rooms now seat up to four. Pick Doubles in your room, send friends the code, and choose teams with Switch team: play together against a CPU pair, or 2 against 2.
-- Empty places are filled by CPUs (Easy, Medium or Hard, the host picks), so any mix works: 2 friends vs 2 CPUs, 3 friends and a CPU, or all four of you.
-- Each of you sees your own team at the near end, with the right person serving and receiving from the right court on every screen, and the host’s screen umpires every point.
-- If you and your partner both swing at the same shuttle, one hit counts on every screen, so the score never splits.
+- Swing assist only works against a Beginner or Easy CPU now, and every shot it plays for you is tagged ASSIST so it’s clear when the game helped.
+- Performance mode (in Assists & controls) for slow school laptops: a lighter crowd, lower resolution, fewer effects and 30 frames a second. It can also lower the ping you see, because a busy laptop answers the server late.
+- Two new camera views: Player (low, behind your end) and Overhead (looking down, best for judging depth). The View button cycles through all four.
+- Better replays: T changes the speed (1×, ½× or ¼×), the winning shot plays in slow motion, and V cycles five cameras (broadcast, side, low, overhead and a reverse angle).
+- Save highlights: press P after a great point, then watch it again any time from Social → Highlights (the last 10 are kept on this computer).
+- Sound pass: crisper racket hits that crack on smashes, a softer shuttle landing, shoe squeaks and footsteps, a crowd that murmurs and cheers, and a touch of arena echo.
+- Online rooms are singles only for now: online doubles is held back while we make it steadier. Doubles against the CPU is still there.
+
+## 2.4.1: Reconnect fix (2 Nov 2026)
+
 - Fixed: if your own connection dropped and came back, your screen could stay stuck on “disconnected”. It now carries on.
 
-## 2.1.10: Fair play and smoother online (2 Nov 2026)
+## 2.4: Fair play and smoother online (2 Nov 2026)
 
 - A smash is always a smash and a lob is always a lob. Hitting a shuttle that’s already behind you no longer turns your smash into a clear: it’s just a weaker, less accurate smash.
 - Clicks aren’t lost any more: if you swing while still recovering from your last swing, it plays the moment you can. Recovery after a miss is also shorter (0.25 s, was 0.45 s).
@@ -23,26 +29,20 @@ small changes and fixes, grouped together rather than bumped for each one.
 - 25-second service clock: take longer than 25 seconds to serve and the umpire shows you a red card, and the point goes to your opponent. Now online too; the clock turns red for the last 10 seconds.
 - Online pause: both players can press Esc, and play only carries on once you’ve both resumed. Any pause ends on its own after a minute (with a countdown on screen), so nobody can stall a match.
 
-## 2.1.9: Welcome card fix (2 Nov 2026)
+## 2.3.2–4: Welcome card and rarer net tumbles (2 Nov 2026)
 
 - Fixed: the welcome card no longer pops up on every reload. Logged-in players never see it; newcomers see it once, and logged-out players get the short sign-up reminder at most once a day.
-
-## 2.1.8: Fewer net tumbles (2 Nov 2026)
-
 - Far fewer tumbling net shots: a net shot only tumbles now if it’s perfectly timed and skims the tape by under 3 cm (it used to be any timing within 12 cm). Before, about half of all net shots tumbled; now it’s about 1 in 10.
-
-## 2.1.7: Welcome for newcomers (2 Nov 2026)
-
 - Welcome card for newcomers: after picking your controls, a big Take the 1-minute tour button, plus Sign up, Log in or Play as a guest. The Take the tour link also shows a New? Start here badge until you’ve taken it.
 - Coming back while logged out: a short Save your progress card suggests signing up (with Don’t show this again). Logged-in players never see it.
 
-## 2.1.6: Challenges and replays online (2 Nov 2026)
+## 2.3.1: Challenges and replays online (2 Nov 2026)
 
 - Hawk-Eye challenges online: line judges can miss close calls again, and whoever a close call goes against can press H to challenge. Both players watch the review, and an overturned call fixes the score on both screens (2 failed challenges per game). Ranked results wait for any challenge before they’re saved.
 - Replays online: press R between points to watch the last rally. If the other player serves while you’re watching, the replay ends so you don’t miss it.
 - A moment to get ready: after each point online, the server has to wait a couple of seconds before serving. A countdown shows for both players.
 
-## 2.1.5: No more net mashing (2 Nov 2026)
+## 2.3: No more net mashing (2 Nov 2026)
 
 - Swings are a commitment: after a miss you can’t swing again for almost half a second (a quarter of a second after a hit), so mashing the key leaves you stuck recovering when the shuttle arrives. Time your swing instead.
 - Lifts beat net-campers: lifts played near the net climb steeper, out of jump reach of a player standing at the net, and still land deep.
@@ -51,16 +51,13 @@ small changes and fixes, grouped together rather than bumped for each one.
 - Tight net shots tumble: a net shot that skims the tape spins over it and is very hard to net back or hit hard, so you’ll usually have to lift it.
 - The back court pays off: drops land shorter and skim the tape, perfectly timed clears go deeper and straighter, and hitting from deep in your own back court costs you power and accuracy. Perfectly timed smashes from the back are only slightly stronger.
 
-## 2.1.4: Updated tour (2 Nov 2026)
+## 2.2.1–2: Controls picker and updated tour (2 Nov 2026)
 
 - Take the tour is up to date: new stops for your controls, Court 4 (quick match and private rooms), the Social screen with your stats, and the help links at the bottom. It opens Social to show you around and tidies up when it ends.
-
-## 2.1.3: Choose your controls (2 Nov 2026)
-
 - Pick your controls first: the first time you open the game, a How do you want to play? screen lets you choose Keyboard + mouse, Keys + trackpad or Keyboard only, with the keys for each.
 - A Controls button at the top of the start screen shows how you’re playing and lets you switch any time.
 
-## 2.1.2: Social and career stats (2 Nov 2026)
+## 2.2: Social and career stats (2 Nov 2026)
 
 - Social: a big new screen (the Social button at the top of the start screen, or your name once you’re logged in) with your stats, friends, the leaderboard, your ranked matches and your account.
 - Career stats from every finished match against the CPU or online: fastest smash, longest rally, best and current win streak, matches, wins and win rate, games, points, winners, aces, smashes, jump and perfect jump smashes, net kills, errors, perfect-timing rate, Hawk-Eye challenges, time on court and more.
@@ -81,12 +78,9 @@ small changes and fixes, grouped together rather than bumped for each one.
 - Clearer connection info: the lobby shows each player’s connection, the readout in the match says whose connection is causing lag, and game servers are now kept in Asia.
 - Results are saved by the game server (not players’ computers), so a ranked win can’t be faked from the browser. Private rooms stay unranked.
 
-## 2.0.2: Shorter changelog (2 Nov 2026)
+## 2.0.1–2: Skyline Smash and a shorter changelog (2 Nov 2026)
 
 - What’s new has a Short / Full switch. Short shows one line per update, Full shows every change. It remembers your choice.
-
-## 2.0.1: Skyline Smash (2 Nov 2026)
-
 - The game is now called Skyline Smash. Your settings, account and keys carry over, and badmintongames.site still brings you here.
 
 ## 2.0: Play online (2 Nov 2026)
@@ -99,38 +93,32 @@ small changes and fixes, grouped together rather than bumped for each one.
 - Dropped connection: it reconnects on its own and play waits. If someone doesn’t come back within a minute, the other player wins. Esc pauses between points (Q while paused forfeits).
 - Rooms are private (only people with the code can join), usernames with offensive words aren’t allowed, and online line calls are always correct (there are no challenges online yet).
 
-## 1.7.1: Tour and easier usernames (2 Nov 2026)
+## 1.8.1: Tour and easier usernames (2 Nov 2026)
 
 - Take the tour: a new button at the bottom of the start screen walks you through your match, the match card, tutorial, practice, Assists & controls, your keys, your account and more, one thing at a time. Use Next or Enter to go forward, Back or ← to go back, and Esc to leave.
 - Easier usernames: spaces become underscores automatically (“Barry Zhang” becomes “barry_zhang”), and the box shows what your username will be, or why it won’t work, as you type.
 
-## 1.7: Player accounts (2 Nov 2026)
+## 1.8: Player accounts (2 Nov 2026)
 
 - Player accounts: press Log in at the top right of the start screen and pick a username and passcode. Use Sign up the first time and Log in after that.
 - You stay logged in on that browser. Your settings and key binds are saved to your account and load on any computer you log in on.
 - Change passcode and Log out are in the same dialog. There’s no email, so a forgotten passcode can’t be reset.
 - Playing without an account works exactly as before, and the account code only loads when you use it, so the game starts just as fast.
 
-## 1.6.4: Serves, jump smashes and challenges (2 Nov 2026)
+## 1.7: Custom keys, serves, jump smashes and challenges (2 Nov 2026)
 
 - Better serve animation: the server holds the shuttle out with their free hand, racket drawn back (forehand in singles, backhand in doubles), then swings through and follows up and forward.
 - Perfect jump smash: hit at the very top of your jump with the swing timed inside a tight window for extra pace (about 380 km/h instead of 340) and a PERFECT JUMP callout. Players only.
 - The CPU challenges again: it challenges calls that look wrong, and sometimes gambles on tight ones, especially on big points. Easy is reckless, Expert is picky and usually right.
 - Line judges miss more close calls (within about 12 cm of the line), so challenges are worth making.
 - Assists now start off except the landing marker: timing light, swing assist, auto-switch and umpire voice are off by default (reset once for everyone; turn them back on in Assists & controls). The tutorial still shows the timing light.
-
-## 1.6.3: Change your keys (2 Nov 2026)
-
 - Change any key under Assists & controls → Controls → Your keys: click an action, then press the new key. Taking a key another action uses swaps the two, and Reset to defaults puts everything back.
 - Keys that would clash are refused with a reason: the game’s own keys (H, R, F, M, G, V, Q, Enter, Esc, 1–9), and movement keys for aiming.
 - The shot table, on-screen hints, serve prompt and tutorial all show your keys. Two players on one keyboard keep the standard keys.
 
-## 1.6.2: Physics page first (2 Nov 2026)
+## 1.6.1–2: Physics revision page (2 Nov 2026)
 
 - badmintongames.site now opens on the Air Physics Revision page. The game is at badmintongames.site/play, or use Badminton simulator in the ☰ menu.
-
-## 1.6.1: Physics revision page (2 Nov 2026)
-
 - New Air Physics Revision page at /physics: a working projectile simulator (shuttlecock, tennis ball or no air) using the game’s drag model, key ideas, equations and a quick quiz.
 - Its menu (☰) has a Badminton simulator button that opens the game at /play. The physics page loads none of the game, so the game starts fresh and runs on its own.
 
@@ -147,12 +135,9 @@ small changes and fixes, grouped together rather than bumped for each one.
 - The end-of-match screen adds each player’s shots, winners, errors, smashes and fastest smash.
 - Two new tutorial lessons, Doubles serve and Doubles positions, and three new practice drills on keys 7–9: Doubles defence (2 on 1), Drive exchange and Return of serve.
 
-## 1.5.2: Slide-out side panel (2 Nov 2026)
+## 1.5.1–2: Assists and controls panel (2 Nov 2026)
 
 - Assists & controls is now a tab on the left edge of the start screen. Click it to slide the panel out, and click it again (or press Esc) to put it away.
-
-## 1.5.1: Assists & controls panel (2 Nov 2026)
-
 - The match card now only has match settings: opponent, CPU style, format and accuracy.
 - Assists and controls have their own panel. Open it with Assists & controls (or How to play) at the bottom of the start screen. The control mode picker is on its Controls tab, above the shot table.
 
@@ -163,16 +148,10 @@ small changes and fixes, grouped together rather than bumped for each one.
 - Opponent, CPU style, controls, scoring, assists and voice are on the match card. Open it with Edit match card.
 - How to play opens the full shot table on the match card.
 
-## 1.4.3: Jump smash recovery (2 Nov 2026)
+## 1.4.1–3: CPU challenges, net reasons, jump smash recovery (2 Nov 2026)
 
 - After landing a jump smash you get a quick burst of speed (and no landing slowdown) to recover to the middle.
-
-## 1.4.2: Why it hit the net (2 Nov 2026)
-
 - When a shot goes into the net, the message says why, e.g. "Smash mistimed (late), hit too low" or "Net shot backhand, stretched".
-
-## 1.4.1: CPU challenges can be wrong (2 Nov 2026)
-
 - The CPU judges line calls by eye now, so its Hawk-Eye challenges are sometimes wrong. Easy challenges recklessly; Expert is picky and usually right.
 
 ## 1.4: Easier to play (2 Nov 2026)
@@ -182,12 +161,9 @@ small changes and fixes, grouped together rather than bumped for each one.
 - You can reach shuttles about 20 cm further from your body.
 - Swing assist (on by default): if you don’t swing at a slower shuttle (lift, drop or clear), your player gets it back with a high shot. Smashes still need a real swing. Turn it off on the menu.
 
-## 1.3.2: Landing marker is back (2 Nov 2026)
+## 1.3.1–2: Landing marker fixes (2 Nov 2026)
 
 - The landing marker is back to the original small ring with a centre dot, just slightly less exact (a few centimetres off).
-
-## 1.3.1: Clearer landing marker (2 Nov 2026)
-
 - The landing marker is a bright solid ring with a dark outline that gently pulses. It’s still deliberately a little off, so it won’t settle close line calls.
 
 ## 1.3: Controls update (2 Nov 2026)

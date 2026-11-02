@@ -36,6 +36,12 @@ export class Recorder {
 
   markLanding() { this.landedAt = this.t; }
 
+  /** The last `seconds` of the rally (up to just after the landing), for saving a highlight. */
+  clip(seconds: number): Frame[] {
+    const end = this.landedAt ?? this.t;
+    return this.frames.filter((f) => f.t >= end - seconds && f.t <= end + 0.6);
+  }
+
   /** Shuttle positions over the last `seconds` before it landed (for Hawk-Eye). */
   pathBefore(seconds: number): V3[] {
     const end = this.landedAt ?? this.t;
@@ -49,15 +55,22 @@ export class Playback {
   done = false;
   private end: number;
 
-  constructor(private frames: Frame[], start: number, private landedAt: number | null, public auto: boolean) {
+  /** base: the chosen speed (1, ½ or ¼); the winning shot slows down further. */
+  constructor(private frames: Frame[], start: number, private landedAt: number | null, public auto: boolean, public base = REPLAY.speeds[1]) {
     this.t = Math.max(frames[0]?.t ?? 0, start);
     this.end = frames[frames.length - 1]?.t ?? 0;
   }
 
-  get speed(): number {
+  /** In slow motion on the winning shot. */
+  get slowmo(): boolean {
     const l = this.landedAt;
-    return l !== null && this.t > l - REPLAY.finalSeconds && this.t < l + 0.25 ? REPLAY.finalSlowmo : REPLAY.speed;
+    return l !== null && this.t > l - REPLAY.finalSeconds && this.t < l + 0.25;
   }
+
+  get speed(): number { return this.slowmo ? this.base * REPLAY.finalSlowmo : this.base; }
+
+  /** Start again from the beginning. */
+  restart() { this.t = this.frames[0]?.t ?? 0; this.done = false; }
 
   get progress(): number {
     const start = this.frames[0]?.t ?? 0;

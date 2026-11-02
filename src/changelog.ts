@@ -1,23 +1,33 @@
 /**
  * Shown in the "What's new" pop-up. Newest first. Also mirrored in CHANGELOG.md.
- * Versioning: bump the middle number (1.4) for a batch of new features; use a patch number
- * (1.3.2) for small changes and fixes, grouping them rather than bumping for each one.
+ * Versioning: big updates move the middle number (2.5); small fixes get a patch number (2.5.1), and a
+ * run of small fixes shares one entry ('1.3.1–2'). Whole numbers are for the biggest changes.
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
-    version: '2.2',
-    title: 'Online doubles',
+    version: '2.5',
+    title: 'Major improvements (part 1 of 3)',
     date: '2 Nov 2026',
     changes: [
-      'Online doubles: rooms now seat up to four. Pick Doubles in your room, send friends the code, and choose teams with Switch team: play together against a CPU pair, or 2 against 2.',
-      'Empty places are filled by CPUs (Easy, Medium or Hard, the host picks), so any mix works: 2 friends vs 2 CPUs, 3 friends and a CPU, or all four of you.',
-      'Each of you sees your own team at the near end, with the right person serving and receiving from the right court on every screen, and the host’s screen umpires every point.',
-      'If you and your partner both swing at the same shuttle, one hit counts on every screen, so the score never splits.',
+      'Swing assist only works against a Beginner or Easy CPU now, and every shot it plays for you is tagged ASSIST so it’s clear when the game helped.',
+      'Performance mode (in Assists & controls) for slow school laptops: a lighter crowd, lower resolution, fewer effects and 30 frames a second. It can also lower the ping you see, because a busy laptop answers the server late.',
+      'Two new camera views: Player (low, behind your end) and Overhead (looking down, best for judging depth). The View button cycles through all four.',
+      'Better replays: T changes the speed (1×, ½× or ¼×), the winning shot plays in slow motion, and V cycles five cameras (broadcast, side, low, overhead and a reverse angle).',
+      'Save highlights: press P after a great point, then watch it again any time from Social → Highlights (the last 10 are kept on this computer).',
+      'Sound pass: crisper racket hits that crack on smashes, a softer shuttle landing, shoe squeaks and footsteps, a crowd that murmurs and cheers, and a touch of arena echo.',
+      'Online rooms are singles only for now: online doubles is held back while we make it steadier. Doubles against the CPU is still there.',
+    ],
+  },
+  {
+    version: '2.4.1',
+    title: 'Reconnect fix',
+    date: '2 Nov 2026',
+    changes: [
       'Fixed: if your own connection dropped and came back, your screen could stay stuck on “disconnected”. It now carries on.',
     ],
   },
   {
-    version: '2.1.10',
+    version: '2.4',
     title: 'Fair play and smoother online',
     date: '2 Nov 2026',
     changes: [
@@ -31,32 +41,18 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '2.1.9',
-    title: 'Welcome card fix',
+    version: '2.3.2–4',
+    title: 'Welcome card and rarer net tumbles',
     date: '2 Nov 2026',
     changes: [
       'Fixed: the welcome card no longer pops up on every reload. Logged-in players never see it; newcomers see it once, and logged-out players get the short sign-up reminder at most once a day.',
-    ],
-  },
-  {
-    version: '2.1.8',
-    title: 'Fewer net tumbles',
-    date: '2 Nov 2026',
-    changes: [
       'Far fewer tumbling net shots: a net shot only tumbles now if it’s perfectly timed and skims the tape by under 3 cm (it used to be any timing within 12 cm). Before, about half of all net shots tumbled; now it’s about 1 in 10.',
-    ],
-  },
-  {
-    version: '2.1.7',
-    title: 'Welcome for newcomers',
-    date: '2 Nov 2026',
-    changes: [
       'Welcome card for newcomers: after picking your controls, a big Take the 1-minute tour button, plus Sign up, Log in or Play as a guest. The Take the tour link also shows a New? Start here badge until you’ve taken it.',
       'Coming back while logged out: a short Save your progress card suggests signing up (with Don’t show this again). Logged-in players never see it.',
     ],
   },
   {
-    version: '2.1.6',
+    version: '2.3.1',
     title: 'Challenges and replays online',
     date: '2 Nov 2026',
     changes: [
@@ -66,7 +62,7 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '2.1.5',
+    version: '2.3',
     title: 'No more net mashing',
     date: '2 Nov 2026',
     changes: [
@@ -79,24 +75,17 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '2.1.4',
-    title: 'Updated tour',
+    version: '2.2.1–2',
+    title: 'Controls picker and updated tour',
     date: '2 Nov 2026',
     changes: [
       'Take the tour is up to date: new stops for your controls, Court 4 (quick match and private rooms), the Social screen with your stats, and the help links at the bottom. It opens Social to show you around and tidies up when it ends.',
-    ],
-  },
-  {
-    version: '2.1.3',
-    title: 'Choose your controls',
-    date: '2 Nov 2026',
-    changes: [
       'Pick your controls first: the first time you open the game, a How do you want to play? screen lets you choose Keyboard + mouse, Keys + trackpad or Keyboard only, with the keys for each.',
       'A Controls button at the top of the start screen shows how you’re playing and lets you switch any time.',
     ],
   },
   {
-    version: '2.1.2',
+    version: '2.2',
     title: 'Social and career stats',
     date: '2 Nov 2026',
     changes: [
@@ -129,18 +118,11 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '2.0.2',
-    title: 'Shorter changelog',
+    version: '2.0.1–2',
+    title: 'Skyline Smash and a shorter changelog',
     date: '2 Nov 2026',
     changes: [
       'What’s new has a Short / Full switch. Short shows one line per update, Full shows every change. It remembers your choice.',
-    ],
-  },
-  {
-    version: '2.0.1',
-    title: 'Skyline Smash',
-    date: '2 Nov 2026',
-    changes: [
       'The game is now called Skyline Smash. Your settings, account and keys carry over, and badmintongames.site still brings you here.',
     ],
   },
@@ -159,7 +141,7 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '1.7.1',
+    version: '1.8.1',
     title: 'Tour and easier usernames',
     date: '2 Nov 2026',
     changes: [
@@ -168,7 +150,7 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '1.7',
+    version: '1.8',
     title: 'Player accounts',
     date: '2 Nov 2026',
     changes: [
@@ -179,8 +161,8 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '1.6.4',
-    title: 'Serves, jump smashes and challenges',
+    version: '1.7',
+    title: 'Custom keys, serves, jump smashes and challenges',
     date: '2 Nov 2026',
     changes: [
       'Better serve animation: the server holds the shuttle out with their free hand, racket drawn back (forehand in singles, backhand in doubles), then swings through and follows up and forward.',
@@ -188,31 +170,17 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
       'The CPU challenges again: it challenges calls that look wrong, and sometimes gambles on tight ones, especially on big points. Easy is reckless, Expert is picky and usually right.',
       'Line judges miss more close calls (within about 12 cm of the line), so challenges are worth making.',
       'Assists now start off except the landing marker: timing light, swing assist, auto-switch and umpire voice are off by default (reset once for everyone; turn them back on in Assists & controls). The tutorial still shows the timing light.',
-    ],
-  },
-  {
-    version: '1.6.3',
-    title: 'Change your keys',
-    date: '2 Nov 2026',
-    changes: [
       'Change any key under Assists & controls → Controls → Your keys: click an action, then press the new key. Taking a key another action uses swaps the two, and Reset to defaults puts everything back.',
       'Keys that would clash are refused with a reason: the game’s own keys (H, R, F, M, G, V, Q, Enter, Esc, 1–9), and movement keys for aiming.',
       'The shot table, on-screen hints, serve prompt and tutorial all show your keys. Two players on one keyboard keep the standard keys.',
     ],
   },
   {
-    version: '1.6.2',
-    title: 'Physics page first',
-    date: '2 Nov 2026',
-    changes: [
-      'badmintongames.site now opens on the Air Physics Revision page. The game is at badmintongames.site/play, or use Badminton simulator in the ☰ menu.',
-    ],
-  },
-  {
-    version: '1.6.1',
+    version: '1.6.1–2',
     title: 'Physics revision page',
     date: '2 Nov 2026',
     changes: [
+      'badmintongames.site now opens on the Air Physics Revision page. The game is at badmintongames.site/play, or use Badminton simulator in the ☰ menu.',
       'New Air Physics Revision page at /physics: a working projectile simulator (shuttlecock, tennis ball or no air) using the game’s drag model, key ideas, equations and a quick quiz.',
       'Its menu (☰) has a Badminton simulator button that opens the game at /play. The physics page loads none of the game, so the game starts fresh and runs on its own.',
     ],
@@ -235,18 +203,11 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '1.5.2',
-    title: 'Slide-out side panel',
+    version: '1.5.1–2',
+    title: 'Assists and controls panel',
     date: '2 Nov 2026',
     changes: [
       'Assists & controls is now a tab on the left edge of the start screen. Click it to slide the panel out, and click it again (or press Esc) to put it away.',
-    ],
-  },
-  {
-    version: '1.5.1',
-    title: 'Assists & controls panel',
-    date: '2 Nov 2026',
-    changes: [
       'The match card now only has match settings: opponent, CPU style, format and accuracy.',
       'Assists and controls have their own panel. Open it with Assists & controls (or How to play) at the bottom of the start screen. The control mode picker is on its Controls tab, above the shot table.',
     ],
@@ -263,26 +224,12 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '1.4.3',
-    title: 'Jump smash recovery',
+    version: '1.4.1–3',
+    title: 'CPU challenges, net reasons, jump smash recovery',
     date: '2 Nov 2026',
     changes: [
       'After landing a jump smash you get a quick burst of speed (and no landing slowdown) to recover to the middle.',
-    ],
-  },
-  {
-    version: '1.4.2',
-    title: 'Why it hit the net',
-    date: '2 Nov 2026',
-    changes: [
       'When a shot goes into the net, the message says why, e.g. "Smash mistimed (late), hit too low" or "Net shot backhand, stretched".',
-    ],
-  },
-  {
-    version: '1.4.1',
-    title: 'CPU challenges can be wrong',
-    date: '2 Nov 2026',
-    changes: [
       'The CPU judges line calls by eye now, so its Hawk-Eye challenges are sometimes wrong. Easy challenges recklessly; Expert is picky and usually right.',
     ],
   },
@@ -298,18 +245,11 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
     ],
   },
   {
-    version: '1.3.2',
-    title: 'Landing marker is back',
+    version: '1.3.1–2',
+    title: 'Landing marker fixes',
     date: '2 Nov 2026',
     changes: [
       'The landing marker is back to the original small ring with a centre dot, just slightly less exact (a few centimetres off).',
-    ],
-  },
-  {
-    version: '1.3.1',
-    title: 'Clearer landing marker',
-    date: '2 Nov 2026',
-    changes: [
       'The landing marker is a bright solid ring with a dark outline that gently pulses. It’s still deliberately a little off, so it won’t settle close line calls.',
     ],
   },

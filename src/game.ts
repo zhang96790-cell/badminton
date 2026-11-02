@@ -17,6 +17,8 @@ import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
 import type { Seat } from './net';
+import { REPLAY_CAMS, type ReplayCam } from './camera';
+import type { Highlight } from './highlights';
 import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
@@ -42,6 +44,8 @@ export interface Settings {
   timingLight: boolean;
   /** If you don't swing at all, the game swings for you as the shuttle reaches you (a late hit). */
   swingAssist: boolean;
+  /** Lighter drawing for slow laptops: smaller crowd, lower resolution, fewer effects, 30 frames a second. */
+  performance?: boolean;
   aim: 'realistic' | 'casual';
   voice: boolean;
   /** Camera: 'close' fills the screen with the court, 'broadcast' is the wider TV view. */
@@ -62,11 +66,14 @@ export type GameEvent =
   | { type: 'net' }
   | { type: 'land' }
   | { type: 'whiff' }
+  /** Footwork: a shoe squeak on a hard stop or turn, and footsteps. pan: −1 left to 1 right; near: your end. */
+  | { type: 'squeak'; pan: number; near: boolean }
+  | { type: 'step'; pan: number; near: boolean }
   | { type: 'point' }
   | { type: 'applause'; intensity: number }
   | { type: 'say'; who: Speaker; text: string; interrupt?: boolean };
 
-export interface Callout { label: string; detail: string; color: string; t: number }
+export interface Callout { label: string; detail: string; color: string; t: number; assist?: boolean }
 export interface Banner { title: string; sub: string; color: string; t: number; card?: 'red' }
 
 export class Game {
@@ -109,7 +116,9 @@ export class Game {
   call: LineCall | null = null;
   review: Review | null = null;
   playback: Playback | null = null;
-  replayCam: 'broadcast' | 'side' = 'broadcast';
+  replayCam: ReplayCam = 'broadcast';
+  /** Replay speed (1, ½ or ¼), T to change. */
+  replaySpeed = REPLAY.speeds[1];
   /** Crowd excitement, 0..1. */
   cheer = 0;
   /** Practice or tutorial session (null in a match). */
@@ -363,6 +372,10 @@ export class Game {
   }
   /** The last shot played (for the doubles AI's attack / defence formations). */
   get lastShotLabel(): string { return this.lastShot?.label ?? ''; }
+  /** Swing assist only helps against a Beginner or Easy CPU (never online, in the tutorial or harder matches). */
+  get assistAllowed(): boolean {
+    return !this.online && this.mode !== 'tutorial' && (this.settings.opponent === 'beginner' || this.settings.opponent === 'easy');
+  }
   /** Played by someone at this computer (not the CPU, and not the online opponent). */
   isHuman(i: number): boolean { const c = this.controllers[i]; return !(c instanceof AIController) && !(c instanceof RemoteController); }
   /** Short lockout so the key that ended the last rally doesn't instantly serve. */
@@ -535,6 +548,7 @@ export class Game {
     this.players.forEach((p, i) => {
       if (first && cmds[i].shot) p.startSwing(cmds[i].shot!, false, this.isHuman(i));
       if (p.update(dt, cmds[i].move, first && cmds[i].jump) === 'whiff') this.events.push({ type: 'whiff' });
+      this.footwork(p, i, dt);
     });
     if (this.doubles) this.keepApart();
 
@@ -604,7 +618,7 @@ export class Game {
       });
       // Swing assist: you didn't swing at all, so get it back with a high shot (a late hit). It lands
       // mid-court rather than deep, so the opponent can still attack it.
-      if (this.settings.swingAssist && this.mode !== 'tutorial') {
+      if (this.settings.swingAssist && this.assistAllowed) {
         this.players.forEach((p, i) => {
           if (!this.isHuman(i) || p.swing || p.charge !== null || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
           // Attacking shots slow down a lot in the air, so judge by what was hit, not current speed.
@@ -662,7 +676,7 @@ export class Game {
         this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted, hitter: p });
         if (this.teamOf(i) === 1) this.maybeSwitch();
         const perfectJump = this.isHuman(i) && /Jump smash/.test(shot.label) && isPerfectJump(c);
-        const detail = `${perfectJump ? 'PERFECT JUMP' : c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`;
+        const detail = `${perfectJump ? 'PERFECT JUMP' : c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}`;
         this.announce(p, shot, detail);
         if (this.online) this.sendHit(i, c.point, shot.velocity, shot.label, shot.speedKmh, c.hand, detail, false);
         if (perfectJump) { this.cheer = Math.max(this.cheer, 0.6); this.events.push({ type: 'applause', intensity: 0.5 }); }
@@ -996,14 +1010,36 @@ export class Game {
     }
   }
 
+  /** T: replay speed 1× → ½× → ¼×. */
+  cycleReplaySpeed() {
+    const S = REPLAY.speeds;
+    this.replaySpeed = S[(S.indexOf(this.replaySpeed) + 1) % S.length];
+    if (this.playback) this.playback.base = this.replaySpeed;
+  }
+
+  /** P: the last rally as a highlight to save (null if there's nothing to save yet). */
+  highlight(): Highlight | null {
+    if (!['point', 'serve', 'replay', 'interval', 'gameBreak', 'matchOver'].includes(this.state)) return null;
+    const frames = this.recorder.clip(REPLAY.highlightSeconds);
+    if (frames.length < 20) return null;
+    const m = this.match, shot = this.lastShot?.label ?? 'Rally';
+    return {
+      id: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`, at: Date.now(),
+      title: `${shot} · ${this.rallyHits}-shot rally`, sub: `${this.teamName(0)} ${m.scores[0]}–${m.scores[1]} ${this.teamName(1)}`,
+      doubles: this.doublesCourt, landedAt: this.recorder.landedAt, frames,
+    };
+  }
+
   toggleReplayCamera() {
-    if (this.state === 'replay') this.replayCam = this.replayCam === 'broadcast' ? 'side' : 'broadcast';
+    if (this.state !== 'replay') return;
+    const i = REPLAY_CAMS.findIndex((c) => c.id === this.replayCam);
+    this.replayCam = REPLAY_CAMS[(i + 1) % REPLAY_CAMS.length].id;
   }
 
   private startReplay(auto: boolean) {
     const r = this.recorder;
     const start = auto ? (r.landedAt ?? r.t) - REPLAY.autoSeconds : 0;
-    this.playback = new Playback(r.frames, start, r.landedAt, auto);
+    this.playback = new Playback(r.frames, start, r.landedAt, auto, this.replaySpeed);
     this.resume = { state: this.state, timer: this.timer, clock: this.clockRunning };
     this.state = 'replay';
     this.clockRunning = false;
@@ -1071,6 +1107,23 @@ export class Game {
     // Online, the pause can't be skipped while the other player could still challenge.
     else if (this.state === 'point' && !this.challengeOpen && !(this.online && this.challengePossible(this.call))) this.timer = 0;
     else if (this.state === 'interval' || this.state === 'gameBreak') this.timer = 0;
+  }
+
+  /** Last frame's movement per player, for footstep and squeak sounds. */
+  private feet: { vx: number; vy: number; stride: number; cd: number }[] = [];
+  private footwork(p: Player, i: number, dt: number) {
+    const f = this.feet[i] ??= { vx: p.vel.x, vy: p.vel.y, stride: p.stride, cd: 0 };
+    f.cd -= dt;
+    const was = Math.hypot(f.vx, f.vy), now = Math.hypot(p.vel.x, p.vel.y);
+    const pan = clamp(p.pos.x / 4, -0.8, 0.8), near = p.side < 0;
+    if (!p.airborne && f.cd <= 0) {
+      const turn = (f.vx * p.vel.x + f.vy * p.vel.y) / (Math.max(was, 1e-6) * Math.max(now, 1e-6));
+      // A lunge into a shot, a hard stop, or a sharp change of direction squeaks.
+      if (p.lunge <= dt + 1e-9 || (was > 1.6 && (now < was * 0.6 || (now > 0.8 && turn < 0.5)))) { this.events.push({ type: 'squeak', pan, near }); f.cd = 0.35; }
+    }
+    // A footstep every half stride while running.
+    if (!p.airborne && now > 1.2 && Math.floor(p.stride / Math.PI) !== Math.floor(f.stride / Math.PI)) this.events.push({ type: 'step', pan, near });
+    f.vx = p.vel.x; f.vy = p.vel.y; f.stride = p.stride;
   }
 
   /** Partners can't stand in the same spot: nudge them apart when they get too close. */
@@ -1498,6 +1551,7 @@ export class Game {
       detail: [fast ? `${Math.round(shot.speedKmh)} km/h` : null, detail].filter(Boolean).join(' · '),
       color: p.color,
       t: 0,
+      assist: p.assisted,
     };
   }
 }

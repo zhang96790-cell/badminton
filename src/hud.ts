@@ -1,5 +1,7 @@
 import { COURT, KEYS, VISUAL } from './config';
 import type { Game } from './game';
+import { REPLAY_CAMS } from './camera';
+import type { Playback } from './replay';
 import { keyLabel } from './keys';
 import { tierOf } from './rating';
 import { clamp } from './math';
@@ -47,7 +49,21 @@ export class Hud {
       ctx.textAlign = 'center';
       ctx.fillStyle = c.color;
       ctx.font = font(22, 800);
-      ctx.fillText(c.label.toUpperCase(), w / 2, h - 66);
+      const label = c.label.toUpperCase();
+      ctx.fillText(label, w / 2, h - 66);
+      if (c.assist) {
+        // The game played this one for you: say so plainly.
+        const lw = ctx.measureText(label).width, tw = 62, tx = w / 2 + lw / 2 + 10, ty = h - 84;
+        ctx.fillStyle = C.accent;
+        ctx.beginPath();
+        ctx.roundRect(tx, ty, tw, 22, 11);
+        ctx.fill();
+        ctx.fillStyle = '#10161f';
+        ctx.font = font(12, 900);
+        ctx.textAlign = 'left';
+        ctx.fillText('ASSIST', tx + 10, ty + 15.5);
+        ctx.textAlign = 'center';
+      }
       if (c.detail) {
         ctx.fillStyle = C.hud;
         ctx.font = font(13, 600);
@@ -296,7 +312,16 @@ export class Hud {
   }
 
   private replay(game: Game, w: number, h: number, time: number) {
-    const ctx = this.ctx, pb = game.playback!;
+    this.replayBars(game.playback!, 'REPLAY', REPLAY_CAMS.find((c) => c.id === game.replayCam)?.label ?? '', 'V camera  ·  T speed  ·  P save highlight  ·  R / Enter skip', w, h, time);
+  }
+
+  /** A saved highlight playing from the Social screen. */
+  highlight(pb: Playback, title: string, cam: string, w: number, h: number, time: number) {
+    this.replayBars(pb, 'HIGHLIGHT', `${title}  ·  ${cam}`, 'V camera  ·  T speed  ·  R restart  ·  Esc close', w, h, time);
+  }
+
+  private replayBars(pb: Playback, tag: string, info: string, keys: string, w: number, h: number, time: number) {
+    const ctx = this.ctx;
     const bar = Math.round(h * 0.06);
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, bar);
@@ -308,12 +333,14 @@ export class Hud {
     ctx.textAlign = 'left';
     ctx.fillStyle = C.hud;
     ctx.font = font(16, 900);
-    ctx.fillText('REPLAY', 42, bar / 2 + 6);
+    ctx.fillText(tag, 42, bar / 2 + 6);
+    const tagW = ctx.measureText(tag).width;
     ctx.fillStyle = C.hudDim;
     ctx.font = font(13, 600);
-    ctx.fillText(`${pb.speed}×  ·  ${game.replayCam === 'side' ? 'Side camera' : 'Broadcast camera'}`, 120, bar / 2 + 5);
+    const speed = (s: number) => (s === 1 ? '1×' : s === 0.5 ? '½×' : s === 0.25 ? '¼×' : `${+s.toFixed(2)}×`);
+    ctx.fillText(`${speed(pb.base)}${pb.slowmo ? '  ·  SLOW MOTION' : ''}  ·  ${info}`, 42 + tagW + 18, bar / 2 + 5);
     ctx.textAlign = 'right';
-    ctx.fillText('V switch camera  ·  R / Enter skip', w - 20, bar / 2 + 5);
+    ctx.fillText(keys, w - 20, bar / 2 + 5);
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.fillRect(20, h - bar / 2 - 2, w - 40, 4);
     ctx.fillStyle = C.accent;

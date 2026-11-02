@@ -214,8 +214,13 @@
           </div>
           <div class="field">
             <h3>Swing assist</h3>
-            <p class="help">Gets lifts, drops and clears back if you don’t swing. Smashes still need you.</p>
+            <p class="help" id="assistHelp">Gets lifts, drops and clears back if you don’t swing. Smashes still need you. Only against Beginner and Easy, and every assisted shot is tagged ASSIST.</p>
             <div class="seg" data-group="swingAssist"><button data-value="true">On</button><button data-value="false">Off</button></div>
+          </div>
+          <div class="field">
+            <h3>Performance mode</h3>
+            <p class="help">For slow school laptops: a lighter crowd, lower resolution, fewer effects and 30 frames a second. Can also make your ping look better, since a busy laptop answers the server late.</p>
+            <div class="seg" data-group="performance"><button data-value="true">On</button><button data-value="false">Off</button></div>
           </div>
           <div class="field">
             <h3>Auto-switch (doubles)</h3>
@@ -361,6 +366,7 @@
           <button role="tab" data-hub="friends" aria-selected="false">Friends <span id="friendBadge" class="hub-badge" hidden></span></button>
           <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
           <button role="tab" data-hub="matches" aria-selected="false">Matches</button>
+          <button role="tab" data-hub="highlights" aria-selected="false">Highlights</button>
           <button role="tab" data-hub="account" aria-selected="false" id="accountTab">Account</button>
           <button role="tab" data-hub="admin" aria-selected="false" id="adminTab" hidden>Admin</button>
         </nav>
@@ -386,6 +392,10 @@
           <section data-hubpane="leaders" hidden>
             <p class="pane-note">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
             <ol id="leaderList" class="hub-list leaders"></ol>
+          </section>
+          <section data-hubpane="highlights" hidden>
+            <p class="pane-note">Rallies you saved by pressing P after a point. Kept on this computer (up to 10).</p>
+            <ol id="highlightList" class="hub-list"></ol>
           </section>
           <section data-hubpane="matches" hidden>
             <div class="social-cta" id="matchesLogin" hidden>

@@ -5,9 +5,11 @@ import '@fontsource/barlow-semi-condensed/600';
 import '@fontsource/barlow-semi-condensed/700';
 import './menu.css';
 import { Sound } from './audio';
-import { Camera, broadcastCamera, setView, sideCamera } from './camera';
+import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
+import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
+import { Playback } from './replay';
 import { CHANGELOG } from './changelog';
-import { RULES, STYLES, UI_KEYS, type Level } from './config';
+import { REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
@@ -29,6 +31,8 @@ const input = new Input(canvas);
 const broadcast = broadcastCamera();
 const side = sideCamera();
 const hawkCam = new Camera();
+/** Replay cameras (V cycles them). */
+const replayCams: Record<ReplayCam, Camera> = { broadcast, side, low: broadcastCamera('player'), overhead: broadcastCamera('overhead'), reverse: reverseCamera() };
 const renderer = new Renderer(ctx);
 const hud = new Hud(ctx);
 const sound = new Sound();
@@ -39,7 +43,7 @@ const settings: Settings = {
   event: 'singles', opponent: 'beginner', style: 'allround', partnerStyle: 'allround', autoSwitch: false, p1Control: 'mouse', games: 3, points: 15,
   // Assists start off except the landing marker.
   guides: true, timingLight: false, swingAssist: false, aim: 'realistic', voice: false,
-  view: 'close',
+  view: 'close', performance: false,
 };
 // Bumped when defaults change in a way existing players should get once.
 const SETTINGS_VERSION = 2;
@@ -64,11 +68,13 @@ let game: Game | null = null;
 const viewBtn = document.getElementById('viewBtn') as HTMLButtonElement;
 const fsBtn = document.getElementById('fsBtn') as HTMLButtonElement;
 function syncViewbar() {
-  viewBtn.textContent = `View: ${settings.view === 'close' ? 'Close' : 'Broadcast'}`;
+  viewBtn.textContent = `View: ${VIEWS.find((v) => v.id === settings.view)?.label ?? 'Close'}`;
   fsBtn.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
 }
 function toggleView() {
-  settings.view = settings.view === 'close' ? 'broadcast' : 'close';
+  // Cycle through every camera: Close → Broadcast → Player → Overhead.
+  const i = VIEWS.findIndex((v) => v.id === settings.view);
+  settings.view = VIEWS[(i + 1) % VIEWS.length].id;
   if (game) game.settings.view = settings.view;
   saveSettings();
   setView(broadcast, settings.view);
@@ -84,12 +90,13 @@ fsBtn.addEventListener('click', () => { toggleFullscreen(); fsBtn.blur(); });
 document.addEventListener('fullscreenchange', () => { syncViewbar(); resize(); });
 
 function resize() {
-  const dpr = window.devicePixelRatio || 1;
+  // Performance mode draws at three-quarters of normal resolution (and never above 1:1 on sharp screens).
+  const dpr = settings.performance ? Math.min(window.devicePixelRatio || 1, 1) * 0.75 : window.devicePixelRatio || 1;
   canvas.width = Math.round(innerWidth * dpr);
   canvas.height = Math.round(innerHeight * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  broadcast.fit(innerWidth, innerHeight);
-  side.fit(innerWidth, innerHeight);
+  renderer.lite = !!settings.performance;
+  for (const c of new Set([broadcast, ...Object.values(replayCams)])) c.fit(innerWidth, innerHeight);
 }
 addEventListener('resize', resize);
 resize();
@@ -411,7 +418,24 @@ function showHubTab(name: string) {
   if (name === 'friends') void renderFriends();
   if (name === 'leaders') void renderLeaders();
   if (name === 'admin') void renderAdmin();
+  if (name === 'highlights') renderHighlights();
 }
+
+/** Highlights tab: rallies you saved with P, kept on this computer. */
+function renderHighlights() {
+  const list = loadHighlights();
+  const el = document.getElementById('highlightList')!;
+  el.innerHTML = list.length ? list.map((h) => {
+    const when = new Date(h.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `<li><span class="grow">${hubEsc(h.title)}<span class="sub">${hubEsc(h.sub)} · ${when}</span></span><button type="button" data-watch="${h.id}">Watch</button><button type="button" data-del="${h.id}" aria-label="Delete">✕</button></li>`;
+  }).join('') : '<li class="empty">No highlights yet. After a great point, press P to save it.</li>';
+}
+document.getElementById('highlightList')!.addEventListener('click', (e) => {
+  const t = e.target as HTMLElement;
+  const watch = t.closest<HTMLElement>('[data-watch]')?.dataset.watch, del = t.closest<HTMLElement>('[data-del]')?.dataset.del;
+  if (watch) { const h = loadHighlights().find((x) => x.id === watch); if (h) watchHighlight(h); }
+  if (del) { deleteHighlight(del); renderHighlights(); }
+});
 
 /** Admin tab: who's signing up and playing. The database refuses anyone who isn't an admin. */
 async function renderAdmin() {
@@ -690,6 +714,8 @@ const roomJoin = document.getElementById('roomJoin')!, roomLobby = document.getE
 const roomCodeIn = document.getElementById('roomCodeIn') as HTMLInputElement, roomJoinMsg = document.getElementById('roomJoinMsg')!;
 const roomStart = document.getElementById('roomStart') as HTMLButtonElement, roomStatus = document.getElementById('roomStatus')!;
 let room: RoomConnection | null = null;
+/** Online doubles is held back while it's made steadier: rooms are singles only (doubles is still there against the CPU). */
+const ONLINE_DOUBLES = false;
 /** The room's match settings (the host's choice). Doubles fills empty places with CPUs at `level`. */
 let roomSettings: { games: number; points: number; event?: 'singles' | 'doubles'; level?: Level } = { games: settings.games, points: settings.points, event: 'singles', level: 'medium' };
 /** The other player asked for a rematch. */
@@ -753,7 +779,7 @@ function renderLobby() {
   row('roomGuest', r?.guest, r?.you === 'guest', 'guest');
   const ranked = r?.ranked;
   const people = seated(r);
-  const doubles = !ranked && roomSettings.event === 'doubles';
+  const doubles = ONLINE_DOUBLES && !ranked && roomSettings.event === 'doubles';
   const me = people.find((p) => p.seat === r?.you);
   // Doubles: your team on the left, CPUs in the empty places.
   document.getElementById('roomSingles')!.hidden = doubles;
@@ -790,7 +816,7 @@ function renderLobby() {
   const ready = doubles ? people.length >= 2 && people.every((p) => p.connected) : !!(r?.host?.connected && r?.guest?.connected);
   // Ranked rooms: no code to share and no settings; the match starts by itself once you're both in.
   document.querySelector<HTMLElement>('#roomLobby .room-code')!.hidden = !!ranked;
-  document.querySelectorAll<HTMLElement>('#roomLobby .field-row').forEach((f) => { f.hidden = !!ranked; });
+  document.querySelectorAll<HTMLElement>('#roomLobby .field-row').forEach((f) => { f.hidden = !!ranked || (f.classList.contains('room-mode') && !ONLINE_DOUBLES); });
   document.getElementById('roomTitle')!.textContent = ranked ? 'Ranked match' : 'Your room';
   // Each player's round trip to the server, so a slow connection is easy to spot before playing.
   const conn = ready && room.rtt && room.peerRtt
@@ -887,7 +913,7 @@ function startOnline(host: boolean, lineup?: LineupSlot[]) {
 function hostStart() {
   const r = room?.roster;
   if (!room || r?.you !== 'host') return;
-  const lineup = !r.ranked && roomSettings.event === 'doubles' ? buildLineup(r) : undefined;
+  const lineup = ONLINE_DOUBLES && !r.ranked && roomSettings.event === 'doubles' ? buildLineup(r) : undefined;
   room.send({ type: 'start', settings: roomSettings, lineup });
   startOnline(true, lineup);
 }
@@ -1118,6 +1144,12 @@ function syncMenu() {
     const group = seg.dataset.group as keyof Settings;
     seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', parse(b.dataset.value!) === settings[group]));
   });
+  // Swing assist only works against a Beginner or Easy CPU.
+  const assistOk = settings.opponent === 'beginner' || settings.opponent === 'easy';
+  document.querySelectorAll<HTMLButtonElement>('.seg[data-group="swingAssist"] button').forEach((b) => b.classList.toggle('disabled', !assistOk));
+  document.getElementById('assistHelp')!.textContent = assistOk
+    ? 'Gets lifts, drops and clears back if you don’t swing. Smashes still need you. Every assisted shot is tagged ASSIST.'
+    : 'Only against a Beginner or Easy CPU. Pick one of those to use it.';
 }
 
 document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
@@ -1128,6 +1160,7 @@ document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
       // Doubles is against a CPU pair: picking one switches off the other.
       if (group === 'event' && settings.event === 'doubles' && settings.opponent === 'human') settings.opponent = 'medium';
       if (group === 'opponent' && settings.opponent === 'human') settings.event = 'singles';
+      if (group === 'performance') resize();
       saveSettings();
       syncMenu();
       describeControls();
@@ -1196,11 +1229,36 @@ function onlineKeys(g: Game, over: boolean) {
   if (input.tapped(UI_KEYS.challenge)) g.requestChallenge();
   if (input.tapped(UI_KEYS.replay)) g.toggleReplay();
   if (input.tapped(UI_KEYS.replayCamera)) g.toggleReplayCamera();
+  if (input.tapped(UI_KEYS.replaySpeed)) g.cycleReplaySpeed();
+  if (input.tapped(UI_KEYS.saveHighlight)) keepHighlight(g);
+}
+
+/** P after a point: save the end of that rally to Social → Highlights. */
+function keepHighlight(g: Game) {
+  const h = g.highlight();
+  if (!h) return;
+  const ok = saveHighlight(h);
+  g.banner = ok
+    ? { title: 'Saved to highlights', sub: `${h.title} · watch it in Social → Highlights`, color: '#ffd166', t: 0 }
+    : { title: 'Couldn’t save', sub: 'This browser has no room for highlights', color: '#ff6b6b', t: 0 };
 }
 
 // ── Loop ─────────────────────────────────────────────────────────────────────
 
 let last = performance.now();
+let lastDraw = 0;
+/** A saved highlight playing (from Social → Highlights), looping until Esc. */
+let watching: { h: Highlight; pb: Playback; cam: ReplayCam; endT: number } | null = null;
+function watchHighlight(h: Highlight) {
+  closeSocial();
+  menu.classList.add('hidden');
+  watching = { h, pb: new Playback(h.frames, h.frames[0]?.t ?? 0, h.landedAt, false), cam: 'broadcast', endT: 0 };
+}
+function stopHighlight() {
+  watching = null;
+  menu.classList.remove('hidden');
+  openSocial('highlights');
+}
 function frame(now: number) {
   const dt = (now - last) / 1000;
   last = now;
@@ -1228,6 +1286,8 @@ function frame(now: number) {
       if (input.tapped(UI_KEYS.challenge)) game.requestChallenge();
       if (input.tapped(UI_KEYS.replay)) game.toggleReplay();
       if (input.tapped(UI_KEYS.replayCamera)) game.toggleReplayCamera();
+      if (input.tapped(UI_KEYS.replaySpeed)) game.cycleReplaySpeed();
+      if (input.tapped(UI_KEYS.saveHighlight)) keepHighlight(game);
     }
     if (game?.online) { /* handled in onlineKeys */ }
     else if (game?.paused && input.tapped(['KeyQ'])) showMenu();
@@ -1236,7 +1296,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && welcome.classList.contains('hidden') && !tour.isOpen) {
+  } else if (!watching && input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && welcome.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 
@@ -1247,20 +1307,42 @@ function frame(now: number) {
       else sound.play(e);
     }
     game.events.length = 0;
-    sound.update(Math.min(dt, 0.05), game.state === 'challenge');
-  }
+    sound.update(Math.min(dt, 0.05), game.state === 'challenge', game.cheer, game.state !== 'matchOver');
+  } else sound.update(dt, false, 0, false);
 
-  if (game?.state === 'challenge' && game.review) {
+  // Performance mode: draw at most 30 frames a second (the game itself still runs every frame).
+  const skipDraw = settings.performance && now - lastDraw < 30;
+  if (watching && !game) {
+    const v = watching;
+    if (input.tapped(['Escape'])) stopHighlight();
+    else {
+      if (input.tapped(UI_KEYS.replayCamera)) { const i = REPLAY_CAMS.findIndex((c) => c.id === v.cam); v.cam = REPLAY_CAMS[(i + 1) % REPLAY_CAMS.length].id; }
+      if (input.tapped(UI_KEYS.replaySpeed)) { const S = REPLAY.speeds; v.pb.base = S[(S.indexOf(v.pb.base) + 1) % S.length]; }
+      if (input.tapped(UI_KEYS.replay) || (v.pb.done && (v.endT += dt) > 1.5)) { v.pb.restart(); v.endT = 0; }
+      v.pb.update(Math.min(dt, 0.05));
+      if (!skipDraw) {
+        lastDraw = now;
+        const cam = replayCams[v.cam];
+        renderer.draw(cam, null, { ...v.pb.frame(), live: false }, w, h, now / 1000, cam === side);
+        hud.highlight(v.pb, v.h.title, REPLAY_CAMS.find((c) => c.id === v.cam)!.label, w, h, now / 1000);
+      }
+    }
+  }
+  else if (skipDraw) { /* keep the last frame on screen */ }
+  else if (game?.state === 'challenge' && game.review) {
+    lastDraw = now;
     drawReview(ctx, w, h, game.review, hawkCam);
   } else if (game) {
     const replaying = game.state === 'replay' && game.playback;
     const scene: Scene = replaying
       ? { ...game.playback!.frame(), live: false }
       : { players: game.players, shuttle: game.shuttleView, live: true };
-    const cam = replaying && game.replayCam === 'side' ? side : broadcast;
+    const cam = replaying ? replayCams[game.replayCam] : broadcast;
+    lastDraw = now;
     renderer.draw(cam, game, scene, w, h, now / 1000, cam === side);
     hud.draw(game, w, h, now / 1000);
   } else {
+    lastDraw = now;
     renderer.draw(broadcast, null, null, w, h, now / 1000);
   }
   input.endFrame();

@@ -52,6 +52,9 @@ function buildCrowd(): Spectator[] {
 export class Renderer {
   private cam!: Camera;
   private crowd = buildCrowd();
+  /** Performance mode: a third of the crowd (standing still), no lighting or glow, no shuttle trail. */
+  lite = false;
+  private liteCrowd = this.crowd.filter((_, i) => i % 3 === 0);
 
   constructor(private ctx: CanvasRenderingContext2D) {}
 
@@ -66,14 +69,15 @@ export class Renderer {
     ctx.fillRect(0, 0, w, h);
     this.arena(time, game?.cheer ?? 0);
     this.court(!!game?.doublesCourt);
-    this.lights(w, h);
+    if (!this.lite) this.lights(w, h);
 
     const items: { d: number; draw: () => void }[] = [{ d: cam.depth(v3(0, 0, 1)), draw: () => this.net() }];
     const officials = game?.officials ?? [];
     for (const o of officials) if (!(sideView && o.kind === 'service')) items.push({ d: cam.depth(v3(o.pos.x, o.pos.y, 0.8)), draw: () => this.official(o, scene?.shuttle.pos ?? null) });
-    if (game && scene) {
+    // A saved highlight plays without a match (game is null): just the recorded players and shuttle.
+    if (scene) {
       this.shadows(scene, officials);
-      if (scene.live) {
+      if (scene.live && game) {
         for (const r of game.rings) this.targetRing(r, time);
         if (game.settings.guides) this.guides(game);
         if (game.landing) this.landingMark(game.landing);
@@ -81,15 +85,15 @@ export class Renderer {
         if (game.doubles) this.youRing(game, time);
       }
       for (const p of scene.players) items.push({ d: cam.depth(v3(p.pos.x, p.pos.y, 1)), draw: () => this.player(p) });
-      if (scene.live && game.settings.timingLight) {
+      if (scene.live && game?.settings.timingLight) {
         game.players.forEach((p, i) => { if (game.isHuman(i)) items.push({ d: -1, draw: () => this.timingLight(game, i) }); });
       }
       items.push({ d: cam.depth(scene.shuttle.pos), draw: () => this.shuttle(scene.shuttle, w) });
-      if (scene.live && game.doubles) items.push({ d: -2, draw: () => this.youTag(game) });
-      if (scene.live) for (const p of game.players) if (p.shout) items.push({ d: -2, draw: () => this.shoutBubble(p) });
+      if (scene.live && game?.doubles) items.push({ d: -2, draw: () => this.youTag(game) });
+      if (scene.live && game) for (const p of game.players) if (p.shout) items.push({ d: -2, draw: () => this.shoutBubble(p) });
     }
     items.sort((a, b) => b.d - a.d).forEach((i) => i.draw());
-    this.vignette(w, h);
+    if (!this.lite) this.vignette(w, h);
   }
 
   // ── Primitives ─────────────────────────────────────────────────────────────
@@ -151,9 +155,9 @@ export class Renderer {
     }
     // Crowd, far to near; they bounce when excited.
     const cam = this.cam, ctx = this.ctx;
-    const people = this.crowd.map((s) => ({ s, d: cam.depth(s.p) })).filter((o) => o.d > 0.5).sort((a, b) => b.d - a.d);
+    const people = (this.lite ? this.liteCrowd : this.crowd).map((s) => ({ s, d: cam.depth(s.p) })).filter((o) => o.d > 0.5).sort((a, b) => b.d - a.d);
     for (const { s } of people) {
-      const bob = Math.max(0, Math.sin(time * 11 + s.phase)) * 0.14 * cheer;
+      const bob = this.lite ? 0 : Math.max(0, Math.sin(time * 11 + s.phase)) * 0.14 * cheer;
       const body = cam.project(v3(s.p.x, s.p.y, s.p.z + bob));
       const head = cam.project(v3(s.p.x, s.p.y, s.p.z + 0.32 + bob));
       ctx.fillStyle = s.shirt;
@@ -428,7 +432,7 @@ export class Renderer {
     const ctx = this.ctx;
     ctx.save();
     ctx.shadowColor = color;
-    ctx.shadowBlur = state === 'none' ? 0 : 12;
+    ctx.shadowBlur = state === 'none' || this.lite ? 0 : 12;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = color;
@@ -648,7 +652,7 @@ export class Renderer {
       return;
     }
     const speed = Math.hypot(s.vel.x, s.vel.y, s.vel.z);
-    if (s.inFlight && speed > 14 && s.trail.length > 2) {
+    if (!this.lite && s.inFlight && speed > 14 && s.trail.length > 2) {
       for (let i = 1; i < s.trail.length; i++) {
         const a = i / s.trail.length;
         this.seg(s.trail[i - 1], s.trail[i], 0.04, `rgba(255,255,255,${(a * 0.35).toFixed(3)})`, 1);

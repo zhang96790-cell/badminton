@@ -103,7 +103,11 @@ export class Camera {
   }
 }
 
-export type View = 'broadcast' | 'close';
+export type View = 'broadcast' | 'close' | 'player' | 'overhead';
+/** The in-game views in the order the View button cycles through them. */
+export const VIEWS: { id: View; label: string }[] = [
+  { id: 'close', label: 'Close' }, { id: 'broadcast', label: 'Broadcast' }, { id: 'player', label: 'Player' }, { id: 'overhead', label: 'Overhead' },
+];
 
 /**
  * Point the main camera for a view. Broadcast: court, run-off and most clears fit the screen.
@@ -118,6 +122,20 @@ export function setView(cam: Camera, view: View) {
       { x: 0, y: L - 0.4, z: 2.6 }, { x: -W, y: -L, z: 1.0 }, { x: W, y: -L, z: 1.0 },
       { x: 0, y: 1.5, z: 5.2 },
     ], 0.53, { w: 0.94, h: 0.84 });
+  } else if (view === 'player') {
+    const W = COURT.doublesHalfWidth + 0.1, L = COURT.halfLength + 0.2;
+    cam.look(CAMERA.player.pos, CAMERA.player.target);
+    cam.setFit([
+      { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 },
+      { x: 0, y: L - 0.3, z: 2.4 },
+    ], 0.5, { w: 0.98, h: 0.86 });
+  } else if (view === 'overhead') {
+    const W = COURT.doublesHalfWidth + 0.5, L = COURT.halfLength + 0.5;
+    cam.look(CAMERA.overhead.pos, CAMERA.overhead.target);
+    cam.setFit([
+      { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 },
+      { x: 0, y: 0, z: 1.55 },
+    ], 0.5, { w: 0.94, h: 0.86 });
   } else {
     const W = COURT.doublesHalfWidth + 0.15, L = COURT.halfLength + 0.35;
     cam.look(CAMERA.close.pos, CAMERA.close.target);
@@ -140,4 +158,19 @@ export function sideCamera(): Camera {
   return new Camera(CAMERA.side.pos, CAMERA.side.target, [
     { x: 0, y: -L, z: 0 }, { x: 0, y: L, z: 0 }, { x: 0, y: -L, z: 2.4 }, { x: 0, y: L, z: 2.4 }, { x: 0, y: 0, z: 5.5 },
   ], 0.56);
+}
+
+/** Replay cameras V cycles through. */
+export type ReplayCam = 'broadcast' | 'side' | 'low' | 'overhead' | 'reverse';
+export const REPLAY_CAMS: { id: ReplayCam; label: string }[] = [
+  { id: 'broadcast', label: 'Broadcast camera' }, { id: 'side', label: 'Side camera' }, { id: 'low', label: 'Low camera' },
+  { id: 'overhead', label: 'Overhead camera' }, { id: 'reverse', label: 'Reverse angle' },
+];
+
+/** From behind the far baseline, looking back at the near player. */
+export function reverseCamera(): Camera {
+  const W = COURT.doublesHalfWidth + 0.8, L = COURT.halfLength + 1.0;
+  return new Camera({ x: 0, y: 14.2, z: 8.6 }, { x: 0, y: -0.8, z: 0.3 }, [
+    { x: -W, y: -L, z: 0 }, { x: W, y: -L, z: 0 }, { x: -W, y: L, z: 0 }, { x: W, y: L, z: 0 }, { x: 0, y: -L + 0.4, z: 2.6 },
+  ], 0.53);
 }

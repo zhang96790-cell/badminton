@@ -188,6 +188,38 @@ export const SERVE = {
   serverOffset: 0.5,
   receiverDepth: 3.3,
   receiverOffset: 0.7,
+  /** Doubles: serve and receive close to the short service line; partners stand behind. */
+  doubles: {
+    serverDepth: 2.15,
+    receiverDepth: 2.35,
+    serverPartnerDepth: 3.9,
+    receiverPartnerDepth: 4.0,
+    partnerOffset: 0.35,
+    /** Long serves aim this far inside the doubles long service line. */
+    longMargin: 0.3,
+  },
+};
+
+export const DOUBLES = {
+  /** Side-by-side defence: each player covers a half, this far from the centre line, this deep. */
+  defence: { x: 1.35, y: 3.6 },
+  /** Front-and-back attack: the front player sits near the T, the back player covers the rear court. */
+  attack: { frontY: 2.1, backY: 4.3 },
+  /** How far a player shades toward the gap their partner leaves when pulled out of position. */
+  coverShift: 0.45,
+  /** Who takes the shuttle: the player with more time to spare, unless it's within this much (m) of even... */
+  contested: 0.35,
+  /** ...in which case the forehand side takes it (this much of a head start). */
+  forehandBias: 0.12,
+  /** Shot-choice bonus for aiming down the middle between two side-by-side defenders. */
+  middleBonus: 0.35,
+  /** Auto-switch control only swaps when the partner is this much better placed (m). */
+  switchMargin: 0.4,
+  /** Serving in doubles is mostly low; this fraction of the CPU's long serves are flicks. */
+  flickShare: 0.75,
+  shoutTime: 0.9,
+  /** Partners are kept at least this far apart (m). */
+  personalSpace: 0.7,
 };
 
 export interface ScoringFormat { pointsToWin: number; winBy: number; pointCap: number; intervalAt: number }
@@ -384,6 +416,10 @@ export const VISUAL = {
     post: '#cfd5dc',
     p1: '#ff6a4d',
     p2: '#4da3ff',
+    /** Doubles partners: a close shade of their team colour. */
+    p3: '#ffb347',
+    p4: '#8f7bff',
+    you: '#ffffff',
     skin: '#e6c3a2',
     hair: '#2a1d15',
     shorts: '#1c2431',

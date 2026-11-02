@@ -31,7 +31,7 @@ Amber is the only warm colour and marks what to do next. Don't spread it to seco
 - ≤760px: rows restack (numeral on the left; event, match and actions below), the footer stacks, and the View/Fullscreen
   bar hides while the menu is open.
 - Two side drawers share the `.matchcard` style, `min(470px, 100%)` wide, and only one is open at a time. Esc closes it.
-  - **Match card** (Edit match card on Court 1): match settings only (opponent, CPU style, format, accuracy). No tabs.
+  - **Match card** (Edit match card on Court 1): match settings only (event, opponent, CPU style, partner style, format, accuracy). No tabs. Rows that don't apply (partner style in singles, 2 players in doubles) dim to 40% and can't be clicked.
   - **Assists & controls** slides in from the **left**. It opens from a vertical cool-white pull tab (`.kit-tab`) on the left screen edge,
     and How to play opens its Controls tab. The tab rides on the drawer's edge while open and its chevron flips. On phones the tab
     sits low on the edge and hides while the full-width drawer is open. Tabs inside: Assists, and Controls (control mode above the shot table).

@@ -5,6 +5,23 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.6',
+    title: 'Doubles',
+    date: '2 Nov 2026',
+    changes: [
+      'Doubles: you and a CPU partner against a CPU pair. Pick it under Event on the match card. Your partner plays at the opponents’ level.',
+      'Real doubles rules: the side alleys are in, and the service box is short and wide (the back line is out on the serve). You serve from the right on an even score and the left on odd, partners swap courts only when they win a point on their own serve, and only the receiver may return the serve.',
+      'Your partner plays like a doubles player: side by side when defending, front and back when attacking. They call “Mine!” or “Yours!” for shuttles down the middle and cover the gap when you get pulled out of position.',
+      'The CPU pair works together too, aiming at the gap between you and at whoever is out of position.',
+      'Partner styles on the match card: All-rounder, Back-court smasher, Steady defender or Net player.',
+      'Serving is mostly low in doubles. Receivers stand close and rush loose serves, so the flick serve matters. In mouse mode, tap right-click for a flick and hold it for a high serve.',
+      'Auto-switch (in Assists & controls): you take over whichever of your pair is better placed for the next shot. It’s off by default.',
+      'A white ring and YOU tag show which player is yours, the scoreboard shows both pairs, and the bottom line says who serves from which court.',
+      'The end-of-match screen adds each player’s shots, winners, errors, smashes and fastest smash.',
+      'Two new tutorial lessons, Doubles serve and Doubles positions, and three new practice drills on keys 7–9: Doubles defence (2 on 1), Drive exchange and Return of serve.',
+    ],
+  },
+  {
     version: '1.5.2',
     title: 'Slide-out side panel',
     date: '2 Nov 2026',

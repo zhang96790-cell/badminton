@@ -31,7 +31,7 @@ const voice = new Voice();
 
 const STORE = 'badminton.settings';
 const settings: Settings = {
-  opponent: 'beginner', style: 'allround', p1Control: 'mouse', games: 3, points: 15, guides: true, timingLight: true, swingAssist: true, aim: 'realistic', voice: true,
+  event: 'singles', opponent: 'beginner', style: 'allround', partnerStyle: 'allround', autoSwitch: false, p1Control: 'mouse', games: 3, points: 15, guides: true, timingLight: true, swingAssist: true, aim: 'realistic', voice: true,
   view: 'close',
 };
 try {
@@ -118,6 +118,9 @@ function describeControls() {
     ${k('H')} challenge a line call · ${k('R')} replay · ${k('F')} fullscreen · ${k('G')} landing marker · ${k('M')} mute`
     + (settings.timingLight ? `<br>Timing light beside your player: <b style="color:#facc15">yellow</b> = too early, <b style="color:#4ade80">green</b> = swing now, <b style="color:#f87171">red</b> = too late.` : '');
   styleRow.classList.toggle('disabled', twoP);
+  const doubles = settings.event === 'doubles';
+  document.getElementById('partnerRow')!.classList.toggle('disabled', !doubles);
+  document.querySelector<HTMLElement>('[data-group="opponent"] [data-value="human"]')!.classList.toggle('disabled', doubles);
 }
 
 // What's new pop-up: newest version first, with a NEW badge on the button until you've opened it.
@@ -161,9 +164,10 @@ function describeFormat() {
   flip(tag, `${len} to ${f.pointsToWin}, win by 2, capped at ${f.pointCap}`);
   const twoP = settings.opponent === 'human';
   const level = settings.opponent[0].toUpperCase() + settings.opponent.slice(1);
-  flip(meName, twoP ? 'Player 1' : 'You');
-  flip(oppName, twoP ? 'Player 2' : `CPU ${level}`);
-  flip(eventLabel, twoP ? 'Singles · 2 players' : `Singles · ${STYLES[settings.style].label}`);
+  const doubles = settings.event === 'doubles';
+  flip(meName, twoP ? 'Player 1' : doubles ? 'You & Partner' : 'You');
+  flip(oppName, twoP ? 'Player 2' : `CPU ${level}${doubles ? ' pair' : ''}`);
+  flip(eventLabel, twoP ? 'Singles · 2 players' : `${doubles ? 'Doubles' : 'Singles'} · ${STYLES[settings.style].label}`);
 }
 const today = new Date();
 document.getElementById('today')!.textContent = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -223,6 +227,9 @@ document.querySelectorAll<HTMLElement>('.seg').forEach((seg) => {
   seg.querySelectorAll<HTMLButtonElement>('button').forEach((btn) => {
     btn.addEventListener('click', () => {
       (settings as unknown as Record<string, unknown>)[group] = parse(btn.dataset.value!);
+      // Doubles is against a CPU pair: picking one switches off the other.
+      if (group === 'event' && settings.event === 'doubles' && settings.opponent === 'human') settings.opponent = 'medium';
+      if (group === 'opponent' && settings.opponent === 'human') settings.event = 'singles';
       saveSettings();
       syncMenu();
       describeControls();
@@ -282,7 +289,7 @@ function frame(now: number) {
     const over = game.state === 'matchOver';
     if (input.tapped(['Escape'])) { if (over || game.session) showMenu(); else game.paused = !game.paused; }
     if (game?.session) {
-      for (const d of ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6']) if (input.tapped([d])) game.session.key(game, d);
+      for (const d of ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9']) if (input.tapped([d])) game.session.key(game, d);
     }
     if (game && input.tapped(UI_KEYS.mute)) {
       sound.muted = !sound.muted;

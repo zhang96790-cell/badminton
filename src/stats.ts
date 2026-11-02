@@ -1,13 +1,14 @@
 import type { V2 } from './math';
 import type { Hand } from './shots';
 
-export interface ShotStat { by: 0 | 1; label: string; speedKmh: number; hand: Hand | 'serve'; landing: V2 | null }
+export interface ShotStat { by: 0 | 1; /** Player id (doubles has four). */ pid: number; label: string; speedKmh: number; hand: Hand | 'serve'; landing: V2 | null }
 
 export interface RallyStat {
   shots: number;
   winner: 0 | 1;
-  /** Who played the last shot. */
+  /** Which side played the last shot, and which player. */
   hitter: 0 | 1;
+  hitterPid: number;
   /** Last shot landed in untouched (winner) or went out / into the net (error). */
   kind: 'winner' | 'error' | 'delay';
   forced: boolean;
@@ -29,6 +30,9 @@ export interface PlayerSummary {
   landings: V2[];
 }
 
+/** One player's line in the doubles breakdown. */
+export interface IndividualSummary { shots: number; winners: number; errors: number; smashes: number; topSmash: number }
+
 export class MatchStats {
   shots: ShotStat[] = [];
   rallies: RallyStat[] = [];
@@ -49,6 +53,19 @@ export class MatchStats {
     r.winner = winner;
     r.kind = kind;
     r.forced = false;
+  }
+
+  /** Per-player numbers by stable player id (doubles). */
+  individual(pid: number): IndividualSummary {
+    const mine = this.shots.filter((s) => s.pid === pid && s.hand !== 'serve');
+    const smashes = mine.filter((s) => /smash/i.test(s.label));
+    return {
+      shots: mine.length,
+      winners: this.rallies.filter((r) => r.kind === 'winner' && r.hitterPid === pid).length,
+      errors: this.rallies.filter((r) => r.kind === 'error' && r.hitterPid === pid).length,
+      smashes: smashes.length,
+      topSmash: smashes.reduce((m, s) => Math.max(m, s.speedKmh), 0),
+    };
   }
 
   summary(i: 0 | 1): PlayerSummary {

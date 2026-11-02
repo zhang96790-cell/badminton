@@ -9,7 +9,7 @@ export interface Command { move: V2; jump: boolean; shot: ShotRequest | null }
 
 /** What controllers get told about the rally (the CPU learns from these). */
 export type Observation =
-  | { type: 'hit'; by: Side; contact: Contact; label: string; landing: V2 | null }
+  | { type: 'hit'; by: Side; contact: Contact; label: string; landing: V2 | null; hitter: Player }
   | { type: 'rally'; winner: Side };
 
 export interface Controller {
@@ -20,6 +20,8 @@ export interface Controller {
   /** Re-read aim at the moment of contact (direction held / cursor position right now). */
   aimAtContact?(req: ShotRequest): ShotRequest;
   observe?(o: Observation): void;
+  /** Take over a different player (doubles auto-switch). */
+  bind?(p: Player): void;
 }
 
 function moveDir(input: Input, k: KeyMap): V2 {
@@ -39,6 +41,8 @@ export class KeyboardController implements Controller {
 
   /** With a camera, the cursor (trackpad) aims left/right; the aim keys still override it. */
   constructor(private input: Input, private keys: KeyMap, private player: Player, private camera?: Camera) {}
+
+  bind(p: Player) { this.player = p; this.chargeT = null; }
 
   get cursorAim(): boolean { return !!this.camera; }
 
@@ -102,6 +106,8 @@ export class MouseController implements Controller {
   private charge: { arc: 'low' | 'high'; button: 'left' | 'right'; t: number } | null = null;
 
   constructor(private input: Input, private keys: KeyMap, private player: Player, private camera: Camera) {}
+
+  bind(p: Player) { this.player = p; this.charge = null; }
 
   poll(dt: number): Command {
     const move = moveDir(this.input, this.keys);

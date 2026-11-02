@@ -1,8 +1,9 @@
 import { AIController } from './ai';
 import type { Camera, View } from './camera';
-import { COURT, KEYS, OFFICIALS, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type Level, type Style } from './config';
+import { COURT, DOUBLES, KEYS, OFFICIALS, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type Level, type Style } from './config';
 import { KeyboardController, MouseController, type Command, type Controller, type Observation } from './controllers';
-import { isIn, netHeightAt, rightCourtSign, signedInside, singlesRect, singlesServiceBox, type Rect } from './court';
+import { halfRect, isIn, netHeightAt, rightCourtSign, serviceBox, signedInside, singlesRect, type Rect } from './court';
+import { interceptSlack } from './doubles';
 import { REVIEW_TIME, type Review } from './hawkeye';
 import type { Input } from './input';
 import { chance, clamp, gauss, type Side, type V2, type V3 } from './math';
@@ -11,15 +12,21 @@ import { Player } from './player';
 import { Practice, feedShot, type FeedType, type Session } from './practice';
 import { Tutorial } from './tutorial';
 import { Playback, Recorder } from './replay';
-import { Match, type PointOutcome } from './rules';
+import { Match, partnerIdx, type PointOutcome } from './rules';
 import { resolveServe, resolveShot, type Contact, type Shot } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
 import type { Speaker } from './voice';
 
 export interface Settings {
+  /** Doubles is you and a CPU partner against a CPU pair. */
+  event: 'singles' | 'doubles';
   opponent: Level | 'human';
   style: Style;
+  /** Your doubles partner's style. */
+  partnerStyle: Style;
+  /** Doubles: you take over whichever of your pair is better placed for the next shot. */
+  autoSwitch: boolean;
   /** hybrid = keys to hit, cursor (trackpad) to aim. */
   p1Control: 'mouse' | 'keyboard' | 'hybrid';
   /** 1 = single game, 3 = best of three. */
@@ -54,13 +61,19 @@ export interface Callout { label: string; detail: string; color: string; t: numb
 export interface Banner { title: string; sub: string; color: string; t: number }
 
 export class Game {
-  players: [Player, Player];
-  controllers: [Controller, Controller];
+  /** 0 = you (near), 1 = far player. Doubles adds 2 = your partner and 3 = the far partner (team = index % 2). */
+  players: Player[];
+  controllers: Controller[];
+  readonly doubles: boolean;
+  /** Tutorial: serve into the doubles box and draw the doubles court, in a singles drill. */
+  drillDoubles = false;
+  /** Which court is in play: doubles (alleys in, short wide service box) or singles. */
+  get doublesCourt(): boolean { return this.doubles || this.drillDoubles; }
   shuttle = new Shuttle();
   match: Match;
   stats = new MatchStats();
   recorder = new Recorder();
-  officials: Official[] = createOfficials();
+  officials: Official[];
   state: GameState = 'serve';
   paused = false;
   rallyHits = 0;
@@ -108,24 +121,38 @@ export class Game {
   private warnings: [number, number] = [0, 0];
   private lastContact: (Contact & { incomingKmh: number }) | null = null;
   private lastShot: { label: string; hand: Contact['hand'] | 'serve'; netCord: boolean } | null = null;
+  /** Index (and stable id) of whoever hit last, for per-player stats. */
+  private lastHitterId = 0;
 
   constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match') {
     const drill = mode !== 'match';
-    if (drill) settings = { ...settings, opponent: 'medium' };
+    if (drill) settings = { ...settings, opponent: 'medium', event: 'singles' };
+    // Doubles is always against a CPU pair (no shared-keyboard doubles).
+    if (settings.event === 'doubles' && settings.opponent === 'human') settings = { ...settings, opponent: 'medium' };
+    this.settings = settings;
+    const doubles = this.doubles = settings.event === 'doubles';
     const vsAI = settings.opponent !== 'human';
-    this.match = new Match(RULES.formats[settings.points], settings.games === 1 ? 1 : 2);
+    this.match = new Match(RULES.formats[settings.points], settings.games === 1 ? 1 : 2, doubles);
+    this.officials = createOfficials(doubles);
     const p1 = new Player(-1, vsAI ? 'You' : 'P1', VISUAL.colors.p1, vsAI ? 'Player' : 'Player one');
-    const p2 = new Player(1, drill ? 'Coach' : vsAI ? 'CPU' : 'P2', VISUAL.colors.p2, vsAI ? 'C P U' : 'Player two');
+    const p2 = new Player(1, drill ? 'Coach' : doubles ? 'CPU 1' : vsAI ? 'CPU' : 'P2', VISUAL.colors.p2, doubles ? 'C P U one' : vsAI ? 'C P U' : 'Player two');
     this.players = [p1, p2];
+    if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
+    this.players.forEach((p, i) => { p.id = i; });
     const c1: Controller = settings.p1Control === 'mouse'
       ? new MouseController(input, KEYS.mouse, p1, camera)
       : new KeyboardController(input, vsAI ? KEYS.solo : KEYS.p1Shared, p1, settings.p1Control === 'hybrid' ? camera : undefined);
     const c2: Controller = drill
       ? { poll: () => ({ move: { x: 0, y: 0 }, jump: false, shot: null }) } // the coach only feeds
       : vsAI
-        ? new AIController(this, p2, p1, settings.opponent as Level, settings.style)
+        ? new AIController(this, p2, settings.opponent as Level, settings.style)
         : new KeyboardController(input, KEYS.p2Shared, p2);
     this.controllers = [c1, c2];
+    if (doubles) {
+      // Your partner plays at the same level as the opponents.
+      const level = settings.opponent as Level;
+      this.controllers.push(new AIController(this, this.players[2], level, settings.partnerStyle), new AIController(this, this.players[3], level, settings.style));
+    }
     this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard');
@@ -173,6 +200,7 @@ export class Game {
       return;
     }
     const f = feedShot(p.type, this.players[0].pos);
+    if (f.place) this.players[0].place(f.place.x, f.place.y);
     const coach = this.players[1];
     coach.place(f.from.x - coach.racketSide * 0.3, Math.max(0.6, f.from.y + 0.25));
     coach.onHit(f.from);
@@ -206,12 +234,26 @@ export class Game {
     this.timer = Infinity;
   }
 
-  get server(): Player { return this.players[this.match.server]; }
-  get receiver(): Player { return this.players[1 - this.match.server]; }
+  get server(): Player { return this.players[this.match.serverIdx()]; }
+  get receiver(): Player { return this.players[this.match.receiverIdx()]; }
   get opponentLabel(): string {
     const o = this.settings.opponent;
-    return o === 'human' ? '2 Player' : `CPU ${o[0].toUpperCase()}${o.slice(1)} · ${STYLES[this.settings.style].label}`;
+    if (o === 'human') return '2 Player';
+    return `CPU ${o[0].toUpperCase()}${o.slice(1)}${this.doubles ? ' pair' : ''} · ${STYLES[this.settings.style].label}`;
   }
+  /** Side 0 (near) or 1 (far) of player i. */
+  teamOf(i: number): 0 | 1 { return (i % 2) as 0 | 1; }
+  teamName(t: 0 | 1): string {
+    if (!this.doubles) return this.players[t].name;
+    return t === 0 ? 'You & Partner' : 'CPU pair';
+  }
+  teamVoice(t: 0 | 1): string {
+    if (!this.doubles) return this.players[t].voiceName;
+    return t === 0 ? 'Player and partner' : 'C P U pair';
+  }
+  teamColor(t: 0 | 1): string { return this.players[t].color; }
+  /** The last shot played (for the doubles AI's attack / defence formations). */
+  get lastShotLabel(): string { return this.lastShot?.label ?? ''; }
   isHuman(i: number): boolean { return !(this.controllers[i] instanceof AIController); }
   /** Short lockout so the key that ended the last rally doesn't instantly serve. */
   canServe(): boolean { return this.state === 'serve' && this.timer <= 0; }
@@ -246,7 +288,7 @@ export class Game {
       return;
     }
 
-    const cmds = this.controllers.map((c) => c.poll(dt)) as [Command, Command];
+    const cmds = this.controllers.map((c) => c.poll(dt));
     if (this.session) this.clockRunning = false;
     if (this.clockRunning && (this.state === 'point' || this.state === 'serve')) {
       this.clock -= real;
@@ -303,9 +345,18 @@ export class Game {
     const srv = this.server, rcv = this.receiver;
     const sCourt = right ? rightCourtSign(srv.side) : -rightCourtSign(srv.side);
     const rCourt = right ? rightCourtSign(rcv.side) : -rightCourtSign(rcv.side);
-    srv.place(sCourt * SERVE.serverOffset, srv.side * SERVE.serverDepth);
-    rcv.place(rCourt * SERVE.receiverOffset, rcv.side * SERVE.receiverDepth);
-    srv.frozen = rcv.frozen = true;
+    if (this.doubles) {
+      // Server and receiver up near the short service line; partners behind, ready for the next shot.
+      const D = SERVE.doubles;
+      srv.place(sCourt * SERVE.serverOffset, srv.side * D.serverDepth);
+      rcv.place(rCourt * SERVE.receiverOffset, rcv.side * D.receiverDepth);
+      this.players[partnerIdx(this.match.serverIdx())].place(-sCourt * D.partnerOffset, srv.side * D.serverPartnerDepth);
+      this.players[partnerIdx(this.match.receiverIdx())].place(-rCourt * DOUBLES.defence.x * 0.8, rcv.side * D.receiverPartnerDepth);
+    } else {
+      srv.place(sCourt * SERVE.serverOffset, srv.side * SERVE.serverDepth);
+      rcv.place(rCourt * SERVE.receiverOffset, rcv.side * SERVE.receiverDepth);
+    }
+    for (const p of this.players) p.frozen = true;
     this.shuttle.hold(this.serveContact(srv));
   }
 
@@ -313,16 +364,16 @@ export class Game {
     return { x: p.pos.x + p.racketSide * 0.15, y: p.pos.y + p.forward * 0.35, z: SERVE.contactHeight };
   }
 
-  private updateServe(dt: number, cmds: [Command, Command]) {
+  private updateServe(dt: number, cmds: Command[]) {
     this.timer -= dt;
     this.players.forEach((p) => p.update(dt, { x: 0, y: 0 }, false));
-    const idx = this.match.server;
+    const idx = this.match.server, si = this.match.serverIdx();
     const srv = this.server;
     this.shuttle.hold(this.serveContact(srv));
-    const req = cmds[idx].shot;
+    const req = cmds[si].shot;
     if (!req || !this.canServe()) return;
 
-    const box = singlesServiceBox(this.receiver.side, this.match.serverInRightCourt());
+    const box = serviceBox(this.receiver.side, this.match.serverInRightCourt(), this.doublesCourt);
     const from = this.serveContact(srv);
     const shot = resolveServe(req, from, srv.side, box);
     this.serveBox = box;
@@ -330,7 +381,7 @@ export class Game {
     this.shuttle.launch(from, shot.velocity, srv.side, true);
     this.predict();
     srv.onHit(from);
-    srv.frozen = this.receiver.frozen = false;
+    for (const p of this.players) p.frozen = false;
     this.receiver.splitStep();
     this.state = 'rally';
     this.clockRunning = false;
@@ -338,14 +389,15 @@ export class Game {
     this.rallyHits = 1;
     this.lastContact = null;
     this.lastShot = { label: shot.label, hand: 'serve', netCord: false };
-    this.stats.shots.push({ by: idx, label: shot.label, speedKmh: shot.speedKmh, hand: 'serve', landing: this.predicted });
+    this.lastHitterId = srv.id;
+    this.stats.shots.push({ by: idx, pid: srv.id, label: shot.label, speedKmh: shot.speedKmh, hand: 'serve', landing: this.predicted });
     this.announce(srv, shot, null);
     this.events.push({ type: 'hit', strength: 0.3 });
   }
 
   // ── Rally ──────────────────────────────────────────────────────────────────
 
-  private updateRally(dt: number, cmds: [Command, Command]) {
+  private updateRally(dt: number, cmds: Command[]) {
     this.acc += dt;
     let first = true;
     while (this.acc >= PHYSICS.dt && this.state === 'rally') {
@@ -356,11 +408,12 @@ export class Game {
     if (this.state !== 'rally') this.acc = 0;
   }
 
-  private step(dt: number, cmds: [Command, Command], first: boolean) {
+  private step(dt: number, cmds: Command[], first: boolean) {
     this.players.forEach((p, i) => {
       if (first && cmds[i].shot) p.startSwing(cmds[i].shot!);
       if (p.update(dt, cmds[i].move, first && cmds[i].jump) === 'whiff') this.events.push({ type: 'whiff' });
     });
+    if (this.doubles) this.keepApart();
 
     const sh = this.shuttle;
     const prev = { ...sh.pos };
@@ -415,16 +468,19 @@ export class Game {
 
     // Contact
     if (sh.inFlight) {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < this.players.length; i++) {
         const p = this.players[i];
         if (!p.swing || sh.lastHitter === p.side || sh.touchedNet || sh.pos.y * p.side <= 0) continue;
+        // Doubles: only the receiver may return the serve.
+        if (this.doubles && sh.isServe && p !== this.receiver) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt);
         if (!c) continue;
         const ctrl = this.controllers[i];
         let req = ctrl.aimAtContact ? ctrl.aimAtContact(p.swing.req) : p.swing.req;
         if (req.kind === 'intent' && !req.target && req.aimX === 0 && this.isHuman(i)) {
           // Keyboard with no direction held: play into the open side rather than straight at the opponent.
-          const ox = this.players[1 - i].pos.x;
+          const opps = this.players.filter((q) => q.side !== p.side);
+          const ox = opps.reduce((a, q) => a + q.pos.x, 0) / opps.length;
           const side = Math.abs(ox) > 0.25 ? -Math.sign(ox) : Math.sign(c.point.x) || 1;
           req = { ...req, aimX: (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
         }
@@ -436,12 +492,14 @@ export class Game {
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         p.timingFlash = { kind: Math.abs(c.timingError) <= SWING.perfectTolerance ? 'perfect' : c.timingError > 0 ? 'early' : 'late', t: 0 };
         if (this.session && i === 0) this.session.onHit(this, { label: shot.label, timing: p.timingFlash.kind, airborne: c.airborne });
-        this.players[1 - i].splitStep();
+        for (const q of this.players) if (q.side !== p.side) q.splitStep();
         this.rallyHits++;
         this.lastContact = { ...c, incomingKmh };
         this.lastShot = { label: shot.label, hand: c.hand, netCord: false };
-        this.stats.shots.push({ by: i as 0 | 1, label: shot.label, speedKmh: shot.speedKmh, hand: c.hand, landing: this.predicted });
-        this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted });
+        this.lastHitterId = p.id;
+        this.stats.shots.push({ by: this.teamOf(i), pid: p.id, label: shot.label, speedKmh: shot.speedKmh, hand: c.hand, landing: this.predicted });
+        this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted, hitter: p });
+        if (this.teamOf(i) === 1) this.maybeSwitch();
         this.announce(p, shot, `${c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`);
         this.events.push({ type: 'hit', strength: Math.min(1, shot.speedKmh / 300) });
         break;
@@ -503,7 +561,7 @@ export class Game {
     if (this.session) {
       // No scoring in practice: report the landing and let the session decide what's next.
       const crossed = land.y * hitter < 0 && !sh.wide;
-      const inCourt = crossed && (sh.isServe ? isIn(land, this.serveBox!) : isIn(land, singlesRect(-hitter as Side)));
+      const inCourt = crossed && (sh.isServe ? isIn(land, this.serveBox!) : isIn(land, halfRect(-hitter as Side, this.doublesCourt)));
       this.landing = { p: land, call: hIdx === 0 ? (inCourt ? 'IN' : 'OUT') : null, t: 0 };
       this.rallyHits = 0;
       this.idle();
@@ -516,7 +574,7 @@ export class Game {
     if (sh.wide) { hitterWins = false; title = 'Fault — passed outside the post'; }
     else if (land.y * hitter >= 0) { hitterWins = false; title = sh.touchedNet ? 'Into the net' : "Didn't cross the net"; }
     else {
-      const rect = sh.isServe ? this.serveBox! : singlesRect(-hitter as Side);
+      const rect = sh.isServe ? this.serveBox! : halfRect(-hitter as Side, this.doubles);
       const signed = signedInside(land, rect);
       const truthIn = signed >= -COURT.footprint;
       // Line judges are human: shuttles right on the edge are sometimes miscalled.
@@ -535,7 +593,7 @@ export class Game {
     const lc = this.lastContact;
     const forced = !hitterWins && !!lc && (lc.stretch > SHOTS.stretchStart || lc.timing < 0.7 || lc.incomingKmh > 180);
     this.stats.rallies.push({
-      shots: this.rallyHits, winner, hitter: hIdx, kind: hitterWins ? 'winner' : 'error', forced,
+      shots: this.rallyHits, winner, hitter: hIdx, hitterPid: this.lastHitterId, kind: hitterWins ? 'winner' : 'error', forced,
       lastLabel: this.lastShot?.label ?? '', lastHand: this.lastShot?.hand ?? 'serve',
     });
     this.call = line;
@@ -544,11 +602,10 @@ export class Game {
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
     this.outcome = this.match.award(winner);
-    const w = this.players[winner];
     const why = sh.touchedNet || (!sh.wide && land.y * hitter >= 0) ? this.netFaultReason() : null;
-    this.banner = { title, sub: `${why ? `${why} · ` : ''}Point ${w.name}`, color: w.color, t: 0 };
+    this.banner = { title, sub: `${why ? `${why} · ` : ''}Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
     this.events.push({ type: 'point' });
-    this.observe({ type: 'rally', winner: w.side });
+    this.observe({ type: 'rally', winner: this.players[winner].side });
 
     // Crowd: long rallies and spectacular winners get the biggest reaction.
     const spectacular = hitterWins && /Jump smash|Net kill/.test(this.lastShot?.label ?? '');
@@ -616,17 +673,17 @@ export class Game {
       this.banner = null;
       this.clockRunning = false;
       this.stats.finish();
-      this.say('umpire', matchWonCall(this.players[wi].voiceName, m.history, wi), true);
+      this.say('umpire', matchWonCall(this.teamVoice(wi), m.history, wi), true);
       this.cheer = 1;
       this.events.push({ type: 'applause', intensity: 1 });
     } else if (this.state === 'point' && o?.gameOver) {
       const [a, b] = m.history[m.history.length - 1];
-      const w = this.players[a > b ? 0 : 1];
+      const wt = (a > b ? 0 : 1) as 0 | 1;
       this.state = 'gameBreak';
       this.timer = RULES.gameBreak;
       this.clockRunning = false;
-      this.banner = { title: `Game ${m.history.length} — ${w.name}`, sub: `${a}–${b}`, color: w.color, t: 0 };
-      this.say('umpire', gameWonCall(w.voiceName, Math.max(a, b), Math.min(a, b)), true);
+      this.banner = { title: `Game ${m.history.length} — ${this.teamName(wt)}`, sub: `${a}–${b}`, color: this.teamColor(wt), t: 0 };
+      this.say('umpire', gameWonCall(this.teamVoice(wt), Math.max(a, b), Math.min(a, b)), true);
     } else if (this.state === 'point' && o?.interval) {
       this.state = 'interval';
       this.timer = RULES.intervalPause;
@@ -661,21 +718,20 @@ export class Game {
     const c = this.call!;
     c.challenged = true;
     this.aiChallengeAt = null;
-    const p = this.players[by];
     this.review = {
-      by, name: p.name, color: p.color, landing: c.landing, path: this.recorder.pathBefore(1.4),
+      by, name: this.teamName(by), color: this.teamColor(by), landing: c.landing, path: this.recorder.pathBefore(1.4),
       rect: c.rect, signed: c.signed, truthIn: c.truthIn, callIn: c.callIn, t: 0,
     };
     this.stats.challenges[by].made++;
     this.state = 'challenge';
     this.clockRunning = false;
-    this.say('umpire', `${p.voiceName}, challenge.`, true);
+    this.say('umpire', `${this.teamVoice(by)}, challenge.`, true);
   }
 
   private finishChallenge() {
     const r = this.review!, c = this.call!;
     const overturned = r.truthIn !== c.callIn;
-    const p = this.players[r.by];
+    const p = { name: this.teamName(r.by), color: this.teamColor(r.by) };
     if (overturned && this.session) {
       c.callIn = c.truthIn;
       if (c.judge) c.judge.signal = c.callIn ? 'in' : 'out';
@@ -690,8 +746,7 @@ export class Game {
       this.stats.challenges[r.by].won++;
       if (c.judge) c.judge.signal = c.callIn ? 'in' : 'out';
       this.landing = { p: c.landing, call: c.callIn ? 'IN' : 'OUT', t: 0 };
-      const w = this.players[winner];
-      this.banner = { title: 'Call overturned', sub: `Point ${w.name}`, color: w.color, t: 0 };
+      this.banner = { title: 'Call overturned', sub: `Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
     } else {
       this.challenges[r.by]--;
       const left = this.challenges[r.by];
@@ -754,12 +809,11 @@ export class Game {
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
     this.outcome = this.match.award(winner);
-    this.stats.rallies.push({ shots: 0, winner, hitter: s, kind: 'delay', forced: false, lastLabel: '', lastHand: 'serve' });
+    this.stats.rallies.push({ shots: 0, winner, hitter: s, hitterPid: this.server.id, kind: 'delay', forced: false, lastLabel: '', lastHand: 'serve' });
     this.call = null;
     this.landing = null;
     this.greatPoint = false;
-    const w = this.players[winner];
-    this.banner = { title: 'Fault — delay of game', sub: `Point ${w.name}`, color: w.color, t: 0 };
+    this.banner = { title: 'Fault — delay of game', sub: `Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
     this.say('service', 'Fault.', true);
     this.events.push({ type: 'point' });
     this.state = 'point';
@@ -779,12 +833,56 @@ export class Game {
     else if (this.state === 'interval' || this.state === 'gameBreak') this.timer = 0;
   }
 
+  /** Partners can't stand in the same spot: nudge them apart when they get too close. */
+  private keepApart() {
+    for (const [a, b] of [[this.players[0], this.players[2]], [this.players[1], this.players[3]]]) {
+      const dx = b.pos.x - a.pos.x, dy = b.pos.y - a.pos.y, d = Math.hypot(dx, dy);
+      if (d >= DOUBLES.personalSpace || d < 1e-6) continue;
+      const push = (DOUBLES.personalSpace - d) / 2;
+      a.pos.x -= (dx / d) * push; a.pos.y -= (dy / d) * push;
+      b.pos.x += (dx / d) * push; b.pos.y += (dy / d) * push;
+    }
+  }
+
+  /** A doubles call ("Mine!" / "Yours!"). Only your partner's calls are spoken. */
+  shout(p: Player, text: string) {
+    p.shout = { text, t: 0 };
+    const i = this.players.indexOf(p);
+    if (i >= 0 && this.teamOf(i) === 0 && !this.isHuman(i)) this.events.push({ type: 'say', who: 'partner', text });
+  }
+
+  /**
+   * Doubles auto-switch: as the shuttle comes back to your side, take over whichever of your pair is
+   * better placed for it. Your old player carries on as the CPU partner.
+   */
+  private maybeSwitch() {
+    if (!this.doubles || !this.settings.autoSwitch || this.session) return;
+    const you = this.players[0], mate = this.players[2];
+    if (you.swing || you.charge !== null || mate.swing || you.airborne) return;
+    const path = predictPath(this.shuttle.pos, this.shuttle.vel);
+    if (path.netFault || path.landing.y * you.side <= 0) return;
+    const a = interceptSlack(you, path.samples, 0).slack, b = interceptSlack(mate, path.samples, 0).slack;
+    if (b < a - DOUBLES.switchMargin) this.swapControl();
+  }
+
+  private swapControl() {
+    const a = this.players[0], b = this.players[2];
+    this.players[0] = b;
+    this.players[2] = a;
+    [a.extraReach, b.extraReach] = [b.extraReach, a.extraReach];
+    [a.speedMult, b.speedMult] = [b.speedMult, a.speedMult];
+    a.charge = b.charge = null;
+    this.controllers[0].bind?.(b);
+    this.controllers[2].bind?.(a);
+    this.match.swapIndices(0, 2);
+  }
+
   private observe(o: Observation) {
     for (const c of this.controllers) c.observe?.(o);
   }
 
   private say(who: Speaker, text: string, interrupt = false) {
-    this.caption = { who, text, t: 0 };
+    if (who !== 'partner') this.caption = { who, text, t: 0 };
     this.events.push({ type: 'say', who, text, interrupt });
   }
 

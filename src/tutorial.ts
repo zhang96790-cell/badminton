@@ -15,6 +15,10 @@ interface Step {
   okHit?: (h: HitInfo) => boolean;
   /** Does this landed shot of yours count? */
   ok?: (l: LandInfo) => boolean;
+  /** Move steps: the rings to run to, in order. */
+  rings?: V2[];
+  /** Serve steps: into the doubles service box. */
+  doubles?: boolean;
 }
 
 const same = (s: string): [string, string] => [s, s];
@@ -88,6 +92,17 @@ const STEPS: Step[] = [
     ],
   },
   {
+    title: 'Doubles serve', kind: 'serve', serve: 'short', doubles: true, goal: 1, ok: (l) => l.inCourt,
+    text: [
+      'Doubles: the service box is short and wide. The side alleys are in, but the back line is out on the serve (the long service line, 0.76 m in, is the limit). Serve low, because a high serve gets smashed. Left-click a short serve into the box.',
+      'Doubles: the service box is short and wide. The side alleys are in, but the back line is out on the serve (the long service line, 0.76 m in, is the limit). Serve low, because a high serve gets smashed. Press L for a short serve into the box.',
+    ],
+  },
+  {
+    title: 'Doubles positions', kind: 'move', rings: [{ x: -1.35, y: -3.6 }, { x: 0, y: -2.1 }, { x: 0, y: -4.3 }],
+    text: same('When your side lifts, defend side by side: one half each (run to the first ring). When your side hits down, attack front and back: one at the net, one at the back (the next two rings). Your partner takes the other spot, calls “Mine!” or “Yours!” for shuttles down the middle, and covers the gap if you get pulled out. Auto-switch (in Assists & controls) lets you take over whichever of you is nearer.'),
+  },
+  {
     title: 'Scoring', kind: 'info',
     text: same('Every rally wins a point. Games go to 15 or 21: win by 2, capped at 21 or 30. Faults: into the net, out, or not over. After each rally there’s a 25-second shot clock to serve. Press Enter to continue.'),
   },
@@ -125,9 +140,10 @@ export class Tutorial implements Session {
     this.count = 0;
     g.rings = [];
     g.players[0].frozen = false;
+    g.drillDoubles = !!s.doubles;
     switch (s.kind) {
       case 'move':
-        this.rings = [{ x: 1.6, y: -5.2 }, { x: -1.7, y: -1.6 }, { x: 0, y: -3.6 }];
+        this.rings = s.rings ?? [{ x: 1.6, y: -5.2 }, { x: -1.7, y: -1.6 }, { x: 0, y: -3.6 }];
         g.rings = [this.rings[0]];
         g.idle();
         break;

@@ -18,6 +18,14 @@ export function singlesRect(side: Side): Rect {
   return { xMin: -COURT.singlesHalfWidth, xMax: COURT.singlesHalfWidth, yMin: Math.min(back, open), yMax: Math.max(back, open) };
 }
 
+/** Doubles court on `side`: the side alleys are in during rallies. */
+export function doublesRect(side: Side): Rect {
+  const back = side * COURT.halfLength, open = -side * 50;
+  return { xMin: -COURT.doublesHalfWidth, xMax: COURT.doublesHalfWidth, yMin: Math.min(back, open), yMax: Math.max(back, open) };
+}
+
+export const halfRect = (side: Side, doubles: boolean) => (doubles ? doublesRect(side) : singlesRect(side));
+
 /** x sign of a player's right-hand service court (players face the net). */
 export const rightCourtSign = (side: Side): number => -side;
 
@@ -32,6 +40,20 @@ export function singlesServiceBox(receiverSide: Side, rightCourt: boolean): Rect
   return { xMin: Math.min(x0, x1), xMax: Math.max(x0, x1), yMin: Math.min(y0, y1), yMax: Math.max(y0, y1) };
 }
 
+/**
+ * Doubles service court: short and wide. From the short service line to the doubles long service line
+ * (the back boundary line is out on the serve), between the centre line and the doubles sideline.
+ */
+export function doublesServiceBox(receiverSide: Side, rightCourt: boolean): Rect {
+  const sx = rightCourt ? rightCourtSign(receiverSide) : -rightCourtSign(receiverSide);
+  const x1 = sx * COURT.doublesHalfWidth, x0 = -sx * (COURT.lineWidth / 2);
+  const y0 = receiverSide * COURT.shortServiceLine, y1 = receiverSide * COURT.doublesLongServiceLine;
+  return { xMin: Math.min(x0, x1), xMax: Math.max(x0, x1), yMin: Math.min(y0, y1), yMax: Math.max(y0, y1) };
+}
+
+export const serviceBox = (receiverSide: Side, rightCourt: boolean, doubles: boolean) =>
+  (doubles ? doublesServiceBox : singlesServiceBox)(receiverSide, rightCourt);
+
 /** Positive = inside by that much, negative = outside by that much (for the footprint's centre). */
 export function signedInside(p: V2, r: Rect): number {
   const dx = Math.max(r.xMin - p.x, 0, p.x - r.xMax);
@@ -43,10 +65,11 @@ export function signedInside(p: V2, r: Rect): number {
 /** In if any part of the cork's footprint touches the area or its lines. */
 export const isIn = (p: V2, r: Rect) => signedInside(p, r) >= -COURT.footprint;
 export const inSinglesHalf = (p: V2, side: Side) => p.y * side > 0 && isIn(p, singlesRect(side));
+export const inHalf = (p: V2, side: Side, doubles: boolean) => p.y * side > 0 && isIn(p, halfRect(side, doubles));
 
-/** How far outside the singles court a point is (0 if in). */
-export function distanceOut(p: V2): number {
-  return Math.max(0, -signedInside(p, singlesRect(p.y < 0 ? -1 : 1)));
+/** How far outside the (singles or doubles) court a point is (0 if in). */
+export function distanceOut(p: V2, doubles = false): number {
+  return Math.max(0, -signedInside(p, halfRect(p.y < 0 ? -1 : 1, doubles)));
 }
 
 /** Every court line as a rectangle, positioned the way the Laws measure them. */

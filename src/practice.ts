@@ -1,12 +1,15 @@
-import { COURT } from './config';
+import { COURT, SERVE } from './config';
 import { netHeightAt } from './court';
 import { DEG, clamp, lerp, pick, type V2, type V3 } from './math';
 import { angleForSpeed, clearNetAngle, softShot, speedForAngle } from './solver';
 import type { Game } from './game';
 
-export type FeedType = 'liftBack' | 'liftMid' | 'net' | 'netLoose' | 'drive' | 'smash' | 'line';
+export type FeedType = 'liftBack' | 'liftMid' | 'net' | 'netLoose' | 'drive' | 'smash' | 'line'
+  // Doubles drills
+  | 'smashWide' | 'driveFlat' | 'lowServe' | 'flickServe';
 
-export interface Feed { from: V3; velocity: V3 }
+/** place: where the drill puts you before this feed (return of serve). */
+export interface Feed { from: V3; velocity: V3; place?: V2 }
 
 /** The player's shot after it lands, for practice stats and tutorial goals. */
 export interface LandInfo {
@@ -15,7 +18,7 @@ export interface LandInfo {
   hitter: 0 | 1;
   label: string;
   isServe: boolean;
-  /** In the singles court (or the service box for serves). */
+  /** In the court in play, singles or doubles (or the service box for serves). */
   inCourt: boolean;
   /** Distance past the net. */
   depth: number;
@@ -72,6 +75,24 @@ export function feedShot(type: FeedType, near: V2): Feed {
     // Drives are a mid-court exchange: aimed past you so they arrive around shoulder height.
     case 'drive': return launch({ x: fx, y: 2.4, z: 1.5 }, { x: lat, y: clamp(near.y - 1.8, -6.4, -4.0) }, fast(22));
     case 'smash': return launch({ x: fx, y: 4.2, z: 2.6 }, { x: lat, y: -rand(3.2, 4.2) }, fast(62));
+    // Two attackers taking turns from either side, smashing anywhere across the doubles width.
+    case 'smashWide': {
+      const from = { x: pick([-1.6, 1.6]), y: rand(3.6, 4.6), z: 2.6 };
+      return launch(from, { x: clamp(near.x + rand(-1.3, 1.3), -2.8, 2.8), y: -rand(3.0, 4.4) }, fast(rand(52, 64)));
+    }
+    // Flat, fast drive exchange from mid-court, straight at you.
+    case 'driveFlat': return launch({ x: fx, y: 2.2, z: 1.3 }, { x: clamp(near.x + rand(-0.5, 0.5), -2.6, 2.6), y: clamp(near.y - 1.2, -6.2, -3.6) }, fast(rand(24, 29)));
+    // Return of serve: you receive in the right court, close to the short service line.
+    case 'lowServe':
+    case 'flickServe': {
+      const place = { x: SERVE.receiverOffset, y: -SERVE.doubles.receiverDepth };
+      const from = { x: -SERVE.serverOffset, y: SERVE.doubles.serverDepth, z: SERVE.contactHeight };
+      const target = type === 'lowServe'
+        ? { x: place.x + rand(-0.4, 0.4), y: -rand(2.05, 2.5) }
+        : { x: place.x + rand(-0.3, 0.6), y: -rand(5.2, 5.75) };
+      const f = type === 'lowServe' ? launch(from, target, soft(rand(0.04, 0.22))) : launch(from, target, lob(30));
+      return { ...f, place };
+    }
     case 'line': {
       // Lands just outside the singles sideline, for the Hawk-Eye lesson.
       const side = near.x >= 0 ? 1 : -1;
@@ -80,13 +101,17 @@ export function feedShot(type: FeedType, near: V2): Feed {
   }
 }
 
-const DRILLS: { name: string; feeds: FeedType[] }[] = [
+/** doubles: played on the doubles court (alleys in). delay: seconds between feeds. */
+const DRILLS: { name: string; feeds: FeedType[]; doubles?: boolean; delay?: number }[] = [
   { name: 'Smash', feeds: ['liftMid'] },
   { name: 'Clear & drop', feeds: ['liftBack'] },
   { name: 'Net play', feeds: ['net', 'net', 'netLoose'] },
   { name: 'Drives', feeds: ['drive'] },
   { name: 'Defence', feeds: ['smash'] },
   { name: 'Mixed', feeds: ['liftBack', 'liftMid', 'net', 'netLoose', 'drive', 'smash'] },
+  { name: 'Doubles defence (2 on 1)', feeds: ['smashWide'], doubles: true, delay: 0.5 },
+  { name: 'Drive exchange', feeds: ['driveFlat'], doubles: true, delay: 0.4 },
+  { name: 'Return of serve', feeds: ['lowServe', 'lowServe', 'lowServe', 'flickServe'], doubles: true, delay: 1.0 },
 ];
 
 /** Free practice against a feeder. Number keys switch drills. */
@@ -100,6 +125,8 @@ export class Practice implements Session {
 
   start(g: Game) { g.feed(this.next(), 1.2); }
 
+  private get delay(): number { return DRILLS[this.drill].delay ?? 0.8; }
+
   private next(): FeedType { return pick(DRILLS[this.drill].feeds); }
 
   update() {}
@@ -111,7 +138,7 @@ export class Practice implements Session {
 
   onLand(g: Game, l: LandInfo) {
     if (l.hitter === 0 && l.inCourt) this.inside++;
-    g.feed(this.next(), 0.8);
+    g.feed(this.next(), this.delay);
   }
 
   onReview() {}
@@ -123,6 +150,7 @@ export class Practice implements Session {
     if (n >= 0 && n < DRILLS.length && n !== this.drill) {
       this.drill = n;
       this.shots = this.inside = this.perfect = 0;
+      g.drillDoubles = !!DRILLS[n].doubles;
       if (g.state === 'feed') g.feed(this.next(), 0.6);
     }
   }

@@ -32,7 +32,7 @@ export interface LineCall {
 }
 
 /** Umpire on the high chair at one post, service judge at the other, line judges watching each line. */
-export function createOfficials(): Official[] {
+export function createOfficials(doubles = false): Official[] {
   const o = (kind: Official['kind'], pos: V2, seat: number, facing: V2, duty?: Official['duty']): Official =>
     ({ kind, pos, seat, facing, duty, signal: 'none', signalT: 0 });
   const list = [
@@ -42,7 +42,7 @@ export function createOfficials(): Official[] {
   for (const half of [-1, 1] as Side[]) {
     for (const xs of [-1, 1]) {
       // Sideline judges sit behind the court in line with the sideline; back-line judges in line with the back line.
-      list.push(o('line', { x: xs * (COURT.singlesHalfWidth - 0.02), y: half * (COURT.halfLength + (half > 0 ? 2.3 : 3.4)) }, 0.45, { x: 0, y: -half }, { line: 'side', half, xs }));
+      list.push(o('line', { x: xs * ((doubles ? COURT.doublesHalfWidth : COURT.singlesHalfWidth) - 0.02), y: half * (COURT.halfLength + (half > 0 ? 2.3 : 3.4)) }, 0.45, { x: 0, y: -half }, { line: 'side', half, xs }));
       list.push(o('line', { x: xs * (COURT.doublesHalfWidth + 1.8), y: half * (COURT.halfLength - 0.02) }, 0.45, { x: -xs, y: 0 }, { line: 'back', half, xs }));
     }
   }

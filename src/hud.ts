@@ -186,22 +186,24 @@ export class Hud {
     ctx.font = font(11, 700);
     const games = m.gamesToWin > 1 ? `GAME ${m.gameNumber} OF 3` : 'ONE GAME';
     ctx.fillText(`${games}  ·  TO ${m.format.pointsToWin}  ·  ${game.opponentLabel.toUpperCase()}`, x + 14, y + 19);
-    game.players.forEach((p, i) => {
+    ([0, 1] as const).forEach((i) => {
       const ry = y + 28 + rowH * i;
-      ctx.fillStyle = p.color;
+      ctx.fillStyle = game.teamColor(i);
       ctx.fillRect(x + 10, ry + 6, 4, rowH - 10);
+      if (game.doubles) { ctx.fillStyle = game.players[i + 2].color; ctx.fillRect(x + 10, ry + 6 + (rowH - 10) / 2, 4, (rowH - 10) / 2); }
       ctx.fillStyle = C.hud;
-      ctx.font = font(16, 700);
-      ctx.fillText(p.name, x + 24, ry + 23);
+      ctx.font = font(game.doubles ? 13 : 16, 700);
+      ctx.fillText(game.doubles ? (i === 0 ? 'You / Partner' : 'CPU 1 / CPU 2') : game.players[i].name, x + 24, ry + 23);
       // Challenges left this game
+      const cx = game.doubles ? 116 : 88;
       for (let k = 0; k < game.challenges[i]; k++) {
         ctx.fillStyle = 'rgba(255,209,102,0.85)';
-        ctx.fillRect(x + 88 + k * 9, ry + 14, 6, 6);
+        ctx.fillRect(x + cx + k * 9, ry + 14, 6, 6);
       }
-      if (game.server === p && (game.state === 'serve' || game.state === 'rally')) {
+      if (m.server === i && (game.state === 'serve' || game.state === 'rally')) {
         ctx.fillStyle = C.accent;
         ctx.beginPath();
-        ctx.arc(x + 124, ry + 17, 4, 0, Math.PI * 2);
+        ctx.arc(x + (game.doubles ? 142 : 124), ry + 17, 4, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.font = font(13, 700);
@@ -280,9 +282,9 @@ export class Hud {
   /** End-of-match scoreboard: result, game scores, stat comparison and where each player's shots landed. */
   private endScreen(game: Game, w: number, h: number) {
     const ctx = this.ctx, m = game.match, st = game.stats;
-    const [p1, p2] = game.players;
-    const wi = m.games[0] > m.games[1] ? 0 : 1;
-    const winner = game.players[wi];
+    const wi = (m.games[0] > m.games[1] ? 0 : 1) as 0 | 1;
+    const p1 = { name: game.teamName(0), color: game.teamColor(0) }, p2 = { name: game.teamName(1), color: game.teamColor(1) };
+    const winner = wi === 0 ? p1 : p2;
     ctx.fillStyle = 'rgba(4,7,12,0.72)';
     ctx.fillRect(0, 0, w, h);
     const pw = Math.min(900, w - 32), ph = Math.min(h - 32, 620);
@@ -297,7 +299,7 @@ export class Hud {
     ctx.fillText('MATCH RESULT', x + 28, y + 36);
     ctx.fillStyle = winner.color;
     ctx.font = font(30, 900);
-    ctx.fillText(winner.name === 'You' ? 'You win!' : `${winner.name} wins`, x + 28, y + 72);
+    ctx.fillText(winner.name === 'You' ? 'You win!' : winner.name === 'You & Partner' ? 'You and your partner win!' : `${winner.name} wins`, x + 28, y + 72);
     const mins = Math.floor(st.seconds / 60), secs = Math.floor(st.seconds % 60);
     ctx.textAlign = 'right';
     ctx.fillStyle = C.hudDim;
@@ -306,7 +308,7 @@ export class Hud {
 
     // Game-by-game table
     const tx = x + 28, ty = y + 96;
-    game.players.forEach((p, i) => {
+    [p1, p2].forEach((p, i) => {
       const ry = ty + i * 40;
       panel(ctx, tx, ry, pw - 56, 34, 8, 'rgba(255,255,255,0.04)');
       ctx.fillStyle = p.color;
@@ -370,10 +372,11 @@ export class Hud {
       ctx.fillRect(sx + sw - half, barY, half * (vb / total), 5);
     });
 
-    // Landing heatmaps
+    // Landing heatmaps (singles) or each player's numbers (doubles)
     const hx = x + pw * 0.64, hw = pw * 0.32;
     const courtH = Math.min((ph - (sy - y) - 70) / 2 - 22, hw * 0.62);
-    [a, b].forEach((s, i) => {
+    if (game.doubles) this.individuals(game, hx, sy - 6, hw);
+    else [a, b].forEach((s, i) => {
       const cy = sy - 6 + i * (courtH + 34);
       ctx.textAlign = 'left';
       ctx.fillStyle = game.players[i].color;
@@ -386,6 +389,36 @@ export class Hud {
     ctx.fillStyle = C.hudDim;
     ctx.font = font(13, 600);
     ctx.fillText('Enter — rematch   ·   R — replay last rally   ·   Esc — menu', w / 2, y + ph - 20);
+  }
+
+  /** Doubles end screen: a line per player (shots, winners, errors, smashes, fastest smash). */
+  private individuals(game: Game, x: number, y: number, w: number) {
+    const ctx = this.ctx;
+    const cols = ['Shots', 'Winners', 'Errors', 'Smashes', 'Top km/h'];
+    const colX = (k: number) => x + w * 0.3 + (k + 0.5) * (w * 0.7 / cols.length);
+    ctx.font = font(9, 800);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.hudDim;
+    ctx.fillText('EACH PLAYER', x, y);
+    ctx.font = font(9, 700);
+    cols.forEach((c, k) => { ctx.textAlign = 'center'; ctx.fillText(c.toUpperCase(), colX(k), y + 24); });
+    const order = [...game.players].sort((p, q) => (p.side - q.side) || (p.id - q.id));
+    order.forEach((p, r) => {
+      const ry = y + 36 + r * 34;
+      const s = game.stats.individual(p.id);
+      panel(ctx, x, ry, w, 28, 6, 'rgba(255,255,255,0.04)');
+      ctx.fillStyle = p.color;
+      ctx.fillRect(x, ry, 4, 28);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = C.hud;
+      ctx.font = font(14, 700);
+      ctx.fillText(p.name, x + 12, ry + 19);
+      ctx.font = font(14, 800);
+      [s.shots, s.winners, s.errors, s.smashes, Math.round(s.topSmash)].forEach((v, k) => {
+        ctx.textAlign = 'center';
+        ctx.fillText(String(v), colX(k), ry + 19);
+      });
+    });
   }
 
   /** Top-down half court (net on the left), with dots where shots landed. */
@@ -419,10 +452,15 @@ export class Hud {
   private servePrompt(game: Game): string | null {
     if (game.state !== 'serve') return null;
     const s = game.server, opp = game.settings.opponent;
+    if (game.doubles && s !== game.players[0]) {
+      const court = game.match.serverInRightCourt() ? 'right' : 'left';
+      const to = game.receiver === game.players[0] ? 'you' : game.receiver.name;
+      return `${s.name} serves from the ${court} court to ${to}`;
+    }
     if (opp !== 'human' && s === game.players[1]) return null;
     const court = game.match.serverInRightCourt() ? 'right' : 'left';
     if (s === game.players[0] && game.settings.p1Control === 'mouse') {
-      return `${s.name} to serve (${court} court): aim with the cursor · left-click short · right-click high (hold for higher)`;
+      return `${s.name} to serve (${court} court): aim with the cursor · left-click short · right-click: tap = flick, hold = high`;
     }
     const k = s === game.players[1] ? KEYS.p2Shared : opp === 'human' ? KEYS.p1Shared : KEYS.solo;
     const key = (c: string[]) => c[0].replace('Key', '');

@@ -247,7 +247,9 @@ export function resolveServe(req: ShotRequest, from: V3, server: Side, box: Rect
   if (req.kind === 'intent') {
     type = req.intent === 'soft' ? 'short' : req.intent === 'high' ? 'high' : 'flick';
     const x = req.aimX < 0 ? box.xMin + 0.35 : req.aimX > 0 ? box.xMax - 0.35 : (box.xMin + box.xMax) / 2;
-    const depth = type === 'short' ? SERVE.shortDepth : type === 'high' ? SERVE.highDepth : SERVE.flickDepth;
+    // Long serves stay inside the box: in doubles that's the long service line, well short of the back line.
+    const far = Math.max(Math.abs(box.yMin), Math.abs(box.yMax)) - SERVE.doubles.longMargin;
+    const depth = Math.min(far, type === 'short' ? SERVE.shortDepth : type === 'high' ? SERVE.highDepth : SERVE.flickDepth);
     target = { x, y: rs * depth };
     angleDeg = type === 'flick' ? SERVE.flickAngle : SERVE.highAngle;
   } else {

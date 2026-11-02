@@ -1,7 +1,7 @@
 import type { Camera } from './camera';
 import { ARENA, COURT, SHOTS, VISUAL } from './config';
 import { KeyboardController, MouseController } from './controllers';
-import { courtLineRects, inSinglesHalf, isIn, netHeightAt, singlesServiceBox, type Rect } from './court';
+import { courtLineRects, inHalf, isIn, netHeightAt, serviceBox, type Rect } from './court';
 import type { Game } from './game';
 import { add3, clamp, len3, mul3, norm3, rng, sub3, type V2, type V3 } from './math';
 import type { Official } from './officials';
@@ -65,7 +65,7 @@ export class Renderer {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
     this.arena(time, game?.cheer ?? 0);
-    this.court();
+    this.court(!!game?.doublesCourt);
     this.lights(w, h);
 
     const items: { d: number; draw: () => void }[] = [{ d: cam.depth(v3(0, 0, 1)), draw: () => this.net() }];
@@ -78,12 +78,17 @@ export class Renderer {
         if (game.settings.guides) this.guides(game);
         if (game.landing) this.landingMark(game.landing);
         this.reticle(game);
+        if (game.doubles) this.youRing(game, time);
       }
       for (const p of scene.players) items.push({ d: cam.depth(v3(p.pos.x, p.pos.y, 1)), draw: () => this.player(p) });
       if (scene.live && game.settings.timingLight) {
         game.players.forEach((p, i) => { if (game.isHuman(i)) items.push({ d: -1, draw: () => this.timingLight(game, i) }); });
       }
       items.push({ d: cam.depth(scene.shuttle.pos), draw: () => this.shuttle(scene.shuttle, w) });
+      if (scene.live && game.doubles) {
+        items.push({ d: -2, draw: () => this.youTag(game) });
+        for (const p of game.players) if (p.shout) items.push({ d: -2, draw: () => this.shoutBubble(p) });
+      }
     }
     items.sort((a, b) => b.d - a.d).forEach((i) => i.draw());
     this.vignette(w, h);
@@ -184,7 +189,7 @@ export class Renderer {
     }
   }
 
-  private court() {
+  private court(doubles: boolean) {
     const W = COURT.doublesHalfWidth, S = COURT.singlesHalfWidth, L = COURT.halfLength;
     this.poly([v3(-W - 1.6, -L - 2.2), v3(W + 1.6, -L - 2.2), v3(W + 1.6, L + 2.2), v3(-W - 1.6, L + 2.2)], C.surround);
     this.poly([v3(-W, -L), v3(W, -L), v3(W, L), v3(-W, L)], C.court);
@@ -193,8 +198,10 @@ export class Renderer {
       this.poly([v3(x, -L), v3(x + 0.61, -L), v3(x + 0.61, L), v3(x, L)], 'rgba(255,255,255,0.025)');
     }
     // Doubles side alleys are out in singles: shade them so the singles court reads clearly.
-    this.poly([v3(-W, -L), v3(-S, -L), v3(-S, L), v3(-W, L)], C.alley);
-    this.poly([v3(S, -L), v3(W, -L), v3(W, L), v3(S, L)], C.alley);
+    if (!doubles) {
+      this.poly([v3(-W, -L), v3(-S, -L), v3(-S, L), v3(-W, L)], C.alley);
+      this.poly([v3(S, -L), v3(W, -L), v3(W, L), v3(S, L)], C.alley);
+    }
     for (const l of LINES) this.poly(rect3(l), C.line);
   }
 
@@ -283,6 +290,57 @@ export class Renderer {
     this.dotAt(v3(p.x, p.y), 0.02, 'rgba(255,209,102,0.95)', 2);
   }
 
+  /** Doubles: a white ring under the player you control, so you never lose yourself among four. */
+  private youRing(game: Game, time: number) {
+    const p = game.players[0];
+    const ring = this.cam.projectPoly(this.floorCircle(p.pos, 0.46 + 0.02 * Math.sin(time * 4))), ctx = this.ctx;
+    ctx.beginPath();
+    ring.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  /** Small "YOU" tag over your head (doubles). */
+  private youTag(game: Game) {
+    const p = game.players[0];
+    if (p.shout) return;
+    const q = this.cam.project(v3(p.pos.x, p.pos.y, p.z + 2.05));
+    const ctx = this.ctx;
+    ctx.font = '800 12px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    const tw = ctx.measureText('YOU').width;
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.beginPath();
+    ctx.roundRect(q.x - tw / 2 - 7, q.y - 14, tw + 14, 19, 4);
+    ctx.fill();
+    ctx.fillStyle = '#0c1422';
+    ctx.fillText('YOU', q.x, q.y);
+  }
+
+  /** "Mine!" / "Yours!" speech bubble over a player. */
+  private shoutBubble(p: { pos: V2; z: number; color: string; shout: { text: string; t: number } | null }) {
+    if (!p.shout) return;
+    const q = this.cam.project(v3(p.pos.x, p.pos.y, p.z + 2.15));
+    const ctx = this.ctx;
+    const a = Math.min(1, (0.9 - p.shout.t) / 0.2);
+    ctx.globalAlpha = Math.max(0, a);
+    ctx.font = '900 15px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    const tw = ctx.measureText(p.shout.text).width;
+    ctx.fillStyle = 'rgba(6,10,16,0.88)';
+    ctx.beginPath();
+    ctx.roundRect(q.x - tw / 2 - 10, q.y - 20, tw + 20, 26, 6);
+    ctx.fill();
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(p.shout.text, q.x, q.y - 2);
+    ctx.globalAlpha = 1;
+  }
+
   /** Pulsing yellow ring to run to (tutorial). */
   private targetRing(c: V2, time: number) {
     const pulse = 0.5 + 0.5 * Math.sin(time * 5);
@@ -317,8 +375,8 @@ export class Renderer {
     const t = ctrl instanceof MouseController ? ctrl.target() : ctrl instanceof KeyboardController ? ctrl.target() : null;
     if (!t || t.y * game.players[0].side > 0) return;
     const ok = game.state === 'serve' && game.server === game.players[0]
-      ? isIn(t, singlesServiceBox(game.receiver.side, game.match.serverInRightCourt()))
-      : inSinglesHalf(t, 1);
+      ? isIn(t, serviceBox(game.receiver.side, game.match.serverInRightCourt(), game.doublesCourt))
+      : inHalf(t, 1, game.doubles);
     const ring = this.cam.projectPoly(this.floorCircle(t, 0.3)), ctx = this.ctx;
     ctx.beginPath();
     ring.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));

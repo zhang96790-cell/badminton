@@ -51,6 +51,8 @@ export function shoulderOf(v: PlayerView): V3 {
 }
 
 export class Player implements PlayerView {
+  /** Stable identity (0–3) for stats; array positions can swap when auto-switch changes who you control. */
+  id = 0;
   pos: V2;
   vel: V2 = { x: 0, y: 0 };
   z = 0;
@@ -67,6 +69,8 @@ export class Player implements PlayerView {
   /** Seconds of post-jump-smash speed boost left. */
   boost = 0;
   charge: number | null = null;
+  /** Doubles call shown over the head ("Mine!" / "Yours!"). */
+  shout: { text: string; t: number } | null = null;
   hand: V3;
   rdir: V3 = { x: 0, y: 0, z: 1 };
   stride = 0;
@@ -209,6 +213,7 @@ export class Player implements PlayerView {
     this.stride += Math.hypot(this.vel.x, this.vel.y) * dt * 5.5;
     if (this.anim) { this.anim.t += dt; if (this.anim.t > 0.35) this.anim = null; }
     if (this.timingFlash) { this.timingFlash.t += dt; if (this.timingFlash.t > 0.7) this.timingFlash = null; }
+    if (this.shout) { this.shout.t += dt; if (this.shout.t > 0.9) this.shout = null; }
     const p = this.poseTarget();
     const snap = this.anim?.kind === 'hit' && this.anim.t < 0.05;
     const k = snap ? 1 : 1 - Math.exp(-26 * dt);

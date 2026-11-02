@@ -112,7 +112,7 @@
         <footer class="board-foot">
           <div class="foot-links">
             <button id="howBtn" class="link">How to play</button>
-            <button id="tourBtn" class="link">Take the tour</button>
+            <button id="tourBtn" class="link">Take the tour <span id="tourBadge" class="tour-badge" hidden>New? Start here</span></button>
           </div>
           <button id="whatsnewBtn" class="link whatsnew">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
         </footer>
@@ -405,6 +405,32 @@
           <p class="help">Pick what you’ve got. You can change it any time from the Controls button at the top.</p>
         </header>
         <div class="pick-cards" id="pickCards"></div>
+      </div>
+    </div>
+    <div id="welcome" class="welcome hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <div class="welcome-panel">
+        <p class="pass-kicker" id="welcomeKicker">Welcome</p>
+        <h2 id="welcomeTitle">Welcome to Skyline Smash</h2>
+        <div id="welcomeTour" class="welcome-tour">
+          <p>New here? The tour shows you around the start screen in about a minute: your controls, the courts, playing online and your stats.</p>
+          <button id="welcomeTourBtn" type="button" class="welcome-big">Take the 1-minute tour →</button>
+        </div>
+        <div class="welcome-account">
+          <h3>Save your progress</h3>
+          <ul>
+            <li>Keep your stats, settings and keys on any computer</li>
+            <li>Play ranked quick matches and climb the leaderboard</li>
+            <li>Add friends and invite them to play</li>
+          </ul>
+          <div class="pass-actions">
+            <button id="welcomeSignup" type="button" class="primary">Sign up</button>
+            <button id="welcomeLogin" type="button">Log in</button>
+          </div>
+        </div>
+        <div class="welcome-foot">
+          <button id="welcomeGuest" type="button" class="inline-link">Play as a guest</button>
+          <label id="welcomeNeverRow" class="welcome-never" hidden><input id="welcomeNever" type="checkbox" /> Don’t show this again</label>
+        </div>
       </div>
     </div>
     <div id="inviteToast" class="invite-toast" role="status" hidden>

@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.7',
+    title: 'Welcome for newcomers',
+    date: '2 Nov 2026',
+    changes: [
+      'Welcome card for newcomers: after picking your controls, a big Take the 1-minute tour button, plus Sign up, Log in or Play as a guest. The Take the tour link also shows a New? Start here badge until you’ve taken it.',
+      'Coming back while logged out: a short Save your progress card suggests signing up (with Don’t show this again). Logged-in players never see it.',
+    ],
+  },
+  {
     version: '2.1.6',
     title: 'Challenges and replays online',
     date: '2 Nov 2026',

@@ -548,7 +548,14 @@ const tour = new Tour([
   { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
   { target: '#start', title: 'Ready?', text: 'That’s everything. Press Walk on to play the CPU, or try Court 4 to play someone online.' },
 ], () => { closeSocial(); closeDrawers(); document.getElementById('tourBtn')?.focus(); });
-document.getElementById('tourBtn')!.addEventListener('click', () => { closeAccountIfOpen(); tour.start(); });
+/** Taking the tour (from the footer or the welcome card) counts as having seen it. */
+function startTour() {
+  closeAccountIfOpen();
+  try { localStorage.setItem('badminton.tourDone', '1'); } catch { /* storage unavailable */ }
+  document.getElementById('tourBadge')!.hidden = true;
+  tour.start();
+}
+document.getElementById('tourBtn')!.addEventListener('click', startTour);
 function closeAccountIfOpen() { if (!accountModal.classList.contains('hidden')) accountModal.classList.add('hidden'); }
 
 // ── Controls picker (first visit, and the Controls button at the top) ────────
@@ -586,6 +593,7 @@ function openControlsPick() {
 function closeControlsPick() {
   controlsPick.classList.add('hidden');
   if (!settings.controlsChosen) { settings.controlsChosen = true; saveSettings(); }
+  maybeWelcome();
 }
 document.getElementById('pickCards')!.addEventListener('click', (e) => {
   const card = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');
@@ -598,12 +606,49 @@ document.getElementById('pickCards')!.addEventListener('click', (e) => {
   renderBinds();
   syncControlsLabel();
   controlsPick.classList.add('hidden');
+  maybeWelcome();
 });
 document.getElementById('controlsBtn')!.addEventListener('click', openControlsPick);
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !controlsPick.classList.contains('hidden')) closeControlsPick(); });
 syncControlsLabel();
-// First visit: ask before anything else.
+// ── Welcome (newcomers and logged-out visitors) ──────────────────────────────
+// New here: a big nudge to take the tour, plus signing up. Back again but logged out: just the
+// sign-up pitch, which can be turned off. Logged in and toured: nothing.
+const TOUR_DONE = 'badminton.tourDone', WELCOME_OFF = 'badminton.welcomeOff';
+const welcome = document.getElementById('welcome')!;
+const stored = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+const store = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
+let welcomeShown = false;
+function syncTourBadge() { document.getElementById('tourBadge')!.hidden = !!stored(TOUR_DONE); }
+function maybeWelcome() {
+  if (welcomeShown || game) return;
+  const newcomer = !stored(TOUR_DONE);
+  const loggedOut = !account && !stored('badminton.account');
+  if (!newcomer && (!loggedOut || stored(WELCOME_OFF))) return;
+  welcomeShown = true;
+  document.getElementById('welcomeTour')!.hidden = !newcomer;
+  document.querySelector<HTMLElement>('.welcome-account')!.hidden = !loggedOut;
+  document.getElementById('welcomeNeverRow')!.hidden = newcomer;
+  document.getElementById('welcomeKicker')!.textContent = newcomer ? 'First time here?' : 'Welcome back';
+  document.getElementById('welcomeTitle')!.textContent = newcomer ? 'Welcome to Skyline Smash' : 'Save your progress';
+  welcome.classList.remove('hidden');
+  (document.getElementById(newcomer ? 'welcomeTourBtn' : 'welcomeSignup') as HTMLButtonElement).focus();
+}
+function closeWelcome() {
+  if ((document.getElementById('welcomeNever') as HTMLInputElement).checked) store(WELCOME_OFF, '1');
+  welcome.classList.add('hidden');
+}
+document.getElementById('welcomeTourBtn')!.addEventListener('click', () => { closeWelcome(); startTour(); });
+document.getElementById('welcomeSignup')!.addEventListener('click', () => { closeWelcome(); openAccount('Pick a username and passcode, then press Sign up.'); });
+document.getElementById('welcomeLogin')!.addEventListener('click', () => { closeWelcome(); openAccount(); });
+document.getElementById('welcomeGuest')!.addEventListener('click', closeWelcome);
+welcome.addEventListener('click', (e) => { if (e.target === welcome) closeWelcome(); });
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !welcome.classList.contains('hidden')) closeWelcome(); });
+syncTourBadge();
+
+// First visit: controls first, then the welcome.
 if (!settings.controlsChosen) openControlsPick();
+else maybeWelcome();
 
 // ── Online rooms (Court 4) ───────────────────────────────────────────────────
 const roomModal = document.getElementById('roomModal')!;
@@ -1099,7 +1144,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && !tour.isOpen) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && welcome.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 

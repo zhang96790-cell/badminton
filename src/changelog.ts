@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.5.2',
+    title: 'Slide-out side panel',
+    date: '2 Nov 2026',
+    changes: [
+      'Assists & controls is now a tab on the left edge of the start screen. Click it to slide the panel out, and click it again (or press Esc) to put it away.',
+    ],
+  },
+  {
     version: '1.5.1',
     title: 'Assists & controls panel',
     date: '2 Nov 2026',

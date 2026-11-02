@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.5.2: Slide-out side panel (2 Nov 2026)
+
+- Assists & controls is now a tab on the left edge of the start screen. Click it to slide the panel out, and click it again (or press Esc) to put it away.
+
 ## 1.5.1: Assists & controls panel (2 Nov 2026)
 
 - The match card now only has match settings: opponent, CPU style, format and accuracy.

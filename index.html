@@ -88,7 +88,6 @@
         <footer class="board-foot">
           <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
           <div class="foot-links">
-            <button id="kitBtn" class="link" aria-controls="kitcard" aria-expanded="false">Assists &amp; controls</button>
             <button id="howBtn" class="link">How to play</button>
             <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
           </div>
@@ -149,7 +148,7 @@
         </section>
       </aside>
 
-      <aside id="kitcard" class="matchcard" aria-label="Assists and controls" aria-hidden="true">
+      <aside id="kitcard" class="matchcard left" aria-label="Assists and controls" aria-hidden="true">
         <header class="mc-head">
           <h2>Assists &amp; controls</h2>
           <button id="kitClose" class="mc-close" aria-label="Close assists and controls">
@@ -196,6 +195,10 @@
           <div class="controls" id="controls"></div>
         </section>
       </aside>
+      <button id="kitBtn" class="kit-tab" aria-controls="kitcard" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        <span>Assists &amp; controls</span>
+      </button>
     </div>
 
     <div id="changelogModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="wnTitle">

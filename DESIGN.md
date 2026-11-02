@@ -32,7 +32,9 @@ Amber is the only warm colour and marks what to do next. Don't spread it to seco
   bar hides while the menu is open.
 - Two side drawers share the `.matchcard` style, `min(470px, 100%)` wide, and only one is open at a time. Esc closes it.
   - **Match card** (Edit match card on Court 1): match settings only (opponent, CPU style, format, accuracy). No tabs.
-  - **Assists & controls** (footer link; How to play opens its Controls tab): Assists tab, and a Controls tab with the control mode above the shot table.
+  - **Assists & controls** slides in from the **left**. It opens from a vertical cool-white pull tab (`.kit-tab`) on the left screen edge,
+    and How to play opens its Controls tab. The tab rides on the drawer's edge while open and its chevron flips. On phones the tab
+    sits low on the edge and hides while the full-width drawer is open. Tabs inside: Assists, and Controls (control mode above the shot table).
 
 ## Motion
 - Rows flip in like a split-flap board (clip-path, staggered). Text that changes (opponent, format, event) flips via `flip()` in main.ts.

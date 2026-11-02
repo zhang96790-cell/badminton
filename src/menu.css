@@ -467,3 +467,55 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
   .matchcard, .walk, .walk svg { transition: none; }
 }
 #eventLabel { white-space: nowrap; }
+
+/* ── Left drawer: Assists & controls, with a pull tab on the screen edge ── */
+.matchcard.left {
+  left: 0;
+  right: auto;
+  transform: translateX(-104%);
+  box-shadow: 18px 0 50px rgba(0, 0, 0, 0.45);
+}
+.matchcard.left.open { transform: none; }
+.kit-tab {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 9px;
+  border: 0;
+  border-radius: 0 4px 4px 0;
+  background: var(--card);
+  color: var(--card-ink);
+  box-shadow: 6px 0 22px rgba(0, 0, 0, 0.35);
+  writing-mode: vertical-rl;
+  font: 700 13px/1 var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  transform: translateY(-50%);
+  transition: transform 0.42s var(--ease-out), padding 0.15s ease;
+}
+.kit-tab span { transform: rotate(180deg); }
+.kit-tab svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.42s var(--ease-out);
+}
+.kit-tab:hover { padding-left: 13px; }
+.kit-tab:focus-visible { outline-color: var(--amber); }
+#kitcard.open ~ .kit-tab { transform: translate(min(470px, 100vw), -50%); }
+#kitcard.open ~ .kit-tab svg { transform: rotate(180deg); }
+@media (max-width: 760px) {
+  .kit-tab { top: auto; bottom: 16px; transform: none; }
+  #kitcard.open ~ .kit-tab { visibility: hidden; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kit-tab, .kit-tab svg { transition: none; }
+}

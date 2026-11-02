@@ -5,6 +5,22 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.0.2',
+    title: 'Shorter changelog',
+    date: '2 Nov 2026',
+    changes: [
+      'What’s new has a Short / Full switch. Short shows one line per update, Full shows every change. It remembers your choice.',
+    ],
+  },
+  {
+    version: '2.0.1',
+    title: 'Skyline Smash',
+    date: '2 Nov 2026',
+    changes: [
+      'The game is now called Skyline Smash. Your settings, account and keys carry over, and badmintongames.site still brings you here.',
+    ],
+  },
+  {
     version: '2.0',
     title: 'Play online',
     date: '2 Nov 2026',

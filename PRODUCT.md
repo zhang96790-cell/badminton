@@ -1,4 +1,4 @@
-# Badminton Games: product
+# Skyline Smash: product
 
 ## What it is
 A browser badminton game (singles) at badmintongames.site. Real shuttle aerodynamics, a broadcast-style
@@ -16,6 +16,6 @@ scoring format, assists and voice live in a settings panel. New players are nudg
 "What's new" opens the changelog pop-up.
 
 ## Brand commitments
-- Name: **Badminton Games**.
+- Name: **Skyline Smash** (renamed from Badminton Games in 2.0.1). The domain badmintongames.site still redirects here.
 - Feel: a pro tournament (a real event's court, officials and broadcast), serious and sporty, not arcade.
 - Keep the game's own facts honest: no invented sponsors, players or tournaments presented as real.

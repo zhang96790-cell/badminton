@@ -697,3 +697,16 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 #roomLobby .seg.locked button { pointer-events: none; }
 #roomLobby .seg.locked button:not(.on) { opacity: 0.45; }
 .pass-actions button:disabled { opacity: 0.4; cursor: default; }
+
+/* ── What's new: short / full toggle ────────────────────────────────────── */
+.nb-head { gap: 14px; }
+.nb-head h2 { flex: 1; }
+.wn-toggle { display: flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; flex: none; }
+.wn-toggle button { padding: 7px 12px; border: 0; background: transparent; font: 700 12px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); }
+.wn-toggle button[aria-pressed='true'] { background: var(--amber); color: var(--amber-ink); }
+.wn-short { list-style: none; margin: 8px 0 0; padding: 0; }
+.wn-short li { display: grid; grid-template-columns: 56px 1fr; column-gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+.wn-short li:last-child { border-bottom: 0; }
+.wn-short b { grid-row: span 2; font: 800 17px/1.2 var(--display); color: var(--amber); }
+.wn-short .t { font: 700 16px/1.25 var(--text); color: var(--ink); }
+.wn-short .g { font: 500 14px/1.35 var(--text); color: var(--ink-3); }

@@ -1,4 +1,4 @@
-// Badminton Games online rooms. Each room code is one Durable Object that seats two players and relays
+// Skyline Smash online rooms. Each room code is one Durable Object that seats two players and relays
 // their messages. The game itself runs in the players' browsers: each is in charge of its own player
 // and hits, and the room creator ("host") referees points. The room only keeps seats, the lobby
 // settings and who is connected, so it costs almost nothing while players aren't sending anything.

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Badminton Games</title>
+    <title>Skyline Smash</title>
   </head>
   <body>
     <!--
@@ -32,7 +32,7 @@
               <circle cx="24" cy="38" r="6.5" />
               <path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0M12.5 17c4.5-1.6 18.5-1.6 23 0" />
             </svg>
-            <h1 id="wordmark">Badminton<br />Games</h1>
+            <h1 id="wordmark">Skyline<br />Smash</h1>
           </div>
           <div class="head-meta">
             <button id="accountBtn" class="account-btn" aria-haspopup="dialog"><i></i><span id="accountLabel">Log in</span></button>
@@ -248,6 +248,10 @@
       <div class="notice-board">
         <header class="nb-head">
           <h2 id="wnTitle">What’s new</h2>
+          <div class="wn-toggle" role="group" aria-label="How much to show">
+            <button type="button" data-view="short" aria-pressed="true">Short</button>
+            <button type="button" data-view="full" aria-pressed="false">Full</button>
+          </div>
           <button id="wnClose" class="mc-close" aria-label="Close">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>

@@ -516,8 +516,28 @@ const modal = document.getElementById('changelogModal')!;
 const wnBadge = document.getElementById('wnBadge')!;
 document.getElementById('wnTitle')!.textContent = `What’s new in v${latest}`;
 document.getElementById('wnVer')!.textContent = `v${latest}`;
-document.getElementById('changelog')!.innerHTML = CHANGELOG.map((v) =>
-  `<h4>v${v.version}: ${esc(v.title)} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
+// Short: one line per version (its title and the gist of its first change). Full: every change.
+const gist = (text: string) => {
+  const first = text.split(/(?<=[.!?])\s/)[0].replace(/\.$/, '');
+  return first.length > 78 ? `${first.slice(0, 76).trimEnd()}…` : first;
+};
+const CHANGELOG_VIEW = 'badminton.changelogView';
+function renderChangelog(view: 'short' | 'full') {
+  const box = document.getElementById('changelog')!;
+  box.classList.toggle('short', view === 'short');
+  box.innerHTML = view === 'short'
+    ? `<ol class="wn-short">${CHANGELOG.map((v) => `<li><b>v${v.version}</b><span class="t">${esc(v.title)}</span><span class="g">${esc(gist(v.changes[0] ?? ''))}</span></li>`).join('')}</ol>`
+    : CHANGELOG.map((v) => `<h4>v${v.version}: ${esc(v.title)} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
+  document.querySelectorAll<HTMLButtonElement>('.wn-toggle button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+}
+let changelogView: 'short' | 'full' = 'short';
+try { if (localStorage.getItem(CHANGELOG_VIEW) === 'full') changelogView = 'full'; } catch { /* storage unavailable */ }
+renderChangelog(changelogView);
+document.querySelectorAll<HTMLButtonElement>('.wn-toggle button').forEach((b) => b.addEventListener('click', () => {
+  changelogView = b.dataset.view as 'short' | 'full';
+  try { localStorage.setItem(CHANGELOG_VIEW, changelogView); } catch { /* storage unavailable */ }
+  renderChangelog(changelogView);
+}));
 try { wnBadge.classList.toggle('hidden', localStorage.getItem(SEEN) === latest); } catch { /* storage unavailable */ }
 const closeChangelog = () => modal.classList.add('hidden');
 document.getElementById('whatsnewBtn')!.addEventListener('click', (e) => {

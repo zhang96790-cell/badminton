@@ -5,6 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.0.2: Shorter changelog (2 Nov 2026)
+
+- What’s new has a Short / Full switch. Short shows one line per update, Full shows every change. It remembers your choice.
+
+## 2.0.1: Skyline Smash (2 Nov 2026)
+
+- The game is now called Skyline Smash. Your settings, account and keys carry over, and badmintongames.site still brings you here.
+
 ## 2.0: Play online (2 Nov 2026)
 
 - Play online: Court 4 on the start screen. Create room gives you a 5-character code and an invite link to send a friend; they press Join (or open the link) and the host presses Start match.

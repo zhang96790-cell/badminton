@@ -1,4 +1,4 @@
-# Badminton Games: design
+# Skyline Smash: design
 
 ## World
 The start screen is the tournament's **Order of Play board**: the notice that tells players which court

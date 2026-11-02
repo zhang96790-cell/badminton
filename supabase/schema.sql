@@ -1,4 +1,4 @@
--- Badminton Games: player accounts.
+-- Skyline Smash: player accounts.
 -- Paste this whole file into Supabase → SQL Editor → New query, then click Run. Safe to run again.
 
 -- One row per player: their username and their saved game settings (key binds, assists, match options).

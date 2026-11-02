@@ -16,7 +16,8 @@ export class Input {
   constructor(el: HTMLElement) {
     const block = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Slash']);
     addEventListener('keydown', (e) => {
-      if (block.has(e.code) && !(e.target instanceof HTMLButtonElement)) e.preventDefault();
+      // Never swallow keys meant for a button or a text box (Space in a passcode, say).
+      if (block.has(e.code) && !(e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement)) e.preventDefault();
       if (!this.down.has(e.code)) this.pressed.add(e.code);
       this.down.add(e.code);
     });

@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.7',
+    title: 'Player accounts',
+    date: '2 Nov 2026',
+    changes: [
+      'Player accounts: press Log in at the top right of the start screen and pick a username and passcode. Use Sign up the first time and Log in after that.',
+      'You stay logged in on that browser. Your settings and key binds are saved to your account and load on any computer you log in on.',
+      'Change passcode and Log out are in the same dialog. There’s no email, so a forgotten passcode can’t be reset.',
+      'Playing without an account works exactly as before, and the account code only loads when you use it, so the game starts just as fast.',
+    ],
+  },
+  {
     version: '1.6.4',
     title: 'Serves, jump smashes and challenges',
     date: '2 Nov 2026',

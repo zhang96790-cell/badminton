@@ -46,8 +46,12 @@ try {
   Object.assign(settings, saved);
 } catch { /* no saved settings */ }
 setView(broadcast, settings.view);
+/** The logged-in player (see Player account below); declared here because saving settings syncs to it. */
+let account: { id: string; username: string } | null = null;
+let accountSaveTimer = 0;
 function saveSettings() {
   try { localStorage.setItem(STORE, JSON.stringify({ ...settings, v: SETTINGS_VERSION })); } catch { /* storage unavailable */ }
+  queueAccountSave();
 }
 saveSettings();
 let game: Game | null = null;
@@ -195,6 +199,110 @@ document.getElementById('bindReset')!.addEventListener('click', () => {
   describeControls();
 });
 renderBinds();
+
+// ── Player account ───────────────────────────────────────────────────────────
+// The account code (and Supabase) only loads when needed: on opening the dialog, or at start-up if
+// this browser has logged in before.
+type AccountModule = typeof import('./account');
+let accountModule: Promise<AccountModule> | null = null;
+const loadAccount = () => (accountModule ??= import('./account'));
+const accountModal = document.getElementById('accountModal')!;
+const acForm = document.getElementById('acForm') as HTMLFormElement, acSignedIn = document.getElementById('acSignedIn')!;
+const acUser = document.getElementById('acUser') as HTMLInputElement, acPass = document.getElementById('acPass') as HTMLInputElement;
+const acNewPass = document.getElementById('acNewPass') as HTMLInputElement;
+const acError = document.getElementById('acError')!, acMsg = document.getElementById('acMsg')!;
+
+function queueAccountSave() {
+  if (!account) return;
+  clearTimeout(accountSaveTimer);
+  const id = account.id;
+  accountSaveTimer = window.setTimeout(() => {
+    void loadAccount().then((m) => m.saveSettings(id, { ...settings } as unknown as Record<string, unknown>));
+  }, 800);
+}
+
+function syncAccountUi() {
+  document.getElementById('accountLabel')!.textContent = account ? account.username : 'Log in';
+  document.getElementById('accountBtn')!.classList.toggle('in', !!account);
+  acForm.hidden = !!account;
+  acSignedIn.hidden = !account;
+  if (account) document.getElementById('acName')!.textContent = account.username;
+}
+
+/** Logged in: use the settings saved to the account, or save this browser's settings to a new one. */
+async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
+  account = a;
+  syncAccountUi();
+  const m = await loadAccount();
+  const remote = isNew ? null : await m.loadSettings(a.id);
+  if (remote) {
+    delete remote.v;
+    Object.assign(settings, remote);
+    try { localStorage.setItem(STORE, JSON.stringify({ ...settings, v: SETTINGS_VERSION })); } catch { /* storage unavailable */ }
+    setView(broadcast, settings.view);
+    resize();
+    syncViewbar();
+    syncMenu();
+    describeControls();
+    describeFormat();
+    renderBinds();
+  } else {
+    await m.saveSettings(a.id, { ...settings } as unknown as Record<string, unknown>);
+  }
+}
+
+function openAccount() {
+  acError.textContent = acMsg.textContent = '';
+  accountModal.classList.remove('hidden');
+  syncAccountUi();
+  (account ? acNewPass : acUser).focus();
+  void loadAccount();
+}
+const closeAccount = () => { accountModal.classList.add('hidden'); document.getElementById('accountBtn')!.focus(); };
+document.getElementById('accountBtn')!.addEventListener('click', openAccount);
+document.getElementById('acClose')!.addEventListener('click', closeAccount);
+accountModal.addEventListener('click', (e) => { if (e.target === accountModal) closeAccount(); });
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !accountModal.classList.contains('hidden')) closeAccount(); });
+
+async function submitAccount(kind: 'login' | 'signup') {
+  const m = await loadAccount();
+  const username = m.normalise(acUser.value), passcode = acPass.value;
+  const problem = m.problemWith(username, passcode);
+  acError.classList.remove('ok');
+  if (problem) { acError.textContent = problem; return; }
+  acError.textContent = kind === 'login' ? 'Logging in…' : 'Creating your account…';
+  const r = kind === 'login' ? await m.logIn(username, passcode) : await m.signUp(username, passcode);
+  if (!r.ok) { acError.textContent = r.error; return; }
+  acPass.value = '';
+  await afterLogin(r.account, kind === 'signup');
+  acMsg.classList.add('ok');
+  acMsg.textContent = kind === 'signup' ? 'Account created. Your settings are saved to it.' : 'Welcome back. Your saved settings are loaded.';
+}
+acForm.addEventListener('submit', (e) => { e.preventDefault(); void submitAccount('login'); });
+document.getElementById('acSignup')!.addEventListener('click', () => void submitAccount('signup'));
+document.getElementById('acChange')!.addEventListener('click', async () => {
+  const m = await loadAccount();
+  acMsg.classList.remove('ok');
+  if (acNewPass.value.length < 6) { acMsg.textContent = 'Passcodes need at least 6 characters'; return; }
+  const err = await m.changePasscode(acNewPass.value);
+  acMsg.classList.toggle('ok', !err);
+  acMsg.textContent = err ?? 'Passcode changed';
+  if (!err) acNewPass.value = '';
+});
+document.getElementById('acLogout')!.addEventListener('click', async () => {
+  const m = await loadAccount();
+  await m.logOut();
+  account = null;
+  acError.textContent = '';
+  syncAccountUi();
+  acUser.focus();
+});
+// Logged in on this browser before: restore the session (Supabase keeps it under this key).
+try {
+  if (localStorage.getItem('badminton.account')) {
+    void loadAccount().then(async (m) => { const a = await m.current(); if (a) await afterLogin(a, false); });
+  }
+} catch { /* storage unavailable */ }
 
 // What's new pop-up: newest version first, with a NEW badge on the button until you've opened it.
 const SEEN = 'badminton.seenVersion';
@@ -387,7 +495,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter'])) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden')) {
     startMatch('match');
   }
 

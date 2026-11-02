@@ -36,6 +36,10 @@ Amber is the only warm colour and marks what to do next. Don't spread it to seco
     and How to play opens its Controls tab. The tab rides on the drawer's edge while open and its chevron flips. On phones the tab
     sits low on the edge and hides while the full-width drawer is open. Tabs inside: Assists, and Controls (control mode above the shot table).
 
+## Account
+- A pill in the board header (above Order of play): grey dot and "Log in", or a green live dot and the username.
+- The dialog is a white **player accreditation pass** (lanyard slot at the top, navy rule under the title), same paper and ink as the match card.
+
 ## Motion
 - Rows flip in like a split-flap board (clip-path, staggered). Text that changes (opponent, format, event) flips via `flip()` in main.ts.
 - The match card slides in over 0.42s with an ease-out.

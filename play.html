@@ -35,6 +35,7 @@
             <h1 id="wordmark">Badminton<br />Games</h1>
           </div>
           <div class="head-meta">
+            <button id="accountBtn" class="account-btn" aria-haspopup="dialog"><i></i><span id="accountLabel">Log in</span></button>
             <p class="oop">Order of play</p>
             <p id="today" class="today"></p>
           </div>
@@ -241,6 +242,38 @@
           </button>
         </header>
         <div id="changelog"></div>
+      </div>
+    </div>
+    <div id="accountModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="acTitle">
+      <div class="pass">
+        <header class="pass-head">
+          <div>
+            <p class="pass-kicker">Player accreditation</p>
+            <h2 id="acTitle">Your account</h2>
+          </div>
+          <button id="acClose" class="mc-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+        </header>
+        <form id="acForm" class="pass-body" autocomplete="on">
+          <p class="help">Pick a username and passcode, and use the same ones to log in next time. Your settings and key binds are saved to your account. Don’t use your real name.</p>
+          <label class="pass-field">Username<input id="acUser" name="username" autocomplete="username" maxlength="16" spellcheck="false" autocapitalize="off" /></label>
+          <label class="pass-field">Passcode<input id="acPass" name="password" type="password" autocomplete="current-password" /></label>
+          <p id="acError" class="pass-msg" aria-live="polite"></p>
+          <div class="pass-actions">
+            <button type="submit" id="acLogin" class="primary">Log in</button>
+            <button type="button" id="acSignup">Sign up</button>
+          </div>
+          <p class="pass-note">There’s no email, so a forgotten passcode can’t be reset. Keep it somewhere safe.</p>
+        </form>
+        <div id="acSignedIn" class="pass-body" hidden>
+          <p class="pass-name">Logged in as <b id="acName"></b></p>
+          <p class="help" id="acSync">Your settings and key binds are saved to this account and follow you to any computer.</p>
+          <label class="pass-field">New passcode<input id="acNewPass" type="password" autocomplete="new-password" /></label>
+          <p id="acMsg" class="pass-msg" aria-live="polite"></p>
+          <div class="pass-actions">
+            <button type="button" id="acChange" class="primary">Change passcode</button>
+            <button type="button" id="acLogout">Log out</button>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

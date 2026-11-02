@@ -546,3 +546,91 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .bind-reset { flex: none; padding: 7px 12px; border: 1px solid var(--card-ink); border-radius: 4px; background: transparent; font: 700 13px/1 var(--text); text-transform: uppercase; letter-spacing: 0.08em; color: var(--card-ink); }
 .bind-reset:hover { background: var(--card-ink); color: var(--card); }
 @media (prefers-reduced-motion: reduce) { .bind button.listening { animation: none; } }
+
+/* ── Player account: header chip + accreditation-pass dialog ───────────── */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font: 700 13px/1 var(--text);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.account-btn:hover { border-color: var(--ink-3); background: rgba(255, 255, 255, 0.08); }
+.account-btn i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+.account-btn.in i { background: var(--live); box-shadow: 0 0 8px var(--live); }
+.account-btn.in span { text-transform: none; letter-spacing: 0.02em; font-size: 14px; }
+
+#accountModal {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 10, 28, 0.72);
+}
+#accountModal.hidden { display: none; }
+.pass {
+  width: min(420px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--card-ink);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+  /* Lanyard slot, like a tournament pass. */
+  background-image: radial-gradient(circle at 50% 14px, var(--board-deep) 0 5px, transparent 5.5px);
+}
+.pass-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 34px 24px 14px;
+  border-bottom: 2px solid var(--card-ink);
+}
+.pass-kicker { font: 700 12px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--card-ink-2); }
+.pass-head h2 { margin-top: 6px; font: 800 32px/1 var(--display); text-transform: uppercase; }
+.pass-body { display: grid; gap: 12px; padding: 18px 24px 22px; }
+.pass-body[hidden] { display: none; }
+.pass-field { display: grid; gap: 6px; font: 700 13px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--card-ink-2); }
+.pass-field input {
+  padding: 11px 12px;
+  border: 1px solid var(--card-rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #fff;
+  font: 600 17px/1.2 var(--text);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--card-ink);
+}
+.pass-field input:focus { outline: none; border-color: var(--card-ink); }
+.pass-msg { min-height: 1.3em; font: 600 14px/1.3 var(--text); color: #b42318; }
+.pass-msg.ok { color: #157f3d; }
+.pass-actions { display: flex; gap: 8px; }
+.pass-actions button {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--card-ink);
+  border-radius: 5px;
+  background: transparent;
+  font: 800 16px/1 var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--card-ink);
+}
+.pass-actions button:hover { background: rgba(12, 34, 89, 0.06); }
+.pass-actions button.primary { background: var(--card-ink); color: var(--card); }
+.pass-actions button.primary:hover { background: var(--board-lit); }
+.pass-note { font: 500 13px/1.4 var(--text); color: var(--card-ink-2); }
+.pass-name { font: 600 17px/1.3 var(--text); }
+.pass-name b { font-weight: 800; }
+@media (max-width: 760px) { .account-btn { margin-bottom: 8px; } }

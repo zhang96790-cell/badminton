@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.7: Player accounts (2 Nov 2026)
+
+- Player accounts: press Log in at the top right of the start screen and pick a username and passcode. Use Sign up the first time and Log in after that.
+- You stay logged in on that browser. Your settings and key binds are saved to your account and load on any computer you log in on.
+- Change passcode and Log out are in the same dialog. There’s no email, so a forgotten passcode can’t be reset.
+- Playing without an account works exactly as before, and the account code only loads when you use it, so the game starts just as fast.
+
 ## 1.6.4: Serves, jump smashes and challenges (2 Nov 2026)
 
 - Better serve animation: the server holds the shuttle out with their free hand, racket drawn back (forehand in singles, backhand in doubles), then swings through and follows up and forward.

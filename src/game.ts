@@ -11,6 +11,7 @@ import { chance, clamp, gauss, type Side, type V2, type V3 } from './math';
 import { createOfficials, gameStartCall, gameWonCall, judgeFor, matchWonCall, scoreCall, type LineCall, type Official } from './officials';
 import { Player } from './player';
 import { Practice, feedShot, type FeedType, type Session } from './practice';
+import { Challenges } from './challenges';
 import { Tutorial } from './tutorial';
 import { Playback, Recorder, type ShuttleView } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
@@ -19,6 +20,7 @@ import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online'
 import type { Seat } from './net';
 import { REPLAY_CAMS, type ReplayCam } from './camera';
 import type { Highlight } from './highlights';
+import type { MatchFacts } from './achievements';
 import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
@@ -59,7 +61,7 @@ export interface Settings {
 /** 'feed' = practice/tutorial: you move freely while the coach gets the next shuttle ready. */
 /** 'wait' = online: the shuttle reached the floor here, waiting to hear whether the other player hit it first. */
 export type GameState = 'serve' | 'rally' | 'point' | 'challenge' | 'interval' | 'gameBreak' | 'replay' | 'matchOver' | 'feed' | 'wait';
-export type Mode = 'match' | 'practice' | 'tutorial' | 'online';
+export type Mode = 'match' | 'practice' | 'tutorial' | 'challenge' | 'online';
 
 export type GameEvent =
   | { type: 'hit'; strength: number }
@@ -74,7 +76,8 @@ export type GameEvent =
   | { type: 'say'; who: Speaker; text: string; interrupt?: boolean };
 
 export interface Callout { label: string; detail: string; color: string; t: number; assist?: boolean }
-export interface Banner { title: string; sub: string; color: string; t: number; card?: 'red' }
+/** ttl: notices that disappear on their own after this many seconds (others stay until the next point). */
+export interface Banner { title: string; sub: string; color: string; t: number; card?: 'red'; ttl?: number }
 
 export class Game {
   /** 0 = you (near), 1 = far player. Doubles adds 2 = your partner and 3 = the far partner (team = index % 2). */
@@ -180,6 +183,8 @@ export class Game {
   /** Online lag hiding: how long the shuttle has hovered on the other side, for which hit. */
   private hoverT = 0;
   private hoverHit = -1;
+  /** A disguised shot was just played: the landing marker stays hidden this long (game seconds). */
+  disguiseT = 0;
   /** Online: how far (game seconds) the other player's latest shot still lags behind its true position. */
   private catchUp = 0;
   /** Online: gap between where the shuttle was drawn and where their hit put it, shrinking to nothing. */
@@ -188,7 +193,7 @@ export class Game {
 
   constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null) {
     this.online = online;
-    const drill = mode === 'practice' || mode === 'tutorial';
+    const drill = mode === 'practice' || mode === 'tutorial' || mode === 'challenge';
     // Online: doubles when the room has a lineup of four, otherwise singles. Nobody switches players online.
     if (online) settings = { ...settings, event: online.lineup ? 'doubles' : 'singles', autoSwitch: false };
     if (drill) settings = { ...settings, opponent: 'medium', event: 'singles' };
@@ -248,7 +253,7 @@ export class Game {
     }
     this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
     if (drill) {
-      this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
+      this.session = mode === 'practice' ? new Practice() : mode === 'challenge' ? new Challenges() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
       p1.place(0, -PLAYER.baseDepth);
       p2.place(0, 2.2);
       this.shuttle.hold({ x: 0, y: 1.6, z: 0.8 });
@@ -267,6 +272,11 @@ export class Game {
       this.unsubscribe = online.conn.on((m) => this.onNet(m));
     }
     this.say('umpire', gameStartCall(1, this.match.gamesToWin));
+    // Singles against the CPU: it remembers your habits from earlier matches on this computer.
+    if (mode === 'match' && !online && !doubles && this.controllers[1] instanceof AIController && vsAI) {
+      const weak = this.controllers[1].useMemory();
+      if (weak) this.banner = { title: 'The CPU remembers you', sub: `Last time you struggled with shots to your ${weak}. Expect more of them.`, color: VISUAL.colors.accent, t: 0, ttl: 4.5 };
+    }
     this.startServe();
   }
 
@@ -395,11 +405,12 @@ export class Game {
     const dt = real * PHYSICS.gameSpeed;
     if (this.drawOffset && (this.drawOffsetT += dt) >= ONLINE.smoothTime) this.drawOffset = null;
     if (this.callout) { this.callout.t += dt; if (this.callout.t > 1.8) this.callout = null; }
-    if (this.banner) this.banner.t += real;
+    if (this.banner) { this.banner.t += real; if (this.banner.ttl && this.banner.t > this.banner.ttl) this.banner = null; }
     if (this.landing) this.landing.t += dt;
     if (this.caption) this.caption.t += real;
     this.cheer = Math.max(0, this.cheer - real * 0.3);
     this.stats.tick(real);
+    if (!this.session) this.scoreWatch();
     for (const o of this.officials) o.signalT += real;
 
     if (this.state === 'replay') {
@@ -554,6 +565,7 @@ export class Game {
 
     const sh = this.shuttle;
     const prev = { ...sh.pos };
+    if (this.disguiseT > 0) this.disguiseT -= dt;
     // Online: a shot from another screen arrived late, so play it a little faster until it catches up.
     // Coming down on a side where someone on another screen could still reach it, the shuttle is for
     // show here: near the floor it hovers for about as long as their hit takes to arrive, rather than
@@ -663,6 +675,12 @@ export class Game {
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
         if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
+        if (req.kind === 'intent' && req.disguise) {
+          // Disguised: the landing marker shows up late and the other side is caught going the wrong way.
+          shot.label = `${shot.label} (disguised)`;
+          this.disguiseT = SHOTS.disguise.markerDelay;
+          for (const q of this.players) if (q.side !== p.side) q.wrongFoot(SHOTS.disguise.wrongFoot);
+        }
         p.onHit(c.point);
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         p.timingFlash = { kind: Math.abs(c.timingError) <= SWING.perfectTolerance ? 'perfect' : c.timingError > 0 ? 'early' : 'late', t: 0 };
@@ -1109,6 +1127,38 @@ export class Game {
     else if (this.state === 'interval' || this.state === 'gameBreak') this.timer = 0;
   }
 
+  // For achievements: the biggest deficit you've faced in the current game, your best comeback and
+  // games won to love.
+  private worstDeficit = 0;
+  private seenGames = 0;
+  private comebackBest = 0;
+  private loveGames = 0;
+  private scoreWatch() {
+    const m = this.match;
+    if (m.history.length > this.seenGames) {
+      const [a, b] = m.history[m.history.length - 1];
+      if (a > b) { this.comebackBest = Math.max(this.comebackBest, this.worstDeficit); if (b === 0) this.loveGames++; }
+      this.seenGames = m.history.length;
+      this.worstDeficit = 0;
+    } else if (this.state !== 'gameBreak' && this.state !== 'matchOver') {
+      this.worstDeficit = Math.max(this.worstDeficit, m.scores[1] - m.scores[0]);
+    }
+  }
+
+  /** What this match showed, for achievements (call when it's over). */
+  matchFacts(): MatchFacts {
+    this.scoreWatch();
+    const m = this.match, me = this.players[0].id;
+    return {
+      won: (this.forfeitWinner ?? (m.games[0] > m.games[1] ? 0 : 1)) === 0,
+      online: !!this.online,
+      level: this.online ? null : this.settings.opponent,
+      jumpSmashWinner: this.stats.rallies.some((r) => r.kind === 'winner' && r.winner === 0 && r.hitterPid === me && /Jump smash/.test(r.lastLabel)),
+      comeback: this.comebackBest,
+      loveGame: this.loveGames > 0,
+    };
+  }
+
   /** Last frame's movement per player, for footstep and squeak sounds. */
   private feet: { vx: number; vy: number; stride: number; cd: number }[] = [];
   private footwork(p: Player, i: number, dt: number) {
@@ -1500,7 +1550,7 @@ export class Game {
   setOnlinePause(on: boolean): boolean {
     if (!this.online) return false;
     if (on && (this.state === 'rally' || this.state === 'wait')) {
-      this.banner = { title: 'Pause between points', sub: 'You can pause once this rally is over', color: VISUAL.colors.hud, t: 0 };
+      this.banner = { title: 'Pause between points', sub: 'You can pause once this rally is over', color: VISUAL.colors.hud, t: 0, ttl: 2.5 };
       return false;
     }
     this.pauseMine = on;
@@ -1531,7 +1581,7 @@ export class Game {
     this.syncPause();
     if (timeUp) {
       this.online?.conn.send({ type: 'pause', on: false, all: true });
-      this.banner = { title: 'Play on', sub: `Pauses last at most ${ONLINE.pauseMax / 60 === 1 ? 'a minute' : `${ONLINE.pauseMax} seconds`}`, color: VISUAL.colors.hud, t: 0 };
+      this.banner = { title: 'Play on', sub: `Pauses last at most ${ONLINE.pauseMax / 60 === 1 ? 'a minute' : `${ONLINE.pauseMax} seconds`}`, color: VISUAL.colors.hud, t: 0, ttl: 2.5 };
     }
   }
 

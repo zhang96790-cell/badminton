@@ -22,6 +22,20 @@ interface Plan {
 
 /** Six target zones on a half: front/mid/back × left/right. */
 const zoneOf = (p: V2) => (Math.abs(p.y) < 2.6 ? 0 : Math.abs(p.y) < 4.6 ? 2 : 4) + (p.x < 0 ? 0 : 1);
+/** The zones as you see them from your end (your left is the screen's left). */
+export const ZONE_NAMES = ['front left', 'front right', 'mid-court left', 'mid-court right', 'back left', 'back right'];
+
+/**
+ * What the CPU remembers about you between matches on this computer: where you struggle (tries and
+ * weak replies per zone) and where you like to hit. Older matches count for less each time.
+ */
+interface Memory { tries: number[]; weak: number[]; landings: V2[]; matches: number }
+const MEMORY = 'badminton.cpuMemory';
+/** How much of the remembered evidence carries into the next match. */
+const MEMORY_KEEP = 0.6;
+export function loadMemory(): Memory | null {
+  try { const m = JSON.parse(localStorage.getItem(MEMORY) ?? 'null') as Memory | null; return m?.tries?.length === 6 ? m : null; } catch { return null; }
+}
 
 /**
  * Reads the shuttle like a player: after a reaction delay it predicts the flight, picks the highest
@@ -44,6 +58,8 @@ export class AIController implements Controller {
   private lastIntent: Intent | null = null;
   /** Doubles: where the partner is expected to take the shuttle when it's theirs. */
   private mateSpot: V2 | null = null;
+  /** Remembering you across matches (singles against you on this computer). */
+  private memory: Memory | null = null;
   private style: Style;
 
   constructor(private game: Game, private me: Player, level: Level, style: Style) {
@@ -51,6 +67,37 @@ export class AIController implements Controller {
     this.S = STYLES[style];
     this.style = style;
     me.speedMult = this.L.speed * this.S.speed;
+    me.extraReach = this.S.reach ?? 0;
+  }
+
+  /**
+   * Start from what it remembers about you, and keep remembering. Returns your weakest zone if it has
+   * learned enough to have a plan.
+   */
+  useMemory(): string | null {
+    const m = loadMemory();
+    this.memory = { tries: [0, 0, 0, 0, 0, 0], weak: [0, 0, 0, 0, 0, 0], landings: [], matches: (m?.matches ?? 0) + 1 };
+    if (!m) return null;
+    for (let z = 0; z < 6; z++) {
+      this.memory.tries[z] = m.tries[z] * MEMORY_KEEP;
+      this.memory.weak[z] = m.weak[z] * MEMORY_KEEP;
+      this.zoneTries[z] += this.memory.tries[z];
+      this.zoneWeak[z] += this.memory.weak[z];
+    }
+    this.oppLandings = m.landings.slice(-10);
+    this.memory.landings = [...this.oppLandings];
+    let best = -1, bestRate = 0;
+    for (let z = 0; z < 6; z++) {
+      const rate = m.weak[z] / Math.max(1, m.tries[z]);
+      if (m.tries[z] >= 3 && rate > bestRate) { best = z; bestRate = rate; }
+    }
+    return best >= 0 && bestRate > 0.3 ? ZONE_NAMES[best] : null;
+  }
+
+  private saveMemory() {
+    const m = this.memory;
+    if (!m) return;
+    try { localStorage.setItem(MEMORY, JSON.stringify({ ...m, landings: this.oppLandings.slice(-10) })); } catch { /* storage unavailable */ }
   }
 
   /** Auto-switch handed this controller a different player. */
@@ -125,6 +172,7 @@ export class AIController implements Controller {
         const weak = c.timing < 0.7 || c.stretch > SHOTS.stretchStart || c.hand === 'backhand' || weakReply;
         this.zoneTries[this.lastTargetZone] += 1;
         this.zoneWeak[this.lastTargetZone] += weak ? 1 : 0;
+        if (this.memory) { this.memory.tries[this.lastTargetZone] += 1; this.memory.weak[this.lastTargetZone] += weak ? 1 : 0; }
         this.lastTargetZone = null;
       }
     } else if (o.type === 'hit' && o.by === this.me.side) {
@@ -133,9 +181,11 @@ export class AIController implements Controller {
       if (this.lastTargetZone !== null) {
         this.zoneTries[this.lastTargetZone] += 1;
         if (o.winner === this.me.side) this.zoneWeak[this.lastTargetZone] += 1;
+        if (this.memory) { this.memory.tries[this.lastTargetZone] += 1; if (o.winner === this.me.side) this.memory.weak[this.lastTargetZone] += 1; }
       }
       this.lastTargetZone = null;
       this.lastIntent = null;
+      this.saveMemory();
     }
   }
 
@@ -359,7 +409,11 @@ export class AIController implements Controller {
       }
     }
     const chosen = weightedPick(options, options.map((o) => Math.exp(o.score * L.decisiveness * 1.5)));
-    const target = { x: chosen.target.x + gauss() * L.aimNoise, y: chosen.target.y + gauss() * L.aimNoise };
-    return { kind: 'intent', intent, aimX: 0, aimDepth: 0, target, strength: L.strength };
+    const noise = L.aimNoise * (this.S.steady ?? 1);
+    const target = { x: chosen.target.x + gauss() * noise, y: chosen.target.y + gauss() * noise };
+    // A deceptive player disguises drops, net shots and flicks from the net.
+    const disguisable = intent === 'soft' || (intent === 'high' && Math.abs(p.contact.y) < SHOTS.nearNet);
+    const disguise = disguisable && chance(this.S.deceive ?? 0);
+    return { kind: 'intent', intent, aimX: 0, aimDepth: 0, target, strength: L.strength, disguise };
   }
 }

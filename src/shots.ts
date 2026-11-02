@@ -9,7 +9,7 @@ export type Intent = 'high' | 'fast' | 'soft';
 
 export type ShotRequest =
   /** Keyboard / AI. aimX: -1 left, 0 centre, 1 right (screen). aimDepth: 1 deeper, -1 shorter. target overrides both. */
-  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number }
+  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number; disguise?: boolean }
   /** Mouse. low (left) = drive → smash, high (right) = drop on a tap, lob when held. power 0..1 from charge. target = cursor. */
   | { kind: 'mouse'; arc: 'low' | 'high'; power: number; target: V2 };
 

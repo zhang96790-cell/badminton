@@ -30,7 +30,7 @@ export interface Panel { tag: string; title: string; text: string; progress: [nu
 
 /** A practice or tutorial session: the far side is a coach feeding shuttles instead of an opponent. */
 export interface Session {
-  readonly kind: 'practice' | 'tutorial';
+  readonly kind: 'practice' | 'tutorial' | 'challenge';
   /** Set when the session wants to return to the menu. */
   done: boolean;
   start(g: Game): void;

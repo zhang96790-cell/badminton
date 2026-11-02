@@ -93,6 +93,16 @@
             <div class="act"><button id="practice" class="go">Start</button></div>
           </section>
 
+          <section class="oop-row" aria-label="Court 5, challenges">
+            <span class="ct" aria-hidden="true">5</span>
+            <p class="event"><span>Challenges</span></p>
+            <div class="match">
+              <p class="vs">Star challenges</p>
+              <p class="sub" id="challengeSub">7 challenges, up to 3 stars each: drops, smash defence, clears, net shots and more</p>
+            </div>
+            <div class="act"><button id="challenges" class="go">Start</button></div>
+          </section>
+
           <section class="oop-row" aria-label="Court 4, online">
             <span class="ct" aria-hidden="true">4</span>
             <p class="event"><span>Online</span></p>
@@ -151,6 +161,9 @@
               <button data-value="attacker">Attacker</button>
               <button data-value="defender">Defender</button>
               <button data-value="net">Net player</button>
+              <button data-value="deceptive">Deceptive</button>
+              <button data-value="retriever">Fast retriever</button>
+              <button data-value="wall">Defensive wall</button>
             </div>
           </div>
           <div class="field" id="partnerRow">
@@ -300,6 +313,7 @@
         </div>
       </div>
     </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <div id="roomModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="roomTitle">
       <div class="pass">
         <header class="pass-head">
@@ -366,6 +380,7 @@
           <button role="tab" data-hub="friends" aria-selected="false">Friends <span id="friendBadge" class="hub-badge" hidden></span></button>
           <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
           <button role="tab" data-hub="matches" aria-selected="false">Matches</button>
+          <button role="tab" data-hub="awards" aria-selected="false">Awards</button>
           <button role="tab" data-hub="highlights" aria-selected="false">Highlights</button>
           <button role="tab" data-hub="account" aria-selected="false" id="accountTab">Account</button>
           <button role="tab" data-hub="admin" aria-selected="false" id="adminTab" hidden>Admin</button>
@@ -392,6 +407,11 @@
           <section data-hubpane="leaders" hidden>
             <p class="pane-note">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
             <ol id="leaderList" class="hub-list leaders"></ol>
+          </section>
+          <section data-hubpane="awards" hidden>
+            <div class="scope" id="awardsScope"></div>
+            <div class="stat-group"><h3>Achievements</h3><div class="tiles" id="achList"></div></div>
+            <div class="stat-group"><h3>Challenges</h3><ol id="starList" class="hub-list"></ol></div>
           </section>
           <section data-hubpane="highlights" hidden>
             <p class="pane-note">Rallies you saved by pressing P after a point. Kept on this computer (up to 10).</p>

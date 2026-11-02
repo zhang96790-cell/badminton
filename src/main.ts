@@ -6,6 +6,8 @@ import '@fontsource/barlow-semi-condensed/700';
 import './menu.css';
 import { Sound } from './audio';
 import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
+import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
+import { CHALLENGES, Challenges, loadStars, totalStars, type ChallengeDef } from './challenges';
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
 import { Playback } from './replay';
 import { CHANGELOG } from './changelog';
@@ -331,9 +333,45 @@ function openAccount(note?: string) {
 function recordCareer(g: Game) {
   if (g.mode !== 'match' && g.mode !== 'online') return;
   const delta = careerDelta(g, career);
+  const fresh = checkAchievements(addCareer(career, delta), g.matchFacts(), loadStars());
+  saveCareer({ ...delta, ...achievementDelta(fresh) });
+  announceAchievements(fresh);
+}
+
+/** Add these numbers to your career: on your account when logged in, otherwise on this computer. */
+function saveCareer(delta: Career) {
+  if (!Object.keys(delta).length) return;
   career = addCareer(career, delta);
   if (!account) { saveLocalCareer(career); return; }
   void loadAccount().then(async (m) => { const saved = await m.addCareer(delta); if (saved) career = saved; });
+}
+
+/** A challenge attempt ended: keep your best stars in your career (for the leaderboard) and check achievements. */
+function challengeResult(c: ChallengeDef, stars: number) {
+  const fresh = checkAchievements(career, null, loadStars());
+  saveCareer({ ...(stars ? { [`max_star_${c.id}`]: stars } : {}), ...achievementDelta(fresh) });
+  announceAchievements(fresh);
+}
+
+/** Pop-up notes in the corner ("Achievement unlocked"), one after another. */
+const toastQueue: { title: string; sub: string }[] = [];
+let toastBusy = false;
+function toast(title: string, sub: string) {
+  toastQueue.push({ title, sub });
+  if (toastBusy) return;
+  const el = document.getElementById('toast')!;
+  const next = () => {
+    const t = toastQueue.shift();
+    if (!t) { toastBusy = false; el.classList.remove('show'); return; }
+    toastBusy = true;
+    el.innerHTML = `<b>${hubEsc(t.title)}</b><span>${hubEsc(t.sub)}</span>`;
+    el.classList.add('show');
+    setTimeout(() => { el.classList.remove('show'); setTimeout(next, 350); }, 3800);
+  };
+  next();
+}
+function announceAchievements(list: Achievement[]) {
+  for (const a of list) toast(`Achievement unlocked: ${a.name}`, a.desc);
 }
 
 // ── Social screen ────────────────────────────────────────────────────────────
@@ -419,6 +457,22 @@ function showHubTab(name: string) {
   if (name === 'leaders') void renderLeaders();
   if (name === 'admin') void renderAdmin();
   if (name === 'highlights') renderHighlights();
+  if (name === 'awards') renderAwards();
+}
+
+/** Awards tab: achievements, and your stars from the challenges. */
+function renderAwards() {
+  const got = loadUnlocked(), stars = loadStars();
+  const n = ACHIEVEMENTS.filter((a) => got[a.id] || career[`max_ach_${a.id}`]).length;
+  document.getElementById('awardsScope')!.innerHTML = `<b>${n}</b> of ${ACHIEVEMENTS.length} achievements · <b>${totalStars(stars)}</b> of ${CHALLENGES.length * 3} challenge stars`;
+  document.getElementById('achList')!.innerHTML = ACHIEVEMENTS.map((a) => {
+    const on = !!(got[a.id] || career[`max_ach_${a.id}`]);
+    return `<div class="tile ach${on ? ' on' : ''}"><b>${on ? '★' : '☆'} ${hubEsc(a.name)}</b><span>${hubEsc(a.desc)}</span></div>`;
+  }).join('');
+  document.getElementById('starList')!.innerHTML = CHALLENGES.map((c, i) => {
+    const r = stars[c.id], s = r?.stars ?? 0;
+    return `<li><span class="rank">${i + 1}</span><span class="grow">${hubEsc(c.name)}<span class="sub">${hubEsc(c.goal)}</span></span><span class="sub">${r ? `Best ${r.best}` : 'Not tried'}</span><b class="stars">${'★'.repeat(s)}${'☆'.repeat(3 - s)}</b></li>`;
+  }).join('');
 }
 
 /** Highlights tab: rallies you saved with P, kept on this computer. */
@@ -1191,6 +1245,7 @@ function startMatch(mode: Mode = 'match') {
   voice.unlock();
   game = new Game({ ...settings }, input, broadcast, mode);
   game.onMatchOver = recordCareer;
+  if (game.session instanceof Challenges) game.session.onResult = challengeResult;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
   menu.classList.add('hidden');
@@ -1210,6 +1265,7 @@ function showMenu() {
 document.getElementById('start')!.addEventListener('click', () => startMatch('match'));
 document.getElementById('tutorial')!.addEventListener('click', () => startMatch('tutorial'));
 document.getElementById('practice')!.addEventListener('click', () => startMatch('practice'));
+document.getElementById('challenges')!.addEventListener('click', () => startMatch('challenge'));
 
 /** Keys during an online match: quick chat, pause (between points), forfeit, rematch, leave. */
 function onlineKeys(g: Game, over: boolean) {
@@ -1239,8 +1295,8 @@ function keepHighlight(g: Game) {
   if (!h) return;
   const ok = saveHighlight(h);
   g.banner = ok
-    ? { title: 'Saved to highlights', sub: `${h.title} · watch it in Social → Highlights`, color: '#ffd166', t: 0 }
-    : { title: 'Couldn’t save', sub: 'This browser has no room for highlights', color: '#ff6b6b', t: 0 };
+    ? { title: 'Saved to highlights', sub: `${h.title} · watch it in Social → Highlights`, color: '#ffd166', t: 0, ttl: 3 }
+    : { title: 'Couldn’t save', sub: 'This browser has no room for highlights', color: '#ff6b6b', t: 0, ttl: 3 };
 }
 
 // ── Loop ─────────────────────────────────────────────────────────────────────

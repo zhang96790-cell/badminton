@@ -266,7 +266,7 @@ export class Renderer {
   /** Predicted landing spot plus a dotted line from the shuttle to the floor, to help read depth. */
   private guides(game: Game) {
     const s = game.shuttle;
-    if (!s.inFlight || game.state !== 'rally') return;
+    if (!s.inFlight || game.state !== 'rally' || game.disguiseT > 0) return;
     const ctx = this.ctx;
     const a = this.cam.project(s.pos), b = this.cam.project(v3(s.pos.x, s.pos.y, 0));
     ctx.setLineDash([3, 4]);

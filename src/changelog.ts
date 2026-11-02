@@ -6,7 +6,7 @@
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
     version: '2.5',
-    title: 'Major improvements (part 1 of 3)',
+    title: 'Major improvements (parts 1 and 2 of 3)',
     date: '2 Nov 2026',
     changes: [
       'Swing assist only works against a Beginner or Easy CPU now, and every shot it plays for you is tagged ASSIST so it’s clear when the game helped.',
@@ -15,6 +15,10 @@ export const CHANGELOG: { version: string; title: string; date: string; changes:
       'Better replays: T changes the speed (1×, ½× or ¼×), the winning shot plays in slow motion, and V cycles five cameras (broadcast, side, low, overhead and a reverse angle).',
       'Save highlights: press P after a great point, then watch it again any time from Social → Highlights (the last 10 are kept on this computer).',
       'Sound pass: crisper racket hits that crack on smashes, a softer shuttle landing, shoe squeaks and footsteps, a crowd that murmurs and cheers, and a touch of arena echo.',
+      'Three new CPU personalities: Deceptive (disguises drops, net shots and flicks, so you read them late), Fast retriever (quicker, longer reach, gets everything back) and Defensive wall (lives at the back, clears and lifts, hardly ever misses).',
+      'The CPU remembers you: in singles it carries what it learned about your weak spots and favourite targets into your next match on this computer, and tells you what it’s planning at the start.',
+      'Star challenges (Court 5): seven short scored drills, each worth up to three stars: Drop zone, Smash defence, Deep clears, Tight at the net, Smash attack, Drive battle and Perfect timing. Number keys switch, Enter retries.',
+      'Achievements: 17 to unlock, from your first win and a 30-shot rally to beating an Expert and 3 stars on every challenge. They pop up as you earn them; see them all in Social → Awards.',
       'Online rooms are singles only for now: online doubles is held back while we make it steadier. Doubles against the CPU is still there.',
     ],
   },

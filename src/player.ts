@@ -129,6 +129,9 @@ export class Player implements PlayerView {
     return true;
   }
 
+  /** Fooled by a disguised shot: half speed for a moment, as if caught going the wrong way. */
+  wrongFoot(t: number) { if (!this.airborne) this.landLag = Math.max(this.landLag, t); }
+
   /** Little hop as the opponent hits; landing from it gives a burst of acceleration. */
   splitStep() {
     if (!this.airborne && !this.frozen && this.lunge > PLAYER.lungeTime) this.split = 0;

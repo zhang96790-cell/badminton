@@ -160,6 +160,8 @@ export const SHOTS = {
    * back or hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.
    */
   tumble: { margin: 0.02, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
+  /** Disguised shots (Deceptive CPU): landing marker hidden for markerDelay, opponents slowed for wrongFoot (s). */
+  disguise: { markerDelay: 0.32, wrongFoot: 0.16 },
   /** An overhead more than this far behind the body (m) is hit weaker (behindPower) and less accurately (behindNoise), whatever the shot. */
   behindLimit: 0.3,
   behindPower: 0.8,
@@ -401,17 +403,25 @@ export const AI: Record<Level, AILevel> = {
   },
 };
 
-export type Style = 'allround' | 'attacker' | 'defender' | 'net';
+export type Style = 'allround' | 'attacker' | 'defender' | 'net' | 'deceptive' | 'retriever' | 'wall';
 
 /** CPU personalities: multipliers on shot preferences plus where they like to stand. */
+/**
+ * CPU personalities: how often each shot is chosen, where it waits, how safe its targets are and how
+ * fast it moves. reach: extra reach (m). deceive: chance a drop, net shot or flick is disguised (you
+ * read it late: no landing marker at first, and a brief wrong-footed step). steady: multiplies its aim error.
+ */
 export const STYLES: Record<Style, {
   label: string; smash: number; drop: number; clear: number; net: number; kill: number; jump: number;
-  baseDepth: number; margin: number; speed: number; serveShort: number;
+  baseDepth: number; margin: number; speed: number; serveShort: number; reach?: number; deceive?: number; steady?: number;
 }> = {
   allround: { label: 'All-rounder', smash: 1, drop: 1, clear: 1, net: 1, kill: 1, jump: 1, baseDepth: 3.5, margin: 0, speed: 1, serveShort: 1 },
   attacker: { label: 'Attacker', smash: 1.8, drop: 0.9, clear: 0.6, net: 0.8, kill: 1.3, jump: 1.6, baseDepth: 3.3, margin: -0.05, speed: 1, serveShort: 0.9 },
   defender: { label: 'Defender', smash: 0.5, drop: 0.8, clear: 1.7, net: 0.9, kill: 0.8, jump: 0.5, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8 },
   net: { label: 'Net player', smash: 0.9, drop: 1.5, clear: 0.8, net: 1.8, kill: 1.5, jump: 0.8, baseDepth: 3.0, margin: 0.05, speed: 1, serveShort: 1.2 },
+  deceptive: { label: 'Deceptive', smash: 1.1, drop: 1.7, clear: 0.9, net: 1.5, kill: 1.1, jump: 0.9, baseDepth: 3.4, margin: 0.05, speed: 1, serveShort: 1.1, deceive: 0.45 },
+  retriever: { label: 'Fast retriever', smash: 0.7, drop: 0.9, clear: 1.3, net: 1.1, kill: 0.9, jump: 0.6, baseDepth: 3.6, margin: 0.12, speed: 1.14, serveShort: 0.9, reach: 0.14 },
+  wall: { label: 'Defensive wall', smash: 0.3, drop: 0.6, clear: 2.3, net: 0.7, kill: 0.7, jump: 0.3, baseDepth: 4.0, margin: 0.25, speed: 1.06, serveShort: 0.7, reach: 0.07, steady: 0.6 },
 };
 
 export interface KeyMap {

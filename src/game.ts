@@ -14,7 +14,7 @@ import { Practice, feedShot, type FeedType, type Session } from './practice';
 import { Tutorial } from './tutorial';
 import { Playback, Recorder } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
-import { resolveServe, resolveShot, type Contact, type Shot } from './shots';
+import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
 import type { Speaker } from './voice';
@@ -132,6 +132,8 @@ export class Game {
   constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match') {
     const drill = mode !== 'match';
     if (drill) settings = { ...settings, opponent: 'medium', event: 'singles' };
+    // The tutorial teaches timing with the light, so it's always on there.
+    if (mode === 'tutorial') settings = { ...settings, timingLight: true };
     // Doubles is always against a CPU pair (no shared-keyboard doubles).
     if (settings.event === 'doubles' && settings.opponent === 'human') settings = { ...settings, opponent: 'medium' };
     this.settings = settings;
@@ -363,7 +365,8 @@ export class Game {
       srv.place(sCourt * SERVE.serverOffset, srv.side * SERVE.serverDepth);
       rcv.place(rCourt * SERVE.receiverOffset, rcv.side * SERVE.receiverDepth);
     }
-    for (const p of this.players) p.frozen = true;
+    for (const p of this.players) { p.frozen = true; p.serving = null; }
+    srv.serving = this.doublesCourt ? 'backhand' : 'forehand';
     this.shuttle.hold(this.serveContact(srv));
   }
 
@@ -387,7 +390,8 @@ export class Game {
     this.recorder.reset();
     this.shuttle.launch(from, shot.velocity, srv.side, true);
     this.predict();
-    srv.onHit(from);
+    srv.serving = null;
+    srv.onHit(from, true);
     for (const p of this.players) p.frozen = false;
     this.receiver.splitStep();
     this.state = 'rally';
@@ -492,7 +496,7 @@ export class Game {
           req = { ...req, aimX: (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
         }
         const incomingKmh = Math.hypot(sh.vel.x, sh.vel.y, sh.vel.z) * 3.6;
-        const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1);
+        const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1, this.isHuman(i));
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
         p.onHit(c.point);
@@ -507,7 +511,9 @@ export class Game {
         this.stats.shots.push({ by: this.teamOf(i), pid: p.id, label: shot.label, speedKmh: shot.speedKmh, hand: c.hand, landing: this.predicted });
         this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted, hitter: p });
         if (this.teamOf(i) === 1) this.maybeSwitch();
-        this.announce(p, shot, `${c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`);
+        const perfectJump = this.isHuman(i) && /Jump smash/.test(shot.label) && isPerfectJump(c);
+        this.announce(p, shot, `${perfectJump ? 'PERFECT JUMP' : c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`);
+        if (perfectJump) { this.cheer = Math.max(this.cheer, 0.6); this.events.push({ type: 'applause', intensity: 0.5 }); }
         this.events.push({ type: 'hit', strength: Math.min(1, shot.speedKmh / 300) });
         break;
       }

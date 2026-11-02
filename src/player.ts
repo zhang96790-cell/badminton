@@ -21,6 +21,8 @@ export interface PlayerView {
   lunge: number;
   lungeDir: V2;
   charge: number | null;
+  /** Holding the shuttle ready to serve: forehand (singles) or backhand (doubles) stance. */
+  serving: 'forehand' | 'backhand' | null;
 }
 
 export const RACKET_LENGTH = 0.58;
@@ -77,7 +79,8 @@ export class Player implements PlayerView {
   split = 9;
   lunge = 9;
   lungeDir: V2 = { x: 0, y: 1 };
-  anim: { kind: 'hit' | 'whiff'; t: number; point: V3 | null } | null = null;
+  anim: { kind: 'hit' | 'whiff' | 'serve'; t: number; point: V3 | null } | null = null;
+  serving: 'forehand' | 'backhand' | null = null;
   /** Result of the last hit, for the timing light. */
   timingFlash: { kind: 'perfect' | 'early' | 'late'; t: number } | null = null;
   private recover = 0;
@@ -265,6 +268,7 @@ export class Player implements PlayerView {
       side: this.side,
       hand,
       airborne: this.airborne,
+      apex: this.airborne && Math.abs(this.vz) < SHOTS.perfectJump.apexSpeed,
       timing,
       timingLabel,
       timingError: err,
@@ -272,9 +276,9 @@ export class Player implements PlayerView {
     };
   }
 
-  onHit(point: V3) {
+  onHit(point: V3, serve = false) {
     this.swing = null;
-    this.anim = { kind: 'hit', t: 0, point: { ...point } };
+    this.anim = { kind: serve ? 'serve' : 'hit', t: 0, point: { ...point } };
     const dx = point.x - this.pos.x, dy = point.y - this.pos.y, d = Math.hypot(dx, dy);
     if (point.z < PLAYER.lungeMaxZ && d > 0.75 && !this.airborne) {
       this.lunge = 0;
@@ -287,7 +291,7 @@ export class Player implements PlayerView {
       side: this.side, color: this.color, racketSide: this.racketSide,
       pos: { ...this.pos }, vel: { ...this.vel }, z: this.z, vz: this.vz,
       hand: { ...this.hand }, rdir: { ...this.rdir }, stride: this.stride,
-      split: this.split, lunge: this.lunge, lungeDir: { ...this.lungeDir }, charge: this.charge,
+      split: this.split, lunge: this.lunge, lungeDir: { ...this.lungeDir }, charge: this.charge, serving: this.serving,
     };
   }
 
@@ -296,11 +300,16 @@ export class Player implements PlayerView {
     const S = shoulderOf(this), r = this.racketSide, f = this.forward;
     const at = (x: number, y: number, z: number): V3 => ({ x: S.x + x, y: S.y + y, z: S.z + z });
     const a = this.anim;
-    if (a?.kind === 'hit' && a.point && a.t < 0.06) {
+    if ((a?.kind === 'hit' || a?.kind === 'serve') && a.point && a.t < 0.06) {
       const d = sub3(a.point, S), L = len3(d), u = norm3(d);
       return { hand: add3(S, mul3(u, clamp(L - RACKET_LENGTH, 0.12, 0.56))), dir: u };
     }
+    // Serve follow-through: the racket carries on up and forward rather than down across the body.
+    if (a?.kind === 'serve') return { hand: at(-r * 0.05, f * 0.42, 0.05), dir: norm3({ x: -r * 0.25, y: f * 0.5, z: 0.85 }) };
     if (a) return { hand: at(-r * 0.25, f * 0.3, -0.45), dir: norm3({ x: -r * 0.7, y: f * 0.2, z: -0.7 }) };
+    // Ready to serve. Forehand: racket drawn back low behind the hip. Backhand: racket in front, head down behind the shuttle.
+    if (this.serving === 'forehand') return { hand: at(r * 0.3, -f * 0.32, -0.5), dir: norm3({ x: r * 0.35, y: -f * 0.6, z: 0.6 }) };
+    if (this.serving === 'backhand') return { hand: at(-r * 0.12, f * 0.22, -0.42), dir: norm3({ x: r * 0.55, y: f * 0.25, z: -0.8 }) };
     if (this.swing || this.charge !== null) return { hand: at(r * 0.22, -f * 0.05, 0.22), dir: norm3({ x: r * 0.1, y: -f * 0.9, z: -0.35 }) };
     if (lungeAmount(this) > 0.2) {
       const ld = this.lungeDir;

@@ -28,7 +28,13 @@ export interface Contact {
   timingError: number;
   /** Horizontal distance to the shuttle as a fraction of max reach. */
   stretch: number;
+  /** Airborne and near the top of the jump. */
+  apex: boolean;
 }
+
+/** Overhead from the top of a jump, timed inside the tight perfect-jump window. */
+export const isPerfectJump = (c: Contact) =>
+  c.apex && c.point.z >= SHOTS.overheadHeight && Math.abs(c.timingError) <= SHOTS.perfectJump.window;
 
 export interface Shot { velocity: V3; label: string; speedKmh: number }
 
@@ -117,8 +123,11 @@ function fastSolve(z0: number, g: ReturnType<typeof geometry>, speed: number, ex
   return softShot(z0, g.D + SHOTS.netAssistMaxExtraDepth * 0.75, g.sNet, g.netH, SHOTS.netAssistMargin + 0.02, speed);
 }
 
-/** aimScale: multiplier on aim error (the menu's Casual setting for humans). */
-export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1): Shot {
+/**
+ * aimScale: multiplier on aim error (the menu's Casual setting for humans).
+ * perfectJumps: whether a perfect jump smash earns its bonus (players only; the CPU's timing is too exact).
+ */
+export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJumps = false): Shot {
   const z0 = c.point.z;
   const zone = zoneOf(z0);
   const netArea = Math.abs(c.point.y) < SHOTS.nearNet;
@@ -130,6 +139,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1): Shot {
     * (stretched ? SHOTS.stretchPower : 1)
     * (0.78 + 0.22 * c.timing)
     * (c.airborne && zone === 'overhead' ? SHOTS.jumpSmashBonus : 1)
+    * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);
   const noiseMult = (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;

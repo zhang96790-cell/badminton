@@ -5,6 +5,18 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.6.4',
+    title: 'Serves, jump smashes and challenges',
+    date: '2 Nov 2026',
+    changes: [
+      'Better serve animation: the server holds the shuttle out with their free hand, racket drawn back (forehand in singles, backhand in doubles), then swings through and follows up and forward.',
+      'Perfect jump smash: hit at the very top of your jump with the swing timed inside a tight window for extra pace (about 380 km/h instead of 340) and a PERFECT JUMP callout. Players only.',
+      'The CPU challenges again: it challenges calls that look wrong, and sometimes gambles on tight ones, especially on big points. Easy is reckless, Expert is picky and usually right.',
+      'Line judges miss more close calls (within about 12 cm of the line), so challenges are worth making.',
+      'Assists now start off except the landing marker: timing light, swing assist, auto-switch and umpire voice are off by default (reset once for everyone; turn them back on in Assists & controls). The tutorial still shows the timing light.',
+    ],
+  },
+  {
     version: '1.6.3',
     title: 'Change your keys',
     date: '2 Nov 2026',

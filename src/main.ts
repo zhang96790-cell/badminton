@@ -32,16 +32,24 @@ const voice = new Voice();
 
 const STORE = 'badminton.settings';
 const settings: Settings = {
-  event: 'singles', opponent: 'beginner', style: 'allround', partnerStyle: 'allround', autoSwitch: false, p1Control: 'mouse', games: 3, points: 15, guides: true, timingLight: true, swingAssist: true, aim: 'realistic', voice: true,
+  event: 'singles', opponent: 'beginner', style: 'allround', partnerStyle: 'allround', autoSwitch: false, p1Control: 'mouse', games: 3, points: 15,
+  // Assists start off except the landing marker.
+  guides: true, timingLight: false, swingAssist: false, aim: 'realistic', voice: false,
   view: 'close',
 };
+// Bumped when defaults change in a way existing players should get once.
+const SETTINGS_VERSION = 2;
 try {
-  Object.assign(settings, JSON.parse(localStorage.getItem(STORE) ?? '{}'));
+  const saved = JSON.parse(localStorage.getItem(STORE) ?? '{}');
+  // v2 (1.6.4): assists default off except the landing marker, so drop old saved assist values once.
+  if ((saved.v ?? 1) < 2) { delete saved.timingLight; delete saved.swingAssist; delete saved.voice; delete saved.autoSwitch; }
+  Object.assign(settings, saved);
 } catch { /* no saved settings */ }
 setView(broadcast, settings.view);
 function saveSettings() {
-  try { localStorage.setItem(STORE, JSON.stringify(settings)); } catch { /* storage unavailable */ }
+  try { localStorage.setItem(STORE, JSON.stringify({ ...settings, v: SETTINGS_VERSION })); } catch { /* storage unavailable */ }
 }
+saveSettings();
 let game: Game | null = null;
 
 // Bottom-right buttons: camera view and fullscreen. Blur after clicking so Space doesn't re-press them.

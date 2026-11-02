@@ -1,4 +1,4 @@
-import { AI, COURT, DOUBLES, PHYSICS, PLAYER, SHOTS, STYLES, SWING, type AILevel, type Level, type Style } from './config';
+import { AI, COURT, DOUBLES, OFFICIALS, PHYSICS, PLAYER, SHOTS, STYLES, SWING, type AILevel, type Level, type Style } from './config';
 import type { Command, Controller, Observation } from './controllers';
 import { distanceOut, inHalf, netHeightAt } from './court';
 import { coverable, interceptSlack } from './doubles';
@@ -144,15 +144,18 @@ export class AIController implements Controller {
    * by eye (worse at lower levels), and on close calls it sometimes gambles even when the call was right.
    */
   wantsChallenge(call: LineCall): boolean {
-    const skill = this.L.challengeSkill;
-    const seen = call.signed + gauss() * (0.02 + 0.06 * (1 - skill));
+    const skill = this.L.challengeSkill, O = OFFICIALS, m = this.game.match;
+    const seen = call.signed + gauss() * (O.cpuEyeError.max - (O.cpuEyeError.max - O.cpuEyeError.min) * skill);
     // How far on the other side of the line from the call it looked (positive = looked wrong).
     const edge = -COURT.footprint;
     const wrongBy = call.callIn ? edge - seen : seen - edge;
-    // Only challenge when it looked clearly wrong; careful players need a clearer view.
-    if (wrongBy > 0.01 + 0.03 * skill) return chance(0.9);
-    // Occasionally gamble on a very close call anyway.
-    return Math.abs(call.signed) < 0.04 && chance(0.02 + 0.08 * (1 - skill));
+    if (wrongBy > 0) return chance(0.85);
+    // It looked right but tight: players often challenge those anyway, especially on big points.
+    const tight = 1 - Math.abs(seen - edge) / O.cpuGambleBand;
+    if (tight <= 0) return false;
+    const bigPoint = m.atGamePoint(0) || m.atGamePoint(1);
+    const p = (O.cpuGamble.reckless - (O.cpuGamble.reckless - O.cpuGamble.careful) * skill) * tight + (bigPoint ? O.cpuGamble.bigPoint : 0);
+    return chance(p);
   }
 
   /** Ready position: personality, last shot, and a lean toward where you've been hitting. */

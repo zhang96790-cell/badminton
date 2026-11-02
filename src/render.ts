@@ -511,7 +511,10 @@ export class Renderer {
     const hand = v.hand;
     const elbow = ik(sh, hand, 0.3, 0.29, add3(v3(0, 0, -1), mul3(fwd, -0.3)));
     const raised = hand.z > sh.z + 0.1;
-    const offHand = raised ? add3(offSh, v3(-rs * 0.05, fwd.y * 0.3, 0.42)) : add3(offSh, v3(-rs * 0.06, fwd.y * 0.24, -0.32));
+    // Serving: the free hand holds the shuttle by its feathers, just above the cork, out in front.
+    const offHand = v.serving
+      ? v3(v.pos.x + rs * 0.15, v.pos.y + fwd.y * 0.35, 1.13)
+      : raised ? add3(offSh, v3(-rs * 0.05, fwd.y * 0.3, 0.42)) : add3(offSh, v3(-rs * 0.06, fwd.y * 0.24, -0.32));
     const offElbow = ik(offSh, offHand, 0.3, 0.29, v3(0, -fwd.y * 0.2, -1));
     const headC = add3(neck, v3(0, 0, 0.2));
     const throat = add3(hand, mul3(v.rdir, 0.33)), rHead = add3(hand, mul3(v.rdir, RACKET_LENGTH));

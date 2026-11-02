@@ -110,6 +110,11 @@ export const SHOTS = {
   /** Minimum speed budget for high shots, so lifts from the floor can still reach the back. */
   highSpeedFloor: 55,
   jumpSmashBonus: 1.1,
+  /**
+   * Perfect jump smash: hit at the top of the jump (vertical speed under apexSpeed) with the swing timed
+   * within this window (s, much tighter than a normal Perfect) for this much extra pace on top.
+   */
+  perfectJump: { window: 0.035, apexSpeed: 1.0, bonus: 1.12 },
   overheadHeight: 2.0,
   lowHeight: 1.15,
   /** Contact closer than this to the net counts as a net-area shot. */
@@ -239,9 +244,17 @@ export const RULES = {
 
 export const OFFICIALS = {
   /** Line judges can miscall shuttles landing within this distance (m) of the line... */
-  errorBand: 0.05,
+  errorBand: 0.12,
   /** ...with this chance right on the edge, falling to zero at the edge of the band. */
-  maxErrorChance: 0.3,
+  maxErrorChance: 0.45,
+  /**
+   * CPU challenges: it judges the landing by eye with this much error (m) at zero skill, down to the
+   * minimum at full skill. If the call looked wrong it challenges; if it was just tight (within
+   * gambleBand of the line) it sometimes challenges anyway, more often when reckless or on a big point.
+   */
+  cpuEyeError: { min: 0.03, max: 0.1 },
+  cpuGambleBand: 0.12,
+  cpuGamble: { careful: 0.25, reckless: 0.6, bigPoint: 0.2 },
   /** You're offered a challenge only when the shuttle landed this close to a line (m). */
   challengeRange: 0.35,
   /** Unsuccessful challenges allowed per game (successful ones are kept). */

@@ -205,6 +205,25 @@ export const SERVE = {
   },
 };
 
+/**
+ * Online lag hiding. After your shot, the shuttle on the other player's half is only for show on your
+ * screen (their screen decides what happens there), so it can bend time a little while their reply
+ * travels to you: it plays slower the more lag there is, and near the floor it hovers instead of
+ * landing until you know whether they hit it.
+ */
+export const ONLINE = {
+  /** Slow-motion: 1 − lag × this (lag in ms, one way), but never slower than slowMin. */
+  slowPerMs: 1 / 900,
+  slowMin: 0.8,
+  /** Hover below this height (m) while falling... */
+  hoverHeight: 0.35,
+  /** ...for at most this long (game seconds), at this fraction of normal speed. */
+  hoverMax: 0.25,
+  hoverRate: 0.08,
+  /** When their hit arrives, the drawn shuttle glides onto its true path over this long (game seconds). */
+  smoothTime: 0.12,
+};
+
 export const DOUBLES = {
   /** Side-by-side defence: each player covers a half, this far from the centre line, this deep. */
   defence: { x: 1.35, y: 3.6 },

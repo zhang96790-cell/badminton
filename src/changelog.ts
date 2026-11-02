@@ -5,6 +5,20 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1',
+    title: 'Quick match, ranking and friends',
+    date: '2 Nov 2026',
+    changes: [
+      'Quick match (Court 4): one press finds an opponent online near your rating. The range widens the longer you wait, and you can cancel any time. Ranked matches are 1 game to 21, start by themselves, and you need to be logged in to play them.',
+      'Ranking: everyone starts at 1000. Beating someone stronger earns more, and forfeits and drop-outs count as losses. Tiers: Bronze, Silver, Gold, Platinum and Champion. The end screen shows your rating change, and Enter finds your next match.',
+      'Player hub (click your name at the top when logged in): your rating, tier and record, your last 20 ranked matches, Friends and the top-50 Leaderboard.',
+      'Friends: add someone by username, accept or decline requests, see who’s online, and Invite them into a private room. They get a pop-up with a Join button.',
+      'Less lag weirdness online: the shuttle no longer touches the floor before the other player’s hit arrives. It plays a touch slower on their side, hovers near the floor if it has to, and glides onto the real path instead of jumping.',
+      'Clearer connection info: the lobby shows each player’s connection, the readout in the match says whose connection is causing lag, and game servers are now kept in Asia.',
+      'Results are saved by the game server (not players’ computers), so a ranked win can’t be faked from the browser. Private rooms stay unranked.',
+    ],
+  },
+  {
     version: '2.0.2',
     title: 'Shorter changelog',
     date: '2 Nov 2026',

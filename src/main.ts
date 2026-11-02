@@ -545,17 +545,21 @@ function renderLobby() {
   document.querySelector<HTMLElement>('#roomLobby .room-code')!.hidden = !!ranked;
   document.querySelector<HTMLElement>('#roomLobby .field-row')!.hidden = !!ranked;
   document.getElementById('roomTitle')!.textContent = ranked ? 'Ranked match' : 'Your room';
+  // Each player's round trip to the server, so a slow connection is easy to spot before playing.
+  const conn = ready && room.rtt && room.peerRtt
+    ? ` Connection: you ${Math.round(room.rtt)} ms, them ${Math.round(room.peerRtt)} ms${room.latency >= 150 ? ' (laggy: try moving closer to the Wi-Fi)' : ''}.`
+    : '';
   if (ranked) {
     roomStart.hidden = true;
-    roomStatus.textContent = ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · starts as soon as you’re both connected';
+    roomStatus.textContent = (ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · starts as soon as you’re both connected') + conn;
     return;
   }
   roomStart.hidden = !host;
   roomStart.disabled = !ready;
-  roomStatus.textContent = room.status === 'connecting' ? 'Connecting…'
+  roomStatus.textContent = (room.status === 'connecting' ? 'Connecting…'
     : room.status === 'reconnecting' ? 'Connection lost, reconnecting…'
     : !ready ? (host ? 'Send your friend the code or the invite link. You can start once they join.' : 'Waiting for the host…')
-    : host ? 'Both here. Press Start match when you’re ready.' : 'Both here. Waiting for the host to start.';
+    : host ? 'Both here. Press Start match when you’re ready.' : 'Both here. Waiting for the host to start.') + conn;
 }
 
 function openRoom(code: string) {
@@ -990,7 +994,7 @@ function frame(now: number) {
     const replaying = game.state === 'replay' && game.playback;
     const scene: Scene = replaying
       ? { ...game.playback!.frame(), live: false }
-      : { players: game.players, shuttle: game.shuttle, live: true };
+      : { players: game.players, shuttle: game.shuttleView, live: true };
     const cam = replaying && game.replayCam === 'side' ? side : broadcast;
     renderer.draw(cam, game, scene, w, h, now / 1000, cam === side);
     hud.draw(game, w, h, now / 1000);

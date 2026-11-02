@@ -4,6 +4,7 @@
 // settings and who is connected, so it costs almost nothing while players aren't sending anything.
 import { DurableObject } from 'cloudflare:workers';
 import { displayName } from '../../shared/names';
+import { LOCATION } from './location';
 import { Matchmaker } from './matchmaker';
 import { recordMatch, type Player, type SupabaseEnv } from './supabase';
 
@@ -39,7 +40,7 @@ export default {
       const origin = req.headers.get('Origin') ?? '';
       if (!ORIGINS.some((o) => o.test(origin))) return new Response('Forbidden', { status: 403 });
       if (req.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
-      return env.QUEUE.get(env.QUEUE.idFromName('global')).fetch(req);
+      return env.QUEUE.get(env.QUEUE.idFromName('global'), { locationHint: LOCATION }).fetch(req);
     }
     const m = url.pathname.match(/^\/room\/([^/]+)$/);
     if (!m) return new Response('Not found', { status: 404 });
@@ -48,7 +49,7 @@ export default {
     const origin = req.headers.get('Origin') ?? '';
     if (!ORIGINS.some((o) => o.test(origin))) return new Response('Forbidden', { status: 403 });
     if (req.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
-    return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(req);
+    return env.ROOMS.get(env.ROOMS.idFromName(code), { locationHint: LOCATION }).fetch(req);
   },
 } satisfies ExportedHandler<Env>;
 

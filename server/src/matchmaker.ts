@@ -4,6 +4,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { verifyPlayer, type Player, type SupabaseEnv } from './supabase';
 import type { Env } from './index';
+import { LOCATION } from './location';
 
 /** Kept on each waiting socket so it survives hibernation. */
 interface Waiting extends Player { joinedAt: number }
@@ -75,7 +76,7 @@ export class Matchmaker extends DurableObject<Env & SupabaseEnv> {
     const code = randomCode(5);
     const tickets = { host: randomCode(24, 'abcdefghijklmnopqrstuvwxyz0123456789'), guest: randomCode(24, 'abcdefghijklmnopqrstuvwxyz0123456789') };
     const strip = (w: Waiting): Player => ({ id: w.id, name: w.name, rating: w.rating });
-    const room = this.env.ROOMS.get(this.env.ROOMS.idFromName(code));
+    const room = this.env.ROOMS.get(this.env.ROOMS.idFromName(code), { locationHint: LOCATION });
     await room.setupRanked({ tickets, host: strip(host.w), guest: strip(guest.w) });
     this.send(host.ws, { type: 'matched', code, ticket: tickets.host, host: true, opponent: { name: guest.w.name, rating: guest.w.rating } });
     this.send(guest.ws, { type: 'matched', code, ticket: tickets.guest, host: false, opponent: { name: host.w.name, rating: host.w.rating } });

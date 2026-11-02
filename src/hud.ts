@@ -425,7 +425,9 @@ export class Hud {
     const ms = Math.round(conn.latency);
     const reconnecting = conn.status === 'reconnecting';
     const color = reconnecting ? C.callOut : ms < 80 ? C.callIn : ms < 150 ? C.accent : C.callOut;
-    const text = reconnecting ? 'Reconnecting…' : `${ms} ms${ms >= 150 ? '  ·  laggy connection' : ''}`;
+    // When there's lag, say whose connection it's coming from.
+    const whose = conn.rtt > conn.peerRtt * 1.5 ? 'your connection' : conn.peerRtt > conn.rtt * 1.5 ? `${game.players[1].name}’s connection` : 'both connections';
+    const text = reconnecting ? 'Reconnecting…' : ms < 80 ? `${ms} ms` : `${ms} ms  ·  ${ms < 150 ? 'some lag' : 'laggy'} (${whose})`;
     ctx.font = font(12, 700);
     const tw = ctx.measureText(text).width;
     panel(ctx, w / 2 - tw / 2 - 22, 14, tw + 44, 24, 12);

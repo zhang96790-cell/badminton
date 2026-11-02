@@ -1,6 +1,6 @@
 import { AIController } from './ai';
 import type { Camera, View } from './camera';
-import { COURT, DOUBLES, KEYS, OFFICIALS, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type KeyMap, type Level, type Style } from './config';
+import { COURT, DOUBLES, KEYS, OFFICIALS, ONLINE, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type KeyMap, type Level, type Style } from './config';
 import { KeyboardController, MouseController, type Command, type Controller, type Observation } from './controllers';
 import { applyBinds, type KeyBinds } from './keys';
 import { halfRect, isIn, netHeightAt, rightCourtSign, serviceBox, signedInside, singlesRect, type Rect } from './court';
@@ -12,7 +12,7 @@ import { createOfficials, gameStartCall, gameWonCall, judgeFor, matchWonCall, sc
 import { Player } from './player';
 import { Practice, feedShot, type FeedType, type Session } from './practice';
 import { Tutorial } from './tutorial';
-import { Playback, Recorder } from './replay';
+import { Playback, Recorder, type ShuttleView } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
@@ -148,6 +148,12 @@ export class Game {
   private jumped = false;
   private lastSentPos = '';
   private lastChat = -9;
+  /** Online lag hiding: how long the shuttle has hovered on the other side, for which hit. */
+  private hoverT = 0;
+  private hoverHit = -1;
+  /** Online: gap between where the shuttle was drawn and where their hit put it, shrinking to nothing. */
+  private drawOffset: V3 | null = null;
+  private drawOffsetT = 0;
 
   constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null) {
     this.online = online;
@@ -299,6 +305,13 @@ export class Game {
     return t === 0 ? 'Player and partner' : 'C P U pair';
   }
   teamColor(t: 0 | 1): string { return this.players[t].color; }
+  /** The shuttle as it should be drawn (online it may be gliding onto its true path). */
+  get shuttleView(): ShuttleView {
+    const sh = this.shuttle, o = this.drawOffset;
+    if (!o) return sh;
+    const k = 1 - this.drawOffsetT / ONLINE.smoothTime;
+    return { pos: { x: sh.pos.x + o.x * k, y: sh.pos.y + o.y * k, z: Math.max(0, sh.pos.z + o.z * k) }, dir: sh.dir, vel: sh.vel, inFlight: sh.inFlight, trail: sh.trail };
+  }
   /** The last shot played (for the doubles AI's attack / defence formations). */
   get lastShotLabel(): string { return this.lastShot?.label ?? ''; }
   /** Played by someone at this computer (not the CPU, and not the online opponent). */
@@ -317,6 +330,7 @@ export class Game {
     if (this.paused || this.peerAway) return;
     const real = Math.min(realDt, 0.05);
     const dt = real * PHYSICS.gameSpeed;
+    if (this.drawOffset && (this.drawOffsetT += dt) >= ONLINE.smoothTime) this.drawOffset = null;
     if (this.callout) { this.callout.t += dt; if (this.callout.t > 1.8) this.callout = null; }
     if (this.banner) this.banner.t += real;
     if (this.landing) this.landing.t += dt;
@@ -474,9 +488,20 @@ export class Game {
 
     const sh = this.shuttle;
     const prev = { ...sh.pos };
-    stepFlight(sh.pos, sh.vel, dt);
-    this.flightT += dt;
-    sh.orient(dt);
+    // Online, after your shot: on the other player's half the shuttle is for show here, so slow it a
+    // little while their reply is on its way, and hover near the floor rather than land early.
+    let fdt = dt;
+    if (this.online && sh.inFlight && !sh.touchedNet && sh.lastHitter === this.players[0].side && sh.pos.y > 0) {
+      if (this.hoverHit !== sh.hits) { this.hoverHit = sh.hits; this.hoverT = 0; }
+      fdt = dt * clamp(1 - this.online.conn.latency * ONLINE.slowPerMs, ONLINE.slowMin, 1);
+      if (sh.pos.z < ONLINE.hoverHeight && sh.vel.z < 0 && this.hoverT < ONLINE.hoverMax) {
+        this.hoverT += dt;
+        fdt = dt * ONLINE.hoverRate;
+      }
+    }
+    stepFlight(sh.pos, sh.vel, fdt);
+    this.flightT += fdt;
+    sh.orient(fdt);
 
     // Net plane crossing
     if (prev.y * sh.pos.y < 0) {
@@ -1028,9 +1053,17 @@ export class Game {
       this.recorder.reset();
       this.rallyHits = 0;
     }
+    // Mid-rally, this screen's shuttle has drifted from where they really hit it: draw it gliding
+    // onto the true path rather than jumping (the physics uses the true path straight away).
+    const drawnFrom = this.state === 'rally' || this.state === 'wait' ? { ...sh.pos } : null;
     this.state = 'rally';
     this.acc = 0;
     sh.launch(pos, vel, opp.side, m.serve);
+    if (drawnFrom && Math.hypot(drawnFrom.x - pos.x, drawnFrom.y - pos.y, drawnFrom.z - pos.z) < 3) {
+      this.drawOffset = { x: drawnFrom.x - pos.x, y: drawnFrom.y - pos.y, z: drawnFrom.z - pos.z };
+      this.drawOffsetT = 0;
+    }
+    sh.trail = [];
     this.predict();
     opp.onHit(pos, m.serve);
     me.splitStep();

@@ -19,7 +19,12 @@ export interface Roster {
   host: { name: string; connected: boolean } | null;
   guest: { name: string; connected: boolean } | null;
   settings: unknown;
+  /** Quick-match rooms: both players' ratings. Null for private rooms. */
+  ranked: { host: number; guest: number } | null;
 }
+
+/** The room's verdict on a ranked match: new ratings, or why they couldn't be saved. */
+export type RankedResult = { winner: Seat; forfeit: boolean; change?: number; ratings?: { host: number; guest: number }; error?: string };
 
 /** Messages the game sends to the other player (relayed by the room). */
 export type GameMsg =
@@ -39,7 +44,8 @@ export type ServerMsg =
   | ({ type: 'roster' } & Roster)
   | { type: 'peer'; status: 'away' | 'back' | 'left'; seconds?: number; forfeit?: boolean }
   | { type: 'pong'; t: number }
-  | { type: 'full' };
+  | { type: 'full' }
+  | ({ type: 'result' } & RankedResult);
 
 type Handler = (msg: GameMsg | ServerMsg) => void;
 
@@ -116,4 +122,31 @@ export class RoomConnection {
   private ping() {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: 'ping', t: performance.now() }));
   }
+}
+
+export type QueueEvent =
+  | { type: 'queued'; rating: number }
+  | { type: 'matched'; code: string; ticket: string; host: boolean; opponent: { name: string; rating: number } }
+  | { type: 'error'; error: string }
+  | { type: 'closed' };
+
+/** Waiting for a quick match. Logs in with your account token; closes once you're matched. */
+export class QueueConnection {
+  private ws: WebSocket;
+  private done = false;
+
+  constructor(token: string, private onEvent: (e: QueueEvent) => void) {
+    this.ws = new WebSocket(`${ROOM_SERVER}/queue`);
+    this.ws.addEventListener('open', () => this.ws.send(JSON.stringify({ type: 'auth', token })));
+    this.ws.addEventListener('message', (e) => {
+      let msg: QueueEvent | { type: 'replaced' };
+      try { msg = JSON.parse(String(e.data)); } catch { return; }
+      if (msg.type === 'matched') this.done = true;
+      if (msg.type === 'replaced') { this.done = true; this.onEvent({ type: 'error', error: 'replaced' }); return; }
+      this.onEvent(msg);
+    });
+    this.ws.addEventListener('close', () => { if (!this.done) this.onEvent({ type: 'closed' }); });
+  }
+
+  cancel() { this.done = true; this.ws.close(1000); }
 }

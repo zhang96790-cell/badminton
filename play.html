@@ -87,10 +87,13 @@
             <span class="ct" aria-hidden="true">4</span>
             <p class="event"><span>Online</span></p>
             <div class="match">
-              <p class="vs">Play a friend online</p>
-              <p class="sub">Make a room and send the code, or join theirs</p>
+              <p class="vs">Play online</p>
+              <p class="sub">Ranked quick match against someone your level, or a private room with a friend</p>
             </div>
-            <div class="act act-pair"><button id="createRoom" class="go">Create room</button><button id="joinRoom" class="go">Join</button></div>
+            <div class="act act-online">
+              <button id="quickMatch" class="go go-primary">Quick match</button>
+              <div class="act-pair"><button id="createRoom" class="go">Create room</button><button id="joinRoom" class="go">Join</button></div>
+            </div>
           </section>
         </div>
 
@@ -280,15 +283,39 @@
           </div>
           <p class="pass-note">There’s no email, so a forgotten passcode can’t be reset. Keep it somewhere safe.</p>
         </form>
-        <div id="acSignedIn" class="pass-body" hidden>
-          <p class="pass-name">Logged in as <b id="acName"></b></p>
-          <p class="help" id="acSync">Your settings and key binds are saved to this account and follow you to any computer.</p>
-          <label class="pass-field">New passcode<input id="acNewPass" type="password" autocomplete="new-password" /></label>
-          <p id="acMsg" class="pass-msg" aria-live="polite"></p>
-          <div class="pass-actions">
-            <button type="button" id="acChange" class="primary">Change passcode</button>
-            <button type="button" id="acLogout">Log out</button>
-          </div>
+        <div id="acSignedIn" class="hub" hidden>
+          <nav class="mc-tabs hub-tabs" role="tablist">
+            <button role="tab" data-hub="profile" aria-selected="true">Profile</button>
+            <button role="tab" data-hub="friends" aria-selected="false">Friends <span id="friendBadge" class="hub-badge" hidden></span></button>
+            <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
+          </nav>
+          <section class="pass-body" data-hubpane="profile">
+            <div class="stat-card">
+              <div><p class="pass-name"><b id="acName"></b></p><p class="tier" id="acTier"></p></div>
+              <div class="stat-nums"><b id="acRating">–</b><span>rating</span></div>
+              <div class="stat-nums"><b id="acRecord">–</b><span>won–lost</span></div>
+            </div>
+            <h3 class="hub-h">Recent ranked matches</h3>
+            <ol id="acMatches" class="hub-list"><li class="empty">No ranked matches yet. Try Quick match on Court 4.</li></ol>
+            <p class="help" id="acSync">Your settings and key binds are saved to this account and follow you to any computer.</p>
+            <label class="pass-field">New passcode<input id="acNewPass" type="password" autocomplete="new-password" /></label>
+            <p id="acMsg" class="pass-msg" aria-live="polite"></p>
+            <div class="pass-actions">
+              <button type="button" id="acChange" class="primary">Change passcode</button>
+              <button type="button" id="acLogout">Log out</button>
+            </div>
+          </section>
+          <section class="pass-body" data-hubpane="friends" hidden>
+            <form id="friendForm" class="friend-add">
+              <input id="friendName" placeholder="Add a friend by username" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="off" />
+              <button type="submit" class="primary">Add</button>
+            </form>
+            <p id="friendMsg" class="pass-msg" aria-live="polite"></p>
+            <ol id="friendList" class="hub-list"></ol>
+          </section>
+          <section class="pass-body" data-hubpane="leaders" hidden>
+            <ol id="leaderList" class="hub-list leaders"></ol>
+          </section>
         </div>
       </div>
     </div>
@@ -301,6 +328,13 @@
           </div>
           <button id="roomClose" class="mc-close" aria-label="Leave room"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
         </header>
+        <div id="roomQueue" class="pass-body" hidden>
+          <div class="queue-pulse" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p class="pass-name" id="queueTitle">Finding an opponent…</p>
+          <p class="help" id="queueInfo">Looking for someone near your rating.</p>
+          <p class="pass-note" id="queueTime">0:00</p>
+          <div class="pass-actions"><button id="queueCancel" type="button">Cancel</button></div>
+        </div>
         <div id="roomJoin" class="pass-body">
           <p class="help">Type the 5-character code your friend sent you.</p>
           <label class="pass-field">Room code<input id="roomCodeIn" maxlength="5" autocomplete="off" spellcheck="false" autocapitalize="characters" /></label>
@@ -321,6 +355,11 @@
           </div>
         </div>
       </div>
+    </div>
+    <div id="inviteToast" class="invite-toast" role="status" hidden>
+      <span id="inviteText"></span>
+      <button id="inviteJoin" type="button" class="primary">Join</button>
+      <button id="inviteDismiss" type="button" aria-label="Dismiss">✕</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

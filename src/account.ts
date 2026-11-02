@@ -83,3 +83,37 @@ export async function saveSettings(id: string, settings: Record<string, unknown>
   const { error } = await supabase.from('profiles').update({ settings, updated_at: new Date().toISOString() }).eq('id', id);
   return !error;
 }
+
+// ── 2.1: ranking, friends and invites ─────────────────────────────────────────
+
+/** Your current login token (the quick-match server checks it to know who you are). */
+export async function accessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
+export interface Stats { username: string; rating: number; wins: number; losses: number }
+export interface MatchRow { opponent: string; won: boolean; score: string; change: number; forfeit: boolean; created_at: string }
+export interface Friend { id: string; username: string; rating: number; online: boolean; direction: 'friend' | 'incoming' | 'outgoing' }
+export interface Invite { id: number; from_name: string; room: string; created_at: string }
+
+async function rpc<T>(name: string, args: Record<string, unknown> = {}): Promise<T | null> {
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) { console.warn(`${name}:`, error.message); return null; }
+  return data as T;
+}
+
+export const myStats = async () => (await rpc<Stats[]>('my_stats'))?.[0] ?? null;
+export const myMatches = async () => (await rpc<MatchRow[]>('my_matches')) ?? [];
+export const leaderboard = async () => (await rpc<Stats[]>('leaderboard')) ?? [];
+export const friendsList = async () => (await rpc<Friend[]>('friends_list')) ?? [];
+export const myInvites = async () => (await rpc<Invite[]>('my_invites')) ?? [];
+export const heartbeat = () => rpc('heartbeat');
+export const respondFriendRequest = (other: string, accept: boolean) => rpc('respond_friend_request', { other, accept });
+export const removeFriend = (other: string) => rpc('remove_friend', { other });
+export const dismissInvite = (invite: number) => rpc('dismiss_invite', { invite });
+
+/** 'sent', 'accepted' (they'd already asked you), 'already', 'no_such_player', 'self', 'too_many', or null on error. */
+export const sendFriendRequest = (target: string) => rpc<string>('send_friend_request', { target: normalise(target) });
+/** 'sent' or 'not_friends' (or null on error). */
+export const sendInvite = (friend: string, room: string) => rpc<string>('send_invite', { friend, room });

@@ -4,12 +4,24 @@
 // settings and who is connected, so it costs almost nothing while players aren't sending anything.
 import { DurableObject } from 'cloudflare:workers';
 import { displayName } from '../../shared/names';
+import { Matchmaker } from './matchmaker';
+import { recordMatch, type Player, type SupabaseEnv } from './supabase';
 
-export interface Env { ROOMS: DurableObjectNamespace<Room> }
+export { Matchmaker };
+export interface Env extends SupabaseEnv { ROOMS: DurableObjectNamespace<Room>; QUEUE: DurableObjectNamespace<Matchmaker> }
 
 type Seat = 'host' | 'guest';
 interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null }
-interface RoomState { host: SeatInfo | null; guest: SeatInfo | null; settings: unknown }
+/** A quick-match room: only the two matched players may sit, and the result counts for ranking. */
+interface Ranked {
+  tickets: Record<Seat, string>;
+  players: Record<Seat, Player>;
+  /** Set once the result has been saved (or couldn't be), so it's only ever recorded once. */
+  recorded: boolean;
+}
+/** The match as the room follows it, from the host's point verdicts. */
+interface Progress { playing: boolean; gamesToWin: number; games: [number, number]; scores: [number, number] }
+interface RoomState { host: SeatInfo | null; guest: SeatInfo | null; settings: unknown; ranked: Ranked | null; progress: Progress | null }
 /** Kept on each socket so it survives hibernation. */
 interface Attachment { seat: Seat }
 
@@ -23,6 +35,12 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === '/health') return new Response('ok');
+    if (url.pathname === '/queue') {
+      const origin = req.headers.get('Origin') ?? '';
+      if (!ORIGINS.some((o) => o.test(origin))) return new Response('Forbidden', { status: 403 });
+      if (req.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
+      return env.QUEUE.get(env.QUEUE.idFromName('global')).fetch(req);
+    }
     const m = url.pathname.match(/^\/room\/([^/]+)$/);
     if (!m) return new Response('Not found', { status: 404 });
     const code = m[1].toUpperCase();
@@ -38,7 +56,7 @@ export class Room extends DurableObject<Env> {
   private state: RoomState | null = null;
 
   private async load(): Promise<RoomState> {
-    this.state ??= (await this.ctx.storage.get<RoomState>('room')) ?? { host: null, guest: null, settings: null };
+    this.state ??= (await this.ctx.storage.get<RoomState>('room')) ?? { host: null, guest: null, settings: null, ranked: null, progress: null };
     return this.state;
   }
 
@@ -52,12 +70,21 @@ export class Room extends DurableObject<Env> {
 
   private roster(s: RoomState) {
     const view = (x: SeatInfo | null) => (x ? { name: x.name, connected: x.connected } : null);
-    return { host: view(s.host), guest: view(s.guest), settings: s.settings };
+    const ranked = s.ranked ? { host: s.ranked.players.host.rating, guest: s.ranked.players.guest.rating } : null;
+    return { host: view(s.host), guest: view(s.guest), settings: s.settings, ranked };
   }
 
   /** Tell both players who's in the room. */
   private broadcastRoster(s: RoomState) {
     for (const seat of ['host', 'guest'] as Seat[]) this.send(this.socket(seat), { type: 'roster', you: seat, ...this.roster(s) });
+  }
+
+  /** Called by the matchmaker: this room is a ranked match between these two players. */
+  async setupRanked(r: { tickets: Record<Seat, string>; host: Player; guest: Player }) {
+    const s = await this.load();
+    s.ranked = { tickets: r.tickets, players: { host: r.host, guest: r.guest }, recorded: false };
+    s.settings = { games: 1, points: 21 };
+    await this.save();
   }
 
   async fetch(req: Request): Promise<Response> {
@@ -66,9 +93,11 @@ export class Room extends DurableObject<Env> {
     if (token.length < 16) return new Response('Missing token', { status: 400 });
     const s = await this.load();
 
-    // Same token as a seat = that player reconnecting. Otherwise take a free seat.
+    // Ranked: your matchmaker ticket is your seat. Otherwise the same token as a seat is that player
+    // reconnecting, and anyone else takes a free seat.
     let seat: Seat | null = s.host?.token === token ? 'host' : s.guest?.token === token ? 'guest' : null;
-    if (!seat) seat = !s.host ? 'host' : !s.guest ? 'guest' : null;
+    if (s.ranked) seat = s.ranked.tickets.host === token ? 'host' : s.ranked.tickets.guest === token ? 'guest' : null;
+    else if (!seat) seat = !s.host ? 'host' : !s.guest ? 'guest' : null;
 
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
@@ -83,7 +112,7 @@ export class Room extends DurableObject<Env> {
     this.ctx.acceptWebSocket(server, [seat]);
     server.serializeAttachment({ seat } satisfies Attachment);
 
-    const name = displayName(url.searchParams.get('name'), seat === 'host' ? 'host_player' : 'guest_player');
+    const name = s.ranked ? s.ranked.players[seat].name : displayName(url.searchParams.get('name'), seat === 'host' ? 'host_player' : 'guest_player');
     const wasAway = !!s[seat]?.awaySince;
     s[seat] = { token, name, connected: true, awaySince: null };
     await this.save();
@@ -101,11 +130,31 @@ export class Room extends DurableObject<Env> {
     if (msg.type === 'ping') { this.send(ws, { type: 'pong', t: msg.t }); return; }
     if (msg.type === 'settings' && att.seat === 'host') {
       const s = await this.load();
-      s.settings = msg.settings;
+      if (!s.ranked) s.settings = msg.settings;
       await this.save();
     }
+    // Follow the match: the host starts it and sends each point's verdict.
+    if (msg.type === 'start' && att.seat === 'host') {
+      const s = await this.load();
+      const games = (msg.settings as { games?: number } | null)?.games === 3 ? 2 : 1;
+      s.progress = { playing: true, gamesToWin: games, games: [0, 0], scores: [0, 0] };
+      if (s.ranked?.recorded) s.ranked = null; // a rematch in a ranked room doesn't count again
+      await this.save();
+    }
+    if (msg.type === 'point' && att.seat === 'host') {
+      const s = await this.load();
+      const p = s.progress;
+      if (p?.playing && Array.isArray(msg.games) && Array.isArray(msg.scores)) {
+        p.games = [Number(msg.games[0]) || 0, Number(msg.games[1]) || 0];
+        p.scores = [Number(msg.scores[0]) || 0, Number(msg.scores[1]) || 0];
+        await this.save();
+        if (Math.max(...p.games) >= p.gamesToWin) await this.finish(p.games[0] > p.games[1] ? 'host' : 'guest', false);
+      }
+    }
+    if (msg.type === 'forfeit') await this.finish(att.seat === 'host' ? 'guest' : 'host', true);
     if (msg.type === 'leave') {
       const s = await this.load();
+      if (s.progress?.playing) await this.finish(att.seat === 'host' ? 'guest' : 'host', true);
       s[att.seat] = null;
       await this.save();
       this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'left' });
@@ -115,6 +164,36 @@ export class Room extends DurableObject<Env> {
     }
     // Everything else is game traffic for the other player.
     this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), msg);
+  }
+
+  /**
+   * The match is over. Ranked: save the result (both ratings change in the database) and tell both
+   * players their new ratings. Each match is recorded at most once.
+   */
+  private async finish(winner: Seat, forfeit: boolean) {
+    const s = await this.load();
+    const p = s.progress;
+    if (!p?.playing) return;
+    p.playing = false;
+    const r = s.ranked;
+    if (!r || r.recorded) { await this.save(); return; }
+    r.recorded = true;
+    await this.save();
+    const loser: Seat = winner === 'host' ? 'guest' : 'host';
+    const [a, b] = winner === 'host' ? p.scores : [p.scores[1], p.scores[0]];
+    const score = forfeit ? `${a}–${b} (retired)` : `${a}–${b}`;
+    let msg: unknown;
+    try {
+      const res = await recordMatch(this.env, r.players[winner].id, r.players[loser].id, score, forfeit);
+      r.players[winner].rating = res.winner_rating;
+      r.players[loser].rating = res.loser_rating;
+      await this.save();
+      msg = { type: 'result', winner, forfeit, change: res.change, ratings: { host: r.players.host.rating, guest: r.players.guest.rating } };
+    } catch (e) {
+      console.error('Could not record ranked result', e);
+      msg = { type: 'result', winner, forfeit, error: 'not_saved' };
+    }
+    for (const seat of ['host', 'guest'] as Seat[]) this.send(this.socket(seat), msg);
   }
 
   async webSocketClose(ws: WebSocket) { await this.dropped(ws); }
@@ -142,6 +221,7 @@ export class Room extends DurableObject<Env> {
     for (const seat of ['host', 'guest'] as Seat[]) {
       const info = s[seat];
       if (info?.awaySince && now - info.awaySince >= RECONNECT_MS) {
+        if (s.progress?.playing) await this.finish(seat === 'host' ? 'guest' : 'host', true);
         s[seat] = null;
         this.send(this.socket(seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'left', forfeit: true });
       }

@@ -141,6 +141,8 @@ export class Game {
   forfeitWinner: 0 | 1 | null = null;
   /** Online: you've asked for a rematch and are waiting for the other player. */
   rematchAsked = false;
+  /** Ranked online match: the result the room saved (new ratings), once it arrives. */
+  rankedResult: import('./net').RankedResult | null = null;
   private unsubscribe: (() => void) | null = null;
   private posT = 0;
   private jumped = false;
@@ -280,6 +282,7 @@ export class Game {
   get server(): Player { return this.players[this.match.serverIdx()]; }
   get receiver(): Player { return this.players[this.match.receiverIdx()]; }
   get opponentLabel(): string {
+    if (this.online?.ranked) return `Ranked · ${this.online.opponentName} ${this.online.ranked.theirs}`;
     if (this.online) return `Online · room ${this.online.conn.code}`;
     const o = this.settings.opponent;
     if (o === 'human') return '2 Player';

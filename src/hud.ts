@@ -1,6 +1,7 @@
 import { COURT, KEYS, VISUAL } from './config';
 import type { Game } from './game';
 import { keyLabel } from './keys';
+import { tierOf } from './rating';
 import { clamp } from './math';
 import type { PlayerSummary } from './stats';
 
@@ -311,6 +312,18 @@ export class Hud {
     ctx.font = font(30, 900);
     const won = winner.name === 'You' ? 'You win!' : winner.name === 'You & Partner' ? 'You and your partner win!' : `${winner.name} wins`;
     ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.players[1].name} left)` : won, x + 28, y + 72);
+    // Ranked: how your rating changed (it arrives from the server a moment after the last point).
+    if (game.online?.ranked) {
+      const r = game.rankedResult, me = game.online.host ? 'host' : 'guest';
+      ctx.font = font(15, 700);
+      if (!r) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · saving the result…', x + 28, y + 96); }
+      else if (r.error || !r.ratings || r.change === undefined) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · this result couldn’t be saved, so ratings didn’t change', x + 28, y + 96); }
+      else {
+        const mine = r.ratings[me], up = r.winner === me;
+        ctx.fillStyle = up ? C.callIn : C.callOut;
+        ctx.fillText(`${up ? '+' : '−'}${r.change} rating  →  ${mine} (${tierOf(mine).name})`, x + 28, y + 96);
+      }
+    }
     const mins = Math.floor(st.seconds / 60), secs = Math.floor(st.seconds % 60);
     ctx.textAlign = 'right';
     ctx.fillStyle = C.hudDim;
@@ -318,7 +331,7 @@ export class Hud {
     ctx.fillText(`${mins}:${String(secs).padStart(2, '0')} match time  ·  longest rally ${st.longestRally} shots`, x + pw - 28, y + 36);
 
     // Game-by-game table
-    const tx = x + 28, ty = y + 96;
+    const tx = x + 28, ty = y + (game.online?.ranked ? 112 : 96);
     [p1, p2].forEach((p, i) => {
       const ry = ty + i * 40;
       panel(ctx, tx, ry, pw - 56, 34, 8, 'rgba(255,255,255,0.04)');
@@ -399,7 +412,9 @@ export class Hud {
     ctx.textAlign = 'center';
     ctx.fillStyle = C.hudDim;
     ctx.font = font(13, 600);
-    ctx.fillText(game.online
+    ctx.fillText(game.online?.ranked
+      ? 'Enter — find another match   ·   R — replay last rally   ·   Esc — back to the menu'
+      : game.online
       ? (game.forfeitWinner !== null ? 'Esc — back to the menu' : `Enter — rematch${game.rematchAsked ? ' (waiting for your opponent)' : ''}   ·   R — replay last rally   ·   Esc — leave room`)
       : 'Enter — rematch   ·   R — replay last rally   ·   Esc — menu', w / 2, y + ph - 20);
   }

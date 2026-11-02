@@ -12,6 +12,8 @@ export interface OnlineLink {
   /** The room creator referees points (in/out, scoring). */
   host: boolean;
   opponentName: string;
+  /** Quick match: both ratings before the match. Null for private rooms. */
+  ranked?: { mine: number; theirs: number } | null;
 }
 
 /** Quick chat: number keys 1–6 during an online match. Preset only, no typing. */

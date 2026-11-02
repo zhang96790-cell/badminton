@@ -13,7 +13,8 @@ import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
-import { CODE_PATTERN, RoomConnection, newRoomCode, type GameMsg, type ServerMsg } from './net';
+import { CODE_PATTERN, QueueConnection, RoomConnection, newRoomCode, type GameMsg, type QueueEvent, type ServerMsg } from './net';
+import { tierOf } from './rating';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
@@ -223,18 +224,42 @@ function queueAccountSave() {
   }, 800);
 }
 
+/** Your rating and record, once loaded (logged in only). */
+let myRating: { rating: number; wins: number; losses: number } | null = null;
+
 function syncAccountUi() {
-  document.getElementById('accountLabel')!.textContent = account ? account.username : 'Log in';
+  document.getElementById('accountLabel')!.textContent = account ? `${account.username}${myRating ? ` · ${myRating.rating}` : ''}` : 'Log in';
   document.getElementById('accountBtn')!.classList.toggle('in', !!account);
   acForm.hidden = !!account;
   acSignedIn.hidden = !account;
-  if (account) document.getElementById('acName')!.textContent = account.username;
+  document.getElementById('acTitle')!.textContent = account ? 'Player hub' : 'Your account';
+  if (!account) return;
+  document.getElementById('acName')!.textContent = account.username;
+  const tier = document.getElementById('acTier')!;
+  if (myRating) {
+    const t = tierOf(myRating.rating);
+    tier.textContent = t.name;
+    tier.style.color = t.color === '#cbd5e1' ? '#64748b' : t.color;
+    document.getElementById('acRating')!.textContent = String(myRating.rating);
+    document.getElementById('acRecord')!.textContent = `${myRating.wins}–${myRating.losses}`;
+  }
+}
+
+/** Reload your rating (after logging in, opening the hub, or a ranked match). */
+async function refreshStats() {
+  if (!account) return;
+  const m = await loadAccount();
+  const s = await m.myStats();
+  if (s) myRating = { rating: s.rating, wins: s.wins, losses: s.losses };
+  syncAccountUi();
 }
 
 /** Logged in: use the settings saved to the account, or save this browser's settings to a new one. */
 async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
   account = a;
   syncAccountUi();
+  void refreshStats();
+  startPresence();
   const m = await loadAccount();
   const remote = isNew ? null : await m.loadSettings(a.id);
   if (remote) {
@@ -253,15 +278,18 @@ async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
   }
 }
 
-function openAccount() {
-  acError.textContent = acMsg.textContent = '';
+function openAccount(note?: string) {
+  acError.classList.remove('ok');
+  acError.textContent = note ?? '';
+  acMsg.textContent = '';
   accountModal.classList.remove('hidden');
   syncAccountUi();
-  (account ? acNewPass : acUser).focus();
+  if (account) { showHubTab('profile'); void refreshStats(); void renderMatches(); void renderFriends(); }
+  else acUser.focus();
   void loadAccount();
 }
 const closeAccount = () => { accountModal.classList.add('hidden'); document.getElementById('accountBtn')!.focus(); };
-document.getElementById('accountBtn')!.addEventListener('click', openAccount);
+document.getElementById('accountBtn')!.addEventListener('click', () => openAccount());
 document.getElementById('acClose')!.addEventListener('click', closeAccount);
 accountModal.addEventListener('click', (e) => { if (e.target === accountModal) closeAccount(); });
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !accountModal.classList.contains('hidden')) closeAccount(); });
@@ -304,10 +332,135 @@ document.getElementById('acLogout')!.addEventListener('click', async () => {
   const m = await loadAccount();
   await m.logOut();
   account = null;
+  myRating = null;
+  stopPresence();
   acError.textContent = '';
   syncAccountUi();
   acUser.focus();
 });
+
+// ── Player hub: profile, friends, leaderboard ────────────────────────────────
+const hubEsc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+function showHubTab(name: string) {
+  document.querySelectorAll<HTMLButtonElement>('[data-hub]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.hub === name)));
+  document.querySelectorAll<HTMLElement>('[data-hubpane]').forEach((p) => { p.hidden = p.dataset.hubpane !== name; });
+  if (name === 'friends') void renderFriends();
+  if (name === 'leaders') void renderLeaders();
+}
+document.querySelectorAll<HTMLButtonElement>('[data-hub]').forEach((t) => t.addEventListener('click', () => showHubTab(t.dataset.hub!)));
+
+async function renderMatches() {
+  const m = await loadAccount();
+  const rows = await m.myMatches();
+  const list = document.getElementById('acMatches')!;
+  list.innerHTML = rows.length ? rows.map((r) => {
+    const when = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `<li><span class="${r.won ? 'won' : 'lost'}">${r.won ? 'W' : 'L'}</span><span class="grow">v ${hubEsc(r.opponent)}<span class="sub">${hubEsc(r.score)} · ${when}</span></span><b class="${r.change >= 0 ? 'won' : 'lost'}">${r.change >= 0 ? '+' : ''}${r.change}</b></li>`;
+  }).join('') : '<li class="empty">No ranked matches yet. Try Quick match on Court 4.</li>';
+}
+
+async function renderLeaders() {
+  const m = await loadAccount();
+  const rows = await m.leaderboard();
+  document.getElementById('leaderList')!.innerHTML = rows.length ? rows.map((r, i) => {
+    const t = tierOf(r.rating);
+    return `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color === '#cbd5e1' ? '#64748b' : t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
+  }).join('') : '<li class="empty">Nobody has played a ranked match yet. Be the first.</li>';
+}
+
+let friendRows: import('./account').Friend[] = [];
+async function renderFriends() {
+  if (!account) return;
+  const m = await loadAccount();
+  friendRows = await m.friendsList();
+  const incoming = friendRows.filter((f) => f.direction === 'incoming').length;
+  const badge = document.getElementById('friendBadge')!;
+  badge.hidden = !incoming;
+  badge.textContent = String(incoming);
+  const list = document.getElementById('friendList')!;
+  list.innerHTML = friendRows.length ? friendRows.map((f) => {
+    const name = `<span class="grow">${hubEsc(f.username)}<span class="sub">${f.direction === 'friend' ? (f.online ? 'Online' : 'Offline') + ` · ${f.rating}` : f.direction === 'incoming' ? 'Wants to be friends' : 'Request sent'}</span></span>`;
+    const actions = f.direction === 'friend'
+      ? `<button class="primary" data-act="invite" data-id="${f.id}" ${f.online ? '' : 'disabled'}>Invite</button><button class="quiet" data-act="remove" data-id="${f.id}">Remove</button>`
+      : f.direction === 'incoming'
+        ? `<button class="primary" data-act="accept" data-id="${f.id}">Accept</button><button class="quiet" data-act="decline" data-id="${f.id}">Decline</button>`
+        : `<button class="quiet" data-act="remove" data-id="${f.id}">Cancel</button>`;
+    return `<li><span class="dot ${f.direction === 'friend' && f.online ? 'on' : ''}"></span>${name}${actions}</li>`;
+  }).join('') : '<li class="empty">No friends yet. Add someone by their username.</li>';
+}
+document.getElementById('friendList')!.addEventListener('click', async (e) => {
+  const b = (e.target as HTMLElement).closest('button');
+  if (!b?.dataset.act) return;
+  const m = await loadAccount(), id = b.dataset.id!;
+  if (b.dataset.act === 'accept') await m.respondFriendRequest(id, true);
+  else if (b.dataset.act === 'decline') await m.respondFriendRequest(id, false);
+  else if (b.dataset.act === 'remove') await m.removeFriend(id);
+  else if (b.dataset.act === 'invite') {
+    // Make a private room, invite them to it and go to its lobby.
+    const code = newRoomCode();
+    const r = await m.sendInvite(id, code);
+    if (r !== 'sent') { document.getElementById('friendMsg')!.textContent = 'Couldn’t send the invite. Try again.'; return; }
+    accountModal.classList.add('hidden');
+    openRoom(code);
+    const f = friendRows.find((x) => x.id === id);
+    roomStatus.textContent = `Invite sent to ${f?.username ?? 'your friend'}. Waiting for them to join…`;
+    return;
+  }
+  void renderFriends();
+});
+document.getElementById('friendForm')!.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('friendName') as HTMLInputElement, msg = document.getElementById('friendMsg')!;
+  const name = input.value.trim();
+  if (!name) return;
+  const m = await loadAccount();
+  const r = await m.sendFriendRequest(name);
+  const text: Record<string, string> = {
+    sent: 'Request sent. They’ll see it in their Friends tab.', accepted: 'You’re now friends.', already: 'You’ve already added them.',
+    no_such_player: 'No player with that username.', self: 'That’s you!', too_many: 'You have too many requests waiting. Cancel some first.',
+  };
+  msg.classList.toggle('ok', r === 'sent' || r === 'accepted');
+  msg.textContent = (r && text[r]) ?? 'Couldn’t send that. Try again.';
+  if (r === 'sent' || r === 'accepted') input.value = '';
+  void renderFriends();
+});
+
+// ── Online presence and invites ──────────────────────────────────────────────
+// While you're logged in: tell the server you're online every minute, and check for invites from
+// friends every 15 seconds (not during a match).
+let presenceTimer = 0, inviteTimer = 0;
+const seenInvites = new Set<number>();
+let shownInvite: import('./account').Invite | null = null;
+const inviteToast = document.getElementById('inviteToast')!;
+function startPresence() {
+  stopPresence();
+  const beat = () => { if (document.visibilityState === 'visible') void loadAccount().then((m) => m.heartbeat()); };
+  beat();
+  presenceTimer = window.setInterval(beat, 60_000);
+  const check = async () => {
+    if (!account || game || shownInvite || document.visibilityState !== 'visible') return;
+    const m = await loadAccount();
+    const inv = (await m.myInvites()).find((i) => !seenInvites.has(i.id));
+    if (!inv) return;
+    shownInvite = inv;
+    document.getElementById('inviteText')!.innerHTML = `<b>${hubEsc(inv.from_name)}</b> invited you to play`;
+    inviteToast.hidden = false;
+  };
+  void check();
+  inviteTimer = window.setInterval(check, 15_000);
+}
+function stopPresence() { clearInterval(presenceTimer); clearInterval(inviteTimer); inviteToast.hidden = true; shownInvite = null; }
+async function closeInvite(join: boolean) {
+  const inv = shownInvite;
+  inviteToast.hidden = true;
+  shownInvite = null;
+  if (!inv) return;
+  seenInvites.add(inv.id);
+  void loadAccount().then((m) => m.dismissInvite(inv.id));
+  if (join && !game) openRoom(inv.room);
+}
+document.getElementById('inviteJoin')!.addEventListener('click', () => void closeInvite(true));
+document.getElementById('inviteDismiss')!.addEventListener('click', () => void closeInvite(false));
 // Logged in on this browser before: restore the session (Supabase keeps it under this key).
 try {
   if (localStorage.getItem('badminton.account')) {
@@ -362,11 +515,12 @@ function roomToken(code: string): string {
   } catch { return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); }
 }
 
-function showRoomView(view: 'join' | 'lobby') {
+function showRoomView(view: 'join' | 'lobby' | 'queue') {
   roomModal.classList.remove('hidden');
   roomJoin.hidden = view !== 'join';
   roomLobby.hidden = view !== 'lobby';
-  document.getElementById('roomTitle')!.textContent = view === 'join' ? 'Join a room' : 'Your room';
+  document.getElementById('roomQueue')!.hidden = view !== 'queue';
+  document.getElementById('roomTitle')!.textContent = view === 'join' ? 'Join a room' : view === 'queue' ? 'Quick match' : room?.roster?.ranked ? 'Ranked match' : 'Your room';
 }
 
 function renderLobby() {
@@ -386,6 +540,16 @@ function renderLobby() {
     seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.value) === roomSettings[key]));
   }
   const ready = !!(r?.host?.connected && r?.guest?.connected);
+  // Ranked rooms: no code to share and no settings; the match starts by itself once you're both in.
+  const ranked = r?.ranked;
+  document.querySelector<HTMLElement>('#roomLobby .room-code')!.hidden = !!ranked;
+  document.querySelector<HTMLElement>('#roomLobby .field-row')!.hidden = !!ranked;
+  document.getElementById('roomTitle')!.textContent = ranked ? 'Ranked match' : 'Your room';
+  if (ranked) {
+    roomStart.hidden = true;
+    roomStatus.textContent = ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · starts as soon as you’re both connected';
+    return;
+  }
   roomStart.hidden = !host;
   roomStart.disabled = !ready;
   roomStatus.textContent = room.status === 'connecting' ? 'Connecting…'
@@ -416,8 +580,19 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
   if (!room) return;
   switch (m.type) {
     case 'roster':
-      if (m.you === 'host') room.send({ type: 'settings', settings: roomSettings });
+      if (m.ranked) roomSettings = (m.settings as typeof roomSettings) ?? { games: 1, points: 21 };
+      else if (m.you === 'host') room.send({ type: 'settings', settings: roomSettings });
       else if (m.settings) roomSettings = m.settings as typeof roomSettings;
+      // Ranked: the host's screen starts the match as soon as both players are connected.
+      if (m.ranked && m.you === 'host' && m.host?.connected && m.guest?.connected && !game) {
+        room.send({ type: 'start', settings: roomSettings });
+        startOnline(true);
+      }
+      break;
+    case 'result':
+      if (game?.online) game.rankedResult = m;
+      void refreshStats();
+      void renderMatches();
       break;
     case 'settings': roomSettings = m.settings as typeof roomSettings; break;
     case 'start': roomSettings = m.settings as typeof roomSettings; startOnline(false); break;
@@ -442,7 +617,8 @@ function startOnline(host: boolean) {
   voice.enabled = settings.voice;
   voice.unlock();
   peerRematch = false;
-  game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21 }, input, broadcast, 'online', { conn: room, host, opponentName: opp.name });
+  const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
+  game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21 }, input, broadcast, 'online', { conn: room, host, opponentName: opp.name, ranked });
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
   roomModal.classList.add('hidden');
@@ -462,6 +638,61 @@ function askRematch() {
   room?.send({ type: 'rematch' });
   if (room?.roster?.you === 'host' && peerRematch) restartOnline();
 }
+
+// ── Quick match ──────────────────────────────────────────────────────────────
+let queue: QueueConnection | null = null;
+let queueTimer = 0;
+async function startQuickMatch() {
+  if (!account) { openAccount('Log in or sign up to play ranked quick matches.'); return; }
+  const m = await loadAccount();
+  const token = await m.accessToken();
+  if (!token) { openAccount('Your login has expired. Log in again to play quick match.'); return; }
+  leaveRoom();
+  showRoomView('queue');
+  const started = Date.now();
+  const info = document.getElementById('queueInfo')!, title = document.getElementById('queueTitle')!, time = document.getElementById('queueTime')!;
+  title.textContent = 'Finding an opponent…';
+  info.textContent = 'Connecting…';
+  clearInterval(queueTimer);
+  queueTimer = window.setInterval(() => {
+    const s = Math.floor((Date.now() - started) / 1000);
+    time.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }, 250);
+  queue?.cancel();
+  queue = new QueueConnection(token, (e: QueueEvent) => {
+    if (e.type === 'queued') {
+      const t = tierOf(e.rating);
+      info.textContent = `Looking for someone near your rating (${e.rating}, ${t.name}). The range widens the longer you wait.`;
+    } else if (e.type === 'matched') {
+      clearInterval(queueTimer);
+      queue = null;
+      title.textContent = `Matched with ${e.opponent.name} (${e.opponent.rating})`;
+      info.textContent = 'Joining the match…';
+      // Your ticket is your seat: keep it for this tab so a reload gets you back in.
+      try { sessionStorage.setItem(`badminton.room.${e.code}`, e.ticket); } catch { /* storage unavailable */ }
+      history.replaceState(null, '', `/play?room=${e.code}`);
+      room = new RoomConnection(e.code, e.ticket, myName());
+      room.on(onRoomMsg);
+      showRoomView('lobby');
+      renderLobby();
+    } else {
+      clearInterval(queueTimer);
+      queue = null;
+      title.textContent = 'Couldn’t find a match';
+      info.textContent = e.type === 'error' && e.error === 'login' ? 'Your login has expired. Log in again and retry.'
+        : e.type === 'error' && e.error === 'replaced' ? 'You started searching in another tab.'
+        : 'Lost the connection to the match server. Check your internet and try again.';
+    }
+  });
+}
+function cancelQuickMatch() {
+  queue?.cancel();
+  queue = null;
+  clearInterval(queueTimer);
+  roomModal.classList.add('hidden');
+}
+document.getElementById('quickMatch')!.addEventListener('click', () => void startQuickMatch());
+document.getElementById('queueCancel')!.addEventListener('click', cancelQuickMatch);
 
 document.getElementById('createRoom')!.addEventListener('click', () => openRoom(newRoomCode()));
 document.getElementById('joinRoom')!.addEventListener('click', () => {
@@ -496,7 +727,7 @@ document.getElementById('roomCopy')!.addEventListener('click', async (e) => {
   catch { btn.textContent = room.code; }
   setTimeout(() => { btn.textContent = 'Copy invite link'; }, 1600);
 });
-const closeRoom = () => { leaveRoom(); roomModal.classList.add('hidden'); };
+const closeRoom = () => { cancelQuickMatch(); leaveRoom(); roomModal.classList.add('hidden'); };
 document.getElementById('roomClose')!.addEventListener('click', closeRoom);
 document.getElementById('roomLeave')!.addEventListener('click', closeRoom);
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && !roomModal.classList.contains('hidden')) closeRoom(); });
@@ -696,7 +927,8 @@ function onlineKeys(g: Game, over: boolean) {
     showMenu();
     return;
   }
-  if (input.tapped(['Enter'])) { if (over) askRematch(); else if (!g.paused) g.skip(); }
+  // Ranked matches don't rematch: Enter looks for the next opponent.
+  if (input.tapped(['Enter'])) { if (over) { if (g.online?.ranked) { leaveRoom(); showMenu(); startQuickMatch(); } else askRematch(); } else if (!g.paused) g.skip(); }
   if (over && input.tapped(UI_KEYS.replay)) g.toggleReplay();
 }
 

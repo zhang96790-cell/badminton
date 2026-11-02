@@ -5,6 +5,15 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.5: No more net mashing (2 Nov 2026)
+
+- Swings are a commitment: after a miss you can’t swing again for almost half a second (a quarter of a second after a hit), so mashing the key leaves you stuck recovering when the shuttle arrives. Time your swing instead.
+- Lifts beat net-campers: lifts played near the net climb steeper, out of jump reach of a player standing at the net, and still land deep.
+- No more smashing a shuttle that’s already behind your head: you can only scramble it back as a weaker, less accurate clear. Move back and get under it to attack.
+- Touching the net is a fault, carefully: only a hard shot hit from right on top of the net can do it (the closer you are, the likelier). Gentle net shots never count.
+- Tight net shots tumble: a net shot that skims the tape spins over it and is very hard to net back or hit hard, so you’ll usually have to lift it.
+- The back court pays off: drops land shorter and skim the tape, perfectly timed clears go deeper and straighter, and hitting from deep in your own back court costs you power and accuracy. Perfectly timed smashes from the back are only slightly stronger.
+
 ## 2.1.4: Updated tour (2 Nov 2026)
 
 - Take the tour is up to date: new stops for your controls, Court 4 (quick match and private rooms), the Social screen with your stats, and the help links at the bottom. It opens Social to show you around and tidies up when it ends.

@@ -88,8 +88,12 @@ export const SWING = {
   /** Timing error beyond the tolerance at which quality bottoms out. */
   falloff: 0.24,
   minQuality: 0.55,
-  /** Lockout after a whiff. */
-  recovery: 0.18,
+  /**
+   * Swings are a commitment: after a miss you can't swing again for this long, and after a hit for
+   * hitRecovery. Mashing the button leaves you mid-recovery when the shuttle actually arrives.
+   */
+  recovery: 0.45,
+  hitRecovery: 0.25,
   /** Mouse mode: hold time to reach full power. */
   chargeTime: 0.5,
   /** Keyboard fast key: hold time to reach its extra-power bonus. */
@@ -142,17 +146,35 @@ export const SHOTS = {
   clearAngle: 30,
   midHighAngle: 38,
   liftAngle: 50,
+  /** Lifts played near the net launch at least this steep, so they climb out of reach of a player at the net. */
+  netLiftAngle: 62,
+  /**
+   * Back court rewards. A perfectly timed clear goes at least clearDeep deep and straighter (noise × clearAim).
+   * Hitting from deeper than deepFrom (m from the net) costs power and accuracy: a good clear pushes you back.
+   * A perfectly timed smash from the back (deeper than 4 m, in front of you) gets only a small bonus.
+   * A perfectly timed drop lands shorter (depth × perfectDrop).
+   */
+  backCourt: { clearDeep: 6.2, clearAim: 0.75, deepFrom: 5.6, deepPower: 0.88, deepNoise: 1.3, smashBonus: 1.03, perfectDrop: 0.8 },
+  /**
+   * Tumbling: a net shot that crosses within tumbleMargin (m) of the tape tumbles. Netting it back or
+   * hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.
+   */
+  tumble: { margin: 0.12, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
+  /** An overhead more than this far behind the body (m) can't be attacked: it's scrambled back as a weaker clear. */
+  behindLimit: 0.3,
+  behindPower: 0.8,
+  behindNoise: 1.5,
   /**
    * Mouse mode. Left click: tap = drive (this fraction of full pace), hold to smashPower charge = full smash.
    * Right click: release before dropMaxPower charge = drop, hold longer = lob (flat → high the longer you hold).
    * Drops land no deeper than dropMaxDepth past the net, lobs no shorter than lobMinDepth, wherever the cursor is.
    */
-  mouse: { drivePace: 0.65, smashPower: 0.85, driveMinDepth: 1.2, dropMaxPower: 0.35, dropMaxDepth: 3.0, lobMinDepth: 4.8 },
+  mouse: { drivePace: 0.65, smashPower: 0.85, driveMinDepth: 1.2, dropMaxPower: 0.35, dropMaxDepth: 2.4, lobMinDepth: 5.2 },
   /** Mouse lob: just past the drop threshold = flat attacking lob, full charge = high defensive lob. */
   mouseHighAngleMin: 20,
   mouseHighAngleMax: 52,
   /** Soft shots: how far above the tape they aim to pass (m). */
-  dropClearance: 0.4,
+  dropClearance: 0.28,
   netShotClearance: 0.06,
   blockClearance: 0.2,
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
@@ -167,7 +189,7 @@ export const SHOTS = {
   /** Targets are kept at least this far past the net. */
   minTargetDepth: 0.4,
   /** Keyboard / AI default target, as distance past the net on the opponent's side. */
-  depth: { high: 5.7, smash: 4.2, drive: 5.0, kill: 3.2, push: 4.6, drop: 2.6, netShot: 0.9, block: 2.2 },
+  depth: { high: 5.9, smash: 4.2, drive: 5.0, kill: 3.2, push: 4.6, drop: 2.1, netShot: 0.9, block: 2.2 },
   /** Holding toward the opponent at contact = deeper, away = shorter. */
   depthToward: 1.1,
   depthAway: -1.0,
@@ -255,6 +277,11 @@ export const RULES = {
     21: { pointsToWin: 21, winBy: 2, pointCap: 30, intervalAt: 11 },
   } as Record<15 | 21, ScoringFormat>,
   pointPause: 1.8,
+  /**
+   * Touching the net is a fault. Only hard shots (kill, smash, drive, push) hit from within `within`
+   * metres of the net risk it: no chance at that distance, rising to maxChance at `closest` (right on it).
+   */
+  netFault: { within: 0.5, closest: 0.25, maxChance: 0.5 },
   /** Extra pause after a line call the human could challenge. */
   challengeWindow: 1.4,
   intervalPause: 4,

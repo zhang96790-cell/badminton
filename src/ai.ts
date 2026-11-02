@@ -247,7 +247,8 @@ export class AIController implements Controller {
     for (const s of path.samples) {
       if (s.p.y * side < 0.3 || s.p.z < PLAYER.reachMinZ + 0.1 || s.p.z > top) continue;
       // Ideally stand so the shuttle is on the forehand, slightly in front...
-      const comfy = { x: s.p.x - rs * 0.45, y: s.p.y + side * 0.2 };
+      // Stand a little behind the shuttle, and never right on the net (that risks touching it).
+      const comfy = { x: s.p.x - rs * 0.45, y: side * Math.max(0.6, Math.abs(s.p.y + side * 0.2)) };
       const needComfy = Math.hypot(comfy.x - me.pos.x, comfy.y - me.pos.y);
       // ...but against fast shots, just get within reach and stretch for it.
       const reachZ = (PLAYER.reach + (s.p.z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0)) * 0.85;
@@ -317,6 +318,8 @@ export class AIController implements Controller {
     }
     // Doubles is about keeping the shuttle down: lift less, attack and push more.
     if (doubles) { high *= 0.55; fast *= 1.3; }
+    // A tumbling net shot can't be netted back or attacked: lift it.
+    if (this.game.shuttle.tumbling) { high *= 4; soft *= 0.15; fast *= 0.3; }
     const k = L.decisiveness;
     return weightedPick<Intent>(['high', 'fast', 'soft'], [high ** k, fast ** k, soft ** k]);
   }

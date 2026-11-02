@@ -30,6 +30,10 @@ export interface Contact {
   stretch: number;
   /** Airborne and near the top of the jump. */
   apex: boolean;
+  /** How far behind the body the shuttle was (m, 0 if level or in front). */
+  behind: number;
+  /** The incoming shuttle is a tumbling net shot (hard to net back or attack). */
+  tumbling?: boolean;
 }
 
 /** Overhead from the top of a jump, timed inside the tight perfect-jump window. */
@@ -131,17 +135,30 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const z0 = c.point.z;
   const zone = zoneOf(z0);
   const netArea = Math.abs(c.point.y) < SHOTS.nearNet;
+  // Already behind you overhead: you can't attack it, only scramble it back high (and not as well).
+  const scrambled = zone === 'overhead' && c.behind > SHOTS.behindLimit;
+  if (scrambled) req = req.kind === 'intent' ? { ...req, intent: 'high', aimDepth: 0 } : { ...req, arc: 'high', power: 1 };
+  const B = SHOTS.backCourt, T = SHOTS.tumble, perfect = c.timing >= 1;
+  const deep = Math.abs(c.point.y) > B.deepFrom;
+  // What this swing is, for the back-court and tumbling rules below.
+  const kindOf = req.kind === 'intent' ? req.intent : mouseShotKind(req.arc, req.power) === 'drop' ? 'soft' : mouseShotKind(req.arc, req.power) === 'lob' ? 'high' : 'fast';
+  const tumbleSoft = !!c.tumbling && kindOf === 'soft', tumbleFast = !!c.tumbling && kindOf === 'fast';
   const stretched = c.stretch > SHOTS.stretchStart;
 
   const handPower = c.hand === 'backhand' ? SHOTS.backhandPower : c.hand === 'round-the-head' ? SHOTS.roundTheHeadPower : 1;
   const handNoise = c.hand === 'backhand' ? SHOTS.backhandNoise : c.hand === 'round-the-head' ? SHOTS.roundTheHeadNoise : 1;
-  const power = handPower
+  const power = (scrambled ? SHOTS.behindPower : 1) * (deep ? B.deepPower : 1) * (tumbleFast ? T.fastPower : 1)
+    * (perfect && zone === 'overhead' && kindOf === 'fast' && Math.abs(c.point.y) > 4 && c.behind === 0 ? B.smashBonus : 1)
+    * handPower
     * (stretched ? SHOTS.stretchPower : 1)
     * (0.78 + 0.22 * c.timing)
     * (c.airborne && zone === 'overhead' ? SHOTS.jumpSmashBonus : 1)
     * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);
-  const noiseMult = (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
+  const noiseMult = (scrambled ? SHOTS.behindNoise : 1) * (deep ? B.deepNoise : 1)
+    * (tumbleSoft ? T.softNoise : tumbleFast ? T.fastNoise : 1)
+    * (perfect && zone === 'overhead' && kindOf === 'high' ? B.clearAim : 1)
+    * (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;
   const softClearance = netArea ? SHOTS.netShotClearance : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;
   const M = SHOTS.softMaxAngle;
@@ -158,7 +175,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     target = req.target ?? intentTarget(req.intent, c.point, c.side, req.aimX, req.aimDepth);
     if (req.intent === 'high') {
       const base = zone === 'overhead' ? SHOTS.clearAngle : zone === 'mid' ? SHOTS.midHighAngle : SHOTS.liftAngle;
-      plan = { type: 'angle', angle: base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0) };
+      const angle = base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0);
+      plan = { type: 'angle', angle: zone !== 'overhead' && netArea ? Math.max(angle, SHOTS.netLiftAngle) : angle };
     } else if (req.intent === 'fast') {
       // Keyboard K: a tap is full normal power; holding it adds a little extra.
       const bonus = req.power === undefined ? 1 : lerp(1, SWING.keyChargeBonus, req.power);
@@ -172,7 +190,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     if (kind === 'drop') plan = { type: 'soft' };
     else if (kind === 'lob') {
       const u = (req.power - Mo.dropMaxPower) / (1 - Mo.dropMaxPower);
-      plan = { type: 'angle', angle: lerp(SHOTS.mouseHighAngleMin, SHOTS.mouseHighAngleMax, u) };
+      const angle = lerp(SHOTS.mouseHighAngleMin, SHOTS.mouseHighAngleMax, u);
+      plan = { type: 'angle', angle: zone !== 'overhead' && netArea ? Math.max(angle, SHOTS.netLiftAngle) : angle };
     } else {
       const smash = kind === 'smash';
       plan = {
@@ -185,13 +204,17 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const full = SHOTS.maxSpeedByHeight[SHOTS.maxSpeedByHeight.length - 1][1];
   pace = plan.type === 'angle' ? 0.45 : plan.type === 'speed' ? plan.speed / full : 0.12;
 
+  // Back court: perfect clears go deep, perfect drops land short.
+  if (perfect && zone === 'overhead' && kindOf === 'high') target = { x: target.x, y: opp * Math.max(Math.abs(target.y), B.clearDeep) };
+  if (perfect && zone === 'overhead' && kindOf === 'soft') target = { x: target.x, y: target.y * B.perfectDrop };
+
   // Longer and harder shots are less accurate: you still aim at a point, it just lands further from it.
   target = clampTarget(target, opp);
   const A = SHOTS.aim;
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
   const sigma = (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
   target = clampTarget({ x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor }, opp, 0.1);
-  const clearance = Math.max(-0.1, softClearance + gauss() * SHOTS.clearanceNoise * noiseMult * aimScale);
+  const clearance = Math.max(-0.1, softClearance + (tumbleSoft ? T.softClearance : 0) + gauss() * SHOTS.clearanceNoise * noiseMult * aimScale);
   const g = geometry(c.point, target);
 
   let angle: number, speed: number;

@@ -269,6 +269,8 @@ export class Player implements PlayerView {
       hand,
       airborne: this.airborne,
       apex: this.airborne && Math.abs(this.vz) < SHOTS.perfectJump.apexSpeed,
+      // Players face the net: forward is toward it, so a negative offset is behind them.
+      behind: Math.max(0, -(s.y - this.pos.y) * this.forward),
       timing,
       timingLabel,
       timingError: err,
@@ -278,6 +280,7 @@ export class Player implements PlayerView {
 
   onHit(point: V3, serve = false) {
     this.swing = null;
+    this.recover = SWING.hitRecovery;
     this.anim = { kind: serve ? 'serve' : 'hit', t: 0, point: { ...point } };
     const dx = point.x - this.pos.x, dy = point.y - this.pos.y, d = Math.hypot(dx, dy);
     if (point.z < PLAYER.lungeMaxZ && d > 0.75 && !this.airborne) {

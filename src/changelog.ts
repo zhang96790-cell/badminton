@@ -5,6 +5,19 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.5',
+    title: 'No more net mashing',
+    date: '2 Nov 2026',
+    changes: [
+      'Swings are a commitment: after a miss you can’t swing again for almost half a second (a quarter of a second after a hit), so mashing the key leaves you stuck recovering when the shuttle arrives. Time your swing instead.',
+      'Lifts beat net-campers: lifts played near the net climb steeper, out of jump reach of a player standing at the net, and still land deep.',
+      'No more smashing a shuttle that’s already behind your head: you can only scramble it back as a weaker, less accurate clear. Move back and get under it to attack.',
+      'Touching the net is a fault, carefully: only a hard shot hit from right on top of the net can do it (the closer you are, the likelier). Gentle net shots never count.',
+      'Tight net shots tumble: a net shot that skims the tape spins over it and is very hard to net back or hit hard, so you’ll usually have to lift it.',
+      'The back court pays off: drops land shorter and skim the tape, perfectly timed clears go deeper and straighter, and hitting from deep in your own back court costs you power and accuracy. Perfectly timed smashes from the back are only slightly stronger.',
+    ],
+  },
+  {
     version: '2.1.4',
     title: 'Updated tour',
     date: '2 Nov 2026',

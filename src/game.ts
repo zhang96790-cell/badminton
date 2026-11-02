@@ -16,7 +16,7 @@ import { Playback, Recorder, type ShuttleView } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
-import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot } from './shots';
+import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
 import type { Speaker } from './voice';
@@ -133,6 +133,8 @@ export class Game {
   private lastShot: { label: string; hand: Contact['hand'] | 'serve'; netCord: boolean } | null = null;
   /** Index (and stable id) of whoever hit last, for per-player stats. */
   private lastHitterId = 0;
+  /** Set when a player touched the net: the next point is called with this instead. */
+  private faultTitle: string | null = null;
   /** Online match: the room connection and whether this screen referees. Null otherwise. */
   readonly online: OnlineLink | null;
   /** Online: the other player's connection dropped (play waits for them). */
@@ -506,6 +508,11 @@ export class Game {
     stepFlight(sh.pos, sh.vel, fdt);
     this.flightT += fdt;
     sh.orient(fdt);
+    if (sh.tumbling) {
+      // Tumbling over the tape: the cork flips end over end.
+      const a = this.flightT * 26;
+      sh.dir = { x: 0.25 * Math.sin(a * 0.5), y: Math.sin(a), z: Math.cos(a) };
+    }
 
     // Net plane crossing
     if (prev.y * sh.pos.y < 0) {
@@ -563,6 +570,7 @@ export class Game {
         if (this.online && i !== 0) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt);
         if (!c) continue;
+        c.tumbling = sh.tumbling;
         const ctrl = this.controllers[i];
         let req = ctrl.aimAtContact ? ctrl.aimAtContact(p.swing.req) : p.swing.req;
         if (req.kind === 'intent' && !req.target && req.aimX === 0 && this.isHuman(i)) {
@@ -573,9 +581,19 @@ export class Game {
           req = { ...req, aimX: (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
         }
         const incomingKmh = Math.hypot(sh.vel.x, sh.vel.y, sh.vel.z) * 3.6;
+        if (this.touchesNet(p, req, c)) {
+          // Hit hard from right on top of the net: the racket clips it. The shuttle drops dead on this side.
+          p.onHit(c.point);
+          sh.vel = { x: 0, y: 0, z: -1.5 };
+          this.faultTitle = 'Fault — touched the net';
+          this.callout = { label: 'TOUCHED THE NET', detail: 'Too close for a hard shot · fault', color: VISUAL.colors.callOut, t: 0 };
+          this.events.push({ type: 'net' });
+          break;
+        }
         const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1, this.isHuman(i));
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
+        if (this.checkTumble(shot.label)) shot.label = 'Net shot (tumbling)';
         p.onHit(c.point);
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         p.timingFlash = { kind: Math.abs(c.timingError) <= SWING.perfectTolerance ? 'perfect' : c.timingError > 0 ? 'early' : 'late', t: 0 };
@@ -614,6 +632,20 @@ export class Game {
       if (this.online) this.onlineLanding({ x: sh.pos.x, y: sh.pos.y });
       else this.endRally({ x: sh.pos.x, y: sh.pos.y });
     }
+  }
+
+  /**
+   * A net shot that will cross within SHOTS.tumble.margin of the tape tumbles over it (worked out from
+   * the predicted flight, so both screens agree online). Returns whether it does.
+   */
+  private checkTumble(label: string): boolean {
+    const sh = this.shuttle;
+    if (!/Net shot/.test(label) || !this.path.length) return false;
+    const cross = this.path.find((s, i) => i > 0 && s.p.y * this.path[i - 1].p.y <= 0);
+    if (!cross) return false;
+    const margin = cross.p.z - netHeightAt(cross.p.x);
+    sh.tumbling = margin >= 0 && margin < SHOTS.tumble.margin;
+    return sh.tumbling;
   }
 
   private predict() {
@@ -687,6 +719,7 @@ export class Game {
       hitterWins = callIn;
       title = sh.isServe ? (callIn ? 'Ace' : 'Service fault — out') : callIn ? 'Winner' : 'Out';
     }
+    if (this.faultTitle) { title = this.faultTitle; this.faultTitle = null; }
 
     const winner = (hitterWins ? hIdx : 1 - hIdx) as 0 | 1;
     const lc = this.lastContact;
@@ -733,6 +766,18 @@ export class Game {
       const ai = this.controllers[loser];
       if (ai instanceof AIController && this.challenges[loser] > 0 && ai.wantsChallenge(line)) this.aiChallengeAt = 0.9;
     }
+  }
+
+  /**
+   * Touching the net: only a hard shot from right on top of it can, never a gentle net shot, and the
+   * risk rises the closer the player is (see RULES.netFault).
+   */
+  private touchesNet(p: Player, req: ShotRequest, c: Contact): boolean {
+    const N = RULES.netFault, dist = Math.abs(p.pos.y);
+    if (dist >= N.within || Math.abs(c.point.y) > N.within + 0.4) return false;
+    const hard = req.kind === 'intent' ? req.intent === 'fast' : req.arc === 'low' && req.power > 0.4;
+    if (!hard) return false;
+    return chance(N.maxChance * Math.min(1, (N.within - dist) / (N.within - N.closest)));
   }
 
   /** Why the last shot didn't get over, e.g. "Smash mistimed (late), hit too low". */
@@ -1075,6 +1120,7 @@ export class Game {
     }
     sh.trail = [];
     this.predict();
+    this.checkTumble(m.label);
     opp.onHit(pos, m.serve);
     me.splitStep();
     this.rallyHits++;
@@ -1086,7 +1132,7 @@ export class Game {
     this.announce(opp, { velocity: vel, label: m.label, speedKmh: m.kmh }, m.detail || null);
     this.events.push({ type: 'hit', strength: m.serve ? 0.3 : Math.min(1, m.kmh / 300) });
     // Same notice a local hit gives (only the timing details of their contact aren't known here).
-    const contact: Contact = { point: pos, side: opp.side, hand: hand === 'serve' ? 'forehand' : hand, airborne: false, timing: 1, timingLabel: 'Perfect', timingError: 0, stretch: 0, apex: false };
+    const contact: Contact = { point: pos, side: opp.side, hand: hand === 'serve' ? 'forehand' : hand, airborne: false, timing: 1, timingLabel: 'Perfect', timingError: 0, stretch: 0, apex: false, behind: 0 };
     this.observe({ type: 'hit', by: opp.side, contact, label: m.label, landing: this.predicted, hitter: opp });
   }
 

@@ -68,6 +68,8 @@ export class Shuttle {
   hits = 0;
   isServe = false;
   touchedNet = false;
+  /** A tight net shot tumbling over the tape (hard to net back: lift it). */
+  tumbling = false;
   wide = false;
   trail: V3[] = [];
 
@@ -80,6 +82,7 @@ export class Shuttle {
     // hits keeps counting across points: anything watching for a new hit always sees one.
     this.touchedNet = false;
     this.wide = false;
+    this.tumbling = false;
     this.trail = [];
   }
 
@@ -91,6 +94,7 @@ export class Shuttle {
     this.inFlight = true;
     this.lastHitter = hitter;
     this.isServe = serve;
+    this.tumbling = false;
     this.hits++;
   }
 

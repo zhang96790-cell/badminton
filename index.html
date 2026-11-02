@@ -3,237 +3,118 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Badminton Games</title>
+    <title>Air Physics Revision</title>
+    <meta name="description" content="Revise projectile motion and air resistance with a working simulator, key ideas, equations and a quick quiz." />
   </head>
   <body>
-    <!--
-      THESIS: The start screen is the tournament's Order of Play board, not a settings form: your match is
-      listed on Court 1 and you walk on. Refuses the floating dark card of stacked option buttons.
-      OWN-WORLD: Arena-board tournament blue with a faint LED dot grid, scoreboard-amber court numerals,
-      condensed stadium caps (Big Shoulders Display), cool-white umpire's match card with navy rules for settings.
-      STORY: Players see their next match, change it on the match card if they want, and walk on. New players are
-      pointed to the warm-up court (tutorial); practice is Court 3.
-      FIRST VIEWPORT: Board centred over the live arena. Header: wordmark left, Order of Play and date right.
-      Three court rows; Court 1 is lit, with an amber Walk on button at its right edge.
-      FORM: Order of Play board, candidate 4 of 7, seed 1bcb0bc4.
-      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
-    -->
-    <canvas id="game"></canvas>
-    <div id="viewbar">
-      <button id="viewBtn" title="Switch camera view">View: Close</button>
-      <button id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
-    </div>
-
-    <div id="menu">
-      <main class="board" aria-labelledby="wordmark">
-        <header class="board-head">
-          <div class="mark">
-            <svg class="shuttle" viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="24" cy="38" r="6.5" />
-              <path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0M12.5 17c4.5-1.6 18.5-1.6 23 0" />
-            </svg>
-            <h1 id="wordmark">Badminton<br />Games</h1>
-          </div>
-          <div class="head-meta">
-            <p class="oop">Order of play</p>
-            <p id="today" class="today"></p>
-          </div>
-        </header>
-
-        <div class="oop-table">
-          <div class="oop-cols" aria-hidden="true">
-            <span>Court</span><span>Event</span><span>Match</span><span></span>
-          </div>
-
-          <section class="oop-row live" aria-label="Court 1, your match">
-            <span class="ct" aria-hidden="true">1</span>
-            <p class="event"><span class="status"><i></i>Next on court</span><span id="eventLabel">Singles</span></p>
-            <div class="match">
-              <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
-              <p class="sub" id="tag">Best of 3 games to 15</p>
-            </div>
-            <div class="act">
-              <button id="start" class="walk">
-                Walk on
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
-              </button>
-              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Edit match card</button>
-            </div>
-          </section>
-
-          <section class="oop-row" aria-label="Court 2, tutorial">
-            <span class="ct" aria-hidden="true">2</span>
-            <p class="event"><span>Warm-up</span></p>
-            <div class="match">
-              <p class="vs">Tutorial with the coach</p>
-              <p class="sub">16 short lessons, about 6 minutes</p>
-              <p id="newHint" class="tip">Start here if you’re new</p>
-            </div>
-            <div class="act"><button id="tutorial" class="go">Start</button></div>
-          </section>
-
-          <section class="oop-row" aria-label="Court 3, practice">
-            <span class="ct" aria-hidden="true">3</span>
-            <p class="event"><span>Practice</span></p>
-            <div class="match">
-              <p class="vs">Drills with the feeder</p>
-              <p class="sub">Smash, clear and drop, net play, drives, defence, plus doubles drills</p>
-            </div>
-            <div class="act"><button id="practice" class="go">Start</button></div>
-          </section>
-        </div>
-
-        <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>
-
-        <footer class="board-foot">
-          <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
-          <div class="foot-links">
-            <button id="howBtn" class="link">How to play</button>
-            <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
-          </div>
-        </footer>
-      </main>
-
-      <aside id="matchcard" class="matchcard" aria-label="Match card" aria-hidden="true">
-        <header class="mc-head">
-          <h2>Match card</h2>
-          <button id="cardClose" class="mc-close" aria-label="Close match card">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
-        </header>
-        <section class="mc-pane">
-          <div class="field">
-            <h3>Event</h3>
-            <div class="seg" data-group="event">
-              <button data-value="singles">Singles</button>
-              <button data-value="doubles">Doubles</button>
-            </div>
-          </div>
-          <div class="field">
-            <h3>Opponent</h3>
-            <div class="seg" data-group="opponent">
-              <button data-value="beginner">Beginner</button>
-              <button data-value="easy">Easy</button>
-              <button data-value="medium">Medium</button>
-              <button data-value="hard">Hard</button>
-              <button data-value="expert">Expert</button>
-              <button data-value="human">2 players</button>
-            </div>
-          </div>
-          <div class="field" id="styleRow">
-            <h3>CPU style</h3>
-            <div class="seg" data-group="style">
-              <button data-value="allround">All-rounder</button>
-              <button data-value="attacker">Attacker</button>
-              <button data-value="defender">Defender</button>
-              <button data-value="net">Net player</button>
-            </div>
-          </div>
-          <div class="field" id="partnerRow">
-            <h3>Your partner</h3>
-            <p class="help">Doubles only. Your partner plays at the same level as the opponents.</p>
-            <div class="seg" data-group="partnerStyle">
-              <button data-value="allround">All-rounder</button>
-              <button data-value="attacker">Back-court smasher</button>
-              <button data-value="defender">Steady defender</button>
-              <button data-value="net">Net player</button>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <h3>Match</h3>
-              <div class="seg" data-group="games">
-                <button data-value="1">1 game</button>
-                <button data-value="3">Best of 3</button>
-              </div>
-            </div>
-            <div class="field">
-              <h3>Points</h3>
-              <div class="seg" data-group="points">
-                <button data-value="15">15</button>
-                <button data-value="21">21</button>
-              </div>
-            </div>
-          </div>
-          <div class="field">
-            <h3>Accuracy</h3>
-            <div class="seg" data-group="aim">
-              <button data-value="realistic">Realistic</button>
-              <button data-value="casual">Casual</button>
-            </div>
-          </div>
-        </section>
-      </aside>
-
-      <aside id="kitcard" class="matchcard left" aria-label="Assists and controls" aria-hidden="true">
-        <header class="mc-head">
-          <h2>Assists &amp; controls</h2>
-          <button id="kitClose" class="mc-close" aria-label="Close assists and controls">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
-        </header>
-        <nav class="mc-tabs" role="tablist">
-          <button role="tab" data-tab="assists" aria-selected="true">Assists</button>
-          <button role="tab" data-tab="controls" aria-selected="false">Controls</button>
-        </nav>
-
-        <section class="mc-pane" data-pane="assists">
-          <div class="field">
-            <h3>Landing marker</h3>
-            <p class="help">A ring on the floor where the shuttle will come down.</p>
-            <div class="seg" data-group="guides"><button data-value="true">On</button><button data-value="false">Off</button></div>
-          </div>
-          <div class="field">
-            <h3>Timing light</h3>
-            <p class="help">Yellow means wait, green means swing, red means you’re late.</p>
-            <div class="seg" data-group="timingLight"><button data-value="true">On</button><button data-value="false">Off</button></div>
-          </div>
-          <div class="field">
-            <h3>Swing assist</h3>
-            <p class="help">Gets lifts, drops and clears back if you don’t swing. Smashes still need you.</p>
-            <div class="seg" data-group="swingAssist"><button data-value="true">On</button><button data-value="false">Off</button></div>
-          </div>
-          <div class="field">
-            <h3>Auto-switch (doubles)</h3>
-            <p class="help">You take over whichever of your pair is better placed for the next shot.</p>
-            <div class="seg" data-group="autoSwitch"><button data-value="true">On</button><button data-value="false">Off</button></div>
-          </div>
-          <div class="field">
-            <h3>Umpire voice</h3>
-            <p class="help">Spoken score calls and line calls.</p>
-            <div class="seg" data-group="voice"><button data-value="true">On</button><button data-value="false">Off</button></div>
-          </div>
-        </section>
-
-        <section class="mc-pane" data-pane="controls" hidden>
-          <div class="field">
-            <h3>Player 1 control mode</h3>
-            <div class="seg" data-group="p1Control">
-              <button data-value="mouse">Keyboard + mouse</button>
-              <button data-value="hybrid">Keys + trackpad aim</button>
-              <button data-value="keyboard">Keyboard only</button>
-            </div>
-          </div>
-          <div class="controls" id="controls"></div>
-        </section>
-      </aside>
-      <button id="kitBtn" class="kit-tab" aria-controls="kitcard" aria-expanded="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-        <span>Assists &amp; controls</span>
+    <header class="top">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
+        <span></span><span></span><span></span>
       </button>
-    </div>
-
-    <div id="changelogModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="wnTitle">
-      <div class="notice-board">
-        <header class="nb-head">
-          <h2 id="wnTitle">What’s new</h2>
-          <button id="wnClose" class="mc-close" aria-label="Close">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
-        </header>
-        <div id="changelog"></div>
+      <div class="brand">
+        <h1>Air Physics Revision</h1>
+        <p>Projectiles and air resistance</p>
       </div>
-    </div>
-    <script type="module" src="/src/main.ts"></script>
+    </header>
+
+    <div id="scrim" class="scrim" hidden></div>
+    <nav id="sidebar" class="sidebar" aria-label="Menu" aria-hidden="true">
+      <p class="side-label">Contents</p>
+      <a href="#simulator">Simulator</a>
+      <a href="#ideas">Key ideas</a>
+      <a href="#equations">Equations</a>
+      <a href="#quiz">Quick quiz</a>
+      <hr />
+      <p class="side-label">Apply it</p>
+      <a id="playBtn" class="play" href="/play">Badminton simulator</a>
+      <p class="side-note">A badminton game that uses this same drag model for the shuttlecock. It opens in place of this page.</p>
+    </nav>
+
+    <main>
+      <p class="lead">
+        Without air, a thrown object follows a symmetric parabola. With air resistance, it slows down, falls more
+        steeply than it rose, and lands much shorter. Try it below, then revise the ideas behind it.
+      </p>
+
+      <section id="simulator" class="card">
+        <h2>Simulator</h2>
+        <canvas id="plot" aria-label="Trajectory plot: height against horizontal distance"></canvas>
+        <div class="controls">
+          <div class="control">
+            <span class="label">Object</span>
+            <div class="seg" id="object">
+              <button data-vt="6.8" class="on">Shuttlecock</button>
+              <button data-vt="22">Tennis ball</button>
+              <button data-vt="0">No air resistance</button>
+            </div>
+          </div>
+          <label class="control">
+            <span class="label">Launch speed <b id="speedOut">30 m/s</b></span>
+            <input id="speed" type="range" min="5" max="90" step="1" value="30" />
+          </label>
+          <label class="control">
+            <span class="label">Launch angle <b id="angleOut">45°</b></span>
+            <input id="angle" type="range" min="5" max="85" step="1" value="45" />
+          </label>
+          <label class="check"><input id="ghost" type="checkbox" checked /> Show the no-air path for comparison</label>
+          <div class="buttons">
+            <button id="launch" class="primary">Launch</button>
+            <button id="clear">Clear</button>
+          </div>
+        </div>
+        <dl class="readouts">
+          <div><dt>Range</dt><dd id="rRange">–</dd></div>
+          <div><dt>Max height</dt><dd id="rHeight">–</dd></div>
+          <div><dt>Flight time</dt><dd id="rTime">–</dd></div>
+          <div><dt>Landing speed</dt><dd id="rLand">–</dd></div>
+          <div><dt>Terminal velocity</dt><dd id="rVt">–</dd></div>
+        </dl>
+      </section>
+
+      <section id="ideas" class="card">
+        <h2>Key ideas</h2>
+        <ul>
+          <li><b>Two forces act in flight:</b> weight (down, constant) and drag (opposite to the velocity, growing with speed).</li>
+          <li><b>Drag grows with speed squared</b> at everyday speeds: double the speed and the drag is four times bigger.</li>
+          <li><b>Terminal velocity</b> is reached when drag equals weight. The resultant force is zero, so the object stops accelerating.</li>
+          <li><b>Horizontal speed only ever falls</b> with air resistance, because drag always has a backward component. That is why the path is lopsided and the fall is steep.</li>
+          <li><b>Light, draggy objects</b> (a shuttlecock has a terminal velocity of about 6.8 m/s) lose speed fast: a smash leaving at 80 m/s is under 20 m/s by the time it lands.</li>
+          <li><b>Without air resistance</b>, horizontal and vertical motion are independent, the path is a parabola, and the best angle for range on flat ground is 45°.</li>
+        </ul>
+      </section>
+
+      <section id="equations" class="card">
+        <h2>Equations</h2>
+        <div class="eqs">
+          <div class="eq"><span>Weight</span><code>W = mg</code></div>
+          <div class="eq"><span>Newton’s second law</span><code>F = ma</code></div>
+          <div class="eq"><span>Drag force</span><code>F<sub>d</sub> = ½ρC<sub>d</sub>Av²</code></div>
+          <div class="eq"><span>Terminal velocity</span><code>v<sub>t</sub> = √(2mg ÷ ρC<sub>d</sub>A)</code></div>
+          <div class="eq"><span>No air: range on flat ground</span><code>R = u²sin2θ ÷ g</code></div>
+          <div class="eq"><span>No air: time of flight</span><code>t = 2u sinθ ÷ g</code></div>
+          <div class="eq"><span>SUVAT</span><code>v = u + at · s = ut + ½at² · v² = u² + 2as</code></div>
+        </div>
+        <div class="worked">
+          <h3>Worked example</h3>
+          <p>
+            A shuttlecock has mass 5.0 g and a terminal velocity of 6.8 m/s. At terminal velocity, drag = weight, so
+            F<sub>d</sub> = mg = 0.005 × 9.81 = <b>0.049 N</b>. Because drag ∝ v², at 13.6 m/s (twice v<sub>t</sub>) the drag is
+            4 × 0.049 = <b>0.196 N</b>. Falling straight down at that speed, the resultant force is 0.196 − 0.049 = 0.147 N
+            upward, so it decelerates at 0.147 ÷ 0.005 = <b>29 m/s²</b> (about 3g).
+          </p>
+        </div>
+      </section>
+
+      <section id="quiz" class="card">
+        <h2>Quick quiz</h2>
+        <ol id="questions" class="questions"></ol>
+        <p id="score" class="score" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>Simulator: g = 9.81 m/s², drag proportional to v², launched from 1 m above the ground.</p>
+    </footer>
+    <script type="module" src="/src/physics/main.ts"></script>
   </body>
 </html>

@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.6.2',
+    title: 'Physics page first',
+    date: '2 Nov 2026',
+    changes: [
+      'badmintongames.site now opens on the Air Physics Revision page. The game is at badmintongames.site/play, or use Badminton simulator in the ☰ menu.',
+    ],
+  },
+  {
     version: '1.6.1',
     title: 'Physics revision page',
     date: '2 Nov 2026',

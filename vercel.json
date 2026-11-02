@@ -1,8 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/", "has": [{ "type": "host", "value": "airphysicsrevision.online" }], "destination": "/physics.html" },
-    { "source": "/", "has": [{ "type": "host", "value": "www.airphysicsrevision.online" }], "destination": "/physics.html" },
-    { "source": "/physics", "destination": "/physics.html" },
-    { "source": "/play", "destination": "/index.html" }
-  ]
+  "cleanUrls": true,
+  "redirects": [{ "source": "/physics", "destination": "/" }]
 }

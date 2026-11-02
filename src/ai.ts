@@ -128,12 +128,20 @@ export class AIController implements Controller {
     }
   }
 
-  /** Decide whether to challenge a call that went against it. */
+  /**
+   * Decide whether to challenge a call that went against it. Like a real player it judges the landing
+   * by eye (worse at lower levels), and on close calls it sometimes gambles even when the call was right.
+   */
   wantsChallenge(call: LineCall): boolean {
-    const seen = call.signed + gauss() * 0.08 * (1 - this.L.challengeSkill);
-    const looksIn = seen >= -COURT.footprint;
-    if (looksIn !== call.callIn) return chance(0.85);
-    return Math.abs(call.signed) < 0.05 && chance(0.15 * (1 - this.L.challengeSkill));
+    const skill = this.L.challengeSkill;
+    const seen = call.signed + gauss() * (0.02 + 0.06 * (1 - skill));
+    // How far on the other side of the line from the call it looked (positive = looked wrong).
+    const edge = -COURT.footprint;
+    const wrongBy = call.callIn ? edge - seen : seen - edge;
+    // Only challenge when it looked clearly wrong; careful players need a clearer view.
+    if (wrongBy > 0.01 + 0.03 * skill) return chance(0.9);
+    // Occasionally gamble on a very close call anyway.
+    return Math.abs(call.signed) < 0.04 && chance(0.02 + 0.08 * (1 - skill));
   }
 
   /** Ready position: personality, last shot, and a lean toward where you've been hitting. */

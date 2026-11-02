@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.4.1',
+    title: 'CPU challenges can be wrong',
+    date: '2 Nov 2026',
+    changes: [
+      'The CPU judges line calls by eye now, so its Hawk-Eye challenges are sometimes wrong. Easy challenges recklessly; Expert is picky and usually right.',
+    ],
+  },
+  {
     version: '1.4',
     title: 'Easier to play',
     date: '2 Nov 2026',

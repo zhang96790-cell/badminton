@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.1: Leaderboard link (2 Nov 2026)
+
+- Leaderboard link at the bottom of the start screen: see the top 50 ranked players without logging in (your row is highlighted when you are).
+
 ## 2.1: Quick match, ranking and friends (2 Nov 2026)
 
 - Quick match (Court 4): one press finds an opponent online near your rating. The range widens the longer you wait, and you can cancel any time. Ranked matches are 1 game to 21, start by themselves, and you need to be logged in to play them.

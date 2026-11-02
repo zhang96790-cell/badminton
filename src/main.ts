@@ -349,6 +349,18 @@ function showHubTab(name: string) {
 }
 document.querySelectorAll<HTMLButtonElement>('[data-hub]').forEach((t) => t.addEventListener('click', () => showHubTab(t.dataset.hub!)));
 
+// Footer link: the leaderboard on its own, no login needed.
+const leadersModal = document.getElementById('leadersModal')!;
+const closeLeaders = () => { leadersModal.classList.add('hidden'); document.getElementById('leadersBtn')!.focus(); };
+document.getElementById('leadersBtn')!.addEventListener('click', () => {
+  leadersModal.classList.remove('hidden');
+  document.getElementById('leadersClose')!.focus();
+  void renderLeaders('leaderListPublic');
+});
+document.getElementById('leadersClose')!.addEventListener('click', closeLeaders);
+leadersModal.addEventListener('click', (e) => { if (e.target === leadersModal) closeLeaders(); });
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !leadersModal.classList.contains('hidden')) closeLeaders(); });
+
 async function renderMatches() {
   const m = await loadAccount();
   const rows = await m.myMatches();
@@ -359,10 +371,11 @@ async function renderMatches() {
   }).join('') : '<li class="empty">No ranked matches yet. Try Quick match on Court 4.</li>';
 }
 
-async function renderLeaders() {
+/** Fill a leaderboard list (the hub's tab or the footer pop-up). Anyone can see it, logged in or not. */
+async function renderLeaders(listId = 'leaderList') {
   const m = await loadAccount();
   const rows = await m.leaderboard();
-  document.getElementById('leaderList')!.innerHTML = rows.length ? rows.map((r, i) => {
+  document.getElementById(listId)!.innerHTML = rows.length ? rows.map((r, i) => {
     const t = tierOf(r.rating);
     return `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color === '#cbd5e1' ? '#64748b' : t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
   }).join('') : '<li class="empty">Nobody has played a ranked match yet. Be the first.</li>';
@@ -974,7 +987,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && !tour.isOpen) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && leadersModal.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 

@@ -767,3 +767,6 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .invite-toast button { padding: 7px 12px; border: 1px solid var(--card-ink); border-radius: 4px; background: transparent; font: 700 13px/1 var(--text); color: var(--card-ink); }
 .invite-toast button.primary { background: var(--card-ink); color: var(--card); }
 @media (prefers-reduced-motion: reduce) { .queue-pulse i { animation: none; opacity: 0.8; } }
+#leadersModal { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 20px; background: rgba(4, 10, 28, 0.72); }
+#leadersModal.hidden { display: none; }
+#leadersModal .hub-list { max-height: min(60vh, 460px); }

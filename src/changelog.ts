@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.1',
+    title: 'Leaderboard link',
+    date: '2 Nov 2026',
+    changes: [
+      'Leaderboard link at the bottom of the start screen: see the top 50 ranked players without logging in (your row is highlighted when you are).',
+    ],
+  },
+  {
     version: '2.1',
     title: 'Quick match, ranking and friends',
     date: '2 Nov 2026',

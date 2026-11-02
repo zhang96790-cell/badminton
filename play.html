@@ -102,6 +102,7 @@
         <footer class="board-foot">
           <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
           <div class="foot-links">
+            <button id="leadersBtn" class="link">Leaderboard</button>
             <button id="tourBtn" class="link">Take the tour</button>
             <button id="howBtn" class="link">How to play</button>
             <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
@@ -353,6 +354,21 @@
             <button id="roomStart" class="primary" type="button">Start match</button>
             <button id="roomLeave" type="button">Leave</button>
           </div>
+        </div>
+      </div>
+    </div>
+    <div id="leadersModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="leadersTitle">
+      <div class="pass">
+        <header class="pass-head">
+          <div>
+            <p class="pass-kicker">Ranked · top 50</p>
+            <h2 id="leadersTitle">Leaderboard</h2>
+          </div>
+          <button id="leadersClose" class="mc-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+        </header>
+        <div class="pass-body">
+          <ol id="leaderListPublic" class="hub-list leaders"><li class="empty">Loading…</li></ol>
+          <p class="pass-note">Ratings come from ranked quick matches (Court 4). Everyone starts at 1000.</p>
         </div>
       </div>
     </div>

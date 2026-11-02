@@ -2,7 +2,7 @@
 // keeping the same seat, and measures the round trip to the server.
 
 /** Where the room server lives. Local development runs `npm run dev` in server/. */
-export const ROOM_SERVER = import.meta.env.DEV ? 'ws://127.0.0.1:8787' : 'wss://badminton-rooms.REPLACE_ME.workers.dev';
+export const ROOM_SERVER = import.meta.env.DEV ? 'ws://127.0.0.1:8787' : 'wss://badminton-rooms.zhang96790.workers.dev';
 
 /** Room codes avoid look-alike characters (no I, O, 0 or 1). */
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

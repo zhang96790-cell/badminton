@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.6.3',
+    title: 'Change your keys',
+    date: '2 Nov 2026',
+    changes: [
+      'Change any key under Assists & controls → Controls → Your keys: click an action, then press the new key. Taking a key another action uses swaps the two, and Reset to defaults puts everything back.',
+      'Keys that would clash are refused with a reason: the game’s own keys (H, R, F, M, G, V, Q, Enter, Esc, 1–9), and movement keys for aiming.',
+      'The shot table, on-screen hints, serve prompt and tutorial all show your keys. Two players on one keyboard keep the standard keys.',
+    ],
+  },
+  {
     version: '1.6.2',
     title: 'Physics page first',
     date: '2 Nov 2026',

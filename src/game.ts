@@ -1,7 +1,8 @@
 import { AIController } from './ai';
 import type { Camera, View } from './camera';
-import { COURT, DOUBLES, KEYS, OFFICIALS, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type Level, type Style } from './config';
+import { COURT, DOUBLES, KEYS, OFFICIALS, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type KeyMap, type Level, type Style } from './config';
 import { KeyboardController, MouseController, type Command, type Controller, type Observation } from './controllers';
+import { applyBinds, type KeyBinds } from './keys';
 import { halfRect, isIn, netHeightAt, rightCourtSign, serviceBox, signedInside, singlesRect, type Rect } from './court';
 import { interceptSlack } from './doubles';
 import { REVIEW_TIME, type Review } from './hawkeye';
@@ -42,6 +43,8 @@ export interface Settings {
   voice: boolean;
   /** Camera: 'close' fills the screen with the court, 'broadcast' is the wider TV view. */
   view: View;
+  /** Your custom keys (single player); anything not set uses the default. */
+  keys?: KeyBinds;
 }
 
 /** 'feed' = practice/tutorial: you move freely while the coach gets the next shuttle ready. */
@@ -65,6 +68,8 @@ export class Game {
   players: Player[];
   controllers: Controller[];
   readonly doubles: boolean;
+  /** Player 1's keys after custom binds (for on-screen hints). */
+  readonly p1Keys: KeyMap;
   /** Tutorial: serve into the doubles box and draw the doubles court, in a singles drill. */
   drillDoubles = false;
   /** Which court is in play: doubles (alleys in, short wide service box) or singles. */
@@ -139,9 +144,11 @@ export class Game {
     this.players = [p1, p2];
     if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
     this.players.forEach((p, i) => { p.id = i; });
+    // Custom keys apply to one player on the keyboard; sharing a keyboard keeps the fixed P1/P2 keys.
+    this.p1Keys = settings.p1Control === 'mouse' ? applyBinds(KEYS.mouse, settings.keys, true) : vsAI ? applyBinds(KEYS.solo, settings.keys) : KEYS.p1Shared;
     const c1: Controller = settings.p1Control === 'mouse'
-      ? new MouseController(input, KEYS.mouse, p1, camera)
-      : new KeyboardController(input, vsAI ? KEYS.solo : KEYS.p1Shared, p1, settings.p1Control === 'hybrid' ? camera : undefined);
+      ? new MouseController(input, this.p1Keys, p1, camera)
+      : new KeyboardController(input, this.p1Keys, p1, settings.p1Control === 'hybrid' ? camera : undefined);
     const c2: Controller = drill
       ? { poll: () => ({ move: { x: 0, y: 0 }, jump: false, shot: null }) } // the coach only feeds
       : vsAI
@@ -155,7 +162,7 @@ export class Game {
     }
     this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
     if (drill) {
-      this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard');
+      this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
       p1.place(0, -PLAYER.baseDepth);
       p2.place(0, 2.2);
       this.shuttle.hold({ x: 0, y: 1.6, z: 0.8 });

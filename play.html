@@ -207,6 +207,15 @@
 
         <section class="mc-pane" data-pane="controls" hidden>
           <div class="field">
+            <h3>Your keys</h3>
+            <p class="help">Click an action, then press its new key (Esc cancels). Taking a key another action uses swaps them. Two players on one keyboard keep the standard keys.</p>
+            <div class="binds" id="binds"></div>
+            <div class="bind-foot">
+              <p class="bind-msg" id="bindMsg" aria-live="polite"></p>
+              <button id="bindReset" class="bind-reset">Reset to defaults</button>
+            </div>
+          </div>
+          <div class="field">
             <h3>Player 1 control mode</h3>
             <div class="seg" data-group="p1Control">
               <button data-value="mouse">Keyboard + mouse</button>

@@ -12,6 +12,7 @@ import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
+import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
 
@@ -84,32 +85,35 @@ const k = (s: string) => `<kbd>${s}</kbd>`;
 function describeControls() {
   const twoP = settings.opponent === 'human';
   // Keyboard keys for high / fast / soft: solo J K L; sharing a keyboard, P1 uses C V B and P2 J K L.
-  const kb = (solo: string, p1: string) => (twoP ? `${k(p1)} <span class="dim">P1</span> · ${k(solo)} <span class="dim">P2</span>` : k(solo));
-  const H = kb('J', 'C'), F = kb('K', 'V'), S = kb('L', 'B');
+  // Your custom keys when you're on your own; sharing a keyboard keeps the fixed keys.
+  const key = (a: BindAction) => k(keyLabel(keyFor(settings.keys, a)));
+  const kb = (a: BindAction, p1: string, p2: string) => (twoP ? `${k(p1)} <span class="dim">P1</span> · ${k(p2)} <span class="dim">P2</span>` : key(a));
+  const H = kb('high', 'C', 'J'), F = kb('fast', 'V', 'K'), S = kb('soft', 'B', 'L');
+  const J = twoP ? k('Space') : key('jump');
   const rows: [string, string, string, string][] = [
     ['Clear', 'Shuttle high above you', 'Hold right-click', H],
     ['Lift', 'Shuttle low: at the net or defending', 'Hold right-click', H],
     ['Drop', 'Shuttle high above you', 'Tap right-click', S],
     ['Net shot', 'At the net, shuttle below the tape', 'Tap right-click', S],
     ['Block', 'Defending a smash', 'Tap right-click', S],
-    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', `Tap ${twoP ? F : k('K')} (hold for extra power)`],
-    ['Jump smash', 'High shuttle coming down', `${k('Space')}, then release left-click at the top`, `${k('Space')}, then tap ${twoP ? F : k('K')} at the top`],
-    ['Drive', 'Shuttle at shoulder height', 'Tap left-click', `Tap ${twoP ? F : k('K')}`],
-    ['Push', 'Shuttle low, front or mid-court', 'Tap left-click', `Tap ${twoP ? F : k('K')}`],
-    ['Net kill', 'At the net, shuttle above the tape', k('E'), twoP ? `Hold ${F}` : k('E')],
+    ['Smash', 'Shuttle high above you', 'Hold left-click until it says SMASH', `Tap ${twoP ? F : key('fast')} (hold for extra power)`],
+    ['Jump smash', 'High shuttle coming down', `${J}, then release left-click at the top`, `${J}, then tap ${twoP ? F : key('fast')} at the top`],
+    ['Drive', 'Shuttle at shoulder height', 'Tap left-click', `Tap ${twoP ? F : key('fast')}`],
+    ['Push', 'Shuttle low, front or mid-court', 'Tap left-click', `Tap ${twoP ? F : key('fast')}`],
+    ['Net kill', 'At the net, shuttle above the tape', key('kill'), twoP ? `Hold ${F}` : key('kill')],
     ['Short serve', 'Serving', 'Left-click', S],
     ['High serve', 'Serving', 'Hold right-click', H],
     ['Flick serve', 'Serving', 'Tap right-click', F],
     ['Aim', 'Any shot', 'Point the cursor', twoP
       ? `Hold ${k('X')}/${k('N')} <span class="dim">P1</span> · ${k('U')}/${k('O')} <span class="dim">P2</span> for left/right; neither = open side`
       : settings.p1Control === 'hybrid'
-        ? `Point the cursor (trackpad); ${k('U')}/${k('O')} also work`
-        : `Hold ${k('U')} left / ${k('O')} right as you hit; neither = open side`],
+        ? `Point the cursor (trackpad); ${key('aimLeft')}/${key('aimRight')} also work`
+        : `Hold ${key('aimLeft')} left / ${key('aimRight')} right as you hit; neither = open side`],
   ];
   const mouseOn = settings.p1Control === 'mouse';
   controlsBox.innerHTML = `
-    <b>Move</b> ${k('W')}${k('A')}${k('S')}${k('D')}${twoP ? ` <span class="dim">(P2: arrow keys)</span>` : ''} · <b>Jump</b> ${k('Space')}${twoP ? ` <span class="dim">(P2: R-Shift)</span>` : ''}
-    · swing just before the shuttle reaches you. Left-click and ${twoP ? 'the fast keys' : k('K')} swing when you <b>let go</b>: a quick tap is a normal shot, holding adds power
+    <b>Move</b> ${twoP ? k('W') + k('A') + k('S') + k('D') : key('up') + key('left') + key('down') + key('right')}${twoP ? ` <span class="dim">(P2: arrow keys)</span>` : ''} · <b>Jump</b> ${J}${twoP ? ` <span class="dim">(P2: R-Shift)</span>` : ''}
+    · swing just before the shuttle reaches you. Left-click and ${twoP ? 'the fast keys' : key('fast')} swing when you <b>let go</b>: a quick tap is a normal shot, holding adds power
     <table class="shots">
       <thead><tr><th>Shot</th><th>When</th><th class="${mouseOn ? 'on' : ''}">Mouse</th><th class="${mouseOn ? '' : 'on'}">Keyboard</th></tr></thead>
       <tbody>${rows.map(([shot, when, m, key]) => `<tr><td><b>${shot}</b></td><td class="dim">${when}</td><td>${m}</td><td>${key}</td></tr>`).join('')}</tbody>
@@ -122,6 +126,67 @@ function describeControls() {
   document.getElementById('partnerRow')!.classList.toggle('disabled', !doubles);
   document.querySelector<HTMLElement>('[data-group="opponent"] [data-value="human"]')!.classList.toggle('disabled', doubles);
 }
+
+// Key bind editor (Assists & controls → Controls). While it's listening, it takes the key before the game or menu sees it.
+const bindsBox = document.getElementById('binds')!, bindMsg = document.getElementById('bindMsg')!;
+let listening: BindAction | null = null;
+let swallowKeyup: string | null = null;
+const actionLabel = (a: BindAction) => BIND_ACTIONS.find((b) => b.action === a)!.label;
+function setBindMsg(text: string, problem = false) {
+  bindMsg.textContent = text;
+  bindMsg.classList.toggle('problem', problem);
+}
+function renderBinds() {
+  const mouse = settings.p1Control === 'mouse';
+  bindsBox.innerHTML = BIND_ACTIONS.map(({ action, label, mouse: inMouse }) => {
+    const off = mouse && !inMouse;
+    const key = listening === action ? 'Press a key…' : keyLabel(keyFor(settings.keys, action));
+    return `<div class="bind${off ? ' off' : ''}"><span>${label}${off ? ' <em>keyboard modes</em>' : ''}</span>`
+      + `<button data-action="${action}" class="${listening === action ? 'listening' : ''}" aria-label="${label}: ${key}">${key}</button></div>`;
+  }).join('');
+  bindsBox.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => {
+    const a = b.dataset.action as BindAction;
+    listening = listening === a ? null : a;
+    setBindMsg(listening ? `Press the new key for ${actionLabel(a).toLowerCase()}` : '');
+    renderBinds();
+    if (listening) bindsBox.querySelector<HTMLButtonElement>(`[data-action="${a}"]`)?.focus();
+  }));
+}
+addEventListener('keydown', (e) => {
+  if (!listening) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  swallowKeyup = e.code;
+  const a = listening;
+  if (e.code === 'Escape') { listening = null; setBindMsg(''); renderBinds(); return; }
+  const problem = bindProblem(settings.keys, a, e.code);
+  if (problem) { setBindMsg(problem, true); return; }
+  const r = bind(settings.keys, a, e.code);
+  settings.keys = r.binds;
+  listening = null;
+  saveSettings();
+  setBindMsg(r.swapped
+    ? `${actionLabel(a)} is now ${keyLabel(e.code)}; ${actionLabel(r.swapped).toLowerCase()} moved to ${keyLabel(keyFor(settings.keys, r.swapped))}`
+    : `${actionLabel(a)} is now ${keyLabel(e.code)}`);
+  renderBinds();
+  describeControls();
+}, { capture: true });
+// Space on a focused button clicks it on key-up: don't let the key we just took re-open the editor.
+addEventListener('keyup', (e) => {
+  if (swallowKeyup !== e.code) return;
+  swallowKeyup = null;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}, { capture: true });
+document.getElementById('bindReset')!.addEventListener('click', () => {
+  settings.keys = {};
+  listening = null;
+  saveSettings();
+  setBindMsg('Keys reset to the defaults');
+  renderBinds();
+  describeControls();
+});
+renderBinds();
 
 // What's new pop-up: newest version first, with a NEW badge on the button until you've opened it.
 const SEEN = 'badminton.seenVersion';
@@ -234,6 +299,7 @@ document.querySelectorAll<HTMLElement>('.seg').forEach((seg) => {
       syncMenu();
       describeControls();
       describeFormat();
+      renderBinds();
     });
   });
 });

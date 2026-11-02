@@ -1,4 +1,6 @@
+import type { KeyMap } from './config';
 import type { Game } from './game';
+import { keyLabel } from './keys';
 import type { V2 } from './math';
 import type { FeedType, HitInfo, LandInfo, Panel, Session } from './practice';
 
@@ -26,76 +28,76 @@ const same = (s: string): [string, string] => [s, s];
 const STEPS: Step[] = [
   {
     title: 'Moving', kind: 'move', goal: 3,
-    text: same('Move with W A S D. Run to each yellow ring. You stop as soon as you let go, so small taps make small adjustments.'),
+    text: same('Move with {move}. Run to each yellow ring. You stop as soon as you let go, so small taps make small adjustments.'),
   },
   {
     title: 'Timing', kind: 'hit', feed: 'liftMid', goal: 2, okHit: (h) => h.timing === 'perfect',
     text: [
       'The coach feeds you shuttles. Get under the yellow landing ring, then watch the light beside your player: yellow = wait, green = swing now, red = too late. Tap left-click on green. Get 2 Perfect hits.',
-      'The coach feeds you shuttles. Get under the yellow landing ring, then watch the light beside your player: yellow = wait, green = swing now, red = too late. Tap K on green (K swings when you let go). Get 2 Perfect hits.',
+      'The coach feeds you shuttles. Get under the yellow landing ring, then watch the light beside your player: yellow = wait, green = swing now, red = too late. Tap {fast} on green ({fast} swings when you let go). Get 2 Perfect hits.',
     ],
   },
   {
     title: 'Clear', kind: 'hit', feed: 'liftBack', goal: 2, ok: (l) => l.inCourt && l.depth >= 4.5,
     text: [
       'Hold right-click, release on green: a clear always goes deep. The cursor picks left or right, and holding longer goes higher. Land 2 in the back of the court.',
-      'Press J on green for a clear, deep to the back. To aim, point the cursor (trackpad mode) or hold U (left) / O (right) as you hit; otherwise it goes to the open side. Land 2 in the back of the court.',
+      'Press {high} on green for a clear, deep to the back. To aim, point the cursor (trackpad mode) or hold {aimLeft} (left) / {aimRight} (right) as you hit; otherwise it goes to the open side. Land 2 in the back of the court.',
     ],
   },
   {
     title: 'Drop', kind: 'hit', feed: 'liftBack', goal: 2, ok: (l) => l.inCourt && l.depth <= 3.3,
     text: [
       'Tap right-click on green for a drop: it always lands short, just over the net. Land 2 drops in the front of the court.',
-      'Press L on green for a drop, landing just over the net. Land 2 drops in the front of the court.',
+      'Press {soft} on green for a drop, landing just over the net. Land 2 drops in the front of the court.',
     ],
   },
   {
     title: 'Smash', kind: 'hit', feed: 'liftMid', goal: 2, ok: (l) => l.inCourt && /smash/i.test(l.label),
     text: [
       'Start holding left-click early. When the label on the court says SMASH, release on green. Land 2 smashes in.',
-      'When the shuttle is high above you, tap K on green to smash. For extra power, start holding K early and let go on green. Land 2 smashes in.',
+      'When the shuttle is high above you, tap {fast} on green to smash. For extra power, start holding {fast} early and let go on green. Land 2 smashes in.',
     ],
   },
   {
     title: 'Drive', kind: 'hit', feed: 'drive', goal: 2, ok: (l) => l.inCourt && /Drive|Push|Half smash|Flat clear|Smash/.test(l.label),
     text: [
       'A tap of left-click is a drive: flat and fast. These feeds come at shoulder height. Land 2 in.',
-      'A quick tap of K is a drive: flat and fast. These feeds come at shoulder height. Land 2 in.',
+      'A quick tap of {fast} is a drive: flat and fast. These feeds come at shoulder height. Land 2 in.',
     ],
   },
   {
     title: 'Net kill', kind: 'hit', feed: 'netLoose', goal: 2, ok: (l) => l.inCourt && /kill/i.test(l.label),
     text: [
-      'Loose shuttles above the tape can be killed. Rush the net and press E for instant full power (no charging). Land 2 kills.',
-      'Loose shuttles above the tape can be killed. Rush the net and press E for instant full power (no holding). Land 2 kills.',
+      'Loose shuttles above the tape can be killed. Rush the net and press {kill} for instant full power (no charging). Land 2 kills.',
+      'Loose shuttles above the tape can be killed. Rush the net and press {kill} for instant full power (no holding). Land 2 kills.',
     ],
   },
   {
     title: 'Jump smash', kind: 'hit', feed: 'liftMid', goal: 1, ok: (l) => l.inCourt && /Jump smash/.test(l.label),
     text: [
-      'Press Space to jump as the shuttle drops toward you, then release your smash (left-click) at the top. Land 1 jump smash.',
-      'Press Space to jump as the shuttle drops toward you, then tap K at the top of the jump. Land 1 jump smash.',
+      'Press {jump} to jump as the shuttle drops toward you, then release your smash (left-click) at the top. Land 1 jump smash.',
+      'Press {jump} to jump as the shuttle drops toward you, then tap {fast} at the top of the jump. Land 1 jump smash.',
     ],
   },
   {
     title: 'Short serve', kind: 'serve', serve: 'short', goal: 1, ok: (l) => l.inCourt,
     text: [
       'Serving: you serve from the RIGHT court when your score is even, the LEFT when it’s odd, diagonally into the box opposite. Left-click for a short serve into the box.',
-      'Serving: you serve from the RIGHT court when your score is even, the LEFT when it’s odd, diagonally into the box opposite. Press L for a short serve into the box.',
+      'Serving: you serve from the RIGHT court when your score is even, the LEFT when it’s odd, diagonally into the box opposite. Press {soft} for a short serve into the box.',
     ],
   },
   {
     title: 'High serve', kind: 'serve', serve: 'high', goal: 1, ok: (l) => l.inCourt && l.depth >= 5,
     text: [
       'Now right-click (hold for higher) for a high serve to the back of the box.',
-      'Now press J for a high serve to the back of the box.',
+      'Now press {high} for a high serve to the back of the box.',
     ],
   },
   {
     title: 'Doubles serve', kind: 'serve', serve: 'short', doubles: true, goal: 1, ok: (l) => l.inCourt,
     text: [
       'Doubles: the service box is short and wide. The side alleys are in, but the back line is out on the serve (the long service line, 0.76 m in, is the limit). Serve low, because a high serve gets smashed. Left-click a short serve into the box.',
-      'Doubles: the service box is short and wide. The side alleys are in, but the back line is out on the serve (the long service line, 0.76 m in, is the limit). Serve low, because a high serve gets smashed. Press L for a short serve into the box.',
+      'Doubles: the service box is short and wide. The side alleys are in, but the back line is out on the serve (the long service line, 0.76 m in, is the limit). Serve low, because a high serve gets smashed. Press {soft} for a short serve into the box.',
     ],
   },
   {
@@ -129,7 +131,13 @@ export class Tutorial implements Session {
   private wait = -1;
   private rings: V2[] = [];
 
-  constructor(private controls: Controls) {}
+  constructor(private controls: Controls, private keys: KeyMap) {}
+
+  /** Fill {action} placeholders with the player's actual keys. */
+  private withKeys(text: string): string {
+    const k = (a: keyof KeyMap) => keyLabel(this.keys[a][0] ?? '');
+    return text.replace(/\{(\w+)\}/g, (_, a: string) => (a === 'move' ? [k('up'), k('left'), k('down'), k('right')].join(' ') : k(a as keyof KeyMap)));
+  }
 
   private get step(): Step { return STEPS[this.i]; }
 
@@ -235,7 +243,7 @@ export class Tutorial implements Session {
     return {
       tag: `TUTORIAL  ·  STEP ${this.i + 1} OF ${STEPS.length}`,
       title: s.title,
-      text: s.text[this.controls === 'mouse' ? 0 : 1],
+      text: this.withKeys(s.text[this.controls === 'mouse' ? 0 : 1]),
       progress: goal ? [Math.min(this.count, goal), goal] : null,
       footer: s.kind === 'info' ? 'Enter to continue   ·   Esc to quit' : 'Enter to skip this step   ·   Esc to quit',
     };

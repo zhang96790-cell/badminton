@@ -1,5 +1,6 @@
 import { COURT, KEYS, VISUAL } from './config';
 import type { Game } from './game';
+import { keyLabel } from './keys';
 import { clamp } from './math';
 import type { PlayerSummary } from './stats';
 
@@ -462,18 +463,20 @@ export class Hud {
     if (s === game.players[0] && game.settings.p1Control === 'mouse') {
       return `${s.name} to serve (${court} court): aim with the cursor · left-click short · right-click: tap = flick, hold = high`;
     }
-    const k = s === game.players[1] ? KEYS.p2Shared : opp === 'human' ? KEYS.p1Shared : KEYS.solo;
-    const key = (c: string[]) => c[0].replace('Key', '');
+    const k = s === game.players[1] ? KEYS.p2Shared : game.p1Keys;
+    const key = (c: string[]) => keyLabel(c[0]);
     return `${s.name} to serve (${court} court): ${key(k.soft)} short · ${key(k.high)} high · ${key(k.fast)} flick · hold ${key(k.aimLeft)}/${key(k.aimRight)} to aim`;
   }
 
   private controlsHint(game: Game): string {
     const vsAI = game.settings.opponent !== 'human';
     const hybrid = game.settings.p1Control === 'hybrid';
+    const K = game.p1Keys, n = (c: string[]) => keyLabel(c[0] ?? '');
+    const move = [K.up, K.left, K.down, K.right].map(n).join('');
     const p1 = game.settings.p1Control === 'mouse'
-      ? 'WASD move · Space jump · cursor = direction · left: tap drive, hold smash · right: tap drop, hold lob · E kill'
+      ? `${move} move · ${n(K.jump)} jump · cursor = direction · left: tap drive, hold smash · right: tap drop, hold lob · ${n(K.kill)} kill`
       : vsAI
-        ? `WASD move · J high · K fast (hold = extra power) · L soft · E kill · ${hybrid ? 'cursor aims' : 'U/O aim'} · Space jump`
+        ? `${move} move · ${n(K.high)} high · ${n(K.fast)} fast (hold = extra power) · ${n(K.soft)} soft · ${n(K.kill)} kill · ${hybrid ? 'cursor aims' : `${n(K.aimLeft)}/${n(K.aimRight)} aim`} · ${n(K.jump)} jump`
         : 'P1: WASD · C high · V fast (hold = extra power) · B soft · X/N aim · Space jump';
     const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · U/O aim · R-Shift jump';
     return `${p1}${p2}   ·   H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;

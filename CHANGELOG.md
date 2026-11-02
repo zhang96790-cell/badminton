@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.6.3: Change your keys (2 Nov 2026)
+
+- Change any key under Assists & controls → Controls → Your keys: click an action, then press the new key. Taking a key another action uses swaps the two, and Reset to defaults puts everything back.
+- Keys that would clash are refused with a reason: the game’s own keys (H, R, F, M, G, V, Q, Enter, Esc, 1–9), and movement keys for aiming.
+- The shot table, on-screen hints, serve prompt and tutorial all show your keys. Two players on one keyboard keep the standard keys.
+
 ## 1.6.2: Physics page first (2 Nov 2026)
 
 - badmintongames.site now opens on the Air Physics Revision page. The game is at badmintongames.site/play, or use Badminton simulator in the ☰ menu.

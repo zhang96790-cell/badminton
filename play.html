@@ -353,6 +353,7 @@
           <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
           <button role="tab" data-hub="matches" aria-selected="false">Matches</button>
           <button role="tab" data-hub="account" aria-selected="false" id="accountTab">Account</button>
+          <button role="tab" data-hub="admin" aria-selected="false" id="adminTab" hidden>Admin</button>
         </nav>
         <div class="social-body">
           <section data-hubpane="overview">
@@ -383,6 +384,12 @@
               <button type="button" class="primary" data-login>Log in or sign up</button>
             </div>
             <ol id="acMatches" class="hub-list"></ol>
+          </section>
+          <section data-hubpane="admin" hidden>
+            <div class="scope" id="adminScope">Loading…</div>
+            <div id="adminGroups" class="stat-groups"></div>
+            <h3 class="admin-h">Players, most recently seen first</h3>
+            <ol id="adminList" class="hub-list admin-list"></ol>
           </section>
           <section data-hubpane="account" hidden>
             <p class="pass-name">Logged in as <b id="acName"></b></p>

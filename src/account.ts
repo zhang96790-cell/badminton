@@ -118,6 +118,15 @@ export const sendFriendRequest = (target: string) => rpc<string>('send_friend_re
 /** 'sent' or 'not_friends' (or null on error). */
 export const sendInvite = (friend: string, room: string) => rpc<string>('send_invite', { friend, room });
 
+// ── Admin (accounts listed in the admins table, set from the Supabase dashboard) ──
+export interface AdminPlayer { username: string; created_at: string; last_seen: string | null; rating: number; wins: number; losses: number; matches: number; online: boolean }
+export interface AdminOverview {
+  players: number; signups_today: number; signups_week: number; online_now: number; active_today: number; active_week: number;
+  ranked_today: number; ranked_total: number; matches_played: number; hours_played: number; recent: AdminPlayer[];
+}
+export const amIAdmin = async () => (await rpc<boolean>('am_i_admin')) === true;
+export const adminOverview = () => rpc<AdminOverview>('admin_overview');
+
 // ── 2.2: career stats ─────────────────────────────────────────────────────────
 export const myCareer = async () => (await rpc<Record<string, number>>('my_career')) ?? null;
 export const addCareer = (delta: Record<string, number>) => rpc<Record<string, number>>('add_career', { delta });

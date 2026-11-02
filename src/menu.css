@@ -904,3 +904,7 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .tour-badge { margin-left: 6px; padding: 3px 7px; border-radius: 4px; background: var(--amber); color: var(--amber-ink); font: 800 10px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; animation: welcome-pulse 2.2s ease-out infinite; }
 .tour-badge[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .welcome-big, .tour-badge { animation: none; } }
+
+/* Admin tab */
+.admin-h { margin: 18px 0 8px; font: 800 12px/1 var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--card-ink-2); }
+.admin-list { max-height: 320px; }

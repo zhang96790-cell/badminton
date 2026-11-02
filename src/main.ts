@@ -227,6 +227,8 @@ function queueAccountSave() {
 
 /** Your rating and record, once loaded (logged in only). */
 let myRating: { rating: number; wins: number; losses: number } | null = null;
+/** This account is in the database's admins table (shows the Admin tab). */
+let isAdmin = false;
 
 /** Your career stats: from your account when logged in, otherwise kept on this computer. */
 let career: Career = loadLocalCareer();
@@ -246,6 +248,7 @@ function syncAccountUi() {
   const played = career.matches ?? 0;
   document.getElementById('heroWinPct')!.textContent = played ? `${Math.round((100 * (career.wins ?? 0)) / played)}%` : '–';
   document.getElementById('accountTab')!.hidden = !account;
+  document.getElementById('adminTab')!.hidden = !(account && isAdmin);
   document.getElementById('friendsLogin')!.hidden = !!account;
   document.getElementById('friendsArea')!.hidden = !account;
   document.getElementById('matchesLogin')!.hidden = !!account;
@@ -282,6 +285,7 @@ async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
   syncAccountUi();
   void refreshStats();
   startPresence();
+  void loadAccount().then((m) => m.amIAdmin()).then((yes) => { isAdmin = yes; syncAccountUi(); });
   const m = await loadAccount();
   const remote = isNew ? null : await m.loadSettings(a.id);
   if (remote) {
@@ -391,6 +395,7 @@ document.getElementById('acLogout')!.addEventListener('click', async () => {
   await m.logOut();
   account = null;
   myRating = null;
+  isAdmin = false;
   career = loadLocalCareer();
   stopPresence();
   acError.textContent = '';
@@ -405,6 +410,35 @@ function showHubTab(name: string) {
   document.querySelectorAll<HTMLElement>('[data-hubpane]').forEach((p) => { p.hidden = p.dataset.hubpane !== name; });
   if (name === 'friends') void renderFriends();
   if (name === 'leaders') void renderLeaders();
+  if (name === 'admin') void renderAdmin();
+}
+
+/** Admin tab: who's signing up and playing. The database refuses anyone who isn't an admin. */
+async function renderAdmin() {
+  const m = await loadAccount();
+  const o = await m.adminOverview();
+  const scope = document.getElementById('adminScope')!;
+  if (!o) { scope.textContent = 'Couldn’t load the admin overview (is supabase/admin.sql set up, and is this account an admin?).'; return; }
+  const n = (v: number) => Number(v).toLocaleString('en-GB');
+  scope.innerHTML = `Accounts only: guests aren’t counted. <b>${n(o.online_now)}</b> online right now.`;
+  const groups = [
+    { title: 'Players', tiles: [['Accounts', o.players], ['New today', o.signups_today], ['New this week', o.signups_week]] },
+    { title: 'Activity', tiles: [['Online now', o.online_now], ['Played today', o.active_today], ['Played this week', o.active_week]] },
+    { title: 'Matches', tiles: [['Matches finished', o.matches_played], ['Hours played', o.hours_played], ['Ranked today', o.ranked_today], ['Ranked all time', o.ranked_total]] },
+  ];
+  document.getElementById('adminGroups')!.innerHTML = groups.map((g) => `
+    <div class="stat-group"><h3>${g.title}</h3>
+      <div class="tiles">${g.tiles.map(([label, v]) => `<div class="tile"><b>${n(v as number)}</b><span>${label}</span></div>`).join('')}</div>
+    </div>`).join('');
+  const ago = (iso: string | null) => {
+    if (!iso) return 'never played logged in';
+    const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    return mins < 2 ? 'online now' : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} d ago`;
+  };
+  document.getElementById('adminList')!.innerHTML = o.recent.length ? o.recent.map((p) => {
+    const joined = new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `<li><span class="dot${p.online ? ' on' : ''}"></span><span class="grow">${hubEsc(p.username)}<span class="sub">Joined ${joined} · seen ${ago(p.last_seen)}</span></span><span class="sub">${n(p.matches)} matches · ${p.wins}–${p.losses}</span><b>${p.rating}</b></li>`;
+  }).join('') : '<li class="empty">No accounts yet.</li>';
 }
 document.querySelectorAll<HTMLButtonElement>('[data-hub]').forEach((t) => t.addEventListener('click', () => showHubTab(t.dataset.hub!)));
 

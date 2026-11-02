@@ -7,13 +7,13 @@ import './menu.css';
 import { Sound } from './audio';
 import { Camera, broadcastCamera, setView, sideCamera } from './camera';
 import { CHANGELOG } from './changelog';
-import { RULES, STYLES, UI_KEYS } from './config';
+import { RULES, STYLES, UI_KEYS, type Level } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
-import { CODE_PATTERN, QueueConnection, RoomConnection, newRoomCode, type GameMsg, type QueueEvent, type ServerMsg } from './net';
+import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type QueueEvent, type Roster, type ServerMsg } from './net';
 import { tierOf } from './rating';
 import { addCareer, careerDelta, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
@@ -690,7 +690,8 @@ const roomJoin = document.getElementById('roomJoin')!, roomLobby = document.getE
 const roomCodeIn = document.getElementById('roomCodeIn') as HTMLInputElement, roomJoinMsg = document.getElementById('roomJoinMsg')!;
 const roomStart = document.getElementById('roomStart') as HTMLButtonElement, roomStatus = document.getElementById('roomStatus')!;
 let room: RoomConnection | null = null;
-let roomSettings = { games: settings.games, points: settings.points };
+/** The room's match settings (the host's choice). Doubles fills empty places with CPUs at `level`. */
+let roomSettings: { games: number; points: number; event?: 'singles' | 'doubles'; level?: Level } = { games: settings.games, points: settings.points, event: 'singles', level: 'medium' };
 /** The other player asked for a rematch. */
 let peerRematch = false;
 
@@ -722,6 +723,23 @@ function showRoomView(view: 'join' | 'lobby' | 'queue') {
   document.getElementById('roomTitle')!.textContent = view === 'join' ? 'Join a room' : view === 'queue' ? 'Quick match' : room?.roster?.ranked ? 'Ranked match' : 'Your room';
 }
 
+/** Everyone seated in the room, with their team (0 = the host's). */
+function seated(r: Roster | null | undefined) {
+  return SEATS.flatMap((seat) => { const p = r?.[seat]; return p ? [{ seat, ...p, team: seat === 'host' ? 0 : p.team ?? 1 }] : []; });
+}
+
+/** Doubles: the four places in court order (host's team in 0 and 2), CPUs where nobody is sitting. */
+function buildLineup(r: Roster): LineupSlot[] {
+  let cpu = 0;
+  const team = (t: number) => {
+    const list: LineupSlot[] = seated(r).filter((p) => p.team === t).map((p) => ({ seat: p.seat, name: p.name }));
+    while (list.length < 2) list.push({ seat: null, name: `CPU ${++cpu}` });
+    return list;
+  };
+  const a = team(0), b = team(1);
+  return [a[0], b[0], a[1], b[1]];
+}
+
 function renderLobby() {
   if (!room) return;
   const r = room.roster, host = r?.you === 'host';
@@ -729,24 +747,54 @@ function renderLobby() {
   const row = (id: string, p: { name: string; connected: boolean } | null | undefined, mine: boolean, role: string) => {
     const li = document.getElementById(id)!;
     li.className = p ? (p.connected ? 'on' : 'away') : '';
-    li.innerHTML = p ? `${p.name}${mine ? ' (you)' : ''}<em>${p.connected ? role : 'reconnecting'}</em>` : `Waiting for your opponent…<em>${role}</em>`;
+    li.innerHTML = p ? `${hubEsc(p.name)}${mine ? ' (you)' : ''}<em>${p.connected ? role : 'reconnecting'}</em>` : `Waiting for your opponent…<em>${role}</em>`;
   };
   row('roomHost', r?.host, r?.you === 'host', 'host');
   row('roomGuest', r?.guest, r?.you === 'guest', 'guest');
-  for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points']] as const) {
+  const ranked = r?.ranked;
+  const people = seated(r);
+  const doubles = !ranked && roomSettings.event === 'doubles';
+  const me = people.find((p) => p.seat === r?.you);
+  // Doubles: your team on the left, CPUs in the empty places.
+  document.getElementById('roomSingles')!.hidden = doubles;
+  document.getElementById('roomTeams')!.hidden = !doubles;
+  if (doubles) {
+    const level = roomSettings.level ?? 'medium';
+    const fill = (id: string, t: number) => {
+      const list = people.filter((p) => p.team === t);
+      document.getElementById(id)!.innerHTML = [0, 1].map((k) => {
+        const p = list[k];
+        if (!p) return `<li class="cpu">CPU<em>${level}</em></li>`;
+        return `<li class="${p.connected ? 'on' : 'away'}${p.seat === r?.you ? ' me' : ''}">${hubEsc(p.name)}${p.seat === r?.you ? ' (you)' : ''}<em>${!p.connected ? 'reconnecting' : p.seat === 'host' ? 'host' : ''}</em></li>`;
+      }).join('');
+    };
+    const mine = me?.team ?? 0;
+    fill('roomTeamMine', mine);
+    fill('roomTeamThem', 1 - mine);
+  }
+  const sw = document.getElementById('roomSwitch') as HTMLButtonElement;
+  sw.hidden = !doubles || host || !me;
+  sw.disabled = !me || people.filter((p) => p.team !== me.team).length >= 2;
+  const lockSeg = (id: string, value: string | number) => {
     const seg = document.getElementById(id)!;
     seg.classList.toggle('locked', !host);
-    seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.value) === roomSettings[key]));
-  }
-  const ready = !!(r?.host?.connected && r?.guest?.connected);
+    seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', b.dataset.value === String(value)));
+  };
+  lockSeg('roomGames', roomSettings.games);
+  lockSeg('roomPoints', roomSettings.points);
+  lockSeg('roomEvent', roomSettings.event ?? 'singles');
+  lockSeg('roomLevel', roomSettings.level ?? 'medium');
+  // Singles can't seat more than two.
+  document.querySelector<HTMLButtonElement>('#roomEvent [data-value="singles"]')!.classList.toggle('disabled', people.length > 2);
+  document.getElementById('roomLevelField')!.hidden = !doubles || people.length >= 4;
+  const ready = doubles ? people.length >= 2 && people.every((p) => p.connected) : !!(r?.host?.connected && r?.guest?.connected);
   // Ranked rooms: no code to share and no settings; the match starts by itself once you're both in.
-  const ranked = r?.ranked;
   document.querySelector<HTMLElement>('#roomLobby .room-code')!.hidden = !!ranked;
-  document.querySelector<HTMLElement>('#roomLobby .field-row')!.hidden = !!ranked;
+  document.querySelectorAll<HTMLElement>('#roomLobby .field-row').forEach((f) => { f.hidden = !!ranked; });
   document.getElementById('roomTitle')!.textContent = ranked ? 'Ranked match' : 'Your room';
   // Each player's round trip to the server, so a slow connection is easy to spot before playing.
   const conn = ready && room.rtt && room.peerRtt
-    ? ` Connection: you ${Math.round(room.rtt)} ms, them ${Math.round(room.peerRtt)} ms${room.latency >= 150 ? ' (laggy: try moving closer to the Wi-Fi)' : ''}.`
+    ? ` Connection: you ${Math.round(room.rtt)} ms, ${doubles ? 'others' : 'them'} ${Math.round(room.peerRtt)} ms${room.latency >= 150 ? ' (laggy: try moving closer to the Wi-Fi)' : ''}.`
     : '';
   if (ranked) {
     roomStart.hidden = true;
@@ -755,8 +803,11 @@ function renderLobby() {
   }
   roomStart.hidden = !host;
   roomStart.disabled = !ready;
+  const cpus = 4 - people.length;
   roomStatus.textContent = (room.status === 'connecting' ? 'Connecting…'
     : room.status === 'reconnecting' ? 'Connection lost, reconnecting…'
+    : doubles && !ready ? (host ? 'Send friends the code or invite link (up to 3). Empty places are played by CPUs.' : 'Waiting for the host…')
+    : doubles ? `${people.length} players${cpus ? ` and ${cpus} CPU${cpus > 1 ? 's' : ''}` : ''}. ${host ? 'Press Start match when everyone’s ready.' : 'Pick your team; the host starts the match.'}`
     : !ready ? (host ? 'Send your friend the code or the invite link. You can start once they join.' : 'Waiting for the host…')
     : host ? 'Both here. Press Start match when you’re ready.' : 'Both here. Waiting for the host to start.') + conn;
 }
@@ -787,10 +838,7 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
       else if (m.you === 'host') room.send({ type: 'settings', settings: roomSettings });
       else if (m.settings) roomSettings = m.settings as typeof roomSettings;
       // Ranked: the host's screen starts the match as soon as both players are connected.
-      if (m.ranked && m.you === 'host' && m.host?.connected && m.guest?.connected && !game) {
-        room.send({ type: 'start', settings: roomSettings });
-        startOnline(true);
-      }
+      if (m.ranked && m.you === 'host' && m.host?.connected && m.guest?.connected && !game) hostStart();
       break;
     case 'result':
       if (game?.online) game.rankedResult = m;
@@ -798,30 +846,35 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
       void renderMatches();
       break;
     case 'settings': roomSettings = m.settings as typeof roomSettings; break;
-    case 'start': roomSettings = m.settings as typeof roomSettings; startOnline(false); break;
+    case 'start': roomSettings = m.settings as typeof roomSettings; startOnline(false, m.lineup); break;
     case 'rematch':
       peerRematch = true;
-      if (room.roster?.you === 'host' && game?.rematchAsked) restartOnline();
+      if (room.roster?.you === 'host' && game?.rematchAsked && !game.doubles) hostStart();
       break;
     case 'full':
       showRoomView('join');
-      roomJoinMsg.textContent = 'That room already has two players.';
+      roomJoinMsg.textContent = 'That room is full.';
       room = null;
       return;
   }
   renderLobby();
 }
 
-function startOnline(host: boolean) {
-  const r = room?.roster, opp = host ? r?.guest : r?.host;
-  if (!room || !opp) return;
+function startOnline(host: boolean, lineup?: LineupSlot[]) {
+  const r = room?.roster;
+  // Doubles: your place in the lineup; singles: the other player.
+  const me = lineup ? lineup.findIndex((s) => s.seat === r?.you) : -1;
+  const opp = lineup ? lineup[me % 2 === 0 ? 1 : 0] : host ? r?.guest : r?.host;
+  if (!room || !r || !opp || (lineup && me < 0)) return;
   game?.dispose();
   sound.init();
   voice.enabled = settings.voice;
   voice.unlock();
   peerRematch = false;
   const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
-  game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21 }, input, broadcast, 'online', { conn: room, host, opponentName: opp.name, ranked });
+  const level = lineup ? roomSettings.level ?? 'medium' : settings.opponent;
+  game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21, opponent: level }, input, broadcast, 'online',
+    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined });
   game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
@@ -830,17 +883,21 @@ function startOnline(host: boolean) {
   (document.activeElement as HTMLElement | null)?.blur();
 }
 
-/** Host: both asked for a rematch, so start a fresh match on both screens. */
-function restartOnline() {
-  room?.send({ type: 'start', settings: roomSettings });
-  startOnline(true);
+/** Host: start the match on every screen (doubles: with the lineup as the room stands now). */
+function hostStart() {
+  const r = room?.roster;
+  if (!room || r?.you !== 'host') return;
+  const lineup = !r.ranked && roomSettings.event === 'doubles' ? buildLineup(r) : undefined;
+  room.send({ type: 'start', settings: roomSettings, lineup });
+  startOnline(true, lineup);
 }
 
 function askRematch() {
   if (!game?.online || game.rematchAsked || game.forfeitWinner !== null) return;
   game.rematchAsked = true;
   room?.send({ type: 'rematch' });
-  if (room?.roster?.you === 'host' && peerRematch) restartOnline();
+  // Singles: both ask. Doubles: the host decides.
+  if (room?.roster?.you === 'host' && (peerRematch || game.doubles)) hostStart();
 }
 
 // ── Quick match ──────────────────────────────────────────────────────────────
@@ -911,19 +968,20 @@ function joinTyped() {
 }
 document.getElementById('roomJoinGo')!.addEventListener('click', joinTyped);
 roomCodeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); joinTyped(); } });
-roomStart.addEventListener('click', () => {
-  if (room?.roster?.you !== 'host') return;
-  room.send({ type: 'start', settings: roomSettings });
-  startOnline(true);
-});
-for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points']] as const) {
+roomStart.addEventListener('click', hostStart);
+for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points'], ['roomEvent', 'event'], ['roomLevel', 'level']] as const) {
   document.getElementById(id)!.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => {
-    if (room?.roster?.you !== 'host') return;
-    roomSettings = { ...roomSettings, [key]: Number(b.dataset.value) };
+    if (room?.roster?.you !== 'host' || b.classList.contains('disabled')) return;
+    const v = b.dataset.value!;
+    roomSettings = { ...roomSettings, [key]: key === 'games' || key === 'points' ? Number(v) : v };
     room.send({ type: 'settings', settings: roomSettings });
     renderLobby();
   }));
 }
+document.getElementById('roomSwitch')!.addEventListener('click', () => {
+  const me = seated(room?.roster).find((p) => p.seat === room?.roster?.you);
+  if (me) room?.send({ type: 'team', team: me.team === 0 ? 1 : 0 });
+});
 document.getElementById('roomCopy')!.addEventListener('click', async (e) => {
   if (!room) return;
   const btn = e.currentTarget as HTMLButtonElement;

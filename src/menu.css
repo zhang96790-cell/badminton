@@ -908,3 +908,14 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 /* Admin tab */
 .admin-h { margin: 18px 0 8px; font: 800 12px/1 var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--card-ink-2); }
 .admin-list { max-height: 320px; }
+
+/* Doubles rooms: two team columns, CPUs filling empty places */
+.room-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.room-team h3 { margin: 0 0 6px; font: 800 12px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--card-ink-2); }
+.room-players li.cpu { color: var(--card-ink-2); border-style: dashed; font-weight: 500; }
+.room-players li.cpu::before { background: transparent; border: 1px dashed var(--card-ink-2); }
+.room-players li.me { border-color: var(--card-ink); }
+.room-switch { justify-self: start; padding: 8px 12px; border: 1px solid var(--card-ink); border-radius: 5px; background: transparent; font: 700 12px/1 var(--text); letter-spacing: 0.06em; text-transform: uppercase; color: var(--card-ink); }
+.room-switch:hover:not(:disabled) { background: var(--card-ink); color: var(--card); }
+.room-switch:disabled { opacity: 0.4; cursor: default; }
+.room-teams[hidden], #roomLobby .field[hidden], #roomLobby .field-row[hidden] { display: none; }

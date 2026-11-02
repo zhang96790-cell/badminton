@@ -17,6 +17,8 @@ export class Match {
   server: 0 | 1 = 0;
   /** Doubles: player index in each team's right service court. */
   right: [number, number] = [0, 1];
+  /** Doubles: who stands in the right courts at the start of each game (online, set from the lineup). */
+  startRight: [number, number] = [0, 1];
   private intervalTaken = false;
 
   constructor(public format: ScoringFormat, public gamesToWin: number, public doubles = false) {}
@@ -50,7 +52,7 @@ export class Match {
   /** The previous game's winner serves first (server already points at them). */
   newGame() {
     this.scores = [0, 0];
-    this.right = [0, 1];
+    this.right = [...this.startRight];
     this.intervalTaken = false;
   }
 

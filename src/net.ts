@@ -13,14 +13,19 @@ export function newRoomCode(): string {
   return Array.from(b, (x) => CODE_CHARS[x % CODE_CHARS.length]).join('');
 }
 
-export type Seat = 'host' | 'guest';
+export type Seat = 'host' | 'guest' | 'p3' | 'p4';
+export const SEATS: Seat[] = ['host', 'guest', 'p3', 'p4'];
+/** Someone in the room. Team 0 is always the host's team (in singles the guest is team 1). */
+export interface RosterSeat { name: string; connected: boolean; team?: 0 | 1 }
 
 /** A line call as the host sends it (host's view; hitter is the host's side numbering). */
 export interface WireCall { rect: { xMin: number; xMax: number; yMin: number; yMax: number }; signed: number; truthIn: boolean; callIn: boolean; hitter: 0 | 1; isServe: boolean }
 export interface Roster {
   you: Seat;
-  host: { name: string; connected: boolean } | null;
-  guest: { name: string; connected: boolean } | null;
+  host: RosterSeat | null;
+  guest: RosterSeat | null;
+  p3?: RosterSeat | null;
+  p4?: RosterSeat | null;
   settings: unknown;
   /** Quick-match rooms: both players' ratings. Null for private rooms. */
   ranked: { host: number; guest: number } | null;
@@ -29,27 +34,44 @@ export interface Roster {
 /** The room's verdict on a ranked match: new ratings, or why they couldn't be saved. */
 export type RankedResult = { winner: Seat; forfeit: boolean; change?: number; ratings?: { host: number; guest: number }; error?: string };
 
-/** Messages the game sends to the other player (relayed by the room). */
-export type GameMsg =
+/**
+ * Doubles: who stands where. Four slots in court order (0 and 2 are the host's team, 1 and 3 the other
+ * team); each is a person's seat or a CPU the host's screen plays.
+ */
+export interface LineupSlot { seat: Seat | null; name: string }
+/** A CPU's position, sent by the host along with its own (g = its slot in the lineup). */
+export interface BotPos { g: number; x: number; y: number; z: number; charge: number | null; jump: boolean }
+
+/**
+ * Messages the game sends to the other players (relayed by the room, which adds `from`, the sender's
+ * seat). Positions are in the sender's view: anyone on the other team turns them round.
+ */
+export type GameMsg = (
   | { type: 'settings'; settings: unknown }
-  | { type: 'start'; settings: unknown }
-  | { type: 'pos'; x: number; y: number; z: number; vx: number; vy: number; charge: number | null; jump: boolean }
-  | { type: 'hit'; p: [number, number, number]; v: [number, number, number]; label: string; kmh: number; hand: string; detail: string; serve: boolean }
+  | { type: 'start'; settings: unknown; lineup?: LineupSlot[] }
+  | { type: 'pos'; x: number; y: number; z: number; vx: number; vy: number; charge: number | null; jump: boolean; bots?: BotPos[] }
+  /** g: the hitter's lineup slot (doubles; a CPU's hits come from the host). n: the rally's hit number, to settle two teammates hitting at once. */
+  | { type: 'hit'; p: [number, number, number]; v: [number, number, number]; label: string; kmh: number; hand: string; detail: string; serve: boolean; g?: number; n?: number }
   | { type: 'land'; p: [number, number]; net: boolean; wide: boolean }
-  | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number]; call?: WireCall | null }
+  /** right: doubles, the lineup slot standing in each team's right service court after this point. */
+  | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number]; call?: WireCall | null; right?: [number, number] }
   | { type: 'challenge' }
   /** Guest to host: I was serving and ran out the shot clock. */
   | { type: 'delay' }
-  | { type: 'review'; scores: [number, number]; games: [number, number] }
+  | { type: 'review'; scores: [number, number]; games: [number, number]; right?: [number, number] }
   | { type: 'pause'; on: boolean; all?: boolean }
   | { type: 'chat'; i: number }
   | { type: 'rtt'; ms: number }
   | { type: 'rematch' }
-  | { type: 'forfeit' };
+  | { type: 'forfeit' }
+  /** Doubles lobby: move to this team. */
+  | { type: 'team'; team: 0 | 1 }
+) & { from?: Seat };
 
 export type ServerMsg =
   | ({ type: 'roster' } & Roster)
-  | { type: 'peer'; status: 'away' | 'back' | 'left'; seconds?: number; forfeit?: boolean }
+  /** self: your own connection dropped or came back (sent by this screen, not the room). */
+  | { type: 'peer'; status: 'away' | 'back' | 'left'; seconds?: number; forfeit?: boolean; seat?: Seat; self?: boolean }
   | { type: 'pong'; t: number }
   | { type: 'full' }
   | ({ type: 'result' } & RankedResult);
@@ -95,6 +117,7 @@ export class RoomConnection {
     const ws = new WebSocket(url);
     this.ws = ws;
     ws.addEventListener('open', () => {
+      if (this.status === 'reconnecting') for (const h of this.handlers) h({ type: 'peer', status: 'back', self: true });
       this.status = 'open';
       this.retry = 0;
       clearInterval(this.pingTimer);
@@ -120,7 +143,7 @@ export class RoomConnection {
       if (this.closedByUs || this.status === 'full') return;
       // Dropped: try again with backoff; the room keeps our seat for a minute.
       this.status = 'reconnecting';
-      for (const h of this.handlers) h({ type: 'peer', status: 'away' } as ServerMsg & { self?: boolean });
+      for (const h of this.handlers) h({ type: 'peer', status: 'away', self: true });
       const wait = Math.min(5000, 500 * 2 ** this.retry++);
       window.setTimeout(() => { if (!this.closedByUs) this.open(); }, wait);
     });

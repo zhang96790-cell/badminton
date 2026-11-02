@@ -110,15 +110,17 @@ export class Hud {
       ctx.fillStyle = 'rgba(5,8,12,0.6)';
       ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = C.hud;
-      const them = game.players[1].name;
+      const them = game.pausers, gone = game.awayName;
       const [title, sub] = game.peerAway
-        ? [`${them} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, you win.']
+        ? gone === 'You'
+          ? ['Connection lost', 'Reconnecting… your place is kept for a minute.']
+          : [`${gone} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, their side retires.']
         : !game.online
           ? ['Paused', 'Esc to resume  ·  Q to quit to menu']
           : game.pauseMine && game.pauseTheirs
-            ? ['Both paused', 'Esc when you’re ready  ·  play starts once you’ve both resumed  ·  Q to forfeit']
+            ? [`You and ${them} paused`, 'Esc when you’re ready  ·  play starts once everyone has resumed  ·  Q to forfeit']
             : game.pauseMine
-              ? ['Paused', `${them} is ready  ·  Esc to resume  ·  Q to forfeit and leave`]
+              ? ['Paused', `${game.doubles ? 'Everyone else is' : `${game.players[1].name} is`} ready  ·  Esc to resume  ·  Q to forfeit and leave`]
               : [`Paused by ${them}`, `Play carries on when ${them} resumes  ·  Esc to pause too`];
       ctx.font = font(34, 800);
       ctx.fillText(title, w / 2, h / 2 - 10);
@@ -338,8 +340,8 @@ export class Hud {
     ctx.fillText('MATCH RESULT', x + 28, y + 36);
     ctx.fillStyle = winner.color;
     ctx.font = font(30, 900);
-    const won = winner.name === 'You' ? 'You win!' : winner.name === 'You & Partner' ? 'You and your partner win!' : `${winner.name} wins`;
-    ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.players[1].name} left)` : won, x + 28, y + 72);
+    const won = winner.name === 'You' ? 'You win!' : wi === 0 && game.doubles ? 'You and your partner win!' : `${winner.name} win${game.doubles ? '' : 's'}`;
+    ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.teamName((1 - wi) as 0 | 1)} left)` : won, x + 28, y + 72);
     // Ranked: how your rating changed (it arrives from the server a moment after the last point).
     if (game.online?.ranked) {
       const r = game.rankedResult, me = game.online.host ? 'host' : 'guest';

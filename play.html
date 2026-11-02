@@ -319,8 +319,17 @@
         </div>
         <div id="roomLobby" class="pass-body" hidden>
           <div class="room-code"><span>Room code</span><b id="roomCode">-----</b><button id="roomCopy" type="button">Copy invite link</button></div>
-          <ul class="room-players"><li id="roomHost"></li><li id="roomGuest"></li></ul>
-          <div class="field-row">
+          <div class="field-row room-mode">
+            <div class="field"><h3>Event</h3><div class="seg" id="roomEvent"><button data-value="singles">Singles</button><button data-value="doubles">Doubles</button></div></div>
+            <div class="field" id="roomLevelField"><h3>CPU players</h3><div class="seg" id="roomLevel"><button data-value="easy">Easy</button><button data-value="medium">Medium</button><button data-value="hard">Hard</button></div></div>
+          </div>
+          <ul class="room-players" id="roomSingles"><li id="roomHost"></li><li id="roomGuest"></li></ul>
+          <div class="room-teams" id="roomTeams" hidden>
+            <div class="room-team"><h3>Your team</h3><ul class="room-players" id="roomTeamMine"></ul></div>
+            <div class="room-team"><h3>Opponents</h3><ul class="room-players" id="roomTeamThem"></ul></div>
+          </div>
+          <button id="roomSwitch" type="button" class="room-switch" hidden>Switch team</button>
+          <div class="field-row room-format">
             <div class="field"><h3>Match</h3><div class="seg" id="roomGames"><button data-value="1">1 game</button><button data-value="3">Best of 3</button></div></div>
             <div class="field"><h3>Points</h3><div class="seg" id="roomPoints"><button data-value="15">15</button><button data-value="21">21</button></div></div>
           </div>

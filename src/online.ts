@@ -1,19 +1,22 @@
-// Online play: how the other player's moves reach this screen.
-// Each screen shows its own player on the near side, so everything from the other player is turned
-// round (x and y flipped) on arrival. Each player is in charge of their own movement and hits; the
-// shuttle's flight after a hit is worked out identically on both screens.
+// Online play: how the other players' moves reach this screen.
+// Each screen shows its own team on the near side, so everything from the other team is turned round
+// (x and y flipped) on arrival. Each person is in charge of their own movement and hits, the host's
+// screen also plays any CPUs, and the shuttle's flight after a hit is worked out identically everywhere.
 import type { Command, Controller } from './controllers';
 import type { V2, V3 } from './math';
-import type { RoomConnection } from './net';
+import type { LineupSlot, RoomConnection } from './net';
 import type { Player } from './player';
 
 export interface OnlineLink {
   conn: RoomConnection;
-  /** The room creator referees points (in/out, scoring). */
+  /** The room creator referees points (in/out, scoring) and plays any CPUs. */
   host: boolean;
   opponentName: string;
   /** Quick match: both ratings before the match. Null for private rooms. */
   ranked?: { mine: number; theirs: number } | null;
+  /** Doubles: the four slots (0 and 2 the host's team, 1 and 3 the other) and which one is you. */
+  lineup?: LineupSlot[];
+  me?: number;
 }
 
 /** Quick chat: number keys 1–6 during an online match. Preset only, no typing. */
@@ -24,7 +27,8 @@ export const flip2 = (x: number, y: number): V2 => ({ x: -x, y: -y });
 export const flip3 = (a: [number, number, number]): V3 => ({ x: -a[0], y: -a[1], z: a[2] });
 
 /**
- * Drives the opponent's player from their position updates (ONLINE.posRate a second). It steers toward
+ * Drives another player (a person elsewhere, or the host's CPU) from position updates (ONLINE.posRate a
+ * second). It steers toward
  * the latest position like a player running there, so movement looks smooth between updates, and
  * snaps if it falls far behind.
  */

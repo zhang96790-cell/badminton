@@ -16,6 +16,7 @@ import { Playback, Recorder, type ShuttleView } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
+import type { Seat } from './net';
 import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
@@ -143,7 +144,15 @@ export class Game {
    * on its own after ONLINE.pauseMax seconds so nobody can stall.
    */
   pauseMine = false;
-  pauseTheirs = false;
+  /** Online: who else has pressed Esc (their seats). */
+  pausedBy = new Set<Seat>();
+  get pauseTheirs(): boolean { return this.pausedBy.size > 0; }
+  /** Online: whose connection is down ('self' for your own). */
+  private away = new Set<string>();
+  /** Online: your team, numbered from the host's side (0 = the host's team). */
+  private myTeam: 0 | 1 = 0;
+  /** Online doubles: the last hit applied here (rally hit number, lineup slot), to settle simultaneous hits. */
+  private lastHit = { n: 0, g: -1 };
   /** When the current online pause began (performance.now()), or null. */
   pauseSince: number | null = null;
   /** Online: set when the other player left or forfeited (index of the winner). */
@@ -156,7 +165,7 @@ export class Game {
   onMatchOver: ((g: Game) => void) | null = null;
   private unsubscribe: (() => void) | null = null;
   private posT = 0;
-  private jumped = false;
+  private jumped = [false, false, false, false];
   private lastSentPos = '';
   private lastChat = -9;
   /** Online lag hiding: how long the shuttle has hovered on the other side, for which hit. */
@@ -171,13 +180,14 @@ export class Game {
   constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null) {
     this.online = online;
     const drill = mode === 'practice' || mode === 'tutorial';
-    // Online is singles for now (doubles comes in 2.1).
-    if (online) settings = { ...settings, event: 'singles' };
+    // Online: doubles when the room has a lineup of four, otherwise singles. Nobody switches players online.
+    if (online) settings = { ...settings, event: online.lineup ? 'doubles' : 'singles', autoSwitch: false };
     if (drill) settings = { ...settings, opponent: 'medium', event: 'singles' };
     // The tutorial teaches timing with the light, so it's always on there.
     if (mode === 'tutorial') settings = { ...settings, timingLight: true };
-    // Doubles is always against a CPU pair (no shared-keyboard doubles).
+    // Offline doubles is always against a CPU pair (no shared-keyboard doubles).
     if (settings.event === 'doubles' && settings.opponent === 'human') settings = { ...settings, opponent: 'medium' };
+    if (online) this.myTeam = online.lineup ? ((online.me ?? 0) % 2 as 0 | 1) : online.host ? 0 : 1;
     this.settings = settings;
     const doubles = this.doubles = settings.event === 'doubles';
     // One player on this keyboard: against the CPU, or online (the other player is on their own computer).
@@ -191,6 +201,14 @@ export class Game {
     this.players = [p1, p2];
     if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
     this.players.forEach((p, i) => { p.id = i; });
+    // Online doubles: everyone's name from the lineup (CPUs keep theirs).
+    if (online?.lineup) {
+      for (let i = 1; i < 4; i++) {
+        const slot = online.lineup[this.slotOf(i)];
+        this.players[i].name = slot.name;
+        this.players[i].voiceName = slot.name.replace(/_/g, ' ');
+      }
+    }
     // Custom keys apply to one player on the keyboard; sharing a keyboard keeps the fixed P1/P2 keys.
     this.p1Keys = settings.p1Control === 'mouse' ? applyBinds(KEYS.mouse, settings.keys, true) : vsAI ? applyBinds(KEYS.solo, settings.keys) : KEYS.p1Shared;
     const c1: Controller = settings.p1Control === 'mouse'
@@ -209,6 +227,16 @@ export class Game {
       const level = settings.opponent as Level;
       this.controllers.push(new AIController(this, this.players[2], level, settings.partnerStyle), new AIController(this, this.players[3], level, settings.style));
     }
+    if (online?.lineup) {
+      // Online doubles: other people are driven from their screens; CPUs are played by the host's
+      // screen and driven from it everywhere else.
+      for (let i = 1; i < 4; i++) {
+        const person = !!online.lineup[this.slotOf(i)].seat;
+        this.controllers[i] = person || !online.host
+          ? new RemoteController(this.players[i])
+          : new AIController(this, this.players[i], settings.opponent as Level, i === 2 ? settings.partnerStyle : settings.style);
+      }
+    }
     this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
@@ -219,8 +247,14 @@ export class Game {
       return;
     }
     if (online) {
-      // The host serves first; on the guest's screen the host is the far player.
-      this.match.server = online.host ? 0 : 1;
+      // The host's team serves first; on the other team's screens the host's team is the far side.
+      this.match.server = this.teamHere(0);
+      if (online.lineup) {
+        // Slots 0 and 1 start in the right service courts, the same people on every screen.
+        this.match.startRight[this.teamHere(0)] = this.local(0);
+        this.match.startRight[this.teamHere(1)] = this.local(1);
+        this.match.right = [...this.match.startRight];
+      }
       this.unsubscribe = online.conn.on((m) => this.onNet(m));
     }
     this.say('umpire', gameStartCall(1, this.match.gamesToWin));
@@ -302,7 +336,7 @@ export class Game {
   get receiver(): Player { return this.players[this.match.receiverIdx()]; }
   get opponentLabel(): string {
     if (this.online?.ranked) return `Ranked · ${this.online.opponentName} ${this.online.ranked.theirs}`;
-    if (this.online) return `Online · room ${this.online.conn.code}`;
+    if (this.online) return `Online${this.doubles ? ' doubles' : ''} · room ${this.online.conn.code}`;
     const o = this.settings.opponent;
     if (o === 'human') return '2 Player';
     return `CPU ${o[0].toUpperCase()}${o.slice(1)}${this.doubles ? ' pair' : ''} · ${STYLES[this.settings.style].label}`;
@@ -311,10 +345,12 @@ export class Game {
   teamOf(i: number): 0 | 1 { return (i % 2) as 0 | 1; }
   teamName(t: 0 | 1): string {
     if (!this.doubles) return this.players[t].name;
+    if (this.online) return `${this.players[t].name} & ${this.players[t + 2].name}`;
     return t === 0 ? 'You & Partner' : 'CPU pair';
   }
   teamVoice(t: 0 | 1): string {
     if (!this.doubles) return this.players[t].voiceName;
+    if (this.online) return `${this.players[t].voiceName} and ${this.players[t + 2].voiceName}`;
     return t === 0 ? 'Player and partner' : 'C P U pair';
   }
   teamColor(t: 0 | 1): string { return this.players[t].color; }
@@ -365,7 +401,7 @@ export class Game {
     }
 
     const cmds = this.controllers.map((c) => c.poll(dt));
-    if (this.online) this.sendPos(dt, cmds[0].jump);
+    if (this.online) this.sendPos(dt, cmds);
     if (this.session) this.clockRunning = false;
     if (this.clockRunning && (this.state === 'point' || this.state === 'serve')) {
       this.clock -= real;
@@ -423,7 +459,8 @@ export class Game {
     this.autoReplayed = false;
     for (const o of this.officials) o.signal = 'none';
     if (!this.clockRunning && !this.session) { this.clock = OFFICIALS.shotClock; this.clockRunning = true; }
-    if (this.controllers[1] instanceof RemoteController) this.controllers[1].reset();
+    for (const c of this.controllers) if (c instanceof RemoteController) c.reset();
+    this.lastHit = { n: 0, g: -1 };
     const right = this.match.serverInRightCourt();
     const srv = this.server, rcv = this.receiver;
     const sCourt = right ? rightCourtSign(srv.side) : -rightCourtSign(srv.side);
@@ -478,7 +515,7 @@ export class Game {
     this.stats.shots.push({ by: idx, pid: srv.id, label: shot.label, speedKmh: shot.speedKmh, hand: 'serve', landing: this.predicted });
     this.announce(srv, shot, null);
     this.events.push({ type: 'hit', strength: 0.3 });
-    if (this.online) this.sendHit(from, shot.velocity, shot.label, shot.speedKmh, 'serve', '', true);
+    if (this.online) this.sendHit(si, from, shot.velocity, shot.label, shot.speedKmh, 'serve', '', true);
   }
 
   // ── Rally ──────────────────────────────────────────────────────────────────
@@ -503,16 +540,18 @@ export class Game {
 
     const sh = this.shuttle;
     const prev = { ...sh.pos };
-    // Online: the other player's shot arrived late, so play it a little faster until it catches up.
-    // After your own shot, on their half the shuttle is for show here: near the floor it hovers for
-    // about as long as their reply takes to arrive, rather than landing before you know if they hit it.
+    // Online: a shot from another screen arrived late, so play it a little faster until it catches up.
+    // Coming down on a side where someone on another screen could still reach it, the shuttle is for
+    // show here: near the floor it hovers for about as long as their hit takes to arrive, rather than
+    // landing before you know if they hit it.
     let fdt = dt;
     if (this.online && sh.inFlight && !sh.touchedNet) {
-      if (sh.lastHitter !== this.players[0].side) {
+      const side = sh.pos.y < 0 ? -1 : 1;
+      if (this.catchUp > 0) {
         const extra = Math.min(this.catchUp, dt * ONLINE.catchUpRate);
         fdt = dt + extra;
         this.catchUp -= extra;
-      } else if (sh.pos.y > 0) {
+      } else if (sh.lastHitter !== side && this.players.some((p, i) => p.side === side && this.remote(i))) {
         if (this.hoverHit !== sh.hits) { this.hoverHit = sh.hits; this.hoverT = 0; }
         const hold = Math.min(ONLINE.hoverMax, ONLINE.hoverScale * this.online.conn.latency / 1000 * PHYSICS.gameSpeed + ONLINE.hoverPad);
         if (sh.pos.z < ONLINE.hoverHeight && sh.vel.z < 0 && this.hoverT < hold) {
@@ -582,8 +621,8 @@ export class Game {
         if (!p.swing || sh.lastHitter === p.side || sh.touchedNet || sh.pos.y * p.side <= 0) continue;
         // Doubles: only the receiver may return the serve.
         if (this.doubles && sh.isServe && p !== this.receiver) continue;
-        // Online: the other player's hits arrive as messages from their screen.
-        if (this.online && i !== 0) continue;
+        // Online: other screens' hits arrive as messages (the host's screen plays its CPUs' hits).
+        if (this.online && this.remote(i)) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt);
         if (!c) continue;
         c.tumbling = sh.tumbling;
@@ -625,7 +664,7 @@ export class Game {
         const perfectJump = this.isHuman(i) && /Jump smash/.test(shot.label) && isPerfectJump(c);
         const detail = `${perfectJump ? 'PERFECT JUMP' : c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`;
         this.announce(p, shot, detail);
-        if (this.online) this.sendHit(c.point, shot.velocity, shot.label, shot.speedKmh, c.hand, detail, false);
+        if (this.online) this.sendHit(i, c.point, shot.velocity, shot.label, shot.speedKmh, c.hand, detail, false);
         if (perfectJump) { this.cheer = Math.max(this.cheer, 0.6); this.events.push({ type: 'applause', intensity: 0.5 }); }
         if (i === 0) {
           this.stats.you.hits++;
@@ -775,7 +814,7 @@ export class Game {
       this.online.conn.send({
         type: 'point', winner, land: [land.x, land.y], title, why, callIn: line ? line.callIn : null,
         call: line ? { rect: line.rect, signed: line.signed, truthIn: line.truthIn, callIn: line.callIn, hitter: line.hitter, isServe: line.isServe } : null,
-        scores: [...this.match.scores], games: [...this.match.games],
+        scores: [...this.match.scores], games: [...this.match.games], ...this.rightField(),
       });
     }
     // The CPU challenges offline only: online, both players are people and press H themselves.
@@ -936,7 +975,7 @@ export class Game {
     }
     this.say('umpire', r.truthIn ? 'Shuttle in.' : 'Shuttle out.', true);
     // Online: the host's score is the real one; send it so the other screen lines up exactly.
-    if (this.online?.host) this.online.conn.send({ type: 'review', scores: [...this.match.scores], games: [...this.match.games] });
+    if (this.online?.host) this.online.conn.send({ type: 'review', scores: [...this.match.scores], games: [...this.match.games], ...this.rightField() });
     this.review = null;
     this.state = 'point';
     this.timer = 1.8;
@@ -988,7 +1027,7 @@ export class Game {
   private timeViolation() {
     const s = this.match.server;
     if (this.online) {
-      if (s !== 0) return;
+      if (this.match.serverIdx() !== 0) return;
       this.clockRunning = false;
       // Guest: no serving now; the host's point message comes straight back.
       if (!this.online.host) { this.online.conn.send({ type: 'delay' }); this.state = 'wait'; return; }
@@ -1017,7 +1056,7 @@ export class Game {
     this.clock = OFFICIALS.shotClock;
     this.clockRunning = true;
     if (this.online?.host) {
-      this.online.conn.send({ type: 'point', winner, land: null, title, why: null, callIn: null, call: null, scores: [...this.match.scores], games: [...this.match.games] });
+      this.online.conn.send({ type: 'point', winner, land: null, title, why: null, callIn: null, call: null, scores: [...this.match.scores], games: [...this.match.games], ...this.rightField() });
     }
   }
 
@@ -1080,49 +1119,144 @@ export class Game {
 
   // ── Online ─────────────────────────────────────────────────────────────────
 
-  /** Tell the other screen where you are (ONLINE.posRate times a second, only when something changed). */
-  private sendPos(dt: number, jump: boolean) {
-    if (jump) this.jumped = true;
+  /** Run by another screen (a person elsewhere, or the host's CPU)? */
+  private remote(i: number): boolean { return this.controllers[i] instanceof RemoteController; }
+
+  /** This screen's player index for a lineup slot: you are 0, your partner 2, the other team 1 and 3. */
+  private local(g: number): number {
+    const me = this.online?.me ?? 0;
+    return g === me ? 0 : g % 2 === me % 2 ? 2 : g < 2 ? 1 : 3;
+  }
+
+  /** The lineup slot of this screen's player i. */
+  private slotOf(i: number): number {
+    for (let g = 0; g < 4; g++) if (this.local(g) === i) return g;
+    return i;
+  }
+
+  /** A team numbered from the host's side, as this screen numbers it (0 = your team). */
+  private teamHere(t: 0 | 1): 0 | 1 { return (this.myTeam === 0 ? t : 1 - t) as 0 | 1; }
+
+  private get mySeat(): Seat | undefined {
+    const o = this.online;
+    return o?.lineup ? o.lineup[o.me ?? 0].seat ?? undefined : o ? (o.host ? 'host' : 'guest') : undefined;
+  }
+
+  /** The team (numbered from the host's side) of a seat in the room. */
+  private teamOfSeat(seat: Seat | undefined): 0 | 1 {
+    const L = this.online?.lineup;
+    if (!L) return seat === 'host' ? 0 : seat ? 1 : (1 - this.myTeam) as 0 | 1;
+    const g = L.findIndex((s) => s.seat === seat);
+    return g >= 0 ? (g % 2) as 0 | 1 : (1 - this.myTeam) as 0 | 1;
+  }
+
+  /** This screen's player index for whoever is in a seat (singles: the opponent). */
+  private localOfSeat(seat: Seat | undefined): number {
+    const L = this.online?.lineup;
+    if (!L) return 1;
+    const g = L.findIndex((s) => s.seat === seat);
+    return g >= 0 ? this.local(g) : 1;
+  }
+
+  /** A name for whoever is in a seat. */
+  nameOfSeat(seat: string | undefined): string {
+    return seat === 'self' ? 'You' : this.players[this.localOfSeat(seat as Seat)].name;
+  }
+
+  /** Messages come in the sender's view: turned round when they're on the other team. */
+  private turned(m: { from?: Seat }): boolean { return this.teamOfSeat(m.from) !== this.myTeam; }
+  private view2(m: { from?: Seat }, x: number, y: number): V2 { return this.turned(m) ? flip2(x, y) : { x, y }; }
+  private view3(m: { from?: Seat }, a: [number, number, number]): V3 { return this.turned(m) ? flip3(a) : { x: a[0], y: a[1], z: a[2] }; }
+
+  /**
+   * Whose screen decides a shuttle landing on this side (0 = yours): the host for its own team and for
+   * a team of CPUs, otherwise that team's first person in the lineup. In singles, each screen its own side.
+   */
+  private ownsSide(t: 0 | 1): boolean {
+    const o = this.online!, team = t === 0 ? this.myTeam : (1 - this.myTeam) as 0 | 1;
+    if (!o.lineup) return t === 0;
+    const owner = team === 0 ? 'host' : o.lineup[1].seat ?? o.lineup[3].seat ?? 'host';
+    return owner === this.mySeat;
+  }
+
+  /** Doubles: who is in each team's right service court, as lineup slots in host-side team order. */
+  private rightSlots(): [number, number] {
+    const r = this.match.right;
+    return [this.slotOf(r[this.teamHere(0)]), this.slotOf(r[this.teamHere(1)])];
+  }
+
+  /** Host, online doubles: who is in the right courts, for the point message. */
+  private rightField(): { right?: [number, number] } { return this.online?.lineup ? { right: this.rightSlots() } : {}; }
+
+  private setRightSlots(slots: [number, number] | undefined) {
+    if (!slots || !this.online?.lineup) return;
+    this.match.right[this.teamHere(0)] = this.local(slots[0]);
+    this.match.right[this.teamHere(1)] = this.local(slots[1]);
+  }
+
+  /**
+   * Tell the other screens where you are (ONLINE.posRate times a second, only when something changed).
+   * The host also sends where its CPUs are, in the same message.
+   */
+  private sendPos(dt: number, cmds: Command[]) {
+    cmds.forEach((c, i) => { if (c.jump) this.jumped[i] = true; });
     this.posT += dt;
     if (this.posT < PHYSICS.gameSpeed / ONLINE.posRate) return;
     this.posT = 0;
     if (this.state !== 'rally' && this.state !== 'wait') return;
-    const p = this.players[0];
     const r = (n: number) => Math.round(n * 100) / 100;
-    const msg = { type: 'pos' as const, x: r(p.pos.x), y: r(p.pos.y), z: r(p.z), vx: r(p.vel.x), vy: r(p.vel.y), charge: p.charge === null ? null : r(p.charge), jump: this.jumped };
-    const key = `${msg.x},${msg.y},${msg.z},${msg.charge},${msg.jump}`;
+    const p = this.players[0];
+    const msg: Extract<GameMsg, { type: 'pos' }> = { type: 'pos', x: r(p.pos.x), y: r(p.pos.y), z: r(p.z), vx: r(p.vel.x), vy: r(p.vel.y), charge: p.charge === null ? null : r(p.charge), jump: this.jumped[0] };
+    if (this.online!.lineup && this.online!.host) {
+      msg.bots = [];
+      this.players.forEach((b, i) => {
+        if (i === 0 || this.remote(i)) return;
+        msg.bots!.push({ g: this.slotOf(i), x: r(b.pos.x), y: r(b.pos.y), z: r(b.z), charge: b.charge === null ? null : r(b.charge), jump: this.jumped[i] });
+      });
+    }
+    const key = JSON.stringify([msg.x, msg.y, msg.z, msg.charge, msg.jump, msg.bots]);
     if (key === this.lastSentPos) return;
     this.lastSentPos = key;
-    this.jumped = false;
+    this.jumped = [false, false, false, false];
     this.online!.conn.send(msg);
   }
 
-  private sendHit(p: V3, v: V3, label: string, kmh: number, hand: string, detail: string, serve: boolean) {
+  /** A hit on this screen (yours, or one of the host's CPUs) for everyone else. */
+  private sendHit(i: number, p: V3, v: V3, label: string, kmh: number, hand: string, detail: string, serve: boolean) {
     const r = (n: number) => Math.round(n * 1000) / 1000;
-    this.online!.conn.send({ type: 'hit', p: [r(p.x), r(p.y), r(p.z)], v: [r(v.x), r(v.y), r(v.z)], label, kmh: Math.round(kmh), hand, detail, serve });
+    const g = this.slotOf(i);
+    const extra = this.online!.lineup ? { g, n: this.rallyHits } : {};
+    this.lastHit = { n: this.rallyHits, g };
+    this.catchUp = 0;
+    this.online!.conn.send({ type: 'hit', p: [r(p.x), r(p.y), r(p.z)], v: [r(v.x), r(v.y), r(v.z)], label, kmh: Math.round(kmh), hand, detail, serve, ...extra });
   }
 
-  /** The shuttle reached the floor on this screen. Whoever owns that side knows nobody there hit it. */
+  /** The shuttle reached the floor on this screen. The screen that owns that side knows nobody there hit it. */
   private onlineLanding(land: V2) {
     const o = this.online!, sh = this.shuttle;
-    if (land.y < 0) {
-      if (o.host) this.endRally(land);
-      // Sent in this screen's view, like every message: the host turns it round on arrival.
-      else { o.conn.send({ type: 'land', p: [land.x, land.y], net: sh.touchedNet, wide: sh.wide }); this.state = 'wait'; }
-    } else this.state = 'wait';
+    if (!this.ownsSide(land.y < 0 ? 0 : 1)) { this.state = 'wait'; return; }
+    if (o.host) this.endRally(land);
+    // Sent in this screen's view, like every message: the host turns it round if it needs to.
+    else { o.conn.send({ type: 'land', p: [land.x, land.y], net: sh.touchedNet, wide: sh.wide }); this.state = 'wait'; }
   }
 
   private onNet(m: GameMsg | ServerMsg) {
     const o = this.online!;
     switch (m.type) {
-      case 'pos':
-        (this.controllers[1] as RemoteController).update(flip2(m.x, m.y), m.charge, m.jump);
+      case 'pos': {
+        const c = this.controllers[this.localOfSeat(m.from)];
+        if (c instanceof RemoteController) c.update(this.view2(m, m.x, m.y), m.charge, m.jump);
+        for (const b of m.bots ?? []) {
+          const bc = this.controllers[this.local(b.g)];
+          if (bc instanceof RemoteController) bc.update(this.view2(m, b.x, b.y), b.charge, b.jump);
+        }
         break;
+      }
       case 'hit': this.applyRemoteHit(m); break;
       case 'land': {
-        // Host only: the guest says the shuttle landed on their side untouched.
+        // Host only: the screen that owns a side says the shuttle landed there untouched.
         if (!o.host || (this.state !== 'rally' && this.state !== 'wait')) break;
-        const sh = this.shuttle, p = flip2(m.p[0], m.p[1]);
+        const sh = this.shuttle, p = this.view2(m, m.p[0], m.p[1]);
         sh.touchedNet ||= m.net;
         sh.wide ||= m.wide;
         sh.pos = { x: p.x, y: p.y, z: 0 };
@@ -1131,42 +1265,71 @@ export class Game {
         break;
       }
       case 'point': if (!o.host) this.applyRemotePoint(m); break;
-      // Host only: the guest was serving and ran out their shot clock.
-      case 'delay': if (o.host && this.state === 'serve' && this.match.server === 1) this.redCard(1); break;
+      // Host only: whoever was serving ran out their shot clock.
+      case 'delay': {
+        const i = this.localOfSeat(m.from);
+        if (o.host && this.state === 'serve' && this.match.serverIdx() === i) this.redCard(this.teamOf(i));
+        break;
+      }
       case 'challenge':
-        // The other player asked for Hawk-Eye on the last call (it went against them).
+        // Someone on the side the call went against asked for Hawk-Eye.
         if (this.state === 'replay') this.endReplay();
-        if (this.call && !this.call.challenged && (this.state === 'point' || this.state === 'serve')) this.startChallenge(1);
+        if (this.call && !this.call.challenged && (this.state === 'point' || this.state === 'serve')) this.startChallenge(this.turned(m) ? 1 : 0);
         break;
       case 'review':
-        if (!o.host) { this.match.scores = [m.scores[1], m.scores[0]]; this.match.games = [m.games[1], m.games[0]]; }
+        if (!o.host) {
+          this.match.scores = [m.scores[this.teamHere(0)], m.scores[this.teamHere(1)]];
+          this.match.games = [m.games[this.teamHere(0)], m.games[this.teamHere(1)]];
+          this.setRightSlots(m.right);
+        }
         break;
-      case 'chat': if (CHAT[m.i]) this.shout(this.players[1], CHAT[m.i], 2.5); break;
+      case 'chat': if (CHAT[m.i]) this.shout(this.players[this.localOfSeat(m.from)], CHAT[m.i], 2.5); break;
       case 'pause':
-        this.pauseTheirs = m.on;
-        // Their pause ran out of time: it ends for both.
-        if (!m.on && m.all) this.pauseMine = false;
+        if (m.from) { if (m.on) this.pausedBy.add(m.from); else this.pausedBy.delete(m.from); }
+        // Their pause ran out of time: it ends for everyone.
+        if (!m.on && m.all) { this.pauseMine = false; this.pausedBy.clear(); }
         this.syncPause();
         break;
-      case 'forfeit': this.winByForfeit(); break;
-      case 'peer':
-        if (m.status === 'away') this.peerAway = true;
-        else if (m.status === 'back') this.peerAway = false;
-        else this.winByForfeit();
+      case 'forfeit': this.winByForfeit(this.turned(m) ? 1 : 0); break;
+      case 'peer': {
+        const who = m.self ? 'self' : m.seat ?? 'peer';
+        if (m.status === 'away') this.away.add(who);
+        else if (m.status === 'back') this.away.delete(who);
+        else this.winByForfeit(this.teamOfSeat(m.seat) === this.myTeam ? 0 : 1);
+        this.peerAway = this.away.size > 0;
         break;
+      }
     }
   }
 
-  /** The other player hit the shuttle (or served) on their screen. */
+  /** Whose connection is down, for the "disconnected" screen. */
+  get awayName(): string {
+    const who = [...this.away][0];
+    return who === 'peer' ? this.players[1].name : this.nameOfSeat(who);
+  }
+
+  /** Someone on another screen hit the shuttle (or served): a person, or one of the host's CPUs. */
   private applyRemoteHit(m: Extract<GameMsg, { type: 'hit' }>) {
+    const doublesOnline = !!this.online!.lineup;
     if (this.state === 'replay') this.endReplay();
     // Still in the pause after the last point here: catch up to their serve.
     if (m.serve) for (let k = 0; k < 4 && this.state !== 'serve' && this.state !== 'matchOver'; k++) this.advance();
     if (this.state === 'matchOver') return;
-    const me = this.players[0], opp = this.players[1], sh = this.shuttle;
-    const pos = flip3(m.p), vel = flip3(m.v);
+    if (doublesOnline && !m.serve) {
+      // Too late: this rally is already over here.
+      if (this.state !== 'rally' && this.state !== 'wait') return;
+      // Two teammates hit the same shuttle on their own screens: the lower lineup slot's hit stands
+      // everywhere (so each screen keeps or swaps to the same one).
+      if (m.n !== undefined && m.g !== undefined) {
+        if (m.n < this.lastHit.n || (m.n === this.lastHit.n && m.g > this.lastHit.g)) return;
+        this.rallyHits = m.n - 1;
+      }
+    }
+    const hi = doublesOnline && m.g !== undefined ? this.local(m.g) : 1;
+    const hitter = this.players[hi], sh = this.shuttle;
+    const pos = this.view3(m, m.p), vel = this.view3(m, m.v);
     if (this.state === 'serve') {
-      this.serveBox = serviceBox(me.side, this.match.serverInRightCourt(), false);
+      this.serveBox = serviceBox(-hitter.side as Side, this.match.serverInRightCourt(), this.doublesCourt);
       for (const p of this.players) { p.frozen = false; p.serving = null; }
       this.recorder.reset();
       this.rallyHits = 0;
@@ -1176,7 +1339,7 @@ export class Game {
     const drawnFrom = this.state === 'rally' || this.state === 'wait' ? { ...sh.pos } : null;
     this.state = 'rally';
     this.acc = 0;
-    sh.launch(pos, vel, opp.side, m.serve);
+    sh.launch(pos, vel, hitter.side, m.serve);
     if (drawnFrom && Math.hypot(drawnFrom.x - pos.x, drawnFrom.y - pos.y, drawnFrom.z - pos.z) < 3) {
       this.drawOffset = { x: drawnFrom.x - pos.x, y: drawnFrom.y - pos.y, z: drawnFrom.z - pos.z };
       this.drawOffsetT = 0;
@@ -1186,25 +1349,26 @@ export class Game {
     // The message took about one trip to get here: make that up by playing this shot a little fast.
     this.catchUp = Math.min(ONLINE.catchUpMax, this.online!.conn.latency / 1000 * PHYSICS.gameSpeed);
     sh.tumbling = /tumbling/.test(m.label);
-    opp.onHit(pos, m.serve);
-    me.splitStep();
+    hitter.onHit(pos, m.serve);
+    for (const p of this.players) if (p.side !== hitter.side) p.splitStep();
     this.rallyHits++;
+    this.lastHit = { n: this.rallyHits, g: m.g ?? -1 };
     this.lastContact = null;
     const hand = m.serve ? 'serve' : (m.hand as Contact['hand']);
     this.lastShot = { label: m.label, hand, netCord: false };
-    this.lastHitterId = opp.id;
-    this.stats.shots.push({ by: 1, pid: opp.id, label: m.label, speedKmh: m.kmh, hand, landing: this.predicted });
-    this.announce(opp, { velocity: vel, label: m.label, speedKmh: m.kmh }, m.detail || null);
+    this.lastHitterId = hitter.id;
+    this.stats.shots.push({ by: this.teamOf(hi), pid: hitter.id, label: m.label, speedKmh: m.kmh, hand, landing: this.predicted });
+    this.announce(hitter, { velocity: vel, label: m.label, speedKmh: m.kmh }, m.detail || null);
     this.events.push({ type: 'hit', strength: m.serve ? 0.3 : Math.min(1, m.kmh / 300) });
     // Same notice a local hit gives (only the timing details of their contact aren't known here).
-    const contact: Contact = { point: pos, side: opp.side, hand: hand === 'serve' ? 'forehand' : hand, airborne: false, timing: 1, timingLabel: 'Perfect', timingError: 0, stretch: 0, apex: false, behind: 0 };
-    this.observe({ type: 'hit', by: opp.side, contact, label: m.label, landing: this.predicted, hitter: opp });
+    const contact: Contact = { point: pos, side: hitter.side, hand: hand === 'serve' ? 'forehand' : hand, airborne: false, timing: 1, timingLabel: 'Perfect', timingError: 0, stretch: 0, apex: false, behind: 0 };
+    this.observe({ type: 'hit', by: hitter.side, contact, label: m.label, landing: this.predicted, hitter });
   }
 
-  /** Guest: the host's verdict on the rally. */
+  /** Not the host: the host's verdict on the rally. */
   private applyRemotePoint(m: Extract<GameMsg, { type: 'point' }>) {
-    const winner = (1 - m.winner) as 0 | 1, sh = this.shuttle;
-    const land = m.land ? flip2(m.land[0], m.land[1]) : null;
+    const winner = this.teamHere(m.winner), sh = this.shuttle;
+    const land = m.land ? this.view2(m, m.land[0], m.land[1]) : null;
     if (land) sh.pos = { x: land.x, y: land.y, z: 0 };
     sh.inFlight = false;
     this.predicted = null;
@@ -1215,26 +1379,28 @@ export class Game {
       shots: this.rallyHits, winner, hitter, hitterPid: this.lastHitterId, kind: hitterWins ? 'winner' : 'error', forced: false,
       lastLabel: this.lastShot?.label ?? '', lastHand: this.lastShot?.hand ?? 'serve',
     });
-    // The host's line call, turned round to this screen (so it can be challenged and reviewed here too).
+    // The host's line call, in this screen's view (so it can be challenged and reviewed here too).
     this.call = null;
     if (m.call && land) {
-      const r = m.call.rect, rect = { xMin: -r.xMax, xMax: -r.xMin, yMin: -r.yMax, yMax: -r.yMin };
+      const r = m.call.rect, rect = this.turned(m) ? { xMin: -r.xMax, xMax: -r.xMin, yMin: -r.yMax, yMax: -r.yMin } : { ...r };
       const judge = judgeFor(this.officials, land, rect);
-      this.call = { landing: land, rect, signed: m.call.signed, truthIn: m.call.truthIn, callIn: m.call.callIn, hitter: (1 - m.call.hitter) as 0 | 1, isServe: m.call.isServe, challenged: false, judge };
+      this.call = { landing: land, rect, signed: m.call.signed, truthIn: m.call.truthIn, callIn: m.call.callIn, hitter: this.teamHere(m.call.hitter), isServe: m.call.isServe, challenged: false, judge };
       if (judge) { judge.signal = m.call.callIn ? 'in' : 'out'; judge.signalT = 0; }
     }
     this.landing = land ? { p: land, call: m.callIn === null ? null : m.callIn ? 'IN' : 'OUT', t: 0 } : null;
     if (m.callIn === false) this.say('line', 'Out!');
     this.longestRally = Math.max(this.longestRally, this.rallyHits);
+    // A red card is given to whoever was serving (worked out before the point moves the serve on).
+    const late = this.players[this.match.serverIdx()];
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
     this.outcome = this.match.award(winner);
     // The host's score is the real one: line up with it if anything drifted.
-    this.match.scores = [m.scores[1], m.scores[0]];
-    this.match.games = [m.games[1], m.games[0]];
+    this.match.scores = [m.scores[this.teamHere(0)], m.scores[this.teamHere(1)]];
+    this.match.games = [m.games[this.teamHere(0)], m.games[this.teamHere(1)]];
+    this.setRightSlots(m.right);
     this.banner = { title: m.title, sub: `${m.why ? `${m.why} · ` : ''}Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
     if (/^Red card/.test(m.title)) {
-      const late = this.players[1 - winner];
       this.banner = { ...this.banner, sub: `${late.name} took more than ${OFFICIALS.shotClock} seconds to serve · Point ${this.teamName(winner)}`, color: VISUAL.colors.callOut, card: 'red' };
       this.say('umpire', `${late.voiceName}, red card, delay of service.`, true);
     }
@@ -1255,20 +1421,21 @@ export class Game {
   /** Online: seconds until the server may serve (0 once they can). */
   get serveCountdown(): number { return this.state === 'serve' ? Math.max(0, this.timer) : 0; }
 
-  /** The other player left or gave up: you win. */
-  private winByForfeit() {
+  /** Someone left or gave up: their team retires (loser = 1, the other team, or 0, yours). */
+  private winByForfeit(loser: 0 | 1 = 1) {
     if (this.state === 'matchOver') return;
-    this.forfeitWinner = 0;
+    this.forfeitWinner = (1 - loser) as 0 | 1;
+    this.away.clear();
     this.peerAway = false;
     this.endOnlinePause(false);
     this.state = 'matchOver';
     this.onMatchOver?.(this);
     this.banner = null;
     this.stats.finish();
-    this.say('umpire', `${this.players[1].voiceName} retired. Match won by player.`, true);
+    this.say('umpire', `${this.teamVoice(loser)} retired. Match won by ${loser === 1 ? this.teamVoice(0) : this.teamVoice(1)}.`, true);
   }
 
-  /** Quick chat (online): a preset line over your head and theirs. */
+  /** Quick chat (online): a preset line over your head and on everyone's screen. */
   sendChat(i: number) {
     if (!this.online || !CHAT[i] || this.stats.seconds - this.lastChat < 1.5) return;
     this.lastChat = this.stats.seconds;
@@ -1276,7 +1443,7 @@ export class Game {
     this.online.conn.send({ type: 'chat', i });
   }
 
-  /** Online pause (Esc): only between points, so both screens stop in the same place. */
+  /** Online pause (Esc): only between points, so every screen stops in the same place. */
   setOnlinePause(on: boolean): boolean {
     if (!this.online) return false;
     if (on && (this.state === 'rally' || this.state === 'wait')) {
@@ -1294,6 +1461,9 @@ export class Game {
     return this.pauseSince === null ? ONLINE.pauseMax : ONLINE.pauseMax - (performance.now() - this.pauseSince) / 1000;
   }
 
+  /** Who else has the game paused, by name. */
+  get pausers(): string { return [...this.pausedBy].map((s) => this.nameOfSeat(s)).join(' and '); }
+
   private syncPause() {
     const was = this.paused;
     this.paused = this.pauseMine || this.pauseTheirs;
@@ -1303,14 +1473,14 @@ export class Game {
 
   /** The pause ran out of time (timeUp) or the match ended: everyone plays on. */
   private endOnlinePause(timeUp: boolean) {
-    this.pauseMine = this.pauseTheirs = false;
+    this.pauseMine = false;
+    this.pausedBy.clear();
     this.syncPause();
     if (timeUp) {
       this.online?.conn.send({ type: 'pause', on: false, all: true });
       this.banner = { title: 'Play on', sub: `Pauses last at most ${ONLINE.pauseMax / 60 === 1 ? 'a minute' : `${ONLINE.pauseMax} seconds`}`, color: VISUAL.colors.hud, t: 0 };
     }
   }
-
 
   private observe(o: Observation) {
     for (const c of this.controllers) c.observe?.(o);

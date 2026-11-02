@@ -5,6 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.2: Online doubles (2 Nov 2026)
+
+- Online doubles: rooms now seat up to four. Pick Doubles in your room, send friends the code, and choose teams with Switch team: play together against a CPU pair, or 2 against 2.
+- Empty places are filled by CPUs (Easy, Medium or Hard, the host picks), so any mix works: 2 friends vs 2 CPUs, 3 friends and a CPU, or all four of you.
+- Each of you sees your own team at the near end, with the right person serving and receiving from the right court on every screen, and the host’s screen umpires every point.
+- If you and your partner both swing at the same shuttle, one hit counts on every screen, so the score never splits.
+- Fixed: if your own connection dropped and came back, your screen could stay stuck on “disconnected”. It now carries on.
+
 ## 2.1.10: Fair play and smoother online (2 Nov 2026)
 
 - A smash is always a smash and a lob is always a lob. Hitting a shuttle that’s already behind you no longer turns your smash into a clear: it’s just a weaker, less accurate smash.

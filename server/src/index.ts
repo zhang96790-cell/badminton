@@ -1,7 +1,8 @@
-// Skyline Smash online rooms. Each room code is one Durable Object that seats two players and relays
-// their messages. The game itself runs in the players' browsers: each is in charge of its own player
-// and hits, and the room creator ("host") referees points. The room only keeps seats, the lobby
-// settings and who is connected, so it costs almost nothing while players aren't sending anything.
+// Skyline Smash online rooms. Each room code is one Durable Object that seats two players (four in a
+// doubles room) and relays their messages. The game itself runs in the players' browsers: each is in
+// charge of its own player and hits, and the room creator ("host") referees points and runs any CPU
+// players. The room only keeps seats, teams, the lobby settings and who is connected, so it costs
+// almost nothing while players aren't sending anything.
 import { DurableObject } from 'cloudflare:workers';
 import { displayName } from '../../shared/names';
 import { LOCATION } from './location';
@@ -11,12 +12,16 @@ import { recordMatch, type Player, type SupabaseEnv } from './supabase';
 export { Matchmaker };
 export interface Env extends SupabaseEnv { ROOMS: DurableObjectNamespace<Room>; QUEUE: DurableObjectNamespace<Matchmaker> }
 
-type Seat = 'host' | 'guest';
-interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null }
+type Seat = 'host' | 'guest' | 'p3' | 'p4';
+const SEATS: Seat[] = ['host', 'guest', 'p3', 'p4'];
+/** The two sides of a result: the host's team ('host') or the other team ('guest'). Ranked rooms are always these two seats. */
+type Side = 'host' | 'guest';
+/** Team 0 is always the host's team. In singles the guest is team 1. */
+interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null; team?: 0 | 1 }
 /** A quick-match room: only the two matched players may sit, and the result counts for ranking. */
 interface Ranked {
-  tickets: Record<Seat, string>;
-  players: Record<Seat, Player>;
+  tickets: Record<Side, string>;
+  players: Record<Side, Player>;
   /** Set once the result has been saved (or couldn't be), so it's only ever recorded once. */
   recorded: boolean;
 }
@@ -24,9 +29,9 @@ interface Ranked {
 interface Progress {
   playing: boolean; gamesToWin: number; games: [number, number]; scores: [number, number];
   /** The match looks over: who won, and when to save it (after any Hawk-Eye challenge has had time). */
-  pending: { winner: Seat; at: number } | null;
+  pending: { winner: Side; at: number } | null;
 }
-interface RoomState { host: SeatInfo | null; guest: SeatInfo | null; settings: unknown; ranked: Ranked | null; progress: Progress | null }
+interface RoomState { host: SeatInfo | null; guest: SeatInfo | null; p3?: SeatInfo | null; p4?: SeatInfo | null; settings: unknown; ranked: Ranked | null; progress: Progress | null }
 /** Kept on each socket so it survives hibernation. */
 interface Attachment { seat: Seat }
 
@@ -71,23 +76,33 @@ export class Room extends DurableObject<Env> {
 
   private socket(seat: Seat): WebSocket | null { return this.ctx.getWebSockets(seat)[0] ?? null; }
 
+  /** A doubles room: the host picked doubles in the lobby, so up to four can sit. */
+  private doubles(s: RoomState): boolean { return !s.ranked && (s.settings as { event?: string } | null)?.event === 'doubles'; }
+
+  private teamOf(s: RoomState, seat: Seat): 0 | 1 { return seat === 'host' ? 0 : s[seat]?.team ?? 1; }
+
+  /** Send to everyone in the room except one seat. */
+  private others(except: Seat, msg: unknown) {
+    for (const seat of SEATS) if (seat !== except) this.send(this.socket(seat), msg);
+  }
+
   private send(ws: WebSocket | null, msg: unknown) {
     try { ws?.send(JSON.stringify(msg)); } catch { /* socket already closing */ }
   }
 
   private roster(s: RoomState) {
-    const view = (x: SeatInfo | null) => (x ? { name: x.name, connected: x.connected } : null);
+    const view = (seat: Seat) => { const x = s[seat]; return x ? { name: x.name, connected: x.connected, team: this.teamOf(s, seat) } : null; };
     const ranked = s.ranked ? { host: s.ranked.players.host.rating, guest: s.ranked.players.guest.rating } : null;
-    return { host: view(s.host), guest: view(s.guest), settings: s.settings, ranked };
+    return { host: view('host'), guest: view('guest'), p3: view('p3'), p4: view('p4'), settings: s.settings, ranked };
   }
 
-  /** Tell both players who's in the room. */
+  /** Tell everyone who's in the room. */
   private broadcastRoster(s: RoomState) {
-    for (const seat of ['host', 'guest'] as Seat[]) this.send(this.socket(seat), { type: 'roster', you: seat, ...this.roster(s) });
+    for (const seat of SEATS) this.send(this.socket(seat), { type: 'roster', you: seat, ...this.roster(s) });
   }
 
   /** Called by the matchmaker: this room is a ranked match between these two players. */
-  async setupRanked(r: { tickets: Record<Seat, string>; host: Player; guest: Player }) {
+  async setupRanked(r: { tickets: Record<Side, string>; host: Player; guest: Player }) {
     const s = await this.load();
     s.ranked = { tickets: r.tickets, players: { host: r.host, guest: r.guest }, recorded: false };
     s.settings = { games: 1, points: 21 };
@@ -102,9 +117,9 @@ export class Room extends DurableObject<Env> {
 
     // Ranked: your matchmaker ticket is your seat. Otherwise the same token as a seat is that player
     // reconnecting, and anyone else takes a free seat.
-    let seat: Seat | null = s.host?.token === token ? 'host' : s.guest?.token === token ? 'guest' : null;
+    let seat: Seat | null = SEATS.find((k) => s[k]?.token === token) ?? null;
     if (s.ranked) seat = s.ranked.tickets.host === token ? 'host' : s.ranked.tickets.guest === token ? 'guest' : null;
-    else if (!seat) seat = !s.host ? 'host' : !s.guest ? 'guest' : null;
+    else if (!seat) seat = (this.doubles(s) ? SEATS : SEATS.slice(0, 2)).find((k) => !s[k]) ?? null;
 
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
@@ -119,12 +134,18 @@ export class Room extends DurableObject<Env> {
     this.ctx.acceptWebSocket(server, [seat]);
     server.serializeAttachment({ seat } satisfies Attachment);
 
-    const name = s.ranked ? s.ranked.players[seat].name : displayName(url.searchParams.get('name'), seat === 'host' ? 'host_player' : 'guest_player');
+    const name = s.ranked ? s.ranked.players[seat as Side].name : displayName(url.searchParams.get('name'), `${seat === 'host' ? 'host' : 'guest'}_player`);
     const wasAway = !!s[seat]?.awaySince;
-    s[seat] = { token, name, connected: true, awaySince: null };
+    // New arrivals join the team with fewer players (the guest is the host's opponent in singles).
+    let team: 0 | 1 = seat === 'host' ? 0 : s[seat]?.team ?? 1;
+    if (!s[seat] && seat !== 'host') {
+      const count = (t: 0 | 1) => SEATS.filter((k) => s[k] && this.teamOf(s, k) === t).length;
+      team = count(1) <= count(0) ? 1 : 0;
+    }
+    s[seat] = { token, name, connected: true, awaySince: null, team };
     await this.save();
     this.broadcastRoster(s);
-    if (wasAway) this.send(this.socket(seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'back' });
+    if (wasAway) this.others(seat, { type: 'peer', status: 'back', seat });
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -139,6 +160,17 @@ export class Room extends DurableObject<Env> {
       const s = await this.load();
       if (!s.ranked) s.settings = msg.settings;
       await this.save();
+    }
+    // Doubles lobby: a player moves to the other team, if it has room.
+    if (msg.type === 'team') {
+      const s = await this.load();
+      const info = s[att.seat], team = msg.team === 0 ? 0 : 1;
+      if (!info || att.seat === 'host' || !this.doubles(s) || s.progress?.playing) return;
+      if (SEATS.filter((k) => s[k] && k !== att.seat && this.teamOf(s, k) === team).length >= 2) return;
+      info.team = team;
+      await this.save();
+      this.broadcastRoster(s);
+      return;
     }
     // Follow the match: the host starts it and sends each point's verdict.
     if (msg.type === 'start' && att.seat === 'host') {
@@ -168,20 +200,20 @@ export class Room extends DurableObject<Env> {
       if (s.progress?.playing) await this.quit(att.seat);
       s[att.seat] = null;
       await this.save();
-      this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'left' });
+      this.others(att.seat, { type: 'peer', status: 'left', seat: att.seat });
       this.broadcastRoster(s);
       try { ws.close(1000, 'Left'); } catch { /* gone */ }
       return;
     }
-    // Everything else is game traffic for the other player.
-    this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), msg);
+    // Everything else is game traffic for the other players, marked with who sent it.
+    this.others(att.seat, { ...msg, from: att.seat });
   }
 
   /**
    * The match is over. Ranked: save the result (both ratings change in the database) and tell both
    * players their new ratings. Each match is recorded at most once.
    */
-  private async finish(winner: Seat, forfeit: boolean) {
+  private async finish(winner: Side, forfeit: boolean) {
     const s = await this.load();
     const p = s.progress;
     if (!p?.playing) return;
@@ -190,7 +222,7 @@ export class Room extends DurableObject<Env> {
     if (!r || r.recorded) { await this.save(); return; }
     r.recorded = true;
     await this.save();
-    const loser: Seat = winner === 'host' ? 'guest' : 'host';
+    const loser: Side = winner === 'host' ? 'guest' : 'host';
     const [a, b] = winner === 'host' ? p.scores : [p.scores[1], p.scores[0]];
     const score = forfeit ? `${a}–${b} (retired)` : `${a}–${b}`;
     let msg: unknown;
@@ -204,7 +236,7 @@ export class Room extends DurableObject<Env> {
       console.error('Could not record ranked result', e);
       msg = { type: 'result', winner, forfeit, error: 'not_saved' };
     }
-    for (const seat of ['host', 'guest'] as Seat[]) this.send(this.socket(seat), msg);
+    for (const seat of SEATS) this.send(this.socket(seat), msg);
   }
 
   async webSocketClose(ws: WebSocket) { await this.dropped(ws); }
@@ -220,23 +252,22 @@ export class Room extends DurableObject<Env> {
     info.connected = false;
     info.awaySince = Date.now();
     await this.save();
-    this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'away', seconds: RECONNECT_MS / 1000 });
+    this.others(att.seat, { type: 'peer', status: 'away', seconds: RECONNECT_MS / 1000, seat: att.seat });
     this.broadcastRoster(s);
     await this.scheduleAlarm(s);
   }
 
-  /** Reconnect window over: anyone still away has left; the other player wins by forfeit. */
-  /** Someone forfeited or left: the other player wins, unless the match was already decided. */
+  /** Someone forfeited or left: the other team wins, unless the match was already decided. */
   private async quit(seat: Seat) {
     const s = await this.load();
     const decided = s.progress?.pending?.winner;
-    await this.finish(decided ?? (seat === 'host' ? 'guest' : 'host'), !decided);
+    await this.finish(decided ?? (this.teamOf(s, seat) === 0 ? 'guest' : 'host'), !decided);
   }
 
   /** One alarm covers both timers: dropped players' reconnect window and a result waiting to be saved. */
   private async scheduleAlarm(s: RoomState) {
     const times: number[] = [];
-    for (const seat of ['host', 'guest'] as Seat[]) { const a = s[seat]?.awaySince; if (a) times.push(a + RECONNECT_MS + 500); }
+    for (const seat of SEATS) { const a = s[seat]?.awaySince; if (a) times.push(a + RECONNECT_MS + 500); }
     if (s.progress?.playing && s.progress.pending) times.push(s.progress.pending.at);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
   }
@@ -246,18 +277,18 @@ export class Room extends DurableObject<Env> {
     const now = Date.now();
     const pend = s.progress?.playing ? s.progress.pending : null;
     if (pend && now >= pend.at) await this.finish(pend.winner, false);
-    for (const seat of ['host', 'guest'] as Seat[]) {
+    for (const seat of SEATS) {
       const info = s[seat];
       if (info?.awaySince && now - info.awaySince >= RECONNECT_MS) {
         if (s.progress?.playing) await this.quit(seat);
         s[seat] = null;
-        this.send(this.socket(seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'left', forfeit: true });
+        this.others(seat, { type: 'peer', status: 'left', forfeit: true, seat });
       }
     }
     await this.save();
     this.broadcastRoster(s);
     // Empty room: forget it entirely. Otherwise keep any remaining timer running.
-    if (!s.host && !s.guest) await this.ctx.storage.deleteAll();
+    if (SEATS.every((k) => !s[k])) await this.ctx.storage.deleteAll();
     else await this.scheduleAlarm(s);
   }
 }

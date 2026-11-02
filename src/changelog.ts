@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.5',
+    title: 'New start screen',
+    date: '2 Nov 2026',
+    changes: [
+      'The start screen is now a tournament Order of Play board: your match is on Court 1, so press Walk on (or Enter) to play.',
+      'Tutorial is on Court 2 and Practice on Court 3.',
+      'Opponent, CPU style, controls, scoring, assists and voice are on the match card. Open it with Edit match card.',
+      'How to play opens the full shot table on the match card.',
+    ],
+  },
+  {
     version: '1.4.3',
     title: 'Jump smash recovery',
     date: '2 Nov 2026',

@@ -3,189 +3,201 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Badminton</title>
-    <style>
-      :root { color-scheme: dark; --fg: #f2f4ef; --dim: rgba(242,244,239,0.6); --accent: #ffd166; --panel: rgba(10,15,22,0.86); }
-      * { box-sizing: border-box; }
-      html, body { margin: 0; height: 100%; overflow: hidden; background: #0c121c; color: var(--fg);
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-      canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
-      #viewbar { position: fixed; right: 14px; bottom: 12px; display: flex; gap: 6px; z-index: 2; }
-      #viewbar button { padding: 6px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: rgba(8,12,18,0.72);
-        color: var(--fg); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-      #viewbar button:hover { background: rgba(255,255,255,0.12); }
-      #menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
-        background: radial-gradient(ellipse at center, rgba(12,18,28,0.55), rgba(12,18,28,0.9)); }
-      #menu.hidden { display: none; }
-      .card { max-height: calc(100vh - 32px); overflow-y: auto; width: min(700px, 100%); background: var(--panel); border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-      h1 { margin: 0 0 4px; font-size: 34px; letter-spacing: -0.02em; }
-      .tag { margin: 0 0 22px; color: var(--dim); font-size: 14px; }
-      .label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--dim); margin: 16px 0 8px; text-transform: uppercase; }
-      .seg { display: flex; gap: 6px; flex-wrap: wrap; }
-      .row { display: grid; grid-template-columns: 1.1fr 0.9fr 1.2fr; gap: 12px; }
-      .row.two { grid-template-columns: 1fr 1fr; }
-      .row.three { grid-template-columns: 1fr 1fr 1fr 1fr; }
-      #styleRow.disabled { opacity: 0.35; pointer-events: none; }
-      .row .seg button { min-width: 0; padding: 10px 6px; }
-      @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
-      .seg button { flex: 1 1 0; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.04); color: var(--fg); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-      .seg button:hover { background: rgba(255,255,255,0.09); }
-      .seg button.on { background: var(--fg); color: #0c121c; border-color: var(--fg); }
-      .controls { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.04);
-        font-size: 13px; line-height: 1.65; color: var(--dim); }
-      .controls b { color: var(--fg); font-weight: 600; }
-      .controls .dim { color: var(--dim); }
-      table.shots { width: 100%; border-collapse: collapse; margin: 10px 0 10px; font-size: 12.5px; }
-      table.shots th { text-align: left; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim);
-        padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.14); }
-      table.shots th.on { color: var(--accent); }
-      table.shots td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--fg); vertical-align: top; }
-      table.shots tr:nth-child(even) td { background: rgba(255,255,255,0.025); }
-      .controls kbd { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: rgba(255,255,255,0.12);
-        color: var(--fg); font: 600 12px ui-monospace, monospace; text-align: center; }
-      #start { margin-top: 20px; width: 100%; padding: 14px; border: 0; border-radius: 12px; background: var(--accent); color: #0c121c;
-        font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
-      #start:hover { filter: brightness(1.05); }
-      .alt { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
-      .alt button { padding: 11px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05);
-        color: var(--fg); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-      .alt button:hover { background: rgba(255,255,255,0.1); }
-      .alt button.suggest { border-color: var(--accent); color: var(--accent); }
-      #newHint { margin-top: 16px; padding: 10px 14px; border-radius: 10px; background: rgba(255,209,102,0.1); color: var(--accent); font-size: 13px; }
-      #newHint.hidden, #touchNote.hidden { display: none; }
-      #touchNote { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: rgba(255,91,91,0.12); color: #ff9a9a; font-size: 13px; }
-      #wnBadge { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #0c121c; font-size: 10px; font-weight: 800; }
-      #wnBadge.hidden { display: none; }
-      #changelogModal { position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 16px;
-        background: rgba(4,7,12,0.7); }
-      #changelogModal.hidden { display: none; }
-      .modal-card { width: min(560px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column;
-        background: var(--panel); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 22px 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
-      .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-      .modal-head h2 { margin: 0; font-size: 22px; }
-      #wnClose { width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
-        color: var(--fg); font-size: 15px; cursor: pointer; }
-      #wnClose:hover { background: rgba(255,255,255,0.12); }
-      #changelog { overflow-y: auto; color: var(--dim); line-height: 1.55; font-size: 14px; padding-right: 4px; }
-      #changelog h4 { margin: 14px 0 4px; color: var(--fg); font-size: 14px; }
-      #changelog h4 span { color: var(--dim); font-weight: 500; }
-      #changelog ul { margin: 0; padding-left: 18px; }
-      .foot { margin-top: 12px; text-align: center; font-size: 12px; color: var(--dim); }
-    </style>
+    <title>Badminton Games</title>
   </head>
   <body>
+    <!--
+      THESIS: The start screen is the tournament's Order of Play board, not a settings form: your match is
+      listed on Court 1 and you walk on. Refuses the floating dark card of stacked option buttons.
+      OWN-WORLD: Arena-board tournament blue with a faint LED dot grid, scoreboard-amber court numerals,
+      condensed stadium caps (Big Shoulders Display), cool-white umpire's match card with navy rules for settings.
+      STORY: Players see their next match, change it on the match card if they want, and walk on. New players are
+      pointed to the warm-up court (tutorial); practice is Court 3.
+      FIRST VIEWPORT: Board centred over the live arena. Header: wordmark left, Order of Play and date right.
+      Three court rows; Court 1 is lit, with an amber Walk on button at its right edge.
+      FORM: Order of Play board, candidate 4 of 7, seed 1bcb0bc4.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
     <canvas id="game"></canvas>
     <div id="viewbar">
       <button id="viewBtn" title="Switch camera view">View: Close</button>
       <button id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
     </div>
+
     <div id="menu">
-      <div class="card">
-        <h1>Badminton</h1>
-        <p class="tag" id="tag">Singles</p>
-
-        <div class="label">Opponent</div>
-        <div class="seg" data-group="opponent">
-          <button data-value="beginner">Beginner</button>
-          <button data-value="easy">Easy</button>
-          <button data-value="medium">Medium</button>
-          <button data-value="hard">Hard</button>
-          <button data-value="expert">Expert</button>
-          <button data-value="human">2 Players</button>
-        </div>
-
-        <div id="styleRow">
-          <div class="label">CPU style</div>
-          <div class="seg" data-group="style">
-            <button data-value="allround">All-rounder</button>
-            <button data-value="attacker">Attacker</button>
-            <button data-value="defender">Defender</button>
-            <button data-value="net">Net player</button>
+      <main class="board" aria-labelledby="wordmark">
+        <header class="board-head">
+          <div class="mark">
+            <svg class="shuttle" viewBox="0 0 48 48" aria-hidden="true">
+              <circle cx="24" cy="38" r="6.5" />
+              <path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0M12.5 17c4.5-1.6 18.5-1.6 23 0" />
+            </svg>
+            <h1 id="wordmark">Badminton<br />Games</h1>
           </div>
+          <div class="head-meta">
+            <p class="oop">Order of play</p>
+            <p id="today" class="today"></p>
+          </div>
+        </header>
+
+        <div class="oop-table">
+          <div class="oop-cols" aria-hidden="true">
+            <span>Court</span><span>Event</span><span>Match</span><span></span>
+          </div>
+
+          <section class="oop-row live" aria-label="Court 1, your match">
+            <span class="ct" aria-hidden="true">1</span>
+            <p class="event"><span class="status"><i></i>Next on court</span><span id="eventLabel">Singles</span></p>
+            <div class="match">
+              <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
+              <p class="sub" id="tag">Best of 3 games to 15</p>
+            </div>
+            <div class="act">
+              <button id="start" class="walk">
+                Walk on
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
+              </button>
+              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Edit match card</button>
+            </div>
+          </section>
+
+          <section class="oop-row" aria-label="Court 2, tutorial">
+            <span class="ct" aria-hidden="true">2</span>
+            <p class="event"><span>Warm-up</span></p>
+            <div class="match">
+              <p class="vs">Tutorial with the coach</p>
+              <p class="sub">14 short lessons, about 5 minutes</p>
+              <p id="newHint" class="tip">Start here if you’re new</p>
+            </div>
+            <div class="act"><button id="tutorial" class="go">Start</button></div>
+          </section>
+
+          <section class="oop-row" aria-label="Court 3, practice">
+            <span class="ct" aria-hidden="true">3</span>
+            <p class="event"><span>Practice</span></p>
+            <div class="match">
+              <p class="vs">Drills with the feeder</p>
+              <p class="sub">Smash, clear and drop, net play, drives, defence</p>
+            </div>
+            <div class="act"><button id="practice" class="go">Start</button></div>
+          </section>
         </div>
 
-        <div class="label">Player 1 controls</div>
-        <div class="seg" data-group="p1Control">
-          <button data-value="mouse">Keyboard + Mouse</button>
-          <button data-value="hybrid">Keys + trackpad aim</button>
-          <button data-value="keyboard">Keyboard only</button>
-        </div>
+        <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>
 
-        <div class="row">
-          <div>
-            <div class="label">Match</div>
-            <div class="seg" data-group="games">
-              <button data-value="1">1 game</button>
-              <button data-value="3">Best of 3</button>
+        <footer class="board-foot">
+          <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
+          <div class="foot-links">
+            <button id="howBtn" class="link">How to play</button>
+            <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
+          </div>
+        </footer>
+      </main>
+
+      <aside id="matchcard" class="matchcard" aria-label="Match card" aria-hidden="true">
+        <header class="mc-head">
+          <h2>Match card</h2>
+          <button id="cardClose" class="mc-close" aria-label="Close match card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+        <nav class="mc-tabs" role="tablist">
+          <button role="tab" data-tab="match" aria-selected="true">Match</button>
+          <button role="tab" data-tab="assists" aria-selected="false">Assists</button>
+          <button role="tab" data-tab="controls" aria-selected="false">Controls</button>
+        </nav>
+
+        <section class="mc-pane" data-pane="match">
+          <div class="field">
+            <h3>Opponent</h3>
+            <div class="seg" data-group="opponent">
+              <button data-value="beginner">Beginner</button>
+              <button data-value="easy">Easy</button>
+              <button data-value="medium">Medium</button>
+              <button data-value="hard">Hard</button>
+              <button data-value="expert">Expert</button>
+              <button data-value="human">2 players</button>
             </div>
           </div>
-          <div>
-            <div class="label">Points</div>
-            <div class="seg" data-group="points">
-              <button data-value="15">15</button>
-              <button data-value="21">21</button>
+          <div class="field" id="styleRow">
+            <h3>CPU style</h3>
+            <div class="seg" data-group="style">
+              <button data-value="allround">All-rounder</button>
+              <button data-value="attacker">Attacker</button>
+              <button data-value="defender">Defender</button>
+              <button data-value="net">Net player</button>
             </div>
           </div>
-          <div>
-            <div class="label">Accuracy</div>
+          <div class="field">
+            <h3>Player 1 controls</h3>
+            <div class="seg" data-group="p1Control">
+              <button data-value="mouse">Keyboard + mouse</button>
+              <button data-value="hybrid">Keys + trackpad aim</button>
+              <button data-value="keyboard">Keyboard only</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <h3>Match</h3>
+              <div class="seg" data-group="games">
+                <button data-value="1">1 game</button>
+                <button data-value="3">Best of 3</button>
+              </div>
+            </div>
+            <div class="field">
+              <h3>Points</h3>
+              <div class="seg" data-group="points">
+                <button data-value="15">15</button>
+                <button data-value="21">21</button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <h3>Accuracy</h3>
             <div class="seg" data-group="aim">
               <button data-value="realistic">Realistic</button>
               <button data-value="casual">Casual</button>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="row three">
-          <div>
-            <div class="label">Landing marker</div>
-            <div class="seg" data-group="guides">
-              <button data-value="true">On</button>
-              <button data-value="false">Off</button>
-            </div>
+        <section class="mc-pane" data-pane="assists" hidden>
+          <div class="field">
+            <h3>Landing marker</h3>
+            <p class="help">A ring on the floor where the shuttle will come down.</p>
+            <div class="seg" data-group="guides"><button data-value="true">On</button><button data-value="false">Off</button></div>
           </div>
-          <div>
-            <div class="label">Timing light</div>
-            <div class="seg" data-group="timingLight">
-              <button data-value="true">On</button>
-              <button data-value="false">Off</button>
-            </div>
+          <div class="field">
+            <h3>Timing light</h3>
+            <p class="help">Yellow means wait, green means swing, red means you’re late.</p>
+            <div class="seg" data-group="timingLight"><button data-value="true">On</button><button data-value="false">Off</button></div>
           </div>
-          <div>
-            <div class="label">Swing assist</div>
-            <div class="seg" data-group="swingAssist">
-              <button data-value="true">On</button>
-              <button data-value="false">Off</button>
-            </div>
+          <div class="field">
+            <h3>Swing assist</h3>
+            <p class="help">Gets lifts, drops and clears back if you don’t swing. Smashes still need you.</p>
+            <div class="seg" data-group="swingAssist"><button data-value="true">On</button><button data-value="false">Off</button></div>
           </div>
-          <div>
-            <div class="label">Umpire voice</div>
-            <div class="seg" data-group="voice">
-              <button data-value="true">On</button>
-              <button data-value="false">Off</button>
-            </div>
+          <div class="field">
+            <h3>Umpire voice</h3>
+            <p class="help">Spoken score calls and line calls.</p>
+            <div class="seg" data-group="voice"><button data-value="true">On</button><button data-value="false">Off</button></div>
           </div>
-        </div>
+        </section>
 
-        <div id="newHint">New here? Start with the <b>tutorial</b>. It takes about 5 minutes.</div>
-        <button id="start">Start match</button>
-        <div class="alt">
-          <button id="tutorial">Tutorial</button>
-          <button id="practice">Practice drills</button>
-          <button id="whatsnewBtn">What’s new <span id="wnBadge">NEW</span></button>
-        </div>
-        <div id="touchNote">This game needs a keyboard (and ideally a mouse). It’s best on a laptop or desktop.</div>
-        <div class="controls" id="controls"></div>
-        <div class="foot">H challenge · R replay · G landing marker · M mute · Esc pause · Enter skips pauses</div>
-      </div>
+        <section class="mc-pane" data-pane="controls" hidden>
+          <div class="controls" id="controls"></div>
+        </section>
+      </aside>
     </div>
+
     <div id="changelogModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="wnTitle">
-      <div class="modal-card">
-        <div class="modal-head">
+      <div class="notice-board">
+        <header class="nb-head">
           <h2 id="wnTitle">What’s new</h2>
-          <button id="wnClose" aria-label="Close">✕</button>
-        </div>
+          <button id="wnClose" class="mc-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
         <div id="changelog"></div>
       </div>
     </div>

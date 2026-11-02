@@ -1,7 +1,13 @@
+import '@fontsource/big-shoulders-display/700';
+import '@fontsource/big-shoulders-display/800';
+import '@fontsource/barlow-semi-condensed/500';
+import '@fontsource/barlow-semi-condensed/600';
+import '@fontsource/barlow-semi-condensed/700';
+import './menu.css';
 import { Sound } from './audio';
 import { Camera, broadcastCamera, setView, sideCamera } from './camera';
 import { CHANGELOG } from './changelog';
-import { RULES, UI_KEYS } from './config';
+import { RULES, STYLES, UI_KEYS } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
@@ -121,6 +127,7 @@ const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const modal = document.getElementById('changelogModal')!;
 const wnBadge = document.getElementById('wnBadge')!;
 document.getElementById('wnTitle')!.textContent = `What’s new in v${latest}`;
+document.getElementById('wnVer')!.textContent = `v${latest}`;
 document.getElementById('changelog')!.innerHTML = CHANGELOG.map((v) =>
   `<h4>v${v.version}: ${esc(v.title)} <span>· ${v.date}</span></h4><ul>${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
 try { wnBadge.classList.toggle('hidden', localStorage.getItem(SEEN) === latest); } catch { /* storage unavailable */ }
@@ -136,12 +143,57 @@ document.getElementById('wnClose')!.addEventListener('click', closeChangelog);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeChangelog(); });
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !modal.classList.contains('hidden')) closeChangelog(); });
 
+// Court 1 on the Order of Play: who you're playing and the format, re-flipped like a board when it changes.
 const tag = document.getElementById('tag')!;
+const oppName = document.getElementById('oppName')!;
+const meName = document.getElementById('meName')!;
+const eventLabel = document.getElementById('eventLabel')!;
+function flip(el: HTMLElement, text: string) {
+  if (el.textContent === text) return;
+  el.textContent = text;
+  el.classList.remove('flip');
+  void el.offsetWidth;
+  el.classList.add('flip');
+}
 function describeFormat() {
   const f = RULES.formats[settings.points];
-  const len = settings.games === 1 ? '1 game' : 'best of 3 games';
-  tag.textContent = `Singles · ${len} to ${f.pointsToWin}, win by 2, capped at ${f.pointCap} · interval at ${f.intervalAt}`;
+  const len = settings.games === 1 ? '1 game' : 'Best of 3 games';
+  flip(tag, `${len} to ${f.pointsToWin}, win by 2, capped at ${f.pointCap}`);
+  const twoP = settings.opponent === 'human';
+  const level = settings.opponent[0].toUpperCase() + settings.opponent.slice(1);
+  flip(meName, twoP ? 'Player 1' : 'You');
+  flip(oppName, twoP ? 'Player 2' : `CPU ${level}`);
+  flip(eventLabel, twoP ? 'Singles · 2 players' : `Singles · ${STYLES[settings.style].label}`);
 }
+const today = new Date();
+document.getElementById('today')!.textContent = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+// Match card: the settings drawer, with Match / Assists / Controls tabs.
+const card = document.getElementById('matchcard')!;
+const cardBtn = document.getElementById('cardBtn')!;
+function showTab(name: string) {
+  card.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
+  card.querySelectorAll<HTMLElement>('.mc-pane').forEach((p) => { p.hidden = p.dataset.pane !== name; });
+}
+function openCard(tab = 'match') {
+  showTab(tab);
+  card.classList.add('open');
+  card.setAttribute('aria-hidden', 'false');
+  cardBtn.setAttribute('aria-expanded', 'true');
+  card.querySelector<HTMLButtonElement>(`[data-tab="${tab}"]`)?.focus();
+}
+function closeCard() {
+  if (!card.classList.contains('open')) return false;
+  card.classList.remove('open');
+  card.setAttribute('aria-hidden', 'true');
+  cardBtn.setAttribute('aria-expanded', 'false');
+  return true;
+}
+cardBtn.addEventListener('click', () => (card.classList.contains('open') ? closeCard() : openCard()));
+document.getElementById('cardClose')!.addEventListener('click', () => { closeCard(); cardBtn.focus(); });
+document.getElementById('howBtn')!.addEventListener('click', () => openCard('controls'));
+card.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab!)));
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && modal.classList.contains('hidden')) closeCard(); });
 
 /** Menu values are strings; settings hold numbers and booleans. */
 const parse = (v: string): string | number | boolean => (v === 'true' ? true : v === 'false' ? false : /^\d+$/.test(v) ? Number(v) : v);
@@ -186,6 +238,7 @@ function startMatch(mode: Mode = 'match') {
   voice.unlock();
   game = new Game({ ...settings }, input, broadcast, mode);
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
+  closeCard();
   menu.classList.add('hidden');
   (document.activeElement as HTMLElement | null)?.blur();
 }

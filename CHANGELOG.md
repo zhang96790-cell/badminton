@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.5: New start screen (2 Nov 2026)
+
+- The start screen is now a tournament Order of Play board: your match is on Court 1, so press Walk on (or Enter) to play.
+- Tutorial is on Court 2 and Practice on Court 3.
+- Opponent, CPU style, controls, scoring, assists and voice are on the match card. Open it with Edit match card.
+- How to play opens the full shot table on the match card.
+
 ## 1.4.3: Jump smash recovery (2 Nov 2026)
 
 - After landing a jump smash you get a quick burst of speed (and no landing slowdown) to recover to the middle.

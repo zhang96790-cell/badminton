@@ -156,7 +156,11 @@ export class Hud {
     const bn = game.banner;
     if (!bn) return;
     const ctx = this.ctx;
-    const bw = Math.min(w - 40, 460), bh = 98;
+    ctx.font = font(28, 800);
+    const tw = ctx.measureText(bn.title).width;
+    ctx.font = font(16, 600);
+    const sw = ctx.measureText(bn.sub).width;
+    const bw = Math.min(w - 40, Math.max(460, tw + 60, sw + 60)), bh = 98;
     const x = w / 2 - bw / 2, y = h * 0.36 - bh / 2;
     ctx.globalAlpha = Math.min(1, bn.t / 0.15);
     panel(ctx, x, y, bw, bh, 14);

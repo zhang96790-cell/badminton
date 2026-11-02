@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.4.2',
+    title: 'Why it hit the net',
+    date: '2 Nov 2026',
+    changes: [
+      'When a shot goes into the net, the message says why, e.g. "Smash mistimed (late), hit too low" or "Net shot backhand, stretched".',
+    ],
+  },
+  {
     version: '1.4.1',
     title: 'CPU challenges can be wrong',
     date: '2 Nov 2026',

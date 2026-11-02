@@ -544,7 +544,8 @@ export class Game {
     this.prevServer = this.match.server;
     this.outcome = this.match.award(winner);
     const w = this.players[winner];
-    this.banner = { title, sub: `Point ${w.name}`, color: w.color, t: 0 };
+    const why = sh.touchedNet || (!sh.wide && land.y * hitter >= 0) ? this.netFaultReason() : null;
+    this.banner = { title, sub: `${why ? `${why} · ` : ''}Point ${w.name}`, color: w.color, t: 0 };
     this.events.push({ type: 'point' });
     this.observe({ type: 'rally', winner: w.side });
 
@@ -569,6 +570,20 @@ export class Game {
       const ai = this.controllers[loser];
       if (ai instanceof AIController && this.challenges[loser] > 0 && ai.wantsChallenge(line)) this.aiChallengeAt = 0.9;
     }
+  }
+
+  /** Why the last shot didn't get over, e.g. "Smash mistimed (late), hit too low". */
+  private netFaultReason(): string | null {
+    const s = this.lastShot, c = this.lastContact;
+    if (!s) return null;
+    if (!c) return s.label; // a serve
+    const why: string[] = [];
+    if (c.timingLabel === 'Late' || c.timingLabel === 'Early') why.push(`mistimed (${c.timingLabel.toLowerCase()})`);
+    if (/smash|kill/i.test(s.label) && c.point.z < SHOTS.overheadHeight + 0.15) why.push('hit too low');
+    if (/smash/i.test(s.label) && Math.abs(c.point.y) > 5.2) why.push('from too far back');
+    if (c.hand === 'backhand') why.push('backhand');
+    if (c.stretch > SHOTS.stretchStart) why.push('stretched');
+    return why.length ? `${s.label} ${why.join(', ')}` : s.label;
   }
 
   private challengeOpenFor(line: LineCall | null): boolean {

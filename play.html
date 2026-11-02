@@ -36,6 +36,10 @@
           </div>
           <div class="head-meta">
             <div class="head-pills">
+              <button id="controlsBtn" class="account-btn controls-btn" aria-haspopup="dialog" title="Change how you play">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2" /><path d="M6 10h1M9 10h1M12 10h1M15 10h1M18 10h1M7 14h10" /></svg>
+                <span id="controlsLabel">Keyboard + mouse</span>
+              </button>
               <button id="socialBtn" class="account-btn social-btn" aria-haspopup="dialog">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2.5 19c.6-3.1 2.8-5 5.5-5s4.9 1.9 5.5 5M13.8 14.6c.8-.4 1.7-.6 2.7-.6 2.4 0 4.3 1.6 5 4.4" /></svg>
                 Social
@@ -391,6 +395,16 @@
             </div>
           </section>
         </div>
+      </div>
+    </div>
+    <div id="controlsPick" class="controls-pick hidden" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+      <div class="pick-panel">
+        <header class="pick-head">
+          <p class="pass-kicker">Before you walk on</p>
+          <h2 id="pickTitle">How do you want to play?</h2>
+          <p class="help">Pick what you’ve got. You can change it any time from the Controls button at the top.</p>
+        </header>
+        <div class="pick-cards" id="pickCards"></div>
       </div>
     </div>
     <div id="inviteToast" class="invite-toast" role="status" hidden>

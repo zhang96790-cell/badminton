@@ -47,6 +47,8 @@ export interface Settings {
   view: View;
   /** Your custom keys (single player); anything not set uses the default. */
   keys?: KeyBinds;
+  /** Set once you've picked how you play on the controls screen (first visit). */
+  controlsChosen?: boolean;
 }
 
 /** 'feed' = practice/tutorial: you move freely while the coach gets the next shuttle ready. */

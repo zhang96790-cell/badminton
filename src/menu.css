@@ -858,3 +858,28 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
   .board-foot { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .head-pills { justify-content: flex-start; }
 }
+
+/* ── 2.1.3: controls picker ─────────────────────────────────────────────── */
+.controls-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.controls-pick { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: 24px; background: rgba(4, 10, 28, 0.82); }
+.controls-pick.hidden { display: none; }
+.pick-panel { width: min(980px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; padding: 30px 32px 32px; border-radius: 12px; background: var(--card); color: var(--card-ink); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); }
+.pick-head h2 { margin: 8px 0 6px; font: 800 44px/1 var(--display); text-transform: uppercase; }
+.pick-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+.pick-card { position: relative; display: grid; align-content: start; gap: 12px; padding: 22px 20px 20px; border: 2px solid var(--card-rule); border-radius: 10px; background: #fff; text-align: left; color: var(--card-ink); }
+.pick-card:hover { border-color: var(--card-ink); transform: translateY(-2px); }
+.pick-card.on { border-color: var(--card-ink); box-shadow: inset 0 0 0 1px var(--card-ink); }
+.pick-card svg { width: 56px; height: 56px; fill: none; stroke: var(--card-ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pick-card h3 { font: 800 26px/1 var(--display); text-transform: uppercase; }
+.pick-card p { font: 500 15px/1.4 var(--text); color: var(--card-ink-2); }
+.pick-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 600 14px/1.35 var(--text); }
+.pick-card ul b { display: inline-block; min-width: 54px; color: var(--card-ink-2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; }
+.pick-card kbd { display: inline-block; min-width: 20px; padding: 1px 5px; border: 1px solid var(--card-rule); border-bottom-width: 2px; border-radius: 4px; font: 700 12px/1.4 var(--text); text-align: center; background: var(--card); }
+.pick-card .rec { position: absolute; top: 14px; right: 14px; padding: 4px 8px; border-radius: 4px; background: var(--amber); color: var(--amber-ink); font: 800 11px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; }
+.pick-card .go-line { margin-top: 4px; font: 800 15px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--card-ink); }
+@media (max-width: 760px) {
+  .controls-pick { padding: 0; }
+  .pick-panel { max-height: 100vh; height: 100vh; border-radius: 0; padding: 22px 18px; }
+  .pick-head h2 { font-size: 32px; }
+  .pick-cards { grid-template-columns: 1fr; }
+}

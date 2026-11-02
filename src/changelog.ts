@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.3',
+    title: 'Choose your controls',
+    date: '2 Nov 2026',
+    changes: [
+      'Pick your controls first: the first time you open the game, a How do you want to play? screen lets you choose Keyboard + mouse, Keys + trackpad or Keyboard only, with the keys for each.',
+      'A Controls button at the top of the start screen shows how you’re playing and lets you switch any time.',
+    ],
+  },
+  {
     version: '2.1.2',
     title: 'Social and career stats',
     date: '2 Nov 2026',

@@ -295,6 +295,9 @@ async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
     describeControls();
     describeFormat();
     renderBinds();
+    syncControlsLabel();
+    // An account that has never picked its controls gets asked once.
+    if (!settings.controlsChosen) openControlsPick();
   } else {
     await m.saveSettings(a.id, { ...settings } as unknown as Record<string, unknown>);
   }
@@ -530,6 +533,7 @@ try {
 // ── Tour of the start screen ─────────────────────────────────────────────────
 const tour = new Tour([
   { target: '.oop-row.live', title: 'Your match', text: 'Your next match is on Court 1: who you’re playing and the scoring. Press Walk on (or Enter) to play.', before: closeDrawers },
+  { target: '#controlsBtn', title: 'Your controls', text: 'How you play: keyboard and mouse, keys with a trackpad, or keyboard only. Click it any time to switch.' },
   { target: '#matchcard', title: 'Match card', text: 'Edit match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
   { target: '.oop-row:has(#tutorial)', title: 'Tutorial', text: 'New to the game? Court 2 is the tutorial: short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
   { target: '.oop-row:has(#practice)', title: 'Practice', text: 'Court 3 is practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
@@ -544,6 +548,60 @@ const tour = new Tour([
 ], () => document.getElementById('tourBtn')?.focus());
 document.getElementById('tourBtn')!.addEventListener('click', () => { closeAccountIfOpen(); tour.start(); });
 function closeAccountIfOpen() { if (!accountModal.classList.contains('hidden')) accountModal.classList.add('hidden'); }
+
+// ── Controls picker (first visit, and the Controls button at the top) ────────
+const CONTROL_NAMES: Record<Settings['p1Control'], string> = { mouse: 'Keyboard + mouse', hybrid: 'Keys + trackpad', keyboard: 'Keyboard only' };
+const controlsPick = document.getElementById('controlsPick')!;
+function syncControlsLabel() { document.getElementById('controlsLabel')!.textContent = CONTROL_NAMES[settings.p1Control]; }
+function renderControlsPick() {
+  const kb = (a: BindAction) => `<kbd>${keyLabel(keyFor(settings.keys, a))}</kbd>`;
+  const move = `${kb('up')}${kb('left')}${kb('down')}${kb('right')}`;
+  const icons = {
+    mouse: '<svg viewBox="0 0 48 48"><rect x="16" y="6" width="16" height="28" rx="8"/><path d="M24 6v10M10 42h28"/></svg>',
+    hybrid: '<svg viewBox="0 0 48 48"><rect x="6" y="12" width="36" height="24" rx="4"/><path d="M14 30h20"/></svg>',
+    keyboard: '<svg viewBox="0 0 48 48"><rect x="4" y="14" width="40" height="20" rx="3"/><path d="M10 20h2M16 20h2M22 20h2M28 20h2M34 20h2M14 28h20"/></svg>',
+  };
+  const cards: [Settings['p1Control'], string, string, string][] = [
+    ['mouse', 'You have a mouse. Move with the keyboard, aim and hit with the mouse.',
+      `<li><b>Move</b>${move}</li><li><b>Aim</b>Point the cursor</li><li><b>Hit</b>Left-click: drive, hold to smash · right-click: drop, hold for a clear</li>`, 'Best with a mouse'],
+    ['hybrid', 'On a laptop trackpad. Hit with keys, aim by moving the cursor.',
+      `<li><b>Move</b>${move}</li><li><b>Aim</b>Trackpad cursor</li><li><b>Hit</b>${kb('high')} high · ${kb('fast')} fast · ${kb('soft')} soft</li>`, ''],
+    ['keyboard', 'Just the keyboard. Aim with two keys or let the game pick the open side.',
+      `<li><b>Move</b>${move}</li><li><b>Aim</b>${kb('aimLeft')} left · ${kb('aimRight')} right</li><li><b>Hit</b>${kb('high')} high · ${kb('fast')} fast · ${kb('soft')} soft</li>`, ''],
+  ];
+  document.getElementById('pickCards')!.innerHTML = cards.map(([mode, blurb, keys, rec]) => `
+    <button type="button" class="pick-card${settings.p1Control === mode ? ' on' : ''}" data-mode="${mode}">
+      ${rec ? `<span class="rec">${rec}</span>` : ''}${icons[mode]}
+      <h3>${CONTROL_NAMES[mode]}</h3><p>${blurb}</p><ul>${keys}</ul>
+      <span class="go-line">Play this way →</span>
+    </button>`).join('');
+}
+function openControlsPick() {
+  renderControlsPick();
+  controlsPick.classList.remove('hidden');
+  controlsPick.querySelector<HTMLButtonElement>('.pick-card.on')?.focus();
+}
+function closeControlsPick() {
+  controlsPick.classList.add('hidden');
+  if (!settings.controlsChosen) { settings.controlsChosen = true; saveSettings(); }
+}
+document.getElementById('pickCards')!.addEventListener('click', (e) => {
+  const card = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');
+  if (!card) return;
+  settings.p1Control = card.dataset.mode as Settings['p1Control'];
+  settings.controlsChosen = true;
+  saveSettings();
+  syncMenu();
+  describeControls();
+  renderBinds();
+  syncControlsLabel();
+  controlsPick.classList.add('hidden');
+});
+document.getElementById('controlsBtn')!.addEventListener('click', openControlsPick);
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !controlsPick.classList.contains('hidden')) closeControlsPick(); });
+syncControlsLabel();
+// First visit: ask before anything else.
+if (!settings.controlsChosen) openControlsPick();
 
 // ── Online rooms (Court 4) ───────────────────────────────────────────────────
 const roomModal = document.getElementById('roomModal')!;
@@ -936,6 +994,7 @@ document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
       describeControls();
       describeFormat();
       renderBinds();
+      syncControlsLabel();
     });
   });
 });
@@ -1036,7 +1095,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && !tour.isOpen) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 

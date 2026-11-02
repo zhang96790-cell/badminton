@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.3: Choose your controls (2 Nov 2026)
+
+- Pick your controls first: the first time you open the game, a How do you want to play? screen lets you choose Keyboard + mouse, Keys + trackpad or Keyboard only, with the keys for each.
+- A Controls button at the top of the start screen shows how you’re playing and lets you switch any time.
+
 ## 2.1.2: Social and career stats (2 Nov 2026)
 
 - Social: a big new screen (the Social button at the top of the start screen, or your name once you’re logged in) with your stats, friends, the leaderboard, your ranked matches and your account.

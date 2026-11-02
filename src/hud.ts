@@ -56,6 +56,7 @@ export class Hud {
     }
 
     this.banner(game, w, h);
+    if (game.online) this.connection(game, w);
 
     if (game.challengeOpen) {
       const call = game.call!;
@@ -104,14 +105,21 @@ export class Hud {
     ctx.font = font(12, 500);
     ctx.fillText(this.controlsHint(game), w / 2, h - 18);
 
-    if (game.paused) {
+    if (game.paused || game.peerAway) {
       ctx.fillStyle = 'rgba(5,8,12,0.6)';
       ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = C.hud;
+      const [title, sub] = game.peerAway
+        ? [`${game.players[1].name} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, you win.']
+        : game.pausedBy === 'opponent'
+          ? [`Paused by ${game.players[1].name}`, 'Play carries on when they resume']
+          : game.online
+            ? ['Paused', 'Esc to resume  ·  Q to forfeit and leave']
+            : ['Paused', 'Esc to resume  ·  Q to quit to menu'];
       ctx.font = font(34, 800);
-      ctx.fillText('Paused', w / 2, h / 2 - 10);
+      ctx.fillText(title, w / 2, h / 2 - 10);
       ctx.font = font(15, 500);
-      ctx.fillText('Esc to resume  ·  Q to quit to menu', w / 2, h / 2 + 22);
+      ctx.fillText(sub, w / 2, h / 2 + 22);
     }
   }
 
@@ -197,7 +205,8 @@ export class Hud {
       ctx.fillText(game.doubles ? (i === 0 ? 'You / Partner' : 'CPU 1 / CPU 2') : game.players[i].name, x + 24, ry + 23);
       // Challenges left this game
       const cx = game.doubles ? 116 : 88;
-      for (let k = 0; k < game.challenges[i]; k++) {
+      // No Hawk-Eye challenges online (yet), so no challenge markers.
+      for (let k = 0; k < (game.online ? 0 : game.challenges[i]); k++) {
         ctx.fillStyle = 'rgba(255,209,102,0.85)';
         ctx.fillRect(x + cx + k * 9, ry + 14, 6, 6);
       }
@@ -283,7 +292,7 @@ export class Hud {
   /** End-of-match scoreboard: result, game scores, stat comparison and where each player's shots landed. */
   private endScreen(game: Game, w: number, h: number) {
     const ctx = this.ctx, m = game.match, st = game.stats;
-    const wi = (m.games[0] > m.games[1] ? 0 : 1) as 0 | 1;
+    const wi = game.forfeitWinner ?? (m.games[0] > m.games[1] ? 0 : 1) as 0 | 1;
     const p1 = { name: game.teamName(0), color: game.teamColor(0) }, p2 = { name: game.teamName(1), color: game.teamColor(1) };
     const winner = wi === 0 ? p1 : p2;
     ctx.fillStyle = 'rgba(4,7,12,0.72)';
@@ -300,7 +309,8 @@ export class Hud {
     ctx.fillText('MATCH RESULT', x + 28, y + 36);
     ctx.fillStyle = winner.color;
     ctx.font = font(30, 900);
-    ctx.fillText(winner.name === 'You' ? 'You win!' : winner.name === 'You & Partner' ? 'You and your partner win!' : `${winner.name} wins`, x + 28, y + 72);
+    const won = winner.name === 'You' ? 'You win!' : winner.name === 'You & Partner' ? 'You and your partner win!' : `${winner.name} wins`;
+    ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.players[1].name} left)` : won, x + 28, y + 72);
     const mins = Math.floor(st.seconds / 60), secs = Math.floor(st.seconds % 60);
     ctx.textAlign = 'right';
     ctx.fillStyle = C.hudDim;
@@ -389,7 +399,28 @@ export class Hud {
     ctx.textAlign = 'center';
     ctx.fillStyle = C.hudDim;
     ctx.font = font(13, 600);
-    ctx.fillText('Enter — rematch   ·   R — replay last rally   ·   Esc — menu', w / 2, y + ph - 20);
+    ctx.fillText(game.online
+      ? (game.forfeitWinner !== null ? 'Esc — back to the menu' : `Enter — rematch${game.rematchAsked ? ' (waiting for your opponent)' : ''}   ·   R — replay last rally   ·   Esc — leave room`)
+      : 'Enter — rematch   ·   R — replay last rally   ·   Esc — menu', w / 2, y + ph - 20);
+  }
+
+  /** Online: connection quality, top centre. Delay is one way between the two players. */
+  private connection(game: Game, w: number) {
+    const conn = game.online!.conn, ctx = this.ctx;
+    const ms = Math.round(conn.latency);
+    const reconnecting = conn.status === 'reconnecting';
+    const color = reconnecting ? C.callOut : ms < 80 ? C.callIn : ms < 150 ? C.accent : C.callOut;
+    const text = reconnecting ? 'Reconnecting…' : `${ms} ms${ms >= 150 ? '  ·  laggy connection' : ''}`;
+    ctx.font = font(12, 700);
+    const tw = ctx.measureText(text).width;
+    panel(ctx, w / 2 - tw / 2 - 22, 14, tw + 44, 24, 12);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(w / 2 - tw / 2 - 8, 26, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.hud;
+    ctx.fillText(text, w / 2 - tw / 2 + 2, 30);
   }
 
   /** Doubles end screen: a line per player (shots, winners, errors, smashes, fastest smash). */
@@ -479,6 +510,7 @@ export class Hud {
         ? `${move} move · ${n(K.high)} high · ${n(K.fast)} fast (hold = extra power) · ${n(K.soft)} soft · ${n(K.kill)} kill · ${hybrid ? 'cursor aims' : `${n(K.aimLeft)}/${n(K.aimRight)} aim`} · ${n(K.jump)} jump`
         : 'P1: WASD · C high · V fast (hold = extra power) · B soft · X/N aim · Space jump';
     const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · U/O aim · R-Shift jump';
+    if (game.online) return `${p1}   ·   1–6 quick chat · G marker · F fullscreen · M mute · Esc pause`;
     return `${p1}${p2}   ·   H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;
   }
 }

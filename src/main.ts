@@ -13,6 +13,7 @@ import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
+import { CODE_PATTERN, RoomConnection, newRoomCode, type GameMsg, type ServerMsg } from './net';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
@@ -331,6 +332,182 @@ const tour = new Tour([
 document.getElementById('tourBtn')!.addEventListener('click', () => { closeAccountIfOpen(); tour.start(); });
 function closeAccountIfOpen() { if (!accountModal.classList.contains('hidden')) accountModal.classList.add('hidden'); }
 
+// ── Online rooms (Court 4) ───────────────────────────────────────────────────
+const roomModal = document.getElementById('roomModal')!;
+const roomJoin = document.getElementById('roomJoin')!, roomLobby = document.getElementById('roomLobby')!;
+const roomCodeIn = document.getElementById('roomCodeIn') as HTMLInputElement, roomJoinMsg = document.getElementById('roomJoinMsg')!;
+const roomStart = document.getElementById('roomStart') as HTMLButtonElement, roomStatus = document.getElementById('roomStatus')!;
+let room: RoomConnection | null = null;
+let roomSettings = { games: settings.games, points: settings.points };
+/** The other player asked for a rematch. */
+let peerRematch = false;
+
+/** Logged in: your username. Otherwise a guest name kept for this browser. */
+function myName(): string {
+  if (account) return account.username;
+  try {
+    let g = localStorage.getItem('badminton.guestName');
+    if (!g) { g = `guest_${Math.floor(1000 + Math.random() * 9000)}`; localStorage.setItem('badminton.guestName', g); }
+    return g;
+  } catch { return 'guest'; }
+}
+
+/** A secret per room, kept for this tab, so reloading or a dropped connection gets your seat back. */
+function roomToken(code: string): string {
+  const key = `badminton.room.${code}`;
+  try {
+    let t = sessionStorage.getItem(key);
+    if (!t) { t = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); sessionStorage.setItem(key, t); }
+    return t;
+  } catch { return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); }
+}
+
+function showRoomView(view: 'join' | 'lobby') {
+  roomModal.classList.remove('hidden');
+  roomJoin.hidden = view !== 'join';
+  roomLobby.hidden = view !== 'lobby';
+  document.getElementById('roomTitle')!.textContent = view === 'join' ? 'Join a room' : 'Your room';
+}
+
+function renderLobby() {
+  if (!room) return;
+  const r = room.roster, host = r?.you === 'host';
+  document.getElementById('roomCode')!.textContent = room.code;
+  const row = (id: string, p: { name: string; connected: boolean } | null | undefined, mine: boolean, role: string) => {
+    const li = document.getElementById(id)!;
+    li.className = p ? (p.connected ? 'on' : 'away') : '';
+    li.innerHTML = p ? `${p.name}${mine ? ' (you)' : ''}<em>${p.connected ? role : 'reconnecting'}</em>` : `Waiting for your opponent…<em>${role}</em>`;
+  };
+  row('roomHost', r?.host, r?.you === 'host', 'host');
+  row('roomGuest', r?.guest, r?.you === 'guest', 'guest');
+  for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points']] as const) {
+    const seg = document.getElementById(id)!;
+    seg.classList.toggle('locked', !host);
+    seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.value) === roomSettings[key]));
+  }
+  const ready = !!(r?.host?.connected && r?.guest?.connected);
+  roomStart.hidden = !host;
+  roomStart.disabled = !ready;
+  roomStatus.textContent = room.status === 'connecting' ? 'Connecting…'
+    : room.status === 'reconnecting' ? 'Connection lost, reconnecting…'
+    : !ready ? (host ? 'Send your friend the code or the invite link. You can start once they join.' : 'Waiting for the host…')
+    : host ? 'Both here. Press Start match when you’re ready.' : 'Both here. Waiting for the host to start.';
+}
+
+function openRoom(code: string) {
+  leaveRoom();
+  room = new RoomConnection(code, roomToken(code), myName());
+  room.on(onRoomMsg);
+  // Reloading the page brings you back to the same seat in this room.
+  history.replaceState(null, '', `/play?room=${code}`);
+  showRoomView('lobby');
+  renderLobby();
+}
+
+function leaveRoom() {
+  game?.dispose();
+  room?.close();
+  room = null;
+  peerRematch = false;
+  if (location.search.includes('room=')) history.replaceState(null, '', '/play');
+}
+
+function onRoomMsg(m: GameMsg | ServerMsg) {
+  if (!room) return;
+  switch (m.type) {
+    case 'roster':
+      if (m.you === 'host') room.send({ type: 'settings', settings: roomSettings });
+      else if (m.settings) roomSettings = m.settings as typeof roomSettings;
+      break;
+    case 'settings': roomSettings = m.settings as typeof roomSettings; break;
+    case 'start': roomSettings = m.settings as typeof roomSettings; startOnline(false); break;
+    case 'rematch':
+      peerRematch = true;
+      if (room.roster?.you === 'host' && game?.rematchAsked) restartOnline();
+      break;
+    case 'full':
+      showRoomView('join');
+      roomJoinMsg.textContent = 'That room already has two players.';
+      room = null;
+      return;
+  }
+  renderLobby();
+}
+
+function startOnline(host: boolean) {
+  const r = room?.roster, opp = host ? r?.guest : r?.host;
+  if (!room || !opp) return;
+  game?.dispose();
+  sound.init();
+  voice.enabled = settings.voice;
+  voice.unlock();
+  peerRematch = false;
+  game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21 }, input, broadcast, 'online', { conn: room, host, opponentName: opp.name });
+  if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
+  closeDrawers();
+  roomModal.classList.add('hidden');
+  menu.classList.add('hidden');
+  (document.activeElement as HTMLElement | null)?.blur();
+}
+
+/** Host: both asked for a rematch, so start a fresh match on both screens. */
+function restartOnline() {
+  room?.send({ type: 'start', settings: roomSettings });
+  startOnline(true);
+}
+
+function askRematch() {
+  if (!game?.online || game.rematchAsked || game.forfeitWinner !== null) return;
+  game.rematchAsked = true;
+  room?.send({ type: 'rematch' });
+  if (room?.roster?.you === 'host' && peerRematch) restartOnline();
+}
+
+document.getElementById('createRoom')!.addEventListener('click', () => openRoom(newRoomCode()));
+document.getElementById('joinRoom')!.addEventListener('click', () => {
+  roomJoinMsg.textContent = '';
+  showRoomView('join');
+  roomCodeIn.focus();
+});
+function joinTyped() {
+  const code = roomCodeIn.value.trim().toUpperCase();
+  if (!CODE_PATTERN.test(code)) { roomJoinMsg.textContent = 'Room codes are 5 letters and numbers.'; return; }
+  openRoom(code);
+}
+document.getElementById('roomJoinGo')!.addEventListener('click', joinTyped);
+roomCodeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); joinTyped(); } });
+roomStart.addEventListener('click', () => {
+  if (room?.roster?.you !== 'host') return;
+  room.send({ type: 'start', settings: roomSettings });
+  startOnline(true);
+});
+for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points']] as const) {
+  document.getElementById(id)!.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => {
+    if (room?.roster?.you !== 'host') return;
+    roomSettings = { ...roomSettings, [key]: Number(b.dataset.value) };
+    room.send({ type: 'settings', settings: roomSettings });
+    renderLobby();
+  }));
+}
+document.getElementById('roomCopy')!.addEventListener('click', async (e) => {
+  if (!room) return;
+  const btn = e.currentTarget as HTMLButtonElement;
+  try { await navigator.clipboard.writeText(`${location.origin}/play?room=${room.code}`); btn.textContent = 'Copied!'; }
+  catch { btn.textContent = room.code; }
+  setTimeout(() => { btn.textContent = 'Copy invite link'; }, 1600);
+});
+const closeRoom = () => { leaveRoom(); roomModal.classList.add('hidden'); };
+document.getElementById('roomClose')!.addEventListener('click', closeRoom);
+document.getElementById('roomLeave')!.addEventListener('click', closeRoom);
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && !roomModal.classList.contains('hidden')) closeRoom(); });
+// Keep the lobby's connection status fresh.
+setInterval(() => { if (room && !roomModal.classList.contains('hidden')) renderLobby(); }, 1000);
+// An invite link (…/play?room=ABCDE) opens that room straight away.
+{
+  const code = new URLSearchParams(location.search).get('room')?.toUpperCase();
+  if (code && CODE_PATTERN.test(code)) openRoom(code);
+}
+
 // What's new pop-up: newest version first, with a NEW badge on the button until you've opened it.
 const SEEN = 'badminton.seenVersion';
 const latest = CHANGELOG[0].version;
@@ -424,13 +601,13 @@ addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && modal.c
 const parse = (v: string): string | number | boolean => (v === 'true' ? true : v === 'false' ? false : /^\d+$/.test(v) ? Number(v) : v);
 
 function syncMenu() {
-  document.querySelectorAll<HTMLElement>('.seg').forEach((seg) => {
+  document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
     const group = seg.dataset.group as keyof Settings;
     seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', parse(b.dataset.value!) === settings[group]));
   });
 }
 
-document.querySelectorAll<HTMLElement>('.seg').forEach((seg) => {
+document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
   const group = seg.dataset.group as keyof Settings;
   seg.querySelectorAll<HTMLButtonElement>('button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -486,6 +663,23 @@ document.getElementById('start')!.addEventListener('click', () => startMatch('ma
 document.getElementById('tutorial')!.addEventListener('click', () => startMatch('tutorial'));
 document.getElementById('practice')!.addEventListener('click', () => startMatch('practice'));
 
+/** Keys during an online match: quick chat, pause (between points), forfeit, rematch, leave. */
+function onlineKeys(g: Game, over: boolean) {
+  for (let i = 0; i < 6; i++) if (input.tapped([`Digit${i + 1}`])) g.sendChat(i);
+  if (input.tapped(['Escape'])) {
+    if (over) { leaveRoom(); showMenu(); return; }
+    if (!g.peerAway) g.setOnlinePause(!(g.paused && g.pausedBy === 'you'));
+  }
+  if (g.paused && g.pausedBy === 'you' && input.tapped(['KeyQ'])) {
+    room?.send({ type: 'forfeit' });
+    leaveRoom();
+    showMenu();
+    return;
+  }
+  if (input.tapped(['Enter'])) { if (over) askRematch(); else if (!g.paused) g.skip(); }
+  if (over && input.tapped(UI_KEYS.replay)) g.toggleReplay();
+}
+
 // ── Loop ─────────────────────────────────────────────────────────────────────
 
 let last = performance.now();
@@ -496,7 +690,8 @@ function frame(now: number) {
 
   if (game) {
     const over = game.state === 'matchOver';
-    if (input.tapped(['Escape'])) { if (over || game.session) showMenu(); else game.paused = !game.paused; }
+    if (game.online) onlineKeys(game, over);
+    else if (input.tapped(['Escape'])) { if (over || game.session) showMenu(); else game.paused = !game.paused; }
     if (game?.session) {
       for (const d of ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9']) if (input.tapped([d])) game.session.key(game, d);
     }
@@ -511,18 +706,19 @@ function frame(now: number) {
       saveSettings();
       syncMenu();
     }
-    if (game && !game.paused) {
+    if (game && !game.paused && !game.online) {
       if (input.tapped(UI_KEYS.challenge)) game.requestChallenge();
       if (input.tapped(UI_KEYS.replay)) game.toggleReplay();
       if (input.tapped(UI_KEYS.replayCamera)) game.toggleReplayCamera();
     }
-    if (game?.paused && input.tapped(['KeyQ'])) showMenu();
+    if (game?.online) { /* handled in onlineKeys */ }
+    else if (game?.paused && input.tapped(['KeyQ'])) showMenu();
     else if (game && input.tapped(['Enter'])) {
       if (game.state === 'matchOver') startMatch('match');
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && !tour.isOpen) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 

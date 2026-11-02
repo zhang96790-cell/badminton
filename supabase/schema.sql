@@ -31,9 +31,14 @@ returns trigger
 language plpgsql
 security definer set search_path = ''
 as $$
+declare
+  name text := lower(new.raw_user_meta_data ->> 'username');
 begin
-  insert into public.profiles (id, username)
-  values (new.id, lower(new.raw_user_meta_data ->> 'username'));
+  -- Same blocked words as the game (shared/names.ts), checked with non-letters removed.
+  if regexp_replace(name, '[^a-z]', '', 'g') ~ '(fuck|shit|cunt|bitch|pussy|penis|vagina|porn|nigg|fag|retard|nazi|hitler|whore|slut|wank|twat|bastard|asshole|killyourself)' then
+    raise exception 'username not allowed';
+  end if;
+  insert into public.profiles (id, username) values (new.id, name);
   return new;
 end;
 $$;

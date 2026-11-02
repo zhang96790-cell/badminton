@@ -5,6 +5,20 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.0',
+    title: 'Play online',
+    date: '2 Nov 2026',
+    changes: [
+      'Play online: Court 4 on the start screen. Create room gives you a 5-character code and an invite link to send a friend; they press Join (or open the link) and the host presses Start match.',
+      'Each player sees themselves on the near side. Your own movement and hits are instant on your screen, and the shuttle flies identically on both screens, so fast smashes stay smooth even with some lag.',
+      'The host picks 1 game or best of 3, to 15 or 21. Rematch: both press Enter at the end.',
+      'Quick chat with keys 1–6 (Good shot!, Nice rally, Unlucky, Ready?, GG, Thanks!) shows over your player on both screens. There’s no free typing.',
+      'The connection readout at the top shows the delay between you and turns amber or red if it gets laggy.',
+      'Dropped connection: it reconnects on its own and play waits. If someone doesn’t come back within a minute, the other player wins. Esc pauses between points (Q while paused forfeits).',
+      'Rooms are private (only people with the code can join), usernames with offensive words aren’t allowed, and online line calls are always correct (there are no challenges online yet).',
+    ],
+  },
+  {
     version: '1.7.1',
     title: 'Tour and easier usernames',
     date: '2 Nov 2026',

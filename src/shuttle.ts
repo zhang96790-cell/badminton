@@ -64,7 +64,7 @@ export class Shuttle {
   dir: V3 = { x: 0, y: 0, z: -1 };
   inFlight = false;
   lastHitter: Side | null = null;
-  /** Total contacts this rally, including the serve. */
+  /** Total contacts so far (never reset, so a new hit always changes it). */
   hits = 0;
   isServe = false;
   touchedNet = false;
@@ -77,7 +77,7 @@ export class Shuttle {
     this.dir = { x: 0, y: 0, z: -1 };
     this.inFlight = false;
     this.lastHitter = null;
-    this.hits = 0;
+    // hits keeps counting across points: anything watching for a new hit always sees one.
     this.touchedNet = false;
     this.wide = false;
     this.trail = [];

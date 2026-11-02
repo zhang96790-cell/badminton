@@ -5,6 +5,16 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.0: Play online (2 Nov 2026)
+
+- Play online: Court 4 on the start screen. Create room gives you a 5-character code and an invite link to send a friend; they press Join (or open the link) and the host presses Start match.
+- Each player sees themselves on the near side. Your own movement and hits are instant on your screen, and the shuttle flies identically on both screens, so fast smashes stay smooth even with some lag.
+- The host picks 1 game or best of 3, to 15 or 21. Rematch: both press Enter at the end.
+- Quick chat with keys 1–6 (Good shot!, Nice rally, Unlucky, Ready?, GG, Thanks!) shows over your player on both screens. There’s no free typing.
+- The connection readout at the top shows the delay between you and turns amber or red if it gets laggy.
+- Dropped connection: it reconnects on its own and play waits. If someone doesn’t come back within a minute, the other player wins. Esc pauses between points (Q while paused forfeits).
+- Rooms are private (only people with the code can join), usernames with offensive words aren’t allowed, and online line calls are always correct (there are no challenges online yet).
+
 ## 1.7.1: Tour and easier usernames (2 Nov 2026)
 
 - Take the tour: a new button at the bottom of the start screen walks you through your match, the match card, tutorial, practice, Assists & controls, your keys, your account and more, one thing at a time. Use Next or Enter to go forward, Back or ← to go back, and Esc to leave.

@@ -2,6 +2,7 @@
 // username becomes an internal email address, because Supabase signs people in by email.
 // Loaded on demand so the game starts without it.
 import { createClient, type AuthError } from '@supabase/supabase-js';
+import { isOffensive } from '../shared/names';
 
 // Both values are meant to be public: what each player may do is enforced by the database's row level security.
 const SUPABASE_URL = 'https://xyadhxnoqdanzbppgxni.supabase.co';
@@ -24,6 +25,7 @@ export const normalise = (username: string) => username.trim().toLowerCase().rep
 /** Why a username / passcode can't be used (null if fine). Matches the database's own check. */
 export function problemWith(username: string, passcode: string): string | null {
   if (!/^[a-z0-9_]{3,16}$/.test(username)) return 'Usernames are 3–16 letters, numbers or underscores';
+  if (isOffensive(username)) return 'That username isn’t allowed. Pick another';
   if (passcode.length < 6) return 'Passcodes need at least 6 characters';
   return null;
 }
@@ -36,7 +38,7 @@ function explain(e: AuthError | Error | null): string {
   if (/password should be|weak password/i.test(m)) return 'Pick a longer passcode (at least 6 characters)';
   if (/rate limit|too many/i.test(m)) return 'Too many tries. Wait a minute and try again';
   if (/fetch|network|failed to/i.test(m)) return 'Can’t reach the account server. Check your connection';
-  if (/database error saving new user/i.test(m)) return 'That username can’t be used';
+  if (/database error saving new user/i.test(m)) return 'That username isn’t allowed. Pick another';
   return m || 'Something went wrong. Try again';
 }
 

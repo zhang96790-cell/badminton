@@ -14,6 +14,8 @@ import { Practice, feedShot, type FeedType, type Session } from './practice';
 import { Tutorial } from './tutorial';
 import { Playback, Recorder } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
+import type { GameMsg, ServerMsg } from './net';
+import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
 import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
@@ -48,8 +50,9 @@ export interface Settings {
 }
 
 /** 'feed' = practice/tutorial: you move freely while the coach gets the next shuttle ready. */
-export type GameState = 'serve' | 'rally' | 'point' | 'challenge' | 'interval' | 'gameBreak' | 'replay' | 'matchOver' | 'feed';
-export type Mode = 'match' | 'practice' | 'tutorial';
+/** 'wait' = online: the shuttle reached the floor here, waiting to hear whether the other player hit it first. */
+export type GameState = 'serve' | 'rally' | 'point' | 'challenge' | 'interval' | 'gameBreak' | 'replay' | 'matchOver' | 'feed' | 'wait';
+export type Mode = 'match' | 'practice' | 'tutorial' | 'online';
 
 export type GameEvent =
   | { type: 'hit'; strength: number }
@@ -128,9 +131,27 @@ export class Game {
   private lastShot: { label: string; hand: Contact['hand'] | 'serve'; netCord: boolean } | null = null;
   /** Index (and stable id) of whoever hit last, for per-player stats. */
   private lastHitterId = 0;
+  /** Online match: the room connection and whether this screen referees. Null otherwise. */
+  readonly online: OnlineLink | null;
+  /** Online: the other player's connection dropped (play waits for them). */
+  peerAway = false;
+  /** Online: who paused. */
+  pausedBy: 'you' | 'opponent' | null = null;
+  /** Online: set when the other player left or forfeited (index of the winner). */
+  forfeitWinner: 0 | 1 | null = null;
+  /** Online: you've asked for a rematch and are waiting for the other player. */
+  rematchAsked = false;
+  private unsubscribe: (() => void) | null = null;
+  private posT = 0;
+  private jumped = false;
+  private lastSentPos = '';
+  private lastChat = -9;
 
-  constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match') {
-    const drill = mode !== 'match';
+  constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null) {
+    this.online = online;
+    const drill = mode === 'practice' || mode === 'tutorial';
+    // Online is singles for now (doubles comes in 2.1).
+    if (online) settings = { ...settings, event: 'singles' };
     if (drill) settings = { ...settings, opponent: 'medium', event: 'singles' };
     // The tutorial teaches timing with the light, so it's always on there.
     if (mode === 'tutorial') settings = { ...settings, timingLight: true };
@@ -138,11 +159,14 @@ export class Game {
     if (settings.event === 'doubles' && settings.opponent === 'human') settings = { ...settings, opponent: 'medium' };
     this.settings = settings;
     const doubles = this.doubles = settings.event === 'doubles';
-    const vsAI = settings.opponent !== 'human';
+    // One player on this keyboard: against the CPU, or online (the other player is on their own computer).
+    const vsAI = settings.opponent !== 'human' || !!online;
     this.match = new Match(RULES.formats[settings.points], settings.games === 1 ? 1 : 2, doubles);
     this.officials = createOfficials(doubles);
     const p1 = new Player(-1, vsAI ? 'You' : 'P1', VISUAL.colors.p1, vsAI ? 'Player' : 'Player one');
-    const p2 = new Player(1, drill ? 'Coach' : doubles ? 'CPU 1' : vsAI ? 'CPU' : 'P2', VISUAL.colors.p2, doubles ? 'C P U one' : vsAI ? 'C P U' : 'Player two');
+    const p2 = online
+      ? new Player(1, online.opponentName, VISUAL.colors.p2, online.opponentName.replace(/_/g, ' '))
+      : new Player(1, drill ? 'Coach' : doubles ? 'CPU 1' : vsAI ? 'CPU' : 'P2', VISUAL.colors.p2, doubles ? 'C P U one' : vsAI ? 'C P U' : 'Player two');
     this.players = [p1, p2];
     if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
     this.players.forEach((p, i) => { p.id = i; });
@@ -151,7 +175,9 @@ export class Game {
     const c1: Controller = settings.p1Control === 'mouse'
       ? new MouseController(input, this.p1Keys, p1, camera)
       : new KeyboardController(input, this.p1Keys, p1, settings.p1Control === 'hybrid' ? camera : undefined);
-    const c2: Controller = drill
+    const c2: Controller = online
+      ? new RemoteController(p2)
+      : drill
       ? { poll: () => ({ move: { x: 0, y: 0 }, jump: false, shot: null }) } // the coach only feeds
       : vsAI
         ? new AIController(this, p2, settings.opponent as Level, settings.style)
@@ -171,9 +197,17 @@ export class Game {
       this.session.start(this);
       return;
     }
+    if (online) {
+      // The host serves first; on the guest's screen the host is the far player.
+      this.match.server = online.host ? 0 : 1;
+      this.unsubscribe = online.conn.on((m) => this.onNet(m));
+    }
     this.say('umpire', gameStartCall(1, this.match.gamesToWin));
     this.startServe();
   }
+
+  /** Stop listening to the room (the match is over or abandoned). */
+  dispose() { this.unsubscribe?.(); this.unsubscribe = null; }
 
   // ── Practice / tutorial hooks ──────────────────────────────────────────────
 
@@ -246,6 +280,7 @@ export class Game {
   get server(): Player { return this.players[this.match.serverIdx()]; }
   get receiver(): Player { return this.players[this.match.receiverIdx()]; }
   get opponentLabel(): string {
+    if (this.online) return `Online · room ${this.online.conn.code}`;
     const o = this.settings.opponent;
     if (o === 'human') return '2 Player';
     return `CPU ${o[0].toUpperCase()}${o.slice(1)}${this.doubles ? ' pair' : ''} · ${STYLES[this.settings.style].label}`;
@@ -263,7 +298,8 @@ export class Game {
   teamColor(t: 0 | 1): string { return this.players[t].color; }
   /** The last shot played (for the doubles AI's attack / defence formations). */
   get lastShotLabel(): string { return this.lastShot?.label ?? ''; }
-  isHuman(i: number): boolean { return !(this.controllers[i] instanceof AIController); }
+  /** Played by someone at this computer (not the CPU, and not the online opponent). */
+  isHuman(i: number): boolean { const c = this.controllers[i]; return !(c instanceof AIController) && !(c instanceof RemoteController); }
   /** Short lockout so the key that ended the last rally doesn't instantly serve. */
   canServe(): boolean { return this.state === 'serve' && this.timer <= 0; }
 
@@ -275,7 +311,7 @@ export class Game {
   }
 
   update(realDt: number) {
-    if (this.paused) return;
+    if (this.paused || this.peerAway) return;
     const real = Math.min(realDt, 0.05);
     const dt = real * PHYSICS.gameSpeed;
     if (this.callout) { this.callout.t += dt; if (this.callout.t > 1.8) this.callout = null; }
@@ -298,6 +334,7 @@ export class Game {
     }
 
     const cmds = this.controllers.map((c) => c.poll(dt));
+    if (this.online) this.sendPos(dt, cmds[0].jump);
     if (this.session) this.clockRunning = false;
     if (this.clockRunning && (this.state === 'point' || this.state === 'serve')) {
       this.clock -= real;
@@ -313,6 +350,10 @@ export class Game {
         if (this.state === 'feed' && this.timer <= 0) this.doPending();
         break;
       case 'rally': this.updateRally(dt, cmds); break;
+      case 'wait':
+        // Keep moving: the other player may still have reached it.
+        this.players.forEach((p, i) => p.update(dt, cmds[i].move, cmds[i].jump));
+        break;
       case 'point':
         this.settle(dt);
         this.pointT += dt;
@@ -349,7 +390,8 @@ export class Game {
     this.greatPoint = false;
     this.autoReplayed = false;
     for (const o of this.officials) o.signal = 'none';
-    if (!this.clockRunning && !this.session) { this.clock = OFFICIALS.shotClock; this.clockRunning = true; }
+    if (!this.clockRunning && !this.session && !this.online) { this.clock = OFFICIALS.shotClock; this.clockRunning = true; }
+    if (this.controllers[1] instanceof RemoteController) this.controllers[1].reset();
     const right = this.match.serverInRightCourt();
     const srv = this.server, rcv = this.receiver;
     const sCourt = right ? rightCourtSign(srv.side) : -rightCourtSign(srv.side);
@@ -404,6 +446,7 @@ export class Game {
     this.stats.shots.push({ by: idx, pid: srv.id, label: shot.label, speedKmh: shot.speedKmh, hand: 'serve', landing: this.predicted });
     this.announce(srv, shot, null);
     this.events.push({ type: 'hit', strength: 0.3 });
+    if (this.online) this.sendHit(from, shot.velocity, shot.label, shot.speedKmh, 'serve', '', true);
   }
 
   // ── Rally ──────────────────────────────────────────────────────────────────
@@ -484,6 +527,8 @@ export class Game {
         if (!p.swing || sh.lastHitter === p.side || sh.touchedNet || sh.pos.y * p.side <= 0) continue;
         // Doubles: only the receiver may return the serve.
         if (this.doubles && sh.isServe && p !== this.receiver) continue;
+        // Online: the other player's hits arrive as messages from their screen.
+        if (this.online && i !== 0) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt);
         if (!c) continue;
         const ctrl = this.controllers[i];
@@ -512,7 +557,9 @@ export class Game {
         this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted, hitter: p });
         if (this.teamOf(i) === 1) this.maybeSwitch();
         const perfectJump = this.isHuman(i) && /Jump smash/.test(shot.label) && isPerfectJump(c);
-        this.announce(p, shot, `${perfectJump ? 'PERFECT JUMP' : c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`);
+        const detail = `${perfectJump ? 'PERFECT JUMP' : c.timingLabel}${c.hand !== 'forehand' ? ` · ${c.hand}` : ''}${p.assisted ? ' · assisted' : ''}`;
+        this.announce(p, shot, detail);
+        if (this.online) this.sendHit(c.point, shot.velocity, shot.label, shot.speedKmh, c.hand, detail, false);
         if (perfectJump) { this.cheer = Math.max(this.cheer, 0.6); this.events.push({ type: 'applause', intensity: 0.5 }); }
         this.events.push({ type: 'hit', strength: Math.min(1, shot.speedKmh / 300) });
         break;
@@ -527,7 +574,8 @@ export class Game {
       sh.pos.z = 0;
       sh.inFlight = false;
       this.events.push({ type: 'land' });
-      this.endRally({ x: sh.pos.x, y: sh.pos.y });
+      if (this.online) this.onlineLanding({ x: sh.pos.x, y: sh.pos.y });
+      else this.endRally({ x: sh.pos.x, y: sh.pos.y });
     }
   }
 
@@ -592,7 +640,8 @@ export class Game {
       const truthIn = signed >= -COURT.footprint;
       // Line judges are human: shuttles right on the edge are sometimes miscalled.
       const edge = Math.abs(signed + COURT.footprint);
-      const wrong = edge < OFFICIALS.errorBand && chance(OFFICIALS.maxErrorChance * (1 - edge / OFFICIALS.errorBand));
+      // Online there are no challenges, so the line judges get every call right.
+      const wrong = !this.online && edge < OFFICIALS.errorBand && chance(OFFICIALS.maxErrorChance * (1 - edge / OFFICIALS.errorBand));
       const callIn = wrong ? !truthIn : truthIn;
       const judge = judgeFor(this.officials, land, rect);
       line = { landing: land, rect, signed, truthIn, callIn, hitter: hIdx, isServe: sh.isServe, challenged: false, judge };
@@ -627,15 +676,21 @@ export class Game {
     this.cheer = Math.min(1, intensity);
     this.events.push({ type: 'applause', intensity: Math.min(1, intensity) });
     this.pointsSinceReplay++;
-    this.greatPoint = this.pointsSinceReplay >= REPLAY.autoCooldown
+    this.greatPoint = !this.online && this.pointsSinceReplay >= REPLAY.autoCooldown
       && (this.rallyHits >= REPLAY.autoMinRally || (spectacular && this.rallyHits >= 6) || (!!line && Math.abs(line.signed) < 0.03) || (hitterWins && !!this.lastShot?.netCord));
 
     this.state = 'point';
     this.pointT = 0;
     this.timer = RULES.pointPause + (this.challengeOpenFor(line) ? RULES.challengeWindow : 0);
     this.clock = OFFICIALS.shotClock;
-    this.clockRunning = true;
+    this.clockRunning = !this.online;
     this.aiChallengeAt = null;
+    if (this.online?.host) {
+      this.online.conn.send({
+        type: 'point', winner, land: [land.x, land.y], title, why, callIn: line ? line.callIn : null,
+        scores: [...this.match.scores], games: [...this.match.games],
+      });
+    }
     if (line) {
       const loser = (line.callIn ? 1 - line.hitter : line.hitter) as 0 | 1;
       const ai = this.controllers[loser];
@@ -658,6 +713,7 @@ export class Game {
   }
 
   private challengeOpenFor(line: LineCall | null): boolean {
+    if (this.online) return false;
     if (!line || Math.abs(line.signed) > OFFICIALS.challengeRange) return false;
     const loser = line.callIn ? 1 - line.hitter : line.hitter;
     return this.isHuman(loser) && this.challenges[loser] > 0;
@@ -778,6 +834,8 @@ export class Game {
 
   /** R: replay the last rally (or skip the replay that's playing). */
   toggleReplay() {
+    // Online, a replay would pause this screen while the other player carries on.
+    if (this.online && this.state !== 'matchOver') return;
     if (this.state === 'replay') { this.endReplay(); return; }
     if (['point', 'serve', 'interval', 'gameBreak', 'matchOver', 'feed'].includes(this.state) && this.recorder.frames.length > 10) {
       this.startReplay(false);
@@ -858,8 +916,8 @@ export class Game {
   }
 
   /** A doubles call ("Mine!" / "Yours!"). Only your partner's calls are spoken. */
-  shout(p: Player, text: string) {
-    p.shout = { text, t: 0 };
+  shout(p: Player, text: string, ttl = DOUBLES.shoutTime) {
+    p.shout = { text, t: 0, ttl };
     const i = this.players.indexOf(p);
     if (i >= 0 && this.teamOf(i) === 0 && !this.isHuman(i)) this.events.push({ type: 'say', who: 'partner', text });
   }
@@ -888,6 +946,173 @@ export class Game {
     this.controllers[0].bind?.(b);
     this.controllers[2].bind?.(a);
     this.match.swapIndices(0, 2);
+  }
+
+  // ── Online ─────────────────────────────────────────────────────────────────
+
+  /** Tell the other screen where you are (about 15 times a second, only when something changed). */
+  private sendPos(dt: number, jump: boolean) {
+    if (jump) this.jumped = true;
+    this.posT += dt;
+    if (this.posT < PHYSICS.gameSpeed / 15) return;
+    this.posT = 0;
+    if (this.state !== 'rally' && this.state !== 'wait') return;
+    const p = this.players[0];
+    const r = (n: number) => Math.round(n * 100) / 100;
+    const msg = { type: 'pos' as const, x: r(p.pos.x), y: r(p.pos.y), z: r(p.z), vx: r(p.vel.x), vy: r(p.vel.y), charge: p.charge === null ? null : r(p.charge), jump: this.jumped };
+    const key = `${msg.x},${msg.y},${msg.z},${msg.charge},${msg.jump}`;
+    if (key === this.lastSentPos) return;
+    this.lastSentPos = key;
+    this.jumped = false;
+    this.online!.conn.send(msg);
+  }
+
+  private sendHit(p: V3, v: V3, label: string, kmh: number, hand: string, detail: string, serve: boolean) {
+    const r = (n: number) => Math.round(n * 1000) / 1000;
+    this.online!.conn.send({ type: 'hit', p: [r(p.x), r(p.y), r(p.z)], v: [r(v.x), r(v.y), r(v.z)], label, kmh: Math.round(kmh), hand, detail, serve });
+  }
+
+  /** The shuttle reached the floor on this screen. Whoever owns that side knows nobody there hit it. */
+  private onlineLanding(land: V2) {
+    const o = this.online!, sh = this.shuttle;
+    if (land.y < 0) {
+      if (o.host) this.endRally(land);
+      // Sent in this screen's view, like every message: the host turns it round on arrival.
+      else { o.conn.send({ type: 'land', p: [land.x, land.y], net: sh.touchedNet, wide: sh.wide }); this.state = 'wait'; }
+    } else this.state = 'wait';
+  }
+
+  private onNet(m: GameMsg | ServerMsg) {
+    const o = this.online!;
+    switch (m.type) {
+      case 'pos':
+        (this.controllers[1] as RemoteController).update(flip2(m.x, m.y), m.charge, m.jump);
+        break;
+      case 'hit': this.applyRemoteHit(m); break;
+      case 'land': {
+        // Host only: the guest says the shuttle landed on their side untouched.
+        if (!o.host || (this.state !== 'rally' && this.state !== 'wait')) break;
+        const sh = this.shuttle, p = flip2(m.p[0], m.p[1]);
+        sh.touchedNet ||= m.net;
+        sh.wide ||= m.wide;
+        sh.pos = { x: p.x, y: p.y, z: 0 };
+        sh.inFlight = false;
+        this.endRally(p);
+        break;
+      }
+      case 'point': if (!o.host) this.applyRemotePoint(m); break;
+      case 'chat': if (CHAT[m.i]) this.shout(this.players[1], CHAT[m.i], 2.5); break;
+      case 'pause': this.paused = m.on; this.pausedBy = m.on ? 'opponent' : null; break;
+      case 'forfeit': this.winByForfeit(); break;
+      case 'peer':
+        if (m.status === 'away') this.peerAway = true;
+        else if (m.status === 'back') this.peerAway = false;
+        else this.winByForfeit();
+        break;
+    }
+  }
+
+  /** The other player hit the shuttle (or served) on their screen. */
+  private applyRemoteHit(m: Extract<GameMsg, { type: 'hit' }>) {
+    // Still in the pause after the last point here: catch up to their serve.
+    if (m.serve) for (let k = 0; k < 4 && this.state !== 'serve' && this.state !== 'matchOver'; k++) this.advance();
+    if (this.state === 'matchOver') return;
+    const me = this.players[0], opp = this.players[1], sh = this.shuttle;
+    const pos = flip3(m.p), vel = flip3(m.v);
+    if (this.state === 'serve') {
+      this.serveBox = serviceBox(me.side, this.match.serverInRightCourt(), false);
+      for (const p of this.players) { p.frozen = false; p.serving = null; }
+      this.recorder.reset();
+      this.rallyHits = 0;
+    }
+    this.state = 'rally';
+    this.acc = 0;
+    sh.launch(pos, vel, opp.side, m.serve);
+    this.predict();
+    opp.onHit(pos, m.serve);
+    me.splitStep();
+    this.rallyHits++;
+    this.lastContact = null;
+    const hand = m.serve ? 'serve' : (m.hand as Contact['hand']);
+    this.lastShot = { label: m.label, hand, netCord: false };
+    this.lastHitterId = opp.id;
+    this.stats.shots.push({ by: 1, pid: opp.id, label: m.label, speedKmh: m.kmh, hand, landing: this.predicted });
+    this.announce(opp, { velocity: vel, label: m.label, speedKmh: m.kmh }, m.detail || null);
+    this.events.push({ type: 'hit', strength: m.serve ? 0.3 : Math.min(1, m.kmh / 300) });
+    // Same notice a local hit gives (only the timing details of their contact aren't known here).
+    const contact: Contact = { point: pos, side: opp.side, hand: hand === 'serve' ? 'forehand' : hand, airborne: false, timing: 1, timingLabel: 'Perfect', timingError: 0, stretch: 0, apex: false };
+    this.observe({ type: 'hit', by: opp.side, contact, label: m.label, landing: this.predicted, hitter: opp });
+  }
+
+  /** Guest: the host's verdict on the rally. */
+  private applyRemotePoint(m: Extract<GameMsg, { type: 'point' }>) {
+    const winner = (1 - m.winner) as 0 | 1, sh = this.shuttle;
+    const land = m.land ? flip2(m.land[0], m.land[1]) : null;
+    if (land) sh.pos = { x: land.x, y: land.y, z: 0 };
+    sh.inFlight = false;
+    this.predicted = null;
+    this.recorder.markLanding();
+    const hitter = (sh.lastHitter === this.players[0].side ? 0 : 1) as 0 | 1;
+    const hitterWins = winner === hitter;
+    this.stats.rallies.push({
+      shots: this.rallyHits, winner, hitter, hitterPid: this.lastHitterId, kind: hitterWins ? 'winner' : 'error', forced: false,
+      lastLabel: this.lastShot?.label ?? '', lastHand: this.lastShot?.hand ?? 'serve',
+    });
+    this.call = null;
+    this.landing = land ? { p: land, call: m.callIn === null ? null : m.callIn ? 'IN' : 'OUT', t: 0 } : null;
+    if (m.callIn === false) this.say('line', 'Out!');
+    this.longestRally = Math.max(this.longestRally, this.rallyHits);
+    this.prevServer = this.match.server;
+    this.outcome = this.match.award(winner);
+    // The host's score is the real one: line up with it if anything drifted.
+    this.match.scores = [m.scores[1], m.scores[0]];
+    this.match.games = [m.games[1], m.games[0]];
+    this.banner = { title: m.title, sub: `${m.why ? `${m.why} · ` : ''}Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
+    this.events.push({ type: 'point' });
+    const intensity = clamp((this.rallyHits - 3) / 14, 0.12, 1);
+    this.cheer = intensity;
+    this.events.push({ type: 'applause', intensity });
+    this.greatPoint = false;
+    this.aiChallengeAt = null;
+    this.observe({ type: 'rally', winner: this.players[winner].side });
+    this.state = 'point';
+    this.pointT = 0;
+    this.timer = RULES.pointPause;
+  }
+
+  /** The other player left or gave up: you win. */
+  private winByForfeit() {
+    if (this.state === 'matchOver') return;
+    this.forfeitWinner = 0;
+    this.peerAway = false;
+    this.paused = false;
+    this.pausedBy = null;
+    this.state = 'matchOver';
+    this.banner = null;
+    this.stats.finish();
+    this.say('umpire', `${this.players[1].voiceName} retired. Match won by player.`, true);
+  }
+
+  /** Quick chat (online): a preset line over your head and theirs. */
+  sendChat(i: number) {
+    if (!this.online || !CHAT[i] || this.stats.seconds - this.lastChat < 1.5) return;
+    this.lastChat = this.stats.seconds;
+    this.shout(this.players[0], CHAT[i], 2.5);
+    this.online.conn.send({ type: 'chat', i });
+  }
+
+  /** Online pause: only between points, so both screens stop in the same place. */
+  setOnlinePause(on: boolean): boolean {
+    if (!this.online) return false;
+    if (on && (this.state === 'rally' || this.state === 'wait')) {
+      this.banner = { title: 'Pause between points', sub: 'You can pause once this rally is over', color: VISUAL.colors.hud, t: 0 };
+      return false;
+    }
+    if (!on && this.pausedBy === 'opponent') return false;
+    this.paused = on;
+    this.pausedBy = on ? 'you' : null;
+    this.online.conn.send({ type: 'pause', on });
+    return true;
   }
 
   private observe(o: Observation) {

@@ -678,3 +678,22 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .tour-actions button.primary { background: var(--card-ink); color: var(--card); }
 .tour-actions .tour-skip { border: 0; padding: 8px 0; font: 600 14px/1 var(--text); letter-spacing: 0; text-transform: none; color: var(--card-ink-2); text-decoration: underline; text-underline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
+
+/* ── Online: Court 4 and the room lobby ─────────────────────────────────── */
+.act-pair { display: flex; gap: 8px; }
+#roomModal { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 20px; background: rgba(4, 10, 28, 0.72); }
+#roomModal.hidden { display: none; }
+.room-code { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 12px 14px; border-radius: 6px; background: rgba(12, 34, 89, 0.06); }
+.room-code span { font: 700 12px/1 var(--text); letter-spacing: 0.14em; text-transform: uppercase; color: var(--card-ink-2); }
+.room-code b { grid-row: 2; font: 800 40px/1 var(--display); letter-spacing: 0.18em; color: var(--card-ink); }
+.room-code button { grid-row: 1 / 3; grid-column: 2; padding: 9px 12px; border: 1px solid var(--card-ink); border-radius: 5px; background: transparent; font: 700 13px/1 var(--text); letter-spacing: 0.06em; text-transform: uppercase; color: var(--card-ink); }
+.room-code button:hover { background: var(--card-ink); color: var(--card); }
+.room-players { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.room-players li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--card-rule); border-radius: 6px; font: 600 16px/1.2 var(--text); }
+.room-players li::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--card-rule); flex: none; }
+.room-players li.on::before { background: #1f9d55; }
+.room-players li.away::before { background: #d97706; }
+.room-players li em { margin-left: auto; font-style: normal; font: 700 11px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--card-ink-2); }
+#roomLobby .seg.locked button { pointer-events: none; }
+#roomLobby .seg.locked button:not(.on) { opacity: 0.45; }
+.pass-actions button:disabled { opacity: 0.4; cursor: default; }

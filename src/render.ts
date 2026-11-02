@@ -85,10 +85,8 @@ export class Renderer {
         game.players.forEach((p, i) => { if (game.isHuman(i)) items.push({ d: -1, draw: () => this.timingLight(game, i) }); });
       }
       items.push({ d: cam.depth(scene.shuttle.pos), draw: () => this.shuttle(scene.shuttle, w) });
-      if (scene.live && game.doubles) {
-        items.push({ d: -2, draw: () => this.youTag(game) });
-        for (const p of game.players) if (p.shout) items.push({ d: -2, draw: () => this.shoutBubble(p) });
-      }
+      if (scene.live && game.doubles) items.push({ d: -2, draw: () => this.youTag(game) });
+      if (scene.live) for (const p of game.players) if (p.shout) items.push({ d: -2, draw: () => this.shoutBubble(p) });
     }
     items.sort((a, b) => b.d - a.d).forEach((i) => i.draw());
     this.vignette(w, h);
@@ -320,11 +318,11 @@ export class Renderer {
   }
 
   /** "Mine!" / "Yours!" speech bubble over a player. */
-  private shoutBubble(p: { pos: V2; z: number; color: string; shout: { text: string; t: number } | null }) {
+  private shoutBubble(p: { pos: V2; z: number; color: string; shout: { text: string; t: number; ttl: number } | null }) {
     if (!p.shout) return;
     const q = this.cam.project(v3(p.pos.x, p.pos.y, p.z + 2.15));
     const ctx = this.ctx;
-    const a = Math.min(1, (0.9 - p.shout.t) / 0.2);
+    const a = Math.min(1, (p.shout.ttl - p.shout.t) / 0.2);
     ctx.globalAlpha = Math.max(0, a);
     ctx.font = '900 15px ui-sans-serif, system-ui, sans-serif';
     ctx.textAlign = 'center';

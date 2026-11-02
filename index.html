@@ -88,6 +88,7 @@
         <footer class="board-foot">
           <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
           <div class="foot-links">
+            <button id="kitBtn" class="link" aria-controls="kitcard" aria-expanded="false">Assists &amp; controls</button>
             <button id="howBtn" class="link">How to play</button>
             <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
           </div>
@@ -101,13 +102,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
         </header>
-        <nav class="mc-tabs" role="tablist">
-          <button role="tab" data-tab="match" aria-selected="true">Match</button>
-          <button role="tab" data-tab="assists" aria-selected="false">Assists</button>
-          <button role="tab" data-tab="controls" aria-selected="false">Controls</button>
-        </nav>
-
-        <section class="mc-pane" data-pane="match">
+        <section class="mc-pane">
           <div class="field">
             <h3>Opponent</h3>
             <div class="seg" data-group="opponent">
@@ -126,14 +121,6 @@
               <button data-value="attacker">Attacker</button>
               <button data-value="defender">Defender</button>
               <button data-value="net">Net player</button>
-            </div>
-          </div>
-          <div class="field">
-            <h3>Player 1 controls</h3>
-            <div class="seg" data-group="p1Control">
-              <button data-value="mouse">Keyboard + mouse</button>
-              <button data-value="hybrid">Keys + trackpad aim</button>
-              <button data-value="keyboard">Keyboard only</button>
             </div>
           </div>
           <div class="field-row">
@@ -160,8 +147,21 @@
             </div>
           </div>
         </section>
+      </aside>
 
-        <section class="mc-pane" data-pane="assists" hidden>
+      <aside id="kitcard" class="matchcard" aria-label="Assists and controls" aria-hidden="true">
+        <header class="mc-head">
+          <h2>Assists &amp; controls</h2>
+          <button id="kitClose" class="mc-close" aria-label="Close assists and controls">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+        <nav class="mc-tabs" role="tablist">
+          <button role="tab" data-tab="assists" aria-selected="true">Assists</button>
+          <button role="tab" data-tab="controls" aria-selected="false">Controls</button>
+        </nav>
+
+        <section class="mc-pane" data-pane="assists">
           <div class="field">
             <h3>Landing marker</h3>
             <p class="help">A ring on the floor where the shuttle will come down.</p>
@@ -185,6 +185,14 @@
         </section>
 
         <section class="mc-pane" data-pane="controls" hidden>
+          <div class="field">
+            <h3>Player 1 control mode</h3>
+            <div class="seg" data-group="p1Control">
+              <button data-value="mouse">Keyboard + mouse</button>
+              <button data-value="hybrid">Keys + trackpad aim</button>
+              <button data-value="keyboard">Keyboard only</button>
+            </div>
+          </div>
           <div class="controls" id="controls"></div>
         </section>
       </aside>

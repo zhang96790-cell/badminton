@@ -30,7 +30,9 @@ Amber is the only warm colour and marks what to do next. Don't spread it to seco
   column heads, three court rows (`84px 188px 1fr auto`), keyboard-notice slot, then a footer with shortcuts and links.
 - ≤760px: rows restack (numeral on the left; event, match and actions below), the footer stacks, and the View/Fullscreen
   bar hides while the menu is open.
-- The match card is `min(470px, 100%)` wide, with tabs for Match, Assists and Controls. Esc closes it.
+- Two side drawers share the `.matchcard` style, `min(470px, 100%)` wide, and only one is open at a time. Esc closes it.
+  - **Match card** (Edit match card on Court 1): match settings only (opponent, CPU style, format, accuracy). No tabs.
+  - **Assists & controls** (footer link; How to play opens its Controls tab): Assists tab, and a Controls tab with the control mode above the shot table.
 
 ## Motion
 - Rows flip in like a split-flap board (clip-path, staggered). Text that changes (opponent, format, event) flips via `flip()` in main.ts.

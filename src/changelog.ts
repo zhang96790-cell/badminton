@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.5.1',
+    title: 'Assists & controls panel',
+    date: '2 Nov 2026',
+    changes: [
+      'The match card now only has match settings: opponent, CPU style, format and accuracy.',
+      'Assists and controls have their own panel. Open it with Assists & controls (or How to play) at the bottom of the start screen. The control mode picker is on its Controls tab, above the shot table.',
+    ],
+  },
+  {
     version: '1.5',
     title: 'New start screen',
     date: '2 Nov 2026',

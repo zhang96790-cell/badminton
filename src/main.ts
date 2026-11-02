@@ -168,32 +168,45 @@ function describeFormat() {
 const today = new Date();
 document.getElementById('today')!.textContent = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
-// Match card: the settings drawer, with Match / Assists / Controls tabs.
-const card = document.getElementById('matchcard')!;
-const cardBtn = document.getElementById('cardBtn')!;
+// Two side drawers: the match card (match settings) and Assists & controls (tabs). One open at a time.
+const drawers = {
+  card: { el: document.getElementById('matchcard')!, btn: document.getElementById('cardBtn')! },
+  kit: { el: document.getElementById('kitcard')!, btn: document.getElementById('kitBtn')! },
+};
+type DrawerName = keyof typeof drawers;
 function showTab(name: string) {
-  card.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
-  card.querySelectorAll<HTMLElement>('.mc-pane').forEach((p) => { p.hidden = p.dataset.pane !== name; });
+  const el = drawers.kit.el;
+  el.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
+  el.querySelectorAll<HTMLElement>('.mc-pane').forEach((p) => { p.hidden = p.dataset.pane !== name; });
 }
-function openCard(tab = 'match') {
-  showTab(tab);
-  card.classList.add('open');
-  card.setAttribute('aria-hidden', 'false');
-  cardBtn.setAttribute('aria-expanded', 'true');
-  card.querySelector<HTMLButtonElement>(`[data-tab="${tab}"]`)?.focus();
+function openDrawer(name: DrawerName, tab?: string) {
+  closeDrawers();
+  const { el, btn } = drawers[name];
+  if (tab) showTab(tab);
+  el.classList.add('open');
+  el.setAttribute('aria-hidden', 'false');
+  btn.setAttribute('aria-expanded', 'true');
+  el.querySelector<HTMLButtonElement>(tab ? `[data-tab="${tab}"]` : '.mc-close')?.focus();
 }
-function closeCard() {
-  if (!card.classList.contains('open')) return false;
-  card.classList.remove('open');
-  card.setAttribute('aria-hidden', 'true');
-  cardBtn.setAttribute('aria-expanded', 'false');
-  return true;
+function closeDrawers() {
+  let closed = false;
+  for (const { el, btn } of Object.values(drawers)) {
+    if (!el.classList.contains('open')) continue;
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    closed = true;
+  }
+  return closed;
 }
-cardBtn.addEventListener('click', () => (card.classList.contains('open') ? closeCard() : openCard()));
-document.getElementById('cardClose')!.addEventListener('click', () => { closeCard(); cardBtn.focus(); });
-document.getElementById('howBtn')!.addEventListener('click', () => openCard('controls'));
-card.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab!)));
-addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && modal.classList.contains('hidden')) closeCard(); });
+const isOpen = (name: DrawerName) => drawers[name].el.classList.contains('open');
+drawers.card.btn.addEventListener('click', () => (isOpen('card') ? closeDrawers() : openDrawer('card')));
+drawers.kit.btn.addEventListener('click', () => (isOpen('kit') ? closeDrawers() : openDrawer('kit', 'assists')));
+document.getElementById('cardClose')!.addEventListener('click', () => { closeDrawers(); drawers.card.btn.focus(); });
+document.getElementById('kitClose')!.addEventListener('click', () => { closeDrawers(); drawers.kit.btn.focus(); });
+document.getElementById('howBtn')!.addEventListener('click', () => openDrawer('kit', 'controls'));
+drawers.kit.el.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab!)));
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && modal.classList.contains('hidden')) closeDrawers(); });
 
 /** Menu values are strings; settings hold numbers and booleans. */
 const parse = (v: string): string | number | boolean => (v === 'true' ? true : v === 'false' ? false : /^\d+$/.test(v) ? Number(v) : v);
@@ -238,7 +251,7 @@ function startMatch(mode: Mode = 'match') {
   voice.unlock();
   game = new Game({ ...settings }, input, broadcast, mode);
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
-  closeCard();
+  closeDrawers();
   menu.classList.add('hidden');
   (document.activeElement as HTMLElement | null)?.blur();
 }

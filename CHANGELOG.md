@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.5.1: Assists & controls panel (2 Nov 2026)
+
+- The match card now only has match settings: opponent, CPU style, format and accuracy.
+- Assists and controls have their own panel. Open it with Assists & controls (or How to play) at the bottom of the start screen. The control mode picker is on its Controls tab, above the shot table.
+
 ## 1.5: New start screen (2 Nov 2026)
 
 - The start screen is now a tournament Order of Play board: your match is on Court 1, so press Walk on (or Enter) to play.

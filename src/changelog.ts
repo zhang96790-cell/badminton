@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.4',
+    title: 'Updated tour',
+    date: '2 Nov 2026',
+    changes: [
+      'Take the tour is up to date: new stops for your controls, Court 4 (quick match and private rooms), the Social screen with your stats, and the help links at the bottom. It opens Social to show you around and tidies up when it ends.',
+    ],
+  },
+  {
     version: '2.1.3',
     title: 'Choose your controls',
     date: '2 Nov 2026',

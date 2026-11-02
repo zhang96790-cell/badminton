@@ -532,20 +532,22 @@ try {
 
 // ── Tour of the start screen ─────────────────────────────────────────────────
 const tour = new Tour([
-  { target: '.oop-row.live', title: 'Your match', text: 'Your next match is on Court 1: who you’re playing and the scoring. Press Walk on (or Enter) to play.', before: closeDrawers },
+  { target: '.oop-row.live', title: 'Your match', text: 'Court 1 is your next match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play.', before: () => { closeDrawers(); closeSocial(); } },
   { target: '#controlsBtn', title: 'Your controls', text: 'How you play: keyboard and mouse, keys with a trackpad, or keyboard only. Click it any time to switch.' },
   { target: '#matchcard', title: 'Match card', text: 'Edit match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
   { target: '.oop-row:has(#tutorial)', title: 'Tutorial', text: 'New to the game? Court 2 is the tutorial: short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
   { target: '.oop-row:has(#practice)', title: 'Practice', text: 'Court 3 is practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
-  { target: '#kitBtn', title: 'Assists & controls', text: 'This tab on the left edge slides out a panel with your assists and controls. Click it again to put it away.' },
+  { target: '.oop-row:has(#quickMatch)', title: 'Play online', text: 'Court 4. Quick match finds someone near your rating for a ranked game (log in first). Create room gives you a code to send a friend, and Join takes you into theirs.' },
+  { target: '#kitBtn', title: 'Assists & controls', text: 'This tab on the left edge slides out your assists and controls. Click it again to put it away.' },
   { target: '#kitcard', title: 'Assists', text: 'Turn help on or off: the landing marker (on by default), the timing light, swing assist, doubles auto-switch and the umpire’s voice.', before: () => openDrawer('kit', 'assists') },
-  { target: '#kitcard', title: 'Controls and keys', text: 'Choose mouse, trackpad or keyboard-only play, change any key under Your keys, and see how to play every shot.', before: () => openDrawer('kit', 'controls') },
-  { target: '#socialBtn', title: 'Social', text: 'Your career stats (fastest smash, longest rally, streaks and lots more), friends, the leaderboard and your ranked matches.', before: closeDrawers },
-  { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to save your settings, keys and stats, play ranked and add friends.' },
-  { target: '#whatsnewBtn', title: 'What’s new', text: 'Every update is listed here. A NEW badge appears when there’s something you haven’t seen.' },
+  { target: '#kitcard', title: 'Controls and keys', text: 'Switch control mode, change any key under Your keys, and see how to play every shot.', before: () => openDrawer('kit', 'controls') },
+  { target: '#socialBtn', title: 'Social', text: 'Everything about you and other players: your stats, friends, the leaderboard and your ranked matches.', before: () => { closeDrawers(); closeSocial(); } },
+  { target: '.social-panel', title: 'Your stats', text: 'Every finished match adds up: fastest smash, longest rally, win streaks, aces, perfect jumps and more. The tabs along the top have your friends, the top 50 and your ranked history.', before: () => openSocial('overview') },
+  { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to keep your stats and settings on any computer, play ranked and add friends. Once you’re in, it shows your rating.', before: closeSocial },
+  { target: '.board-foot', title: 'Help and updates', text: 'How to play lists every shot and key, Take the tour brings you back here, and What’s new shows every update (with a NEW badge when there’s one you haven’t seen).' },
   { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
-  { target: '#start', title: 'Ready?', text: 'That’s everything. Press Walk on to start your match, or come back to this tour any time from the bottom of the board.' },
-], () => document.getElementById('tourBtn')?.focus());
+  { target: '#start', title: 'Ready?', text: 'That’s everything. Press Walk on to play the CPU, or try Court 4 to play someone online.' },
+], () => { closeSocial(); closeDrawers(); document.getElementById('tourBtn')?.focus(); });
 document.getElementById('tourBtn')!.addEventListener('click', () => { closeAccountIfOpen(); tour.start(); });
 function closeAccountIfOpen() { if (!accountModal.classList.contains('hidden')) accountModal.classList.add('hidden'); }
 

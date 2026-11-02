@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.4: Updated tour (2 Nov 2026)
+
+- Take the tour is up to date: new stops for your controls, Court 4 (quick match and private rooms), the Social screen with your stats, and the help links at the bottom. It opens Social to show you around and tidies up when it ends.
+
 ## 2.1.3: Choose your controls (2 Nov 2026)
 
 - Pick your controls first: the first time you open the game, a How do you want to play? screen lets you choose Keyboard + mouse, Keys + trackpad or Keyboard only, with the keys for each.

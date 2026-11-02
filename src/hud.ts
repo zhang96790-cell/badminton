@@ -93,6 +93,23 @@ export class Hud {
       ctx.fillText(`H — Challenge with Hawk-Eye (${n} left)`, w / 2, y + 26);
     }
 
+    // Commentary: text only, at the top.
+    const cm = game.commentary;
+    if (cm) {
+      ctx.globalAlpha = Math.min(1, cm.t / 0.25, (4.5 - cm.t) / 0.6);
+      ctx.font = font(15, 600);
+      const tw = ctx.measureText(cm.text).width, bw = tw + 150, x = w / 2 - bw / 2, y = bw > w - 2 * 370 ? 124 : 18;
+      panel(ctx, x, y, bw, 34, 17);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = C.accent;
+      ctx.font = font(10, 800);
+      ctx.fillText('COMMENTARY', x + 16, y + 21);
+      ctx.fillStyle = C.hud;
+      ctx.font = font(15, 600);
+      ctx.fillText(cm.text, x + 120, y + 22);
+      ctx.globalAlpha = 1;
+    }
+
     // Umpire caption
     const cap = game.caption;
     if (cap && cap.t < 4) {
@@ -367,7 +384,9 @@ export class Hud {
     ctx.fillText('MATCH RESULT', x + 28, y + 36);
     ctx.fillStyle = winner.color;
     ctx.font = font(30, 900);
-    const won = winner.name === 'You' ? 'You win!' : wi === 0 && game.doubles ? 'You and your partner win!' : `${winner.name} win${game.doubles ? '' : 's'}`;
+    // Two players on one keyboard are P1 and P2; otherwise player 0 is you.
+    const shared = game.settings.opponent === 'human' && !game.online;
+    const won = wi === 0 && !shared ? (game.doubles ? 'You and your partner win!' : 'You win!') : `${winner.name} win${game.doubles ? '' : 's'}`;
     ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.teamName((1 - wi) as 0 | 1)} left)` : won, x + 28, y + 72);
     // Ranked: how your rating changed (it arrives from the server a moment after the last point).
     if (game.online?.ranked) {

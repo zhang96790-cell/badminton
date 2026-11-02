@@ -554,7 +554,7 @@ export class Renderer {
           ctx.ellipse(q.x, q.y, Math.max(3, 0.13 * q.s), Math.max(2.4, 0.1 * q.s), ang, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(255,255,255,0.14)';
           ctx.fill();
-          ctx.strokeStyle = C.racket;
+          ctx.strokeStyle = v.racket ?? C.racket;
           ctx.lineWidth = Math.max(1.2, 0.014 * q.s);
           ctx.stroke();
         },

@@ -6,6 +6,8 @@ import type { Contact, Hand, ShotRequest, TimingLabel } from './shots';
 export interface PlayerView {
   side: Side;
   color: string;
+  /** Racket frame colour (yours can be customised). */
+  racket?: string;
   /** x sign of the racket hand. */
   racketSide: number;
   pos: V2;
@@ -87,6 +89,9 @@ export class Player implements PlayerView {
   /** A click made during recovery, played as soon as it ends. */
   private queued: { req: ShotRequest; assisted: boolean } | null = null;
   private landLag = 0;
+
+  /** Racket frame colour, if not the standard one. */
+  racket: string | undefined = undefined;
 
   constructor(public side: Side, public name: string, public color: string, public voiceName: string) {
     this.pos = { x: 0, y: side * PLAYER.baseDepth };
@@ -307,7 +312,7 @@ export class Player implements PlayerView {
 
   snapshot(): PlayerView {
     return {
-      side: this.side, color: this.color, racketSide: this.racketSide,
+      side: this.side, color: this.color, racket: this.racket, racketSide: this.racketSide,
       pos: { ...this.pos }, vel: { ...this.vel }, z: this.z, vz: this.vz,
       hand: { ...this.hand }, rdir: { ...this.rdir }, stride: this.stride,
       split: this.split, lunge: this.lunge, lungeDir: { ...this.lungeDir }, charge: this.charge, serving: this.serving,

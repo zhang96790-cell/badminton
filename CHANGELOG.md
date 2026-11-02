@@ -5,7 +5,7 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
-## 2.5: Major improvements (parts 1 and 2 of 3) (2 Nov 2026)
+## 2.5: Major improvements (2 Nov 2026)
 
 - Swing assist only works against a Beginner or Easy CPU now, and every shot it plays for you is tagged ASSIST so it’s clear when the game helped.
 - Performance mode (in Assists & controls) for slow school laptops: a lighter crowd, lower resolution, fewer effects and 30 frames a second. It can also lower the ping you see, because a busy laptop answers the server late.
@@ -17,6 +17,12 @@ of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest c
 - The CPU remembers you: in singles it carries what it learned about your weak spots and favourite targets into your next match on this computer, and tells you what it’s planning at the start.
 - Star challenges (Court 5): seven short scored drills, each worth up to three stars: Drop zone, Smash defence, Deep clears, Tight at the net, Smash attack, Drive battle and Perfect timing. Number keys switch, Enter retries.
 - Achievements: 17 to unlock, from your first win and a 30-shot rally to beating an Expert and 3 stars on every challenge. They pop up as you earn them; see them all in Social → Awards.
+- Your game, evaluated: the Stats tab now opens with your strengths, what to work on, and a drill to try next, worked out from your career (and from what the CPU has noticed about you).
+- Shot heatmaps (Social → Heatmap): where your shots land across every match, practice and challenge, with your last 5 sessions next to all time, and a filter for smashes, drops, clears, net shots and drives.
+- Make it yours (Assists & controls → You): your name on the scoreboard, and your shirt and racket colours.
+- Settings profiles for shared laptops: each friend gets a profile with their own controls, keys, difficulty and look. Switch or add one in the You tab.
+- Text commentary for the big moments: long rallies, huge smashes, comebacks, runs of points, saved game and match points, and the end of each game.
+- Global leaderboards: ranked rating plus wins, fastest smash, longest rally, perfect hits, win streak, challenge stars and achievements (stats count when you’re logged in).
 - Online rooms are singles only for now: online doubles is held back while we make it steadier. Doubles against the CPU is still there.
 
 ## 2.4.1: Reconnect fix (2 Nov 2026)

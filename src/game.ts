@@ -46,6 +46,10 @@ export interface Settings {
   timingLight: boolean;
   /** If you don't swing at all, the game swings for you as the shuttle reaches you (a late hit). */
   swingAssist: boolean;
+  /** Your look: a name for the scoreboard (blank = "You"), shirt and racket colours (blank = standard). */
+  playerName?: string;
+  shirt?: string;
+  racket?: string;
   /** Lighter drawing for slow laptops: smaller crowd, lower resolution, fewer effects, 30 frames a second. */
   performance?: boolean;
   aim: 'realistic' | 'casual';
@@ -208,7 +212,9 @@ export class Game {
     const vsAI = settings.opponent !== 'human' || !!online;
     this.match = new Match(RULES.formats[settings.points], settings.games === 1 ? 1 : 2, doubles);
     this.officials = createOfficials(doubles);
-    const p1 = new Player(-1, vsAI ? 'You' : 'P1', VISUAL.colors.p1, vsAI ? 'Player' : 'Player one');
+    const myName = settings.playerName?.trim();
+    const p1 = new Player(-1, vsAI ? myName || 'You' : 'P1', settings.shirt || VISUAL.colors.p1, vsAI ? myName?.replace(/_/g, ' ') || 'Player' : 'Player one');
+    p1.racket = settings.racket || undefined;
     const p2 = online
       ? new Player(1, online.opponentName, VISUAL.colors.p2, online.opponentName.replace(/_/g, ' '))
       : new Player(1, drill ? 'Coach' : doubles ? 'CPU 1' : vsAI ? 'CPU' : 'P2', VISUAL.colors.p2, doubles ? 'C P U one' : vsAI ? 'C P U' : 'Player two');
@@ -408,6 +414,7 @@ export class Game {
     if (this.banner) { this.banner.t += real; if (this.banner.ttl && this.banner.t > this.banner.ttl) this.banner = null; }
     if (this.landing) this.landing.t += dt;
     if (this.caption) this.caption.t += real;
+    if (this.commentary && (this.commentary.t += real) > 4.5) this.commentary = null;
     this.cheer = Math.max(0, this.cheer - real * 0.3);
     this.stats.tick(real);
     if (!this.session) this.scoreWatch();
@@ -820,7 +827,7 @@ export class Game {
     this.longestRally = Math.max(this.longestRally, this.rallyHits);
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
-    this.outcome = this.match.award(winner);
+    this.outcome = this.awardPoint(winner);
     const why = sh.touchedNet || (!sh.wide && land.y * hitter >= 0) ? this.netFaultReason() : null;
     this.banner = { title, sub: `${why ? `${why} · ` : ''}Point ${this.teamName(winner)}`, color: this.teamColor(winner), t: 0 };
     this.events.push({ type: 'point' });
@@ -1095,7 +1102,7 @@ export class Game {
     const title = 'Red card — delay of service';
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
-    this.outcome = this.match.award(winner);
+    this.outcome = this.awardPoint(winner);
     this.stats.rallies.push({ shots: 0, winner, hitter: s, hitterPid: late.id, kind: 'delay', forced: false, lastLabel: '', lastHand: 'serve' });
     this.call = null;
     this.landing = null;
@@ -1157,6 +1164,56 @@ export class Game {
       comeback: this.comebackBest,
       loveGame: this.loveGames > 0,
     };
+  }
+
+  // ── Commentary (text only) ────────────────────────────────────────────────
+  /** The latest line from the commentator, shown at the top for a few seconds. */
+  commentary: { text: string; t: number } | null = null;
+  private run = { team: -1, n: 0 };
+  /** Game or match points saved in a row by the same side. */
+  private saves = { team: -1, n: 0 };
+  private deficit: [number, number] = [0, 0];
+  private bigSmash = 0;
+
+  /** Score the point, then let the commentator react to it. */
+  private awardPoint(winner: 0 | 1): PointOutcome {
+    const m = this.match, savedFrom = m.atMatchPoint((1 - winner) as 0 | 1) ? 'match' : m.atGamePoint((1 - winner) as 0 | 1) ? 'game' : null;
+    const last = this.stats.shots[this.stats.shots.length - 1];
+    this.bigSmash = last && /smash/i.test(last.label) ? last.speedKmh : 0;
+    const out = m.award(winner);
+    if (!this.session) this.commentate(winner, out, savedFrom);
+    return out;
+  }
+
+  private commentate(w: 0 | 1, out: PointOutcome, savedFrom: 'match' | 'game' | null) {
+    const m = this.match, name = this.teamName(w);
+    const plural = this.doubles || (w === 0 && this.players[0].name === 'You');
+    const s = (verb: string) => (plural ? verb : `${verb}s`), were = plural ? 'were' : 'was';
+    const [a, b] = m.scores, mine = m.scores[w], theirs = m.scores[1 - w];
+    // Points in a row, and the biggest deficit each side has faced this game.
+    this.run = this.run.team === w ? { team: w, n: this.run.n + 1 } : { team: w, n: 1 };
+    if (a + b === 1) this.deficit = [0, 0];
+    this.deficit[0] = Math.max(this.deficit[0], b - a);
+    this.deficit[1] = Math.max(this.deficit[1], a - b);
+    const down = this.deficit[w];
+    const rally = this.rallyHits;
+    let line: string | null = null;
+    if (out.matchOver) line = down >= 5 ? `From ${down} points down, ${name} ${s('win')} it! What a comeback.` : `That’s the match. ${name} ${s('take')} it ${m.games[w]}–${m.games[1 - w]}.`;
+    else if (out.gameOver) line = down >= 4 ? `${name} ${were} ${down} down in that game and still ${s('win')} it, ${mine}–${theirs}!` : `${name} ${s('take')} the game, ${mine}–${theirs}.`;
+    else if (savedFrom) {
+      this.saves = this.saves.team === w ? { team: w, n: this.saves.n + 1 } : { team: w, n: 1 };
+      const what = savedFrom === 'match' ? 'match' : 'game';
+      line = this.saves.n === 1 ? `${what === 'match' ? 'Match' : 'Game'} point saved! ${name} ${s('hang')} on.`
+        : this.saves.n === 3 ? `Three ${what} points saved in a row! ${name} won’t go away.`
+        : mine === theirs ? `Level at ${mine}–${theirs}. Anything can happen now.` : null;
+    }
+    else if (rally >= 25) line = `${rally} shots! What a rally, and ${name} ${s('win')} it.`;
+    else if (this.bigSmash >= 320 && this.teamOf(this.players.findIndex((p) => p.id === this.lastHitterId)) === w) line = `${Math.round(this.bigSmash)} km/h! Nobody’s getting that back.`;
+    else if (rally >= 15) line = `A ${rally}-shot rally goes to ${name}.`;
+    else if (mine === theirs && down >= 4) line = `${name} ${were} ${down} points down. All square now at ${mine}–${theirs}!`;
+    else if (this.run.n === 5 || this.run.n === 8) line = `${this.run.n === 5 ? 'Five' : 'Eight'} points in a row for ${name}.`;
+    else if (m.atMatchPoint(w)) line = `Match point to ${name}.`;
+    if (line) this.commentary = { text: line, t: 0 };
   }
 
   /** Last frame's movement per player, for footstep and squeak sounds. */
@@ -1497,7 +1554,7 @@ export class Game {
     const late = this.players[this.match.serverIdx()];
     this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
-    this.outcome = this.match.award(winner);
+    this.outcome = this.awardPoint(winner);
     // The host's score is the real one: line up with it if anything drifted.
     this.match.scores = [m.scores[this.teamHere(0)], m.scores[this.teamHere(1)]];
     this.match.games = [m.games[this.teamHere(0)], m.games[this.teamHere(1)]];

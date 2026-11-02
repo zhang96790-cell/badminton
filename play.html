@@ -212,6 +212,7 @@
         <nav class="mc-tabs" role="tablist">
           <button role="tab" data-tab="assists" aria-selected="true">Assists</button>
           <button role="tab" data-tab="controls" aria-selected="false">Controls</button>
+          <button role="tab" data-tab="you" aria-selected="false">You</button>
         </nav>
 
         <section class="mc-pane" data-pane="assists">
@@ -266,6 +267,34 @@
             </div>
           </div>
           <div class="controls" id="controls"></div>
+        </section>
+        <section class="mc-pane" data-pane="you" hidden>
+          <div class="field">
+            <h3>Profile</h3>
+            <p class="help">Sharing a laptop? Each profile keeps its own controls, keys, difficulty and look. Profiles are on this computer; if you log in, your account follows the profile you pick.</p>
+            <div class="profile-row">
+              <select id="profileSel" aria-label="Profile"></select>
+              <button type="button" id="profileNew">New profile</button>
+              <button type="button" id="profileDel">Delete</button>
+            </div>
+            <div class="profile-row" id="profileNewRow" hidden>
+              <input id="profileName" maxlength="16" placeholder="Their name" autocomplete="off" />
+              <button type="button" id="profileCreate" class="primary">Create</button>
+            </div>
+          </div>
+          <div class="field">
+            <h3>Your name</h3>
+            <p class="help">Shown on the scoreboard instead of “You” (online, everyone sees your username).</p>
+            <input id="playerName" class="you-name" maxlength="16" placeholder="You" autocomplete="off" />
+          </div>
+          <div class="field">
+            <h3>Shirt</h3>
+            <div class="swatches" id="shirtSw"></div>
+          </div>
+          <div class="field">
+            <h3>Racket</h3>
+            <div class="swatches" id="racketSw"></div>
+          </div>
         </section>
       </aside>
       <button id="kitBtn" class="kit-tab" aria-controls="kitcard" aria-expanded="false">
@@ -380,6 +409,7 @@
           <button role="tab" data-hub="friends" aria-selected="false">Friends <span id="friendBadge" class="hub-badge" hidden></span></button>
           <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
           <button role="tab" data-hub="matches" aria-selected="false">Matches</button>
+          <button role="tab" data-hub="heat" aria-selected="false">Heatmap</button>
           <button role="tab" data-hub="awards" aria-selected="false">Awards</button>
           <button role="tab" data-hub="highlights" aria-selected="false">Highlights</button>
           <button role="tab" data-hub="account" aria-selected="false" id="accountTab">Account</button>
@@ -387,6 +417,7 @@
         </nav>
         <div class="social-body">
           <section data-hubpane="overview">
+            <div class="evaluation" id="evaluation"></div>
             <div class="scope" id="statsScope"></div>
             <div id="statGroups" class="stat-groups"></div>
           </section>
@@ -405,8 +436,21 @@
             </div>
           </section>
           <section data-hubpane="leaders" hidden>
-            <p class="pane-note">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
+            <div class="seg board-seg" id="boardSeg">
+              <button data-value="rating">Ranked rating</button><button data-value="wins">Wins</button><button data-value="max_smash">Fastest smash</button>
+              <button data-value="max_rally">Longest rally</button><button data-value="perfect_hits">Perfect hits</button><button data-value="max_streak">Win streak</button>
+              <button data-value="stars">Challenge stars</button><button data-value="achievements">Achievements</button>
+            </div>
+            <p class="pane-note" id="boardNote">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
             <ol id="leaderList" class="hub-list leaders"></ol>
+          </section>
+          <section data-hubpane="heat" hidden>
+            <p class="pane-note">Where your shots land on the other side, from every match, practice and challenge on this computer.</p>
+            <div class="seg" id="heatKind"><button data-value="all">All shots</button><button data-value="smash">Smashes</button><button data-value="drop">Drops</button><button data-value="clear">Clears &amp; lifts</button><button data-value="net">Net shots</button><button data-value="other">Drives &amp; blocks</button></div>
+            <div class="heat-row">
+              <figure><canvas id="heatRecent"></canvas><figcaption><b>Last 5 sessions</b><span id="heatRecentNote"></span></figcaption></figure>
+              <figure><canvas id="heatAll"></canvas><figcaption><b>All time</b><span id="heatAllNote"></span></figcaption></figure>
+            </div>
           </section>
           <section data-hubpane="awards" hidden>
             <div class="scope" id="awardsScope"></div>

@@ -6,6 +6,8 @@ import '@fontsource/barlow-semi-condensed/700';
 import './menu.css';
 import { Sound } from './audio';
 import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
+import { ZONE_NAMES, loadMemory } from './ai';
+import { drawHeat, loadSessions, recordHeat, type ShotKind } from './heatmap';
 import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
 import { CHALLENGES, Challenges, loadStars, totalStars, type ChallengeDef } from './challenges';
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
@@ -19,7 +21,7 @@ import { Input } from './input';
 import { Tour } from './tour';
 import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type QueueEvent, type Roster, type ServerMsg } from './net';
 import { tierOf } from './rating';
-import { addCareer, careerDelta, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
+import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
@@ -47,6 +49,8 @@ const settings: Settings = {
   guides: true, timingLight: false, swingAssist: false, aim: 'realistic', voice: false,
   view: 'close', performance: false,
 };
+/** A fresh start, for new settings profiles. */
+const DEFAULT_SETTINGS: Settings = JSON.parse(JSON.stringify(settings));
 // Bumped when defaults change in a way existing players should get once.
 const SETTINGS_VERSION = 2;
 try {
@@ -62,6 +66,7 @@ let accountSaveTimer = 0;
 function saveSettings() {
   try { localStorage.setItem(STORE, JSON.stringify({ ...settings, v: SETTINGS_VERSION })); } catch { /* storage unavailable */ }
   queueAccountSave();
+  saveProfile();
 }
 saveSettings();
 let game: Game | null = null;
@@ -266,8 +271,14 @@ function syncAccountUi() {
   renderStats();
 }
 
-/** The Stats tab: your career in groups of tiles. */
+/** The Stats tab: your evaluation, then your career in groups of tiles. */
 function renderStats() {
+  const ev = evaluate(career, cpuWeakZone());
+  document.getElementById('evaluation')!.innerHTML = ev.ready
+    ? `<div class="ev-col"><h3>Strengths</h3><ul>${ev.strengths.map((t) => `<li>${hubEsc(t)}</li>`).join('')}</ul></div>
+       <div class="ev-col"><h3>Work on</h3><ul>${ev.weaknesses.length ? ev.weaknesses.map((t) => `<li>${hubEsc(t)}</li>`).join('') : '<li>Nothing stands out. Nice.</li>'}</ul></div>
+       <p class="ev-tip">${hubEsc(ev.tip)}</p>`
+    : `<p class="ev-tip">${hubEsc(ev.tip)}</p>`;
   document.getElementById('statsScope')!.innerHTML = account
     ? `Every finished match against the CPU or online counts. <b>${(career.matches ?? 0).toLocaleString('en-GB')}</b> so far.`
     : 'These stats are saved on this computer only. <button type="button" class="inline-link" data-login>Log in</button> to keep them on your account and play ranked.';
@@ -332,6 +343,7 @@ function openAccount(note?: string) {
 /** Add a finished match to your career: on your account if you're logged in, otherwise on this computer. */
 function recordCareer(g: Game) {
   if (g.mode !== 'match' && g.mode !== 'online') return;
+  recordHeat(g);
   const delta = careerDelta(g, career);
   const fresh = checkAchievements(addCareer(career, delta), g.matchFacts(), loadStars());
   saveCareer({ ...delta, ...achievementDelta(fresh) });
@@ -458,7 +470,30 @@ function showHubTab(name: string) {
   if (name === 'admin') void renderAdmin();
   if (name === 'highlights') renderHighlights();
   if (name === 'awards') renderAwards();
+  if (name === 'heat') renderHeat();
 }
+
+/** Where the CPU's memory says you struggle most (needs a few remembered points there). */
+function cpuWeakZone(): string | null {
+  const m = loadMemory();
+  if (!m) return null;
+  let best = -1, rate = 0.3;
+  m.tries.forEach((t, z) => { const r = m.weak[z] / Math.max(1, t); if (t >= 4 && r > rate) { best = z; rate = r; } });
+  return best >= 0 ? ZONE_NAMES[best] : null;
+}
+
+/** Heatmap tab: where your shots land, recent sessions next to all time, by shot type. */
+let heatKind: ShotKind | 'all' = 'all';
+function renderHeat() {
+  const all = loadSessions();
+  document.querySelectorAll<HTMLButtonElement>('#heatKind button').forEach((b) => b.classList.toggle('on', b.dataset.value === heatKind));
+  const recent = drawHeat(document.getElementById('heatRecent') as HTMLCanvasElement, all.slice(0, 5), heatKind);
+  const ever = drawHeat(document.getElementById('heatAll') as HTMLCanvasElement, all, heatKind);
+  const pct = (x: number) => `${Math.round(100 * x)}%`;
+  document.getElementById('heatRecentNote')!.textContent = recent.n ? `${recent.n} shots · ${pct(recent.inShare)} in` : 'No shots yet';
+  document.getElementById('heatAllNote')!.textContent = ever.n ? `${ever.n} shots over ${all.length} session${all.length === 1 ? '' : 's'} · ${pct(ever.inShare)} in` : 'No shots yet';
+}
+document.querySelectorAll<HTMLButtonElement>('#heatKind button').forEach((b) => b.addEventListener('click', () => { heatKind = b.dataset.value as ShotKind | 'all'; renderHeat(); }));
 
 /** Awards tab: achievements, and your stars from the challenges. */
 function renderAwards() {
@@ -533,9 +568,41 @@ async function renderMatches() {
 }
 
 /** Fill a leaderboard list (the hub's tab or the footer pop-up). Anyone can see it, logged in or not. */
+/** Which global leaderboard the Leaderboard tab shows. */
+let board = 'rating';
+const BOARDS: Record<string, { note: string; unit: (v: number) => string }> = {
+  wins: { note: 'Most matches won (against the CPU and online), by everyone with an account.', unit: (v) => `${v} wins` },
+  max_smash: { note: 'Fastest smash ever hit, by everyone with an account.', unit: (v) => `${v} km/h` },
+  max_rally: { note: 'Longest rally in a match.', unit: (v) => `${v} shots` },
+  perfect_hits: { note: 'Most perfectly timed hits, all time.', unit: (v) => `${v}` },
+  max_streak: { note: 'Longest run of matches won in a row.', unit: (v) => `${v} in a row` },
+  stars: { note: 'Most stars from the Court 5 challenges (best stars on each).', unit: (v) => `${v} ★` },
+  achievements: { note: 'Most achievements unlocked.', unit: (v) => `${v}` },
+};
+document.querySelectorAll<HTMLButtonElement>('#boardSeg button').forEach((b) => b.addEventListener('click', () => { board = b.dataset.value!; void renderLeaders(); }));
+
+let boardReq = 0;
 async function renderLeaders(listId = 'leaderList') {
+  // Only the latest request draws (switching boards quickly mustn't let an older answer win).
+  const req = ++boardReq;
   const m = await loadAccount();
+  if (listId === 'leaderList') {
+    document.querySelectorAll<HTMLButtonElement>('#boardSeg button').forEach((b) => b.classList.toggle('on', b.dataset.value === board));
+    if (board !== 'rating') {
+      const B = BOARDS[board], list = document.getElementById(listId)!;
+      document.getElementById('boardNote')!.textContent = `${B.note} Stats count when you’re logged in.`;
+      list.innerHTML = '<li class="empty">Loading…</li>';
+      const rows = await m.leaderboardStat(board);
+      if (req !== boardReq) return;
+      list.innerHTML = rows === null ? '<li class="empty">This leaderboard needs a quick database update (supabase/leaderboards.sql).</li>'
+        : rows.length ? rows.map((r, i) => `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}</span><b>${B.unit(Number(r.value))}</b></li>`).join('')
+        : '<li class="empty">Nobody on this board yet. Be the first.</li>';
+      return;
+    }
+    document.getElementById('boardNote')!.textContent = 'Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.';
+  }
   const rows = await m.leaderboard();
+  if (req !== boardReq) return;
   document.getElementById(listId)!.innerHTML = rows.length ? rows.map((r, i) => {
     const t = tierOf(r.rating);
     return `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color === '#cbd5e1' ? '#64748b' : t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
@@ -723,6 +790,94 @@ document.getElementById('pickCards')!.addEventListener('click', (e) => {
 document.getElementById('controlsBtn')!.addEventListener('click', openControlsPick);
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !controlsPick.classList.contains('hidden')) closeControlsPick(); });
 syncControlsLabel();
+
+// ── You: look and settings profiles ──────────────────────────────────────────
+const SHIRTS = ['#ff6a4d', '#e63946', '#f4a261', '#ffd166', '#2a9d8f', '#3a86ff', '#8338ec', '#ff4fa3', '#f1f1f1', '#222831'];
+const RACKETS = ['#eef1f4', '#ffd166', '#ff4d4d', '#4dd2ff', '#7cff6b', '#c77dff', '#111111'];
+function syncYou() {
+  (document.getElementById('playerName') as HTMLInputElement).value = settings.playerName ?? '';
+  const sw = (id: string, colors: string[], cur: string | undefined, fallback: string) => {
+    document.getElementById(id)!.innerHTML = colors.map((c) => `<button type="button" class="sw${(cur || fallback) === c ? ' on' : ''}" data-color="${c}" style="--c:${c}" aria-label="${c}"></button>`).join('');
+  };
+  sw('shirtSw', SHIRTS, settings.shirt, SHIRTS[0]);
+  sw('racketSw', RACKETS, settings.racket, RACKETS[0]);
+  const P = loadProfiles();
+  document.getElementById('profileSel')!.innerHTML = Object.keys(P.list).map((n) => `<option${n === P.active ? ' selected' : ''}>${hubEsc(n)}</option>`).join('');
+  (document.getElementById('profileDel') as HTMLButtonElement).disabled = Object.keys(P.list).length < 2;
+}
+document.getElementById('playerName')!.addEventListener('input', (e) => { settings.playerName = (e.target as HTMLInputElement).value.trim().slice(0, 16); saveSettings(); });
+for (const [id, key] of [['shirtSw', 'shirt'], ['racketSw', 'racket']] as const) {
+  document.getElementById(id)!.addEventListener('click', (e) => {
+    const c = (e.target as HTMLElement).closest<HTMLElement>('[data-color]')?.dataset.color;
+    if (!c) return;
+    settings[key] = c;
+    saveSettings();
+    syncYou();
+  });
+}
+
+/** Settings profiles on this computer: each a full copy of the settings, one active. */
+interface Profiles { active: string; list: Record<string, Partial<Settings>> }
+function loadProfiles(): Profiles {
+  try {
+    const p = JSON.parse(localStorage.getItem('badminton.profiles') ?? 'null') as Profiles | null;
+    if (p && p.list[p.active]) return p;
+  } catch { /* none yet */ }
+  return { active: 'Player 1', list: { 'Player 1': { ...settings } } };
+}
+function storeProfiles(p: Profiles) { try { localStorage.setItem('badminton.profiles', JSON.stringify(p)); } catch { /* storage unavailable */ } }
+/** Keep the active profile up to date with the current settings. */
+function saveProfile() { const p = loadProfiles(); p.list[p.active] = { ...settings }; storeProfiles(p); }
+/** Switch to a profile: its settings replace the current ones everywhere. */
+function useProfile(name: string) {
+  const p = loadProfiles();
+  p.list[p.active] = { ...settings };
+  p.active = name;
+  storeProfiles(p);
+  // Start from the standard settings so nothing from the previous profile (a name, a shirt) carries over.
+  const next: Record<string, unknown> = { ...JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), ...p.list[name] };
+  for (const k of Object.keys(settings)) if (!(k in next)) delete (settings as unknown as Record<string, unknown>)[k];
+  Object.assign(settings, next);
+  saveSettings();
+  setView(broadcast, settings.view);
+  resize();
+  syncViewbar();
+  syncMenu();
+  describeControls();
+  describeFormat();
+  renderBinds();
+  syncControlsLabel();
+  syncYou();
+  if (!settings.controlsChosen) openControlsPick();
+}
+document.getElementById('profileSel')!.addEventListener('change', (e) => useProfile((e.target as HTMLSelectElement).value));
+document.getElementById('profileNew')!.addEventListener('click', () => {
+  const row = document.getElementById('profileNewRow')!;
+  row.hidden = !row.hidden;
+  if (!row.hidden) (document.getElementById('profileName') as HTMLInputElement).focus();
+});
+document.getElementById('profileCreate')!.addEventListener('click', () => {
+  const input = document.getElementById('profileName') as HTMLInputElement, name = input.value.trim().slice(0, 16);
+  const p = loadProfiles();
+  if (!name || p.list[name]) { input.focus(); return; }
+  // A new profile starts from the standard settings, with its name on the scoreboard.
+  p.list[p.active] = { ...settings };
+  p.list[name] = { ...JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), playerName: name, controlsChosen: false };
+  storeProfiles(p);
+  input.value = '';
+  document.getElementById('profileNewRow')!.hidden = true;
+  useProfile(name);
+});
+document.getElementById('profileDel')!.addEventListener('click', () => {
+  const p = loadProfiles(), names = Object.keys(p.list);
+  if (names.length < 2) return;
+  delete p.list[p.active];
+  p.active = Object.keys(p.list)[0];
+  storeProfiles(p);
+  useProfile(p.active);
+});
+syncYou();
+
 // ── Welcome (newcomers and logged-out visitors) ──────────────────────────────
 // First visit: a big nudge to take the tour, plus signing up. Back again but logged out: just the
 // sign-up pitch, at most once a day, and it can be turned off. Logged in: nothing.
@@ -1253,6 +1408,8 @@ function startMatch(mode: Mode = 'match') {
 }
 
 function showMenu() {
+  // Practice and challenges add to your heatmap too (matches add theirs when they finish).
+  if (game?.mode === 'practice' || game?.mode === 'challenge') recordHeat(game);
   if (game?.mode === 'tutorial' && game.session?.done) {
     try { localStorage.setItem(TUTORIAL_DONE, '1'); } catch { /* storage unavailable */ }
   }

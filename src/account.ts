@@ -106,6 +106,8 @@ async function rpc<T>(name: string, args: Record<string, unknown> = {}): Promise
 export const myStats = async () => (await rpc<Stats[]>('my_stats'))?.[0] ?? null;
 export const myMatches = async () => (await rpc<MatchRow[]>('my_matches')) ?? [];
 export const leaderboard = async () => (await rpc<Stats[]>('leaderboard')) ?? [];
+/** Top 50 for a career record, challenge stars or achievements (null if the database isn't set up for it yet). */
+export const leaderboardStat = (stat: string) => rpc<{ username: string; value: number }[]>('leaderboard_stat', { stat });
 export const friendsList = async () => (await rpc<Friend[]>('friends_list')) ?? [];
 export const myInvites = async () => (await rpc<Invite[]>('my_invites')) ?? [];
 export const heartbeat = () => rpc('heartbeat');

@@ -18,7 +18,8 @@ export type Result = { ok: true; account: Account } | { ok: false; error: string
 const emailFor = (username: string) => `${username}@${EMAIL_DOMAIN}`;
 const usernameOf = (email: string | undefined) => (email ?? '').split('@')[0];
 
-export const normalise = (username: string) => username.trim().toLowerCase();
+/** What a typed username becomes: lowercase, spaces turned into underscores ("Barry Zhang" → "barry_zhang"). */
+export const normalise = (username: string) => username.trim().toLowerCase().replace(/\s+/g, '_');
 
 /** Why a username / passcode can't be used (null if fine). Matches the database's own check. */
 export function problemWith(username: string, passcode: string): string | null {

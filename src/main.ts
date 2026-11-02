@@ -12,6 +12,7 @@ import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
+import { Tour } from './tour';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
@@ -278,6 +279,15 @@ async function submitAccount(kind: 'login' | 'signup') {
   acMsg.classList.add('ok');
   acMsg.textContent = kind === 'signup' ? 'Account created. Your settings are saved to it.' : 'Welcome back. Your saved settings are loaded.';
 }
+// Show what the typed name will become, and whether it's allowed, before anything is sent.
+const acHint = document.getElementById('acHint')!;
+const HINT = '3–16 letters, numbers or underscores. Spaces become underscores.';
+acUser.addEventListener('input', () => {
+  const name = acUser.value.trim().toLowerCase().replace(/\s+/g, '_');
+  const ok = /^[a-z0-9_]{3,16}$/.test(name);
+  acHint.classList.toggle('bad', !!name && !ok);
+  acHint.textContent = !name ? HINT : ok ? `Your username: ${name}` : `“${name}” won’t work. ${HINT}`;
+});
 acForm.addEventListener('submit', (e) => { e.preventDefault(); void submitAccount('login'); });
 document.getElementById('acSignup')!.addEventListener('click', () => void submitAccount('signup'));
 document.getElementById('acChange')!.addEventListener('click', async () => {
@@ -303,6 +313,23 @@ try {
     void loadAccount().then(async (m) => { const a = await m.current(); if (a) await afterLogin(a, false); });
   }
 } catch { /* storage unavailable */ }
+
+// ── Tour of the start screen ─────────────────────────────────────────────────
+const tour = new Tour([
+  { target: '.oop-row.live', title: 'Your match', text: 'Your next match is on Court 1: who you’re playing and the scoring. Press Walk on (or Enter) to play.', before: closeDrawers },
+  { target: '#matchcard', title: 'Match card', text: 'Edit match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
+  { target: '.oop-row:has(#tutorial)', title: 'Tutorial', text: 'New to the game? Court 2 is the tutorial: short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
+  { target: '.oop-row:has(#practice)', title: 'Practice', text: 'Court 3 is practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
+  { target: '#kitBtn', title: 'Assists & controls', text: 'This tab on the left edge slides out a panel with your assists and controls. Click it again to put it away.' },
+  { target: '#kitcard', title: 'Assists', text: 'Turn help on or off: the landing marker (on by default), the timing light, swing assist, doubles auto-switch and the umpire’s voice.', before: () => openDrawer('kit', 'assists') },
+  { target: '#kitcard', title: 'Controls and keys', text: 'Choose mouse, trackpad or keyboard-only play, change any key under Your keys, and see how to play every shot.', before: () => openDrawer('kit', 'controls') },
+  { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to save your settings and keys, so they follow you to any computer.', before: closeDrawers },
+  { target: '#whatsnewBtn', title: 'What’s new', text: 'Every update is listed here. A NEW badge appears when there’s something you haven’t seen.' },
+  { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
+  { target: '#start', title: 'Ready?', text: 'That’s everything. Press Walk on to start your match, or come back to this tour any time from the bottom of the board.' },
+], () => document.getElementById('tourBtn')?.focus());
+document.getElementById('tourBtn')!.addEventListener('click', () => { closeAccountIfOpen(); tour.start(); });
+function closeAccountIfOpen() { if (!accountModal.classList.contains('hidden')) accountModal.classList.add('hidden'); }
 
 // What's new pop-up: newest version first, with a NEW badge on the button until you've opened it.
 const SEEN = 'badminton.seenVersion';
@@ -495,7 +522,7 @@ function frame(now: number) {
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden')) {
+  } else if (input.tapped(['Enter']) && accountModal.classList.contains('hidden') && !tour.isOpen) {
     startMatch('match');
   }
 

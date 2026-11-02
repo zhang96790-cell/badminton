@@ -89,6 +89,7 @@
         <footer class="board-foot">
           <p><kbd>Enter</kbd> walk on · <kbd>H</kbd> challenge · <kbd>R</kbd> replay · <kbd>F</kbd> fullscreen · <kbd>M</kbd> mute · <kbd>Esc</kbd> pause</p>
           <div class="foot-links">
+            <button id="tourBtn" class="link">Take the tour</button>
             <button id="howBtn" class="link">How to play</button>
             <button id="whatsnewBtn" class="link">What’s new <span id="wnVer"></span><span id="wnBadge">New</span></button>
           </div>
@@ -255,7 +256,8 @@
         </header>
         <form id="acForm" class="pass-body" autocomplete="on">
           <p class="help">Pick a username and passcode, and use the same ones to log in next time. Your settings and key binds are saved to your account. Don’t use your real name.</p>
-          <label class="pass-field">Username<input id="acUser" name="username" autocomplete="username" maxlength="16" spellcheck="false" autocapitalize="off" /></label>
+          <label class="pass-field">Username<input id="acUser" name="username" autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" /></label>
+          <p id="acHint" class="pass-hint">3–16 letters, numbers or underscores. Spaces become underscores.</p>
           <label class="pass-field">Passcode<input id="acPass" name="password" type="password" autocomplete="current-password" /></label>
           <p id="acError" class="pass-msg" aria-live="polite"></p>
           <div class="pass-actions">

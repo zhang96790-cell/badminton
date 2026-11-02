@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.7.1',
+    title: 'Tour and easier usernames',
+    date: '2 Nov 2026',
+    changes: [
+      'Take the tour: a new button at the bottom of the start screen walks you through your match, the match card, tutorial, practice, Assists & controls, your keys, your account and more, one thing at a time. Use Next or Enter to go forward, Back or ← to go back, and Esc to leave.',
+      'Easier usernames: spaces become underscores automatically (“Barry Zhang” becomes “barry_zhang”), and the box shows what your username will be, or why it won’t work, as you type.',
+    ],
+  },
+  {
     version: '1.7',
     title: 'Player accounts',
     date: '2 Nov 2026',

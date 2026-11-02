@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.7.1: Tour and easier usernames (2 Nov 2026)
+
+- Take the tour: a new button at the bottom of the start screen walks you through your match, the match card, tutorial, practice, Assists & controls, your keys, your account and more, one thing at a time. Use Next or Enter to go forward, Back or ← to go back, and Esc to leave.
+- Easier usernames: spaces become underscores automatically (“Barry Zhang” becomes “barry_zhang”), and the box shows what your username will be, or why it won’t work, as you type.
+
 ## 1.7: Player accounts (2 Nov 2026)
 
 - Player accounts: press Log in at the top right of the start screen and pick a username and passcode. Use Sign up the first time and Log in after that.

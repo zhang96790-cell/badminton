@@ -62,6 +62,10 @@ export class Player implements PlayerView {
   extraReach = 0;
   /** The current swing was started by swing assist. */
   assisted = false;
+  /** Set when a jump smash is hit; the boost starts when they land. */
+  jumpSmashed = false;
+  /** Seconds of post-jump-smash speed boost left. */
+  boost = 0;
   charge: number | null = null;
   hand: V3;
   rdir: V3 = { x: 0, y: 0, z: 1 };
@@ -99,6 +103,8 @@ export class Player implements PlayerView {
     this.landLag = 0;
     this.split = 9;
     this.lunge = 9;
+    this.boost = 0;
+    this.jumpSmashed = false;
   }
 
   startSwing(req: ShotRequest, assisted = false): boolean {
@@ -125,7 +131,12 @@ export class Player implements PlayerView {
     if (this.vz !== 0 || this.z > 0) {
       this.z += this.vz * dt;
       this.vz -= PHYSICS.gravity * dt;
-      if (this.z <= 0) { this.z = 0; this.vz = 0; this.landLag = PLAYER.landingLag; }
+      if (this.z <= 0) {
+        this.z = 0;
+        this.vz = 0;
+        if (this.jumpSmashed) { this.boost = PLAYER.jumpSmashBoostTime; this.landLag = 0; this.jumpSmashed = false; }
+        else this.landLag = PLAYER.landingLag;
+      }
     }
 
     const len = Math.min(1, Math.hypot(move.x, move.y));
@@ -134,8 +145,9 @@ export class Player implements PlayerView {
     if (this.swing) max *= PLAYER.swingMoveFactor;
     if (this.landLag > 0) max *= 0.5;
     if (this.lunge < PLAYER.lungeTime) max *= PLAYER.lungeRecoverySpeed;
+    if (this.boost > 0) max *= PLAYER.jumpSmashBoostSpeed;
     const boosted = this.split > PLAYER.splitStepTime && this.split < PLAYER.splitStepTime + PLAYER.splitBoostTime;
-    const accel = PLAYER.accel * (boosted ? PLAYER.splitBoost : 1);
+    const accel = PLAYER.accel * (boosted ? PLAYER.splitBoost : 1) * (this.boost > 0 ? PLAYER.jumpSmashBoostAccel : 1);
     if (this.frozen) {
       this.vel = { x: 0, y: 0 };
     } else if (this.airborne) {
@@ -182,6 +194,7 @@ export class Player implements PlayerView {
     this.recover = Math.max(0, this.recover - dt);
     this.split += dt;
     this.lunge += dt;
+    this.boost = Math.max(0, this.boost - dt);
     if (this.swing) {
       this.swing.t += dt;
       if (this.swing.t > SWING.window) {

@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 1.4.3: Jump smash recovery (2 Nov 2026)
+
+- After landing a jump smash you get a quick burst of speed (and no landing slowdown) to recover to the middle.
+
 ## 1.4.2: Why it hit the net (2 Nov 2026)
 
 - When a shot goes into the net, the message says why, e.g. "Smash mistimed (late), hit too low" or "Net shot backhand, stretched".

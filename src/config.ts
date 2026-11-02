@@ -63,6 +63,10 @@ export const PLAYER = {
   /** Initial vertical speed of a jump: 3.0 m/s ≈ 0.46 m high, 0.6 s in the air. */
   jumpSpeed: 3.0,
   landingLag: 0.12,
+  /** After landing a jump smash: no landing slowdown, and a short burst of extra speed to recover. */
+  jumpSmashBoostTime: 0.6,
+  jumpSmashBoostSpeed: 1.15,
+  jumpSmashBoostAccel: 1.2,
   /** Split-step: an automatic little hop as the opponent hits, then a short burst of extra acceleration. */
   splitStepTime: 0.14,
   splitBoost: 1.35,

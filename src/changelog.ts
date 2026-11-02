@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '1.4.3',
+    title: 'Jump smash recovery',
+    date: '2 Nov 2026',
+    changes: [
+      'After landing a jump smash you get a quick burst of speed (and no landing slowdown) to recover to the middle.',
+    ],
+  },
+  {
     version: '1.4.2',
     title: 'Why it hit the net',
     date: '2 Nov 2026',

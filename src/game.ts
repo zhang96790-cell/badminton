@@ -433,6 +433,7 @@ export class Game {
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
         p.onHit(c.point);
+        if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         p.timingFlash = { kind: Math.abs(c.timingError) <= SWING.perfectTolerance ? 'perfect' : c.timingError > 0 ? 'early' : 'late', t: 0 };
         if (this.session && i === 0) this.session.onHit(this, { label: shot.label, timing: p.timingFlash.kind, airborne: c.airborne });
         this.players[1 - i].splitStep();

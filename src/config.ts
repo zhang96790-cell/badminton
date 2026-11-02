@@ -156,10 +156,10 @@ export const SHOTS = {
    */
   backCourt: { clearDeep: 6.2, clearAim: 0.75, deepFrom: 5.6, deepPower: 0.88, deepNoise: 1.3, smashBonus: 1.03, perfectDrop: 0.8 },
   /**
-   * Tumbling: a net shot that crosses within tumbleMargin (m) of the tape tumbles. Netting it back or
-   * hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.
+   * Tumbling: only a perfectly timed net shot that crosses within margin (m) of the tape tumbles. Netting it
+   * back or hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.
    */
-  tumble: { margin: 0.12, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
+  tumble: { margin: 0.03, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
   /** An overhead more than this far behind the body (m) can't be attacked: it's scrambled back as a weaker clear. */
   behindLimit: 0.3,
   behindPower: 0.8,

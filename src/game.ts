@@ -594,7 +594,7 @@ export class Game {
         const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1, this.isHuman(i));
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
-        if (this.checkTumble(shot.label)) shot.label = 'Net shot (tumbling)';
+        if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
         p.onHit(c.point);
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         p.timingFlash = { kind: Math.abs(c.timingError) <= SWING.perfectTolerance ? 'perfect' : c.timingError > 0 ? 'early' : 'late', t: 0 };
@@ -636,12 +636,13 @@ export class Game {
   }
 
   /**
-   * A net shot that will cross within SHOTS.tumble.margin of the tape tumbles over it (worked out from
-   * the predicted flight, so both screens agree online). Returns whether it does.
+   * A perfectly timed net shot that will cross within SHOTS.tumble.margin of the tape tumbles over it
+   * (worked out from the predicted flight). Returns whether it does. Online, the other screen goes by the label.
    */
-  private checkTumble(label: string): boolean {
+  private checkTumble(label: string, perfect: boolean): boolean {
     const sh = this.shuttle;
-    if (!/Net shot/.test(label) || !this.path.length) return false;
+    sh.tumbling = false;
+    if (!perfect || !/Net shot/.test(label) || !this.path.length) return false;
     const cross = this.path.find((s, i) => i > 0 && s.p.y * this.path[i - 1].p.y <= 0);
     if (!cross) return false;
     const margin = cross.p.z - netHeightAt(cross.p.x);
@@ -1147,7 +1148,7 @@ export class Game {
     }
     sh.trail = [];
     this.predict();
-    this.checkTumble(m.label);
+    sh.tumbling = /tumbling/.test(m.label);
     opp.onHit(pos, m.serve);
     me.splitStep();
     this.rallyHits++;

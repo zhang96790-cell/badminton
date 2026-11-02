@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.8',
+    title: 'Fewer net tumbles',
+    date: '2 Nov 2026',
+    changes: [
+      'Far fewer tumbling net shots: a net shot only tumbles now if it’s perfectly timed and skims the tape by under 3 cm (it used to be any timing within 12 cm). Before, about half of all net shots tumbled; now it’s about 1 in 10.',
+    ],
+  },
+  {
     version: '2.1.7',
     title: 'Welcome for newcomers',
     date: '2 Nov 2026',

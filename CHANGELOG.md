@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.8: Fewer net tumbles (2 Nov 2026)
+
+- Far fewer tumbling net shots: a net shot only tumbles now if it’s perfectly timed and skims the tape by under 3 cm (it used to be any timing within 12 cm). Before, about half of all net shots tumbled; now it’s about 1 in 10.
+
 ## 2.1.7: Welcome for newcomers (2 Nov 2026)
 
 - Welcome card for newcomers: after picking your controls, a big Take the 1-minute tour button, plus Sign up, Log in or Play as a guest. The Take the tour link also shows a New? Start here badge until you’ve taken it.

@@ -21,13 +21,19 @@ interface Ranked {
   recorded: boolean;
 }
 /** The match as the room follows it, from the host's point verdicts. */
-interface Progress { playing: boolean; gamesToWin: number; games: [number, number]; scores: [number, number] }
+interface Progress {
+  playing: boolean; gamesToWin: number; games: [number, number]; scores: [number, number];
+  /** The match looks over: who won, and when to save it (after any Hawk-Eye challenge has had time). */
+  pending: { winner: Seat; at: number } | null;
+}
 interface RoomState { host: SeatInfo | null; guest: SeatInfo | null; settings: unknown; ranked: Ranked | null; progress: Progress | null }
 /** Kept on each socket so it survives hibernation. */
 interface Attachment { seat: Seat }
 
 /** A dropped player has this long to come back before the other player wins by forfeit. */
 const RECONNECT_MS = 60_000;
+/** After the last point, wait this long before saving a ranked result: the loser may challenge the call. */
+const CHALLENGE_GRACE_MS = 9_000;
 const CODE = /^[A-HJ-NP-Z2-9]{5}$/;
 /** Sites allowed to open game connections (plus local development). */
 const ORIGINS = [/^https:\/\/(www\.)?airphysicsrevision\.online$/, /^https:\/\/(www\.)?badmintongames\.site$/, /^https:\/\/[a-z0-9-]+\.vercel\.app$/, /^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
@@ -138,24 +144,28 @@ export class Room extends DurableObject<Env> {
     if (msg.type === 'start' && att.seat === 'host') {
       const s = await this.load();
       const games = (msg.settings as { games?: number } | null)?.games === 3 ? 2 : 1;
-      s.progress = { playing: true, gamesToWin: games, games: [0, 0], scores: [0, 0] };
+      s.progress = { playing: true, gamesToWin: games, games: [0, 0], scores: [0, 0], pending: null };
       if (s.ranked?.recorded) s.ranked = null; // a rematch in a ranked room doesn't count again
       await this.save();
     }
-    if (msg.type === 'point' && att.seat === 'host') {
+    // A point, or a Hawk-Eye review that changed the score: follow it. When the match looks over, wait
+    // for any challenge before saving the result.
+    if ((msg.type === 'point' || msg.type === 'review') && att.seat === 'host') {
       const s = await this.load();
       const p = s.progress;
       if (p?.playing && Array.isArray(msg.games) && Array.isArray(msg.scores)) {
         p.games = [Number(msg.games[0]) || 0, Number(msg.games[1]) || 0];
         p.scores = [Number(msg.scores[0]) || 0, Number(msg.scores[1]) || 0];
+        const over = Math.max(...p.games) >= p.gamesToWin;
+        p.pending = over ? { winner: p.games[0] > p.games[1] ? 'host' : 'guest', at: Date.now() + (msg.type === 'review' ? 2_000 : CHALLENGE_GRACE_MS) } : null;
         await this.save();
-        if (Math.max(...p.games) >= p.gamesToWin) await this.finish(p.games[0] > p.games[1] ? 'host' : 'guest', false);
+        await this.scheduleAlarm(s);
       }
     }
-    if (msg.type === 'forfeit') await this.finish(att.seat === 'host' ? 'guest' : 'host', true);
+    if (msg.type === 'forfeit') await this.quit(att.seat);
     if (msg.type === 'leave') {
       const s = await this.load();
-      if (s.progress?.playing) await this.finish(att.seat === 'host' ? 'guest' : 'host', true);
+      if (s.progress?.playing) await this.quit(att.seat);
       s[att.seat] = null;
       await this.save();
       this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'left' });
@@ -212,24 +222,42 @@ export class Room extends DurableObject<Env> {
     await this.save();
     this.send(this.socket(att.seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'away', seconds: RECONNECT_MS / 1000 });
     this.broadcastRoster(s);
-    await this.ctx.storage.setAlarm(Date.now() + RECONNECT_MS + 500);
+    await this.scheduleAlarm(s);
   }
 
   /** Reconnect window over: anyone still away has left; the other player wins by forfeit. */
+  /** Someone forfeited or left: the other player wins, unless the match was already decided. */
+  private async quit(seat: Seat) {
+    const s = await this.load();
+    const decided = s.progress?.pending?.winner;
+    await this.finish(decided ?? (seat === 'host' ? 'guest' : 'host'), !decided);
+  }
+
+  /** One alarm covers both timers: dropped players' reconnect window and a result waiting to be saved. */
+  private async scheduleAlarm(s: RoomState) {
+    const times: number[] = [];
+    for (const seat of ['host', 'guest'] as Seat[]) { const a = s[seat]?.awaySince; if (a) times.push(a + RECONNECT_MS + 500); }
+    if (s.progress?.playing && s.progress.pending) times.push(s.progress.pending.at);
+    if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
+  }
+
   async alarm() {
     const s = await this.load();
     const now = Date.now();
+    const pend = s.progress?.playing ? s.progress.pending : null;
+    if (pend && now >= pend.at) await this.finish(pend.winner, false);
     for (const seat of ['host', 'guest'] as Seat[]) {
       const info = s[seat];
       if (info?.awaySince && now - info.awaySince >= RECONNECT_MS) {
-        if (s.progress?.playing) await this.finish(seat === 'host' ? 'guest' : 'host', true);
+        if (s.progress?.playing) await this.quit(seat);
         s[seat] = null;
         this.send(this.socket(seat === 'host' ? 'guest' : 'host'), { type: 'peer', status: 'left', forfeit: true });
       }
     }
     await this.save();
     this.broadcastRoster(s);
-    // Empty room: forget it entirely.
+    // Empty room: forget it entirely. Otherwise keep any remaining timer running.
     if (!s.host && !s.guest) await this.ctx.storage.deleteAll();
+    else await this.scheduleAlarm(s);
   }
 }

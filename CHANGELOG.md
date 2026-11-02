@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.6: Challenges and replays online (2 Nov 2026)
+
+- Hawk-Eye challenges online: line judges can miss close calls again, and whoever a close call goes against can press H to challenge. Both players watch the review, and an overturned call fixes the score on both screens (2 failed challenges per game). Ranked results wait for any challenge before they’re saved.
+- Replays online: press R between points to watch the last rally. If the other player serves while you’re watching, the replay ends so you don’t miss it.
+- A moment to get ready: after each point online, the server has to wait a couple of seconds before serving. A countdown shows for both players.
+
 ## 2.1.5: No more net mashing (2 Nov 2026)
 
 - Swings are a commitment: after a miss you can’t swing again for almost half a second (a quarter of a second after a hit), so mashing the key leaves you stuck recovering when the shuttle arrives. Time your swing instead.

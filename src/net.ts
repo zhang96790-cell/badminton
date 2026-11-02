@@ -14,6 +14,9 @@ export function newRoomCode(): string {
 }
 
 export type Seat = 'host' | 'guest';
+
+/** A line call as the host sends it (host's view; hitter is the host's side numbering). */
+export interface WireCall { rect: { xMin: number; xMax: number; yMin: number; yMax: number }; signed: number; truthIn: boolean; callIn: boolean; hitter: 0 | 1; isServe: boolean }
 export interface Roster {
   you: Seat;
   host: { name: string; connected: boolean } | null;
@@ -33,7 +36,9 @@ export type GameMsg =
   | { type: 'pos'; x: number; y: number; z: number; vx: number; vy: number; charge: number | null; jump: boolean }
   | { type: 'hit'; p: [number, number, number]; v: [number, number, number]; label: string; kmh: number; hand: string; detail: string; serve: boolean }
   | { type: 'land'; p: [number, number]; net: boolean; wide: boolean }
-  | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number] }
+  | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number]; call?: WireCall | null }
+  | { type: 'challenge' }
+  | { type: 'review'; scores: [number, number]; games: [number, number] }
   | { type: 'pause'; on: boolean }
   | { type: 'chat'; i: number }
   | { type: 'rtt'; ms: number }

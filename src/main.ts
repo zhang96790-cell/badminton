@@ -1056,7 +1056,9 @@ function onlineKeys(g: Game, over: boolean) {
   }
   // Ranked matches don't rematch: Enter looks for the next opponent.
   if (input.tapped(['Enter'])) { if (over) { if (g.online?.ranked) { leaveRoom(); showMenu(); startQuickMatch(); } else askRematch(); } else if (!g.paused) g.skip(); }
-  if (over && input.tapped(UI_KEYS.replay)) g.toggleReplay();
+  if (input.tapped(UI_KEYS.challenge)) g.requestChallenge();
+  if (input.tapped(UI_KEYS.replay)) g.toggleReplay();
+  if (input.tapped(UI_KEYS.replayCamera)) g.toggleReplayCamera();
 }
 
 // ── Loop ─────────────────────────────────────────────────────────────────────

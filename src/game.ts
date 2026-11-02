@@ -404,7 +404,8 @@ export class Game {
 
   private startServe() {
     this.state = 'serve';
-    this.timer = 0.35;
+    // Online, the server waits a moment after each point so the receiver is ready.
+    this.timer = this.online ? RULES.onlineServeWait : 0.35;
     this.rallyHits = 0;
     this.landing = null;
     this.serveBox = null;
@@ -709,8 +710,7 @@ export class Game {
       const truthIn = signed >= -COURT.footprint;
       // Line judges are human: shuttles right on the edge are sometimes miscalled.
       const edge = Math.abs(signed + COURT.footprint);
-      // Online there are no challenges, so the line judges get every call right.
-      const wrong = !this.online && edge < OFFICIALS.errorBand && chance(OFFICIALS.maxErrorChance * (1 - edge / OFFICIALS.errorBand));
+      const wrong = edge < OFFICIALS.errorBand && chance(OFFICIALS.maxErrorChance * (1 - edge / OFFICIALS.errorBand));
       const callIn = wrong ? !truthIn : truthIn;
       const judge = judgeFor(this.officials, land, rect);
       line = { landing: land, rect, signed, truthIn, callIn, hitter: hIdx, isServe: sh.isServe, challenged: false, judge };
@@ -751,17 +751,19 @@ export class Game {
 
     this.state = 'point';
     this.pointT = 0;
-    this.timer = RULES.pointPause + (this.challengeOpenFor(line) ? RULES.challengeWindow : 0);
+    this.timer = RULES.pointPause + (this.challengeWait(line) ? RULES.challengeWindow : 0);
     this.clock = OFFICIALS.shotClock;
     this.clockRunning = !this.online;
     this.aiChallengeAt = null;
     if (this.online?.host) {
       this.online.conn.send({
         type: 'point', winner, land: [land.x, land.y], title, why, callIn: line ? line.callIn : null,
+        call: line ? { rect: line.rect, signed: line.signed, truthIn: line.truthIn, callIn: line.callIn, hitter: line.hitter, isServe: line.isServe } : null,
         scores: [...this.match.scores], games: [...this.match.games],
       });
     }
-    if (line) {
+    // The CPU challenges offline only: online, both players are people and press H themselves.
+    if (line && !this.online) {
       const loser = (line.callIn ? 1 - line.hitter : line.hitter) as 0 | 1;
       const ai = this.controllers[loser];
       if (ai instanceof AIController && this.challenges[loser] > 0 && ai.wantsChallenge(line)) this.aiChallengeAt = 0.9;
@@ -794,8 +796,21 @@ export class Game {
     return why.length ? `${s.label} ${why.join(', ')}` : s.label;
   }
 
+  /**
+   * Hold the pause open for a possible challenge. Online that's on both screens whenever either player
+   * could challenge, so neither serves while the other is still deciding.
+   */
+  private challengeWait(line: LineCall | null): boolean {
+    return this.online ? this.challengePossible(line) : this.challengeOpenFor(line);
+  }
+
+  /** The call is close enough to challenge and the side it went against has challenges left. */
+  private challengePossible(line: LineCall | null): boolean {
+    if (!line || line.challenged || Math.abs(line.signed) > OFFICIALS.challengeRange) return false;
+    return this.challenges[line.callIn ? 1 - line.hitter : line.hitter] > 0;
+  }
+
   private challengeOpenFor(line: LineCall | null): boolean {
-    if (this.online) return false;
     if (!line || Math.abs(line.signed) > OFFICIALS.challengeRange) return false;
     const loser = line.callIn ? 1 - line.hitter : line.hitter;
     return this.isHuman(loser) && this.challenges[loser] > 0;
@@ -863,6 +878,7 @@ export class Game {
   requestChallenge() {
     if (!this.challengeOpen) return;
     const c = this.call!;
+    this.online?.conn.send({ type: 'challenge' });
     this.startChallenge((c.callIn ? 1 - c.hitter : c.hitter) as 0 | 1);
   }
 
@@ -905,6 +921,8 @@ export class Game {
       this.banner = { title: 'Call stands', sub: `${p.name}: ${left} challenge${left === 1 ? '' : 's'} left this game`, color: VISUAL.colors.hud, t: 0 };
     }
     this.say('umpire', r.truthIn ? 'Shuttle in.' : 'Shuttle out.', true);
+    // Online: the host's score is the real one; send it so the other screen lines up exactly.
+    if (this.online?.host) this.online.conn.send({ type: 'review', scores: [...this.match.scores], games: [...this.match.games] });
     this.review = null;
     this.state = 'point';
     this.timer = 1.8;
@@ -917,8 +935,7 @@ export class Game {
 
   /** R: replay the last rally (or skip the replay that's playing). */
   toggleReplay() {
-    // Online, a replay would pause this screen while the other player carries on.
-    if (this.online && this.state !== 'matchOver') return;
+    // Online, replays only between points (the other player's serve ends one, so you never miss it).
     if (this.state === 'replay') { this.endReplay(); return; }
     if (['point', 'serve', 'interval', 'gameBreak', 'matchOver', 'feed'].includes(this.state) && this.recorder.frames.length > 10) {
       this.startReplay(false);
@@ -983,7 +1000,8 @@ export class Game {
     if (this.state === 'replay') this.endReplay();
     else if (this.session && this.state !== 'challenge') this.session.skip(this);
     else if (this.state === 'challenge' && this.review) this.review.t = Math.max(this.review.t, REVIEW_TIME - 1.2);
-    else if (this.state === 'point' && !this.challengeOpen) this.timer = 0;
+    // Online, the pause can't be skipped while the other player could still challenge.
+    else if (this.state === 'point' && !this.challengeOpen && !(this.online && this.challengePossible(this.call))) this.timer = 0;
     else if (this.state === 'interval' || this.state === 'gameBreak') this.timer = 0;
   }
 
@@ -1084,6 +1102,14 @@ export class Game {
         break;
       }
       case 'point': if (!o.host) this.applyRemotePoint(m); break;
+      case 'challenge':
+        // The other player asked for Hawk-Eye on the last call (it went against them).
+        if (this.state === 'replay') this.endReplay();
+        if (this.call && !this.call.challenged && (this.state === 'point' || this.state === 'serve')) this.startChallenge(1);
+        break;
+      case 'review':
+        if (!o.host) { this.match.scores = [m.scores[1], m.scores[0]]; this.match.games = [m.games[1], m.games[0]]; }
+        break;
       case 'chat': if (CHAT[m.i]) this.shout(this.players[1], CHAT[m.i], 2.5); break;
       case 'pause': this.paused = m.on; this.pausedBy = m.on ? 'opponent' : null; break;
       case 'forfeit': this.winByForfeit(); break;
@@ -1097,6 +1123,7 @@ export class Game {
 
   /** The other player hit the shuttle (or served) on their screen. */
   private applyRemoteHit(m: Extract<GameMsg, { type: 'hit' }>) {
+    if (this.state === 'replay') this.endReplay();
     // Still in the pause after the last point here: catch up to their serve.
     if (m.serve) for (let k = 0; k < 4 && this.state !== 'serve' && this.state !== 'matchOver'; k++) this.advance();
     if (this.state === 'matchOver') return;
@@ -1150,10 +1177,18 @@ export class Game {
       shots: this.rallyHits, winner, hitter, hitterPid: this.lastHitterId, kind: hitterWins ? 'winner' : 'error', forced: false,
       lastLabel: this.lastShot?.label ?? '', lastHand: this.lastShot?.hand ?? 'serve',
     });
+    // The host's line call, turned round to this screen (so it can be challenged and reviewed here too).
     this.call = null;
+    if (m.call && land) {
+      const r = m.call.rect, rect = { xMin: -r.xMax, xMax: -r.xMin, yMin: -r.yMax, yMax: -r.yMin };
+      const judge = judgeFor(this.officials, land, rect);
+      this.call = { landing: land, rect, signed: m.call.signed, truthIn: m.call.truthIn, callIn: m.call.callIn, hitter: (1 - m.call.hitter) as 0 | 1, isServe: m.call.isServe, challenged: false, judge };
+      if (judge) { judge.signal = m.call.callIn ? 'in' : 'out'; judge.signalT = 0; }
+    }
     this.landing = land ? { p: land, call: m.callIn === null ? null : m.callIn ? 'IN' : 'OUT', t: 0 } : null;
     if (m.callIn === false) this.say('line', 'Out!');
     this.longestRally = Math.max(this.longestRally, this.rallyHits);
+    this.snap = this.match.snapshot();
     this.prevServer = this.match.server;
     this.outcome = this.match.award(winner);
     // The host's score is the real one: line up with it if anything drifted.
@@ -1169,8 +1204,11 @@ export class Game {
     this.observe({ type: 'rally', winner: this.players[winner].side });
     this.state = 'point';
     this.pointT = 0;
-    this.timer = RULES.pointPause;
+    this.timer = RULES.pointPause + (this.challengeWait(this.call) ? RULES.challengeWindow : 0);
   }
+
+  /** Online: seconds until the server may serve (0 once they can). */
+  get serveCountdown(): number { return this.state === 'serve' ? Math.max(0, this.timer) : 0; }
 
   /** The other player left or gave up: you win. */
   private winByForfeit() {

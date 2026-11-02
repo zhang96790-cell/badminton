@@ -282,6 +282,8 @@ export const RULES = {
    * metres of the net risk it: no chance at that distance, rising to maxChance at `closest` (right on it).
    */
   netFault: { within: 0.5, closest: 0.25, maxChance: 0.5 },
+  /** Online: after each point the server waits this long (s) before they can serve, so the receiver is ready. */
+  onlineServeWait: 2.2,
   /** Extra pause after a line call the human could challenge. */
   challengeWindow: 1.4,
   intervalPause: 4,

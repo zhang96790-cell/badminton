@@ -501,6 +501,9 @@ export class Hud {
   private servePrompt(game: Game): string | null {
     if (game.state !== 'serve') return null;
     const s = game.server, opp = game.settings.opponent;
+    // Online: a short wait after each point before the serve, counted down for both players.
+    const wait = game.online ? Math.ceil(game.serveCountdown) : 0;
+    if (wait > 0) return s === game.players[0] ? `Get ready… you can serve in ${wait}` : `${s.name} serves in ${wait}… get ready`;
     if (game.doubles && s !== game.players[0]) {
       const court = game.match.serverInRightCourt() ? 'right' : 'left';
       const to = game.receiver === game.players[0] ? 'you' : game.receiver.name;
@@ -527,7 +530,7 @@ export class Hud {
         ? `${move} move · ${n(K.high)} high · ${n(K.fast)} fast (hold = extra power) · ${n(K.soft)} soft · ${n(K.kill)} kill · ${hybrid ? 'cursor aims' : `${n(K.aimLeft)}/${n(K.aimRight)} aim`} · ${n(K.jump)} jump`
         : 'P1: WASD · C high · V fast (hold = extra power) · B soft · X/N aim · Space jump';
     const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · U/O aim · R-Shift jump';
-    if (game.online) return `${p1}   ·   1–6 quick chat · G marker · F fullscreen · M mute · Esc pause`;
+    if (game.online) return `${p1}   ·   1–6 quick chat · H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;
     return `${p1}${p2}   ·   H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;
   }
 }

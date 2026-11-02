@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.6',
+    title: 'Challenges and replays online',
+    date: '2 Nov 2026',
+    changes: [
+      'Hawk-Eye challenges online: line judges can miss close calls again, and whoever a close call goes against can press H to challenge. Both players watch the review, and an overturned call fixes the score on both screens (2 failed challenges per game). Ranked results wait for any challenge before they’re saved.',
+      'Replays online: press R between points to watch the last rally. If the other player serves while you’re watching, the replay ends so you don’t miss it.',
+      'A moment to get ready: after each point online, the server has to wait a couple of seconds before serving. A countdown shows for both players.',
+    ],
+  },
+  {
     version: '2.1.5',
     title: 'No more net mashing',
     date: '2 Nov 2026',

@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: the middle number goes up for a batch of new features (1.4); a patch number (1.3.2) is for
 small changes and fixes, grouped together rather than bumped for each one.
 
+## 2.1.9: Welcome card fix (2 Nov 2026)
+
+- Fixed: the welcome card no longer pops up on every reload. Logged-in players never see it; newcomers see it once, and logged-out players get the short sign-up reminder at most once a day.
+
 ## 2.1.8: Fewer net tumbles (2 Nov 2026)
 
 - Far fewer tumbling net shots: a net shot only tumbles now if it’s perfectly timed and skims the tape by under 3 cm (it used to be any timing within 12 cm). Before, about half of all net shots tumbled; now it’s about 1 in 10.

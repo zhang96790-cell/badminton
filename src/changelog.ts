@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.1.9',
+    title: 'Welcome card fix',
+    date: '2 Nov 2026',
+    changes: [
+      'Fixed: the welcome card no longer pops up on every reload. Logged-in players never see it; newcomers see it once, and logged-out players get the short sign-up reminder at most once a day.',
+    ],
+  },
+  {
     version: '2.1.8',
     title: 'Fewer net tumbles',
     date: '2 Nov 2026',

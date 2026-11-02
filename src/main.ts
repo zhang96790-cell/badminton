@@ -612,9 +612,9 @@ document.getElementById('controlsBtn')!.addEventListener('click', openControlsPi
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !controlsPick.classList.contains('hidden')) closeControlsPick(); });
 syncControlsLabel();
 // ── Welcome (newcomers and logged-out visitors) ──────────────────────────────
-// New here: a big nudge to take the tour, plus signing up. Back again but logged out: just the
-// sign-up pitch, which can be turned off. Logged in and toured: nothing.
-const TOUR_DONE = 'badminton.tourDone', WELCOME_OFF = 'badminton.welcomeOff';
+// First visit: a big nudge to take the tour, plus signing up. Back again but logged out: just the
+// sign-up pitch, at most once a day, and it can be turned off. Logged in: nothing.
+const TOUR_DONE = 'badminton.tourDone', WELCOME_OFF = 'badminton.welcomeOff', WELCOME_SEEN = 'badminton.welcomeSeen';
 const welcome = document.getElementById('welcome')!;
 const stored = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const store = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
@@ -622,12 +622,12 @@ let welcomeShown = false;
 function syncTourBadge() { document.getElementById('tourBadge')!.hidden = !!stored(TOUR_DONE); }
 function maybeWelcome() {
   if (welcomeShown || game) return;
-  const newcomer = !stored(TOUR_DONE);
-  const loggedOut = !account && !stored('badminton.account');
-  if (!newcomer && (!loggedOut || stored(WELCOME_OFF))) return;
+  if (account || stored('badminton.account')) return;
+  const seen = Number(stored(WELCOME_SEEN) ?? 0), newcomer = !seen && !stored(TOUR_DONE);
+  if (!newcomer && (stored(WELCOME_OFF) || Date.now() - seen < 24 * 3600e3)) return;
   welcomeShown = true;
+  store(WELCOME_SEEN, String(Date.now()));
   document.getElementById('welcomeTour')!.hidden = !newcomer;
-  document.querySelector<HTMLElement>('.welcome-account')!.hidden = !loggedOut;
   document.getElementById('welcomeNeverRow')!.hidden = newcomer;
   document.getElementById('welcomeKicker')!.textContent = newcomer ? 'First time here?' : 'Welcome back';
   document.getElementById('welcomeTitle')!.textContent = newcomer ? 'Welcome to Skyline Smash' : 'Save your progress';

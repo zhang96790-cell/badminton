@@ -16,6 +16,8 @@ export interface ChallengeDef {
   streak?: boolean;
   /** Score needed for one, two and three stars. */
   stars: [number, number, number];
+  /** The target box on the far court, as depths past the net (m), highlighted while you play. */
+  zone?: { d0: number; d1: number };
   /** Does this landing count? (Your shot, landed in the court.) */
   counts?: (l: LandInfo) => boolean;
   /** Or does this hit count? */
@@ -24,13 +26,13 @@ export interface ChallengeDef {
 
 export const CHALLENGES: ChallengeDef[] = [
   { id: 'drops', name: 'Drop zone', goal: 'Land drops in the front box (between the net and the short service line)', feeds: ['liftBack'], tries: 15, stars: [4, 7, 10],
-    counts: (l) => /Drop/.test(l.label) && l.depth < 1.98 },
+    zone: { d0: 0, d1: 1.98 }, counts: (l) => /drop/i.test(l.label) && l.depth < 1.98 },
   { id: 'defence', name: 'Smash defence', goal: 'Return smashes into the court, in a row', feeds: ['smash'], tries: 15, streak: true, stars: [3, 5, 8],
     counts: () => true },
   { id: 'clears', name: 'Deep clears', goal: 'Clear to the back 1.2 m of the court', feeds: ['liftBack'], tries: 12, stars: [4, 7, 10],
-    counts: (l) => /Clear|Lift/.test(l.label) && l.depth > 5.5 },
+    zone: { d0: 5.5, d1: 6.7 }, counts: (l) => /clear|lift/i.test(l.label) && l.depth > 5.5 },
   { id: 'netshots', name: 'Tight at the net', goal: 'Net shots that land within 1 m of the net', feeds: ['net', 'net', 'netLoose'], tries: 12, stars: [4, 7, 10],
-    counts: (l) => /Net shot/.test(l.label) && l.depth < 1.0 },
+    zone: { d0: 0, d1: 1.0 }, counts: (l) => /net shot/i.test(l.label) && l.depth < 1.0 },
   { id: 'smashes', name: 'Smash attack', goal: 'Smash short lifts into the court', feeds: ['liftMid'], tries: 12, stars: [5, 8, 11],
     counts: (l) => /smash/i.test(l.label) },
   { id: 'drives', name: 'Drive battle', goal: 'Return drives into the court, in a row', feeds: ['drive'], tries: 15, streak: true, stars: [4, 7, 11],
@@ -64,6 +66,7 @@ export class Challenges implements Session {
   start(g: Game) { this.begin(g, 1.2); }
 
   private begin(g: Game, delay: number) {
+    g.targetZone = this.c.zone ?? null;
     this.fed = 0;
     this.score = 0;
     this.over = false;
@@ -85,7 +88,7 @@ export class Challenges implements Session {
     if (this.over) return;
     const c = this.c;
     const yours = l.hitter === 0 && l.inCourt && !l.isServe;
-    if (c.counts && yours && c.counts(l)) this.score++;
+    if (c.counts && yours && c.counts(l)) { this.score++; g.zoneFlash = 0; }
     if ((c.streak && !yours) || this.fed >= c.tries) { this.finish(g); return; }
     this.feed(g, 0.8);
   }

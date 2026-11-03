@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.1: Sponsors and challenge fixes (3 Nov 2026)
+
+- Sponsors: Solar Sparks and Ventra now on the advertising boards behind the far baseline and down both sides.
+- Challenges: the target box is highlighted on the court (it flashes green when a shot counts), and Drop zone and Deep clears now count every drop and clear (fast drops and flat clears weren’t counting before).
+- Your reach is a little smaller (1.25 m from your body instead of 1.35 m), so you have to get closer to the shuttle.
+- The start screen’s courts are in order again: Online is Court 4 and Challenges Court 5.
+
 ## 2.5: Major improvements (2 Nov 2026)
 
 - Swing assist only works against a Beginner or Easy CPU now, and every shot it plays for you is tagged ASSIST so it’s clear when the game helped.

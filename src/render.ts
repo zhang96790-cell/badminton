@@ -1,5 +1,6 @@
 import type { Camera } from './camera';
 import { ARENA, COURT, SHOTS, VISUAL } from './config';
+import { ads, type Ad } from './ads';
 import { KeyboardController, MouseController } from './controllers';
 import { courtLineRects, inHalf, isIn, netHeightAt, serviceBox, type Rect } from './court';
 import type { Game } from './game';
@@ -69,6 +70,7 @@ export class Renderer {
     ctx.fillRect(0, 0, w, h);
     this.arena(time, game?.cheer ?? 0);
     this.court(!!game?.doublesCourt);
+    if (game?.targetZone) this.targetZone(game, time);
     if (!this.lite) this.lights(w, h);
 
     const items: { d: number; draw: () => void }[] = [{ d: cam.depth(v3(0, 0, 1)), draw: () => this.net() }];
@@ -173,6 +175,9 @@ export class Renderer {
     const texts = ARENA.boardTexts;
     for (let i = 0; i < 6; i++) {
       const x0 = -7.8 + i * 2.6, color = C.boards[i % C.boards.length];
+      // Sponsors' boards: Solar Sparks and Ventra.
+      const ad = i === 2 ? ads.solar : i === 3 ? ads.ventra : undefined;
+      if (ad && this.cam.forward.y >= 0.5) { this.adBoard(ad, v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
       this.poly([v3(x0, 9.4, 0), v3(x0 + 2.6, 9.4, 0), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0.85)], color);
       this.poly([v3(x0, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.78), v3(x0, 9.4, 0.78)], 'rgba(255,255,255,0.25)');
       if (this.cam.forward.y < 0.5) continue; // seen edge-on: skip the text
@@ -185,9 +190,44 @@ export class Renderer {
     for (const s of [-1, 1]) {
       for (let i = 0; i < 6; i++) {
         const y0 = -9 + i * 3.05;
+        // Read from the court: left-hand boards run near to far, right-hand ones far to near.
+        const ad = i === 2 ? (s < 0 ? ads.ventra : ads.solar) : i === 4 ? (s < 0 ? ads.solar : ads.ventra) : undefined;
+        if (ad) {
+          const [ya, yb] = s < 0 ? [y0, y0 + 3.05] : [y0 + 3.05, y0];
+          this.adBoard(ad, v3(s * 6.6, ya, 0.85), v3(s * 6.6, yb, 0.85), v3(s * 6.6, ya, 0));
+          continue;
+        }
         this.poly([v3(s * 6.6, y0, 0), v3(s * 6.6, y0 + 3.05, 0), v3(s * 6.6, y0 + 3.05, 0.85), v3(s * 6.6, y0, 0.85)], C.boards[(i + (s > 0 ? 1 : 3)) % C.boards.length]);
         this.poly([v3(s * 6.6, y0, 0.72), v3(s * 6.6, y0 + 3.05, 0.72), v3(s * 6.6, y0 + 3.05, 0.78), v3(s * 6.6, y0, 0.78)], 'rgba(255,255,255,0.22)');
       }
+    }
+  }
+
+  /**
+   * A sponsor's board: its background colour, with the banner fitted inside and drawn in perspective.
+   * tl / tr: the board's top corners left to right as you read it; bl: bottom left.
+   */
+  private adBoard(ad: Ad, tl: V3, tr: V3, bl: V3) {
+    const br = v3(tr.x + bl.x - tl.x, tr.y + bl.y - tl.y, tr.z + bl.z - tl.z);
+    this.poly([tl, tr, br, bl], ad.bg);
+    const cam = this.cam;
+    if ([tl, tr, bl, br].some((p) => cam.depth(p) < 0.5)) return;
+    // Fit the banner inside a small margin, keeping its shape.
+    const len = Math.hypot(tr.x - tl.x, tr.y - tl.y), hgt = tl.z - bl.z, m = 0.07;
+    const aw = len - 2 * m, ah = hgt - 2 * m, ratio = ad.banner.width / ad.banner.height;
+    const w = Math.min(aw, ah * ratio), h = w / ratio;
+    const u0 = (len - w) / 2 / len, u1 = u0 + w / len, v0 = (hgt - h) / 2 / hgt, v1 = v0 + h / hgt;
+    const at = (u: number, v: number) => cam.project(v3(tl.x + (tr.x - tl.x) * u + (bl.x - tl.x) * v, tl.y + (tr.y - tl.y) * u + (bl.y - tl.y) * v, tl.z + (tr.z - tl.z) * u + (bl.z - tl.z) * v));
+    // In thin vertical strips, each mapped flat, so a board seen at an angle keeps its perspective.
+    const ctx = this.ctx, iw = ad.banner.width, ih = ad.banner.height, N = 12, sw = iw / N;
+    for (let k = 0; k < N; k++) {
+      const ua = u0 + ((u1 - u0) * k) / N, ub = u0 + ((u1 - u0) * (k + 1)) / N;
+      const a = at(ua, v0), b = at(ub, v0), c = at(ua, v1);
+      ctx.save();
+      ctx.transform((b.x - a.x) / sw, (b.y - a.y) / sw, (c.x - a.x) / ih, (c.y - a.y) / ih, a.x, a.y);
+      // A hair wider than the strip so no seams show between them.
+      ctx.drawImage(ad.banner, k * sw, 0, Math.min(sw + 1, iw - k * sw), ih, 0, 0, Math.min(sw + 1, iw - k * sw), ih);
+      ctx.restore();
     }
   }
 
@@ -205,6 +245,21 @@ export class Renderer {
       this.poly([v3(S, -L), v3(W, -L), v3(W, L), v3(S, L)], C.alley);
     }
     for (const l of LINES) this.poly(rect3(l), C.line);
+  }
+
+  /** A challenge's target box on the far court: a pulsing fill and bright edge, flashing green on a hit. */
+  private targetZone(game: Game, time: number) {
+    const z = game.targetZone!, X = COURT.singlesHalfWidth;
+    const hit = game.zoneFlash < 0.6, pulse = 0.5 + 0.5 * Math.sin(time * 3);
+    const corners = [v3(-X, z.d0, 0.002), v3(X, z.d0, 0.002), v3(X, z.d1, 0.002), v3(-X, z.d1, 0.002)];
+    this.poly(corners, hit ? `rgba(80,220,120,${0.55 - game.zoneFlash * 0.6})` : `rgba(255,209,102,${0.16 + 0.1 * pulse})`);
+    const ctx = this.ctx, p = corners.map((c) => this.cam.project(c));
+    ctx.beginPath();
+    p.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+    ctx.closePath();
+    ctx.strokeStyle = hit ? '#50dc78' : '#ffd166';
+    ctx.lineWidth = 3;
+    ctx.stroke();
   }
 
   private lights(w: number, h: number) {

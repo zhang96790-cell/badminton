@@ -132,6 +132,9 @@ export class Game {
   session: Session | null = null;
   /** Yellow target rings on the floor (tutorial movement lesson). */
   rings: V2[] = [];
+  /** Challenges: the box to aim for on the far court (depths past the net), and time since a shot counted. */
+  targetZone: { d0: number; d1: number } | null = null;
+  zoneFlash = Infinity;
   private pending: { kind: 'feed'; type: FeedType } | { kind: 'serve' } | null = null;
 
   private timer = 0;
@@ -414,6 +417,7 @@ export class Game {
     if (this.banner) { this.banner.t += real; if (this.banner.ttl && this.banner.t > this.banner.ttl) this.banner = null; }
     if (this.landing) this.landing.t += dt;
     if (this.caption) this.caption.t += real;
+    this.zoneFlash += real;
     if (this.commentary && (this.commentary.t += real) > 4.5) this.commentary = null;
     this.cheer = Math.max(0, this.cheer - real * 0.3);
     this.stats.tick(real);

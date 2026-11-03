@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.1',
+    title: 'Sponsors and challenge fixes',
+    date: '3 Nov 2026',
+    changes: [
+      'Sponsors: Solar Sparks and Ventra now on the advertising boards behind the far baseline and down both sides.',
+      'Challenges: the target box is highlighted on the court (it flashes green when a shot counts), and Drop zone and Deep clears now count every drop and clear (fast drops and flat clears weren’t counting before).',
+      'Your reach is a little smaller (1.25 m from your body instead of 1.35 m), so you have to get closer to the shuttle.',
+      'The start screen’s courts are in order again: Online is Court 4 and Challenges Court 5.',
+    ],
+  },
+  {
     version: '2.5',
     title: 'Major improvements',
     date: '2 Nov 2026',

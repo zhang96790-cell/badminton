@@ -51,7 +51,7 @@ export const PLAYER = {
   /** Horizontal distance from body centre the racket can reach (arm + racket + lean). */
   reach: 1.15,
   /** Extra reach for human players, so near misses become (stretched) hits. */
-  humanExtraReach: 0.2,
+  humanExtraReach: 0.1,
   /** Lunging adds reach for low shuttles, then slows you while you recover. */
   lungeReach: 0.25,
   lungeMaxZ: 1.2,

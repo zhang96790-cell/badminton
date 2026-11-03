@@ -102,7 +102,7 @@ export function statGroups(c: Career): { title: string; tiles: StatTile[] }[] {
       tiles: [
         { label: 'Played', value: num(g('matches')) },
         { label: 'Won', value: num(g('wins')) },
-        { label: 'Win rate', value: pct(g('wins'), g('matches')) },
+        { label: 'Win rate', value: pct(g('wins'), g('matches')), hint: 'All matches, CPU and online' },
         { label: 'Games won', value: `${num(g('games_won'))}–${num(g('games_lost'))}` },
         { label: 'Vs CPU', value: num(g('cpu_matches')) },
         { label: 'Online', value: num(g('online_matches')) },

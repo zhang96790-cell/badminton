@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.2',
+    title: 'Fair lifts and calmer net play',
+    date: '3 Nov 2026',
+    changes: [
+      'No more smashing a lift on its way up: a hard overhead taken while the shuttle is still climbing is only a drive (flatter, slower, no jump bonus). Wait for it to come down to smash.',
+      'Higher, deeper lifts: lifts now climb at 57° (65° from the net) and aim for the back of the court, so they’re much harder to cut off. Mouse lobs from low down lift just as high.',
+      'Less frantic net exchanges: you wait 0.35 s after a hit before you can swing again (was 0.25 s), and hard shots from near the net and below the tape are 15% slower.',
+      'Fixed: the win rate at the top of Social now matches the ranked record beside it (it used to count CPU matches too). The Stats tab’s win rate still counts every match.',
+    ],
+  },
+  {
     version: '2.5.1',
     title: 'Sponsors and challenge fixes',
     date: '3 Nov 2026',

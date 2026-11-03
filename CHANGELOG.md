@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.2: Fair lifts and calmer net play (3 Nov 2026)
+
+- No more smashing a lift on its way up: a hard overhead taken while the shuttle is still climbing is only a drive (flatter, slower, no jump bonus). Wait for it to come down to smash.
+- Higher, deeper lifts: lifts now climb at 57° (65° from the net) and aim for the back of the court, so they’re much harder to cut off. Mouse lobs from low down lift just as high.
+- Less frantic net exchanges: you wait 0.35 s after a hit before you can swing again (was 0.25 s), and hard shots from near the net and below the tape are 15% slower.
+- Fixed: the win rate at the top of Social now matches the ranked record beside it (it used to count CPU matches too). The Stats tab’s win rate still counts every match.
+
 ## 2.5.1: Sponsors and challenge fixes (3 Nov 2026)
 
 - Sponsors: Solar Sparks and Ventra now on the advertising boards behind the far baseline and down both sides.

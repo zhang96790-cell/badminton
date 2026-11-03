@@ -32,6 +32,8 @@ export interface Contact {
   apex: boolean;
   /** How far behind the body the shuttle was (m, 0 if level or in front). */
   behind: number;
+  /** The shuttle was still climbing at contact (a lift on its way up): it can't be smashed. */
+  rising?: boolean;
   /** The incoming shuttle is a tumbling net shot (hard to net back or attack). */
   tumbling?: boolean;
 }
@@ -106,7 +108,7 @@ export function intentTarget(intent: Intent, point: V3, side: Side, aimX: number
   const netArea = Math.abs(point.y) < SHOTS.nearNet;
   const d = SHOTS.depth;
   let depth: number;
-  if (intent === 'high') depth = d.high;
+  if (intent === 'high') depth = zone === 'overhead' ? d.high : d.lift;
   else if (intent === 'fast') depth = isKill(point) ? d.kill : zone === 'overhead' ? d.smash : zone === 'mid' ? d.drive : d.push;
   else depth = zone === 'overhead' ? d.drop : netArea ? d.netShot : d.block;
   depth += aimDepth > 0 ? SHOTS.depthToward : aimDepth < 0 ? SHOTS.depthAway : 0;
@@ -142,6 +144,11 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   // What this swing is, for the back-court and tumbling rules below.
   const kindOf = req.kind === 'intent' ? req.intent : mouseShotKind(req.arc, req.power) === 'drop' ? 'soft' : mouseShotKind(req.arc, req.power) === 'lob' ? 'high' : 'fast';
   const tumbleSoft = !!c.tumbling && kindOf === 'soft', tumbleFast = !!c.tumbling && kindOf === 'fast';
+  // Taken on the way up, a hard overhead is only a drive: flatter, slower, no jump bonus.
+  const risingFast = !!c.rising && zone === 'overhead' && kindOf === 'fast';
+  const shotZone = risingFast ? 'mid' : zone;
+  // Hard shots from close to the net and below the tape are slower (a kill above the tape isn't).
+  const netDrive = kindOf === 'fast' && netArea && z0 < netHeightAt(c.point.x) + 0.1;
   const stretched = c.stretch > SHOTS.stretchStart;
 
   const handPower = c.hand === 'backhand' ? SHOTS.backhandPower : c.hand === 'round-the-head' ? SHOTS.roundTheHeadPower : 1;
@@ -151,7 +158,9 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * handPower
     * (stretched ? SHOTS.stretchPower : 1)
     * (0.78 + 0.22 * c.timing)
-    * (c.airborne && zone === 'overhead' ? SHOTS.jumpSmashBonus : 1)
+    * (c.airborne && shotZone === 'overhead' ? SHOTS.jumpSmashBonus : 1)
+    * (risingFast ? SHOTS.rising.power : 1)
+    * (netDrive ? SHOTS.netDrivePower : 1)
     * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);
   const noiseMult = (scrambled ? SHOTS.behindNoise : 1) * (deep ? B.deepNoise : 1)
@@ -189,7 +198,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     if (kind === 'drop') plan = { type: 'soft' };
     else if (kind === 'lob') {
       const u = (req.power - Mo.dropMaxPower) / (1 - Mo.dropMaxPower);
-      const angle = lerp(SHOTS.mouseHighAngleMin, SHOTS.mouseHighAngleMax, u);
+      // From below shoulder height a lob is a lift: never flatter than a keyboard lift.
+      const angle = Math.max(lerp(SHOTS.mouseHighAngleMin, SHOTS.mouseHighAngleMax, u), zone === 'low' ? SHOTS.liftAngle : 0);
       plan = { type: 'angle', angle: zone !== 'overhead' && netArea ? Math.max(angle, SHOTS.netLiftAngle) : angle };
     } else {
       const smash = kind === 'smash';
@@ -208,6 +218,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   if (perfect && zone === 'overhead' && kindOf === 'soft') target = { x: target.x, y: target.y * B.perfectDrop };
 
   // Longer and harder shots are less accurate: you still aim at a point, it just lands further from it.
+  // A rising shuttle driven back goes flat and deep, not down steeply like a smash.
+  if (risingFast) target = { x: target.x, y: opp * Math.max(Math.abs(target.y), SHOTS.depth.drive) };
   target = clampTarget(target, opp);
   const A = SHOTS.aim;
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
@@ -245,7 +257,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
 
   speed *= 1 + gauss() * SHOTS.speedNoise * noiseMult;
   const rise = fly2d(z0, speed, angle, Infinity).apex - z0;
-  const label = classify(zone, netArea, angle / DEG, speed, c.airborne, Math.abs(target.y), rise);
+  const label = classify(shotZone, netArea, angle / DEG, speed, c.airborne, Math.abs(target.y), rise);
   return { velocity: toVelocity(g.ux, g.uy, speed, angle), label, speedKmh: speed * 3.6 };
 }
 

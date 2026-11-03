@@ -290,6 +290,7 @@ export class Player implements PlayerView {
       hand,
       airborne: this.airborne,
       apex: this.airborne && Math.abs(this.vz) < SHOTS.perfectJump.apexSpeed,
+      rising: v.z > SHOTS.rising.speed,
       // Players face the net: forward is toward it, so a negative offset is behind them.
       behind: Math.max(0, -(s.y - this.pos.y) * this.forward),
       timing,

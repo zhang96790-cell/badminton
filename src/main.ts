@@ -260,7 +260,10 @@ function syncAccountUi() {
   document.getElementById('heroRating')!.textContent = myRating ? String(myRating.rating) : '–';
   document.getElementById('heroRecord')!.textContent = myRating ? `${myRating.wins}–${myRating.losses}` : '–';
   const played = career.matches ?? 0;
-  document.getElementById('heroWinPct')!.textContent = played ? `${Math.round((100 * (career.wins ?? 0)) / played)}%` : '–';
+  // Beside the ranked record, show the ranked win rate (so the two agree); otherwise all your matches.
+  const ranked = myRating ? myRating.wins + myRating.losses : 0;
+  document.getElementById('heroWinPct')!.textContent = ranked ? `${Math.round((100 * myRating!.wins) / ranked)}%` : played ? `${Math.round((100 * (career.wins ?? 0)) / played)}%` : '–';
+  document.getElementById('heroWinLabel')!.textContent = ranked ? 'Ranked win rate' : 'Win rate (all matches)';
   document.getElementById('accountTab')!.hidden = !account;
   document.getElementById('adminTab')!.hidden = !(account && isAdmin);
   document.getElementById('friendsLogin')!.hidden = !!account;

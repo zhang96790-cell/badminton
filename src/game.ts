@@ -280,7 +280,13 @@ export class Game {
       }
       this.unsubscribe = online.conn.on((m) => this.onNet(m));
     }
-    this.say('umpire', gameStartCall(1, this.match.gamesToWin));
+    const r = online?.resume;
+    if (r) {
+      // Carrying on after a reload: same score, same server, turned to this screen's view.
+      const flip = <T,>(a: [T, T]): [T, T] => (this.myTeam === 0 ? [a[0], a[1]] : [a[1], a[0]]);
+      this.match.resumeFrom(flip(r.scores), flip(r.games), r.history.map((h) => flip(h)), this.teamHere(r.server));
+      this.say('umpire', `Play resumes. ${scoreCall(this.match, false)}`);
+    } else this.say('umpire', gameStartCall(1, this.match.gamesToWin));
     // Singles against the CPU: it remembers your habits from earlier matches on this computer.
     if (mode === 'match' && !online && !doubles && this.controllers[1] instanceof AIController && vsAI) {
       const weak = this.controllers[1].useMemory();

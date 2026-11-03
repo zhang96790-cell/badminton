@@ -146,8 +146,8 @@ export class Hud {
       const them = game.pausers, gone = game.awayName;
       const [title, sub] = game.peerAway
         ? gone === 'You'
-          ? ['Connection lost', 'Reconnecting… your place is kept for a minute.']
-          : [`${gone} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, their side retires.']
+          ? ['Connection lost', 'Reconnecting… your place is kept for a minute  ·  Q to leave']
+          : [`${gone} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, their side retires  ·  Q to leave']
         : !game.online
           ? ['Paused', 'Esc to resume  ·  Q to quit to menu']
           : game.pauseMine && game.pauseTheirs

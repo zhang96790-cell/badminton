@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.4',
+    title: 'Steadier online play',
+    date: '3 Nov 2026',
+    changes: [
+      'Reloading mid-match no longer breaks it: the match carries on for both of you from the last point, same score and same server (the umpire says “Play resumes”).',
+      'Out-of-date pages are caught: if someone in your room hasn’t refreshed since an update, the game says who, and offers a Refresh button to whoever needs it, instead of the match silently going wrong.',
+      'No more getting stuck: Q always leaves when a connection is lost, a finished ranked match offers Find another match, and if your quick-match opponent never joins you can move on after 30 seconds.',
+      'Logins renew themselves when you come back to the tab and before quick match; if a login really has expired, you’re told so and asked to log in again.',
+    ],
+  },
+  {
     version: '2.5.3',
     title: 'Net kills toned down',
     date: '3 Nov 2026',

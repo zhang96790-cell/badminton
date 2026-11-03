@@ -19,7 +19,7 @@ import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
-import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type QueueEvent, type Roster, type ServerMsg } from './net';
+import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type MatchSnapshot, type QueueEvent, type Roster, type ServerMsg } from './net';
 import { tierOf } from './rating';
 import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
@@ -302,6 +302,21 @@ async function refreshStats() {
   syncAccountUi();
 }
 
+// Logins: renew when you come back to the tab (a sleeping laptop can miss the automatic renewal), and
+// say so clearly if the login ended, instead of quietly failing.
+let loggingOut = false;
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && account) void loadAccount().then((m) => m.freshToken()); });
+void loadAccount().then((m) => m.onLoggedOut(() => {
+  if (loggingOut || !account) return;
+  account = null;
+  myRating = null;
+  isAdmin = false;
+  career = loadLocalCareer();
+  stopPresence();
+  syncAccountUi();
+  toast('You’ve been logged out', 'Your login expired. Log in again to keep saving stats and play ranked.');
+}));
+
 /** Logged in: use the settings saved to the account, or save this browser's settings to a new one. */
 async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
   account = a;
@@ -452,7 +467,9 @@ document.getElementById('acChange')!.addEventListener('click', async () => {
 });
 document.getElementById('acLogout')!.addEventListener('click', async () => {
   const m = await loadAccount();
+  loggingOut = true;
   await m.logOut();
+  loggingOut = false;
   account = null;
   myRating = null;
   isAdmin = false;
@@ -926,6 +943,21 @@ const roomJoin = document.getElementById('roomJoin')!, roomLobby = document.getE
 const roomCodeIn = document.getElementById('roomCodeIn') as HTMLInputElement, roomJoinMsg = document.getElementById('roomJoinMsg')!;
 const roomStart = document.getElementById('roomStart') as HTMLButtonElement, roomStatus = document.getElementById('roomStatus')!;
 let room: RoomConnection | null = null;
+/** This game's version: the room compares it so players on an old page are told to refresh. */
+const GAME_VERSION = CHANGELOG[0].version;
+/** Someone in the room is on a different version: who, and whether it's you that's out of date. */
+function versionClash(r: Roster | null | undefined): { name: string; mineOld: boolean } | null {
+  for (const p of seated(r)) {
+    // (A room server from before 2.5.4 doesn't report versions at all: nothing to compare.)
+    if (p.seat === r?.you || p.v === undefined || p.v === GAME_VERSION) continue;
+    // An empty version is a page from before 2.5.4: always the older one.
+    const theirs = (p.v || '0').split(/[.–-]/).map(Number), mine = GAME_VERSION.split(/[.–-]/).map(Number);
+    let mineOld = false;
+    for (let i = 0; i < 3; i++) { if ((mine[i] ?? 0) !== (theirs[i] ?? 0)) { mineOld = (mine[i] ?? 0) < (theirs[i] ?? 0); break; } }
+    return { name: p.name, mineOld };
+  }
+  return null;
+}
 /** Online doubles is held back while it's made steadier: rooms are singles only (doubles is still there against the CPU). */
 const ONLINE_DOUBLES = false;
 /** The room's match settings (the host's choice). Doubles fills empty places with CPUs at `level`. */
@@ -1034,9 +1066,26 @@ function renderLobby() {
   const conn = ready && room.rtt && room.peerRtt
     ? ` Connection: you ${Math.round(room.rtt)} ms, ${doubles ? 'others' : 'them'} ${Math.round(room.peerRtt)} ms${room.latency >= 150 ? ' (laggy: try moving closer to the Wi-Fi)' : ''}.`
     : '';
+  const clash = versionClash(r);
+  const refresh = document.getElementById('roomRefresh')!, next = document.getElementById('roomNext')!;
+  refresh.hidden = !clash?.mineOld;
+  // Ranked: over, or the opponent never turned up: offer the next match instead of waiting forever.
+  const rankedOver = !!ranked && !!r?.match?.finished && !game;
+  const noShow = !!ranked && !ready && !rankedOver && Date.now() - roomOpenedAt > 30_000;
+  next.hidden = !(rankedOver || noShow);
+  if (clash) {
+    roomStart.hidden = !host;
+    roomStart.disabled = true;
+    roomStatus.textContent = clash.mineOld
+      ? 'There’s a newer version of the game. Refresh this page to play (your seat is kept).'
+      : `Waiting for ${clash.name} to refresh their page: they’re on an older version of the game.`;
+    return;
+  }
   if (ranked) {
     roomStart.hidden = true;
-    roomStatus.textContent = (ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · starts as soon as you’re both connected') + conn;
+    roomStatus.textContent = (rankedOver ? 'This ranked match is over. Find another when you’re ready.'
+      : noShow ? 'Your opponent hasn’t joined. Find another match, or keep waiting.'
+      : ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · starts as soon as you’re both connected') + conn;
     return;
   }
   roomStart.hidden = !host;
@@ -1050,9 +1099,15 @@ function renderLobby() {
     : host ? 'Both here. Press Start match when you’re ready.' : 'Both here. Waiting for the host to start.') + conn;
 }
 
+/** When this room was opened (to notice an opponent who never joins). */
+let roomOpenedAt = 0;
+/** Asked the room to carry on a match in progress (after a reload), once per connection. */
+let resumeAsked = false;
 function openRoom(code: string) {
   leaveRoom();
-  room = new RoomConnection(code, roomToken(code), myName());
+  room = new RoomConnection(code, roomToken(code), myName(), GAME_VERSION);
+  roomOpenedAt = Date.now();
+  resumeAsked = false;
   room.on(onRoomMsg);
   // Reloading the page brings you back to the same seat in this room.
   history.replaceState(null, '', `/play?room=${code}`);
@@ -1075,8 +1130,18 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
       if (m.ranked) roomSettings = (m.settings as typeof roomSettings) ?? { games: 1, points: 21 };
       else if (m.you === 'host') room.send({ type: 'settings', settings: roomSettings });
       else if (m.settings) roomSettings = m.settings as typeof roomSettings;
-      // Ranked: the host's screen starts the match as soon as both players are connected.
-      if (m.ranked && m.you === 'host' && m.host?.connected && m.guest?.connected && !game) hostStart();
+      {
+        const both = !!(m.host?.connected && m.guest?.connected), same = !versionClash(m);
+        // A match is already under way and this page has none (it was reloaded): ask everyone to carry on.
+        if (m.match?.playing && !game && both && same && !resumeAsked) { resumeAsked = true; room.send({ type: 'resumeReq' }); }
+        // Ranked: the host's screen starts the match as soon as both players are connected (and on the same version).
+        else if (m.ranked && m.you === 'host' && both && same && !game && !m.match) hostStart();
+      }
+      break;
+    case 'resume':
+      // Someone's page reloaded mid-match: everyone restarts from the last point.
+      roomSettings = { ...roomSettings, ...(m.settings as typeof roomSettings) };
+      startOnline(room.roster?.you === 'host', undefined, m.match);
       break;
     case 'result':
       if (game?.online) game.rankedResult = m;
@@ -1098,7 +1163,7 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
   renderLobby();
 }
 
-function startOnline(host: boolean, lineup?: LineupSlot[]) {
+function startOnline(host: boolean, lineup?: LineupSlot[], resume?: MatchSnapshot) {
   const r = room?.roster;
   // Doubles: your place in the lineup; singles: the other player.
   const me = lineup ? lineup.findIndex((s) => s.seat === r?.you) : -1;
@@ -1112,7 +1177,7 @@ function startOnline(host: boolean, lineup?: LineupSlot[]) {
   const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
   const level = lineup ? roomSettings.level ?? 'medium' : settings.opponent;
   game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21, opponent: level }, input, broadcast, 'online',
-    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined });
+    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined, resume });
   game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
@@ -1144,7 +1209,7 @@ let queueTimer = 0;
 async function startQuickMatch() {
   if (!account) { openAccount('Log in or sign up to play ranked quick matches.'); return; }
   const m = await loadAccount();
-  const token = await m.accessToken();
+  const token = await m.freshToken();
   if (!token) { openAccount('Your login has expired. Log in again to play quick match.'); return; }
   leaveRoom();
   showRoomView('queue');
@@ -1170,7 +1235,9 @@ async function startQuickMatch() {
       // Your ticket is your seat: keep it for this tab so a reload gets you back in.
       try { sessionStorage.setItem(`badminton.room.${e.code}`, e.ticket); } catch { /* storage unavailable */ }
       history.replaceState(null, '', `/play?room=${e.code}`);
-      room = new RoomConnection(e.code, e.ticket, myName());
+      room = new RoomConnection(e.code, e.ticket, myName(), GAME_VERSION);
+      roomOpenedAt = Date.now();
+      resumeAsked = false;
       room.on(onRoomMsg);
       showRoomView('lobby');
       renderLobby();
@@ -1207,6 +1274,8 @@ function joinTyped() {
 document.getElementById('roomJoinGo')!.addEventListener('click', joinTyped);
 roomCodeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); joinTyped(); } });
 roomStart.addEventListener('click', hostStart);
+document.getElementById('roomRefresh')!.addEventListener('click', () => location.reload());
+document.getElementById('roomNext')!.addEventListener('click', () => void startQuickMatch());
 for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points'], ['roomEvent', 'event'], ['roomLevel', 'level']] as const) {
   document.getElementById(id)!.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => {
     if (room?.roster?.you !== 'host' || b.classList.contains('disabled')) return;
@@ -1434,6 +1503,8 @@ function onlineKeys(g: Game, over: boolean) {
     if (over) { leaveRoom(); showMenu(); return; }
     if (!g.peerAway) g.setOnlinePause(!g.pauseMine);
   }
+  // Stuck waiting on a lost connection: Q always gets you out.
+  if (g.peerAway && input.tapped(['KeyQ'])) { leaveRoom(); showMenu(); return; }
   if (g.pauseMine && input.tapped(['KeyQ'])) {
     room?.send({ type: 'forfeit' });
     leaveRoom();

@@ -16,7 +16,9 @@ export function newRoomCode(): string {
 export type Seat = 'host' | 'guest' | 'p3' | 'p4';
 export const SEATS: Seat[] = ['host', 'guest', 'p3', 'p4'];
 /** Someone in the room. Team 0 is always the host's team (in singles the guest is team 1). */
-export interface RosterSeat { name: string; connected: boolean; team?: 0 | 1 }
+export interface RosterSeat { name: string; connected: boolean; team?: 0 | 1; /** Their game version ('' if too old to say). */ v?: string }
+/** Where a match stands, in the host's view (side 0 = the host). */
+export interface MatchSnapshot { games: [number, number]; scores: [number, number]; history: [number, number][]; server: 0 | 1 }
 
 /** A line call as the host sends it (host's view; hitter is the host's side numbering). */
 export interface WireCall { rect: { xMin: number; xMax: number; yMin: number; yMax: number }; signed: number; truthIn: boolean; callIn: boolean; hitter: 0 | 1; isServe: boolean }
@@ -29,6 +31,8 @@ export interface Roster {
   settings: unknown;
   /** Quick-match rooms: both players' ratings. Null for private rooms. */
   ranked: { host: number; guest: number } | null;
+  /** The room's match: still being played (a reloaded page can resume it) or finished. */
+  match?: (MatchSnapshot & { playing: boolean; finished: boolean }) | null;
 }
 
 /** The room's verdict on a ranked match: new ratings, or why they couldn't be saved. */
@@ -73,6 +77,8 @@ export type ServerMsg =
   /** self: your own connection dropped or came back (sent by this screen, not the room). */
   | { type: 'peer'; status: 'away' | 'back' | 'left'; seconds?: number; forfeit?: boolean; seat?: Seat; self?: boolean }
   | { type: 'pong'; t: number }
+  /** Everyone restarts the match from this point (someone's page was reloaded). */
+  | { type: 'resume'; settings: unknown; match: MatchSnapshot }
   | { type: 'full' }
   | ({ type: 'result' } & RankedResult);
 
@@ -91,7 +97,8 @@ export class RoomConnection {
   private retry = 0;
   private closedByUs = false;
 
-  constructor(readonly code: string, private token: string, private name: string) {
+  /** version: this game's version, so the room can spot players who need to refresh. */
+  constructor(readonly code: string, private token: string, private name: string, private version = '') {
     this.open();
   }
 
@@ -100,7 +107,7 @@ export class RoomConnection {
 
   on(h: Handler): () => void { this.handlers.add(h); return () => this.handlers.delete(h); }
 
-  send(msg: GameMsg | { type: 'leave' }) {
+  send(msg: GameMsg | { type: 'leave' } | { type: 'resumeReq' }) {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg));
   }
 
@@ -113,7 +120,7 @@ export class RoomConnection {
   }
 
   private open() {
-    const url = `${ROOM_SERVER}/room/${this.code}?token=${encodeURIComponent(this.token)}&name=${encodeURIComponent(this.name)}`;
+    const url = `${ROOM_SERVER}/room/${this.code}?token=${encodeURIComponent(this.token)}&name=${encodeURIComponent(this.name)}&v=${encodeURIComponent(this.version)}`;
     const ws = new WebSocket(url);
     this.ws = ws;
     ws.addEventListener('open', () => {

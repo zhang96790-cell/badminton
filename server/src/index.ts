@@ -17,7 +17,7 @@ const SEATS: Seat[] = ['host', 'guest', 'p3', 'p4'];
 /** The two sides of a result: the host's team ('host') or the other team ('guest'). Ranked rooms are always these two seats. */
 type Side = 'host' | 'guest';
 /** Team 0 is always the host's team. In singles the guest is team 1. */
-interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null; team?: 0 | 1 }
+interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null; team?: 0 | 1; /** Game version they're running ('' if too old to say). */ v?: string }
 /** A quick-match room: only the two matched players may sit, and the result counts for ranking. */
 interface Ranked {
   tickets: Record<Side, string>;
@@ -28,6 +28,8 @@ interface Ranked {
 /** The match as the room follows it, from the host's point verdicts. */
 interface Progress {
   playing: boolean; gamesToWin: number; games: [number, number]; scores: [number, number];
+  /** Finished games' scores and who serves next (0 = the host's side), so a reloaded match can carry on. */
+  history?: [number, number][]; server?: 0 | 1;
   /** The match looks over: who won, and when to save it (after any Hawk-Eye challenge has had time). */
   pending: { winner: Side; at: number } | null;
 }
@@ -91,9 +93,12 @@ export class Room extends DurableObject<Env> {
   }
 
   private roster(s: RoomState) {
-    const view = (seat: Seat) => { const x = s[seat]; return x ? { name: x.name, connected: x.connected, team: this.teamOf(s, seat) } : null; };
+    const view = (seat: Seat) => { const x = s[seat]; return x ? { name: x.name, connected: x.connected, team: this.teamOf(s, seat), v: x.v ?? '' } : null; };
     const ranked = s.ranked ? { host: s.ranked.players.host.rating, guest: s.ranked.players.guest.rating } : null;
-    return { host: view('host'), guest: view('guest'), p3: view('p3'), p4: view('p4'), settings: s.settings, ranked };
+    const p = s.progress;
+    // Where the match stands: playing (so a reloaded page can resume it) or finished.
+    const match = p ? { playing: p.playing && !p.pending, finished: !p.playing || !!p.pending, games: p.games, scores: p.scores, history: p.history ?? [], server: p.server ?? 0 } : null;
+    return { host: view('host'), guest: view('guest'), p3: view('p3'), p4: view('p4'), settings: s.settings, ranked, match };
   }
 
   /** Tell everyone who's in the room. */
@@ -142,7 +147,7 @@ export class Room extends DurableObject<Env> {
       const count = (t: 0 | 1) => SEATS.filter((k) => s[k] && this.teamOf(s, k) === t).length;
       team = count(1) <= count(0) ? 1 : 0;
     }
-    s[seat] = { token, name, connected: true, awaySince: null, team };
+    s[seat] = { token, name, connected: true, awaySince: null, team, v: (url.searchParams.get('v') ?? '').slice(0, 16) };
     await this.save();
     this.broadcastRoster(s);
     if (wasAway) this.others(seat, { type: 'peer', status: 'back', seat });
@@ -176,7 +181,7 @@ export class Room extends DurableObject<Env> {
     if (msg.type === 'start' && att.seat === 'host') {
       const s = await this.load();
       const games = (msg.settings as { games?: number } | null)?.games === 3 ? 2 : 1;
-      s.progress = { playing: true, gamesToWin: games, games: [0, 0], scores: [0, 0], pending: null };
+      s.progress = { playing: true, gamesToWin: games, games: [0, 0], scores: [0, 0], pending: null, history: [], server: 0 };
       if (s.ranked?.recorded) s.ranked = null; // a rematch in a ranked room doesn't count again
       await this.save();
     }
@@ -186,13 +191,28 @@ export class Room extends DurableObject<Env> {
       const s = await this.load();
       const p = s.progress;
       if (p?.playing && Array.isArray(msg.games) && Array.isArray(msg.scores)) {
-        p.games = [Number(msg.games[0]) || 0, Number(msg.games[1]) || 0];
-        p.scores = [Number(msg.scores[0]) || 0, Number(msg.scores[1]) || 0];
+        const games: [number, number] = [Number(msg.games[0]) || 0, Number(msg.games[1]) || 0];
+        const scores: [number, number] = [Number(msg.scores[0]) || 0, Number(msg.scores[1]) || 0];
+        // A game just ended: its final score goes in the history (the host's scores are still the final ones).
+        if (games[0] + games[1] > p.games[0] + p.games[1]) (p.history ??= []).push(scores);
+        if (msg.type === 'point' && (msg.winner === 0 || msg.winner === 1)) p.server = msg.winner;
+        p.games = games;
+        p.scores = scores;
         const over = Math.max(...p.games) >= p.gamesToWin;
         p.pending = over ? { winner: p.games[0] > p.games[1] ? 'host' : 'guest', at: Date.now() + (msg.type === 'review' ? 2_000 : CHALLENGE_GRACE_MS) } : null;
         await this.save();
         await this.scheduleAlarm(s);
       }
+    }
+    // Someone's page reloaded mid-match: restart everyone from the last point (same score, same server).
+    if (msg.type === 'resumeReq') {
+      const s = await this.load();
+      const p = s.progress;
+      if (p?.playing && !p.pending && s.host?.connected && s.guest?.connected) {
+        const resume = { type: 'resume', settings: s.settings, match: { games: p.games, scores: p.scores, history: p.history ?? [], server: p.server ?? 0 } };
+        for (const seat of SEATS) this.send(this.socket(seat), resume);
+      }
+      return;
     }
     if (msg.type === 'forfeit') await this.quit(att.seat);
     if (msg.type === 'leave') {

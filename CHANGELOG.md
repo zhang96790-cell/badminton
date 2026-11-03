@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.4: Steadier online play (3 Nov 2026)
+
+- Reloading mid-match no longer breaks it: the match carries on for both of you from the last point, same score and same server (the umpire says “Play resumes”).
+- Out-of-date pages are caught: if someone in your room hasn’t refreshed since an update, the game says who, and offers a Refresh button to whoever needs it, instead of the match silently going wrong.
+- No more getting stuck: Q always leaves when a connection is lost, a finished ranked match offers Find another match, and if your quick-match opponent never joins you can move on after 30 seconds.
+- Logins renew themselves when you come back to the tab and before quick match; if a login really has expired, you’re told so and asked to log in again.
+
 ## 2.5.3: Net kills toned down (3 Nov 2026)
 
 - Net kills nerfed: a kill at the net is now a short, sharp tap (around 130 km/h, was up to 240), and the shuttle has to be well above the tape (25 cm) for a full kill; just above it, it’s a weaker push.

@@ -4,7 +4,7 @@
 // screen also plays any CPUs, and the shuttle's flight after a hit is worked out identically everywhere.
 import type { Command, Controller } from './controllers';
 import type { V2, V3 } from './math';
-import type { LineupSlot, RoomConnection } from './net';
+import type { LineupSlot, MatchSnapshot, RoomConnection } from './net';
 import type { Player } from './player';
 
 export interface OnlineLink {
@@ -17,6 +17,8 @@ export interface OnlineLink {
   /** Doubles: the four slots (0 and 2 the host's team, 1 and 3 the other) and which one is you. */
   lineup?: LineupSlot[];
   me?: number;
+  /** Carry on a match from this point (after someone's page reloaded), in the host's view. */
+  resume?: MatchSnapshot;
 }
 
 /** Quick chat: number keys 1–6 during an online match. Preset only, no typing. */

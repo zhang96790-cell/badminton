@@ -81,6 +81,15 @@ export class Match {
     this.right = o.r;
   }
 
+  /** Carry on from a saved point (scores, games, finished games, who serves); 0 is this screen's side. */
+  resumeFrom(scores: [number, number], games: [number, number], history: [number, number][], server: 0 | 1) {
+    this.scores = scores;
+    this.games = games;
+    this.history = history;
+    this.server = server;
+    this.intervalTaken = Math.max(...scores) >= this.format.intervalAt;
+  }
+
   /** Serve from the right service court on an even score, left on odd. */
   serverInRightCourt(): boolean {
     return this.scores[this.server] % 2 === 0;

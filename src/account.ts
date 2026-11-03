@@ -92,6 +92,24 @@ export async function accessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
+/**
+ * A login token that's good for a while yet: renewed first if it runs out within two minutes (a laptop
+ * that slept, or a tab left in the background, can miss the automatic renewal). Null if it can't be renewed.
+ */
+export async function freshToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  const s = data.session;
+  if (!s) return null;
+  if ((s.expires_at ?? 0) * 1000 - Date.now() > 120_000) return s.access_token;
+  const { data: r, error } = await supabase.auth.refreshSession();
+  return error ? null : r.session?.access_token ?? null;
+}
+
+/** Called when the login ends without you logging out (it expired and couldn't be renewed). */
+export function onLoggedOut(cb: () => void) {
+  supabase.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') cb(); });
+}
+
 export interface Stats { username: string; rating: number; wins: number; losses: number }
 export interface MatchRow { opponent: string; won: boolean; score: string; change: number; forfeit: boolean; created_at: string }
 export interface Friend { id: string; username: string; rating: number; online: boolean; direction: 'friend' | 'incoming' | 'outgoing' }

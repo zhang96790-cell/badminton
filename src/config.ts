@@ -83,7 +83,7 @@ export const SWING = {
   /** How long a swing stays live looking for the shuttle. */
   window: 0.34,
   /** Press-to-contact time for a perfectly timed hit. */
-  idealDelay: 0.11,
+  idealDelay: 0.14,
   perfectTolerance: 0.08,
   /** Timing error beyond the tolerance at which quality bottoms out. */
   falloff: 0.24,
@@ -93,7 +93,7 @@ export const SWING = {
    * hitRecovery. A player's click during recovery isn't lost: it swings the moment recovery ends.
    */
   recovery: 0.25,
-  hitRecovery: 0.35,
+  hitRecovery: 0.45,
   /** Mouse mode: hold time to reach full power. */
   chargeTime: 0.5,
   /** Keyboard fast key: hold time to reach its extra-power bonus. */
@@ -162,6 +162,11 @@ export const SHOTS = {
   tumble: { margin: 0.02, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
   /** A hard overhead taken while the shuttle is still rising (faster upward than this, m/s) is only a drive, at this power. */
   rising: { speed: 0.4, power: 0.8 },
+  /**
+   * Hard shots at the net above the tape (net kills) play at this power; only just above the tape
+   * (less than minAbove, m) they're a weaker push.
+   */
+  netKill: { power: 0.62, minAbove: 0.25, lowPower: 0.5 },
   /** Hard shots from within nearNet of the net and below the tape lose this much pace. */
   netDrivePower: 0.85,
   /** Disguised shots (Deceptive CPU): landing marker hidden for markerDelay, opponents slowed for wrongFoot (s). */

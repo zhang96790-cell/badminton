@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.3: Net kills toned down (3 Nov 2026)
+
+- Net kills nerfed: a kill at the net is now a short, sharp tap (around 130 km/h, was up to 240), and the shuttle has to be well above the tape (25 cm) for a full kill; just above it, it’s a weaker push.
+- Swings take a little longer: perfect timing is now 0.14 s after you press (was 0.11 s), and you wait 0.45 s after a hit before you can swing again (was 0.35 s), so fast net and drive exchanges calm down.
+
 ## 2.5.2: Fair lifts and calmer net play (3 Nov 2026)
 
 - No more smashing a lift on its way up: a hard overhead taken while the shuttle is still climbing is only a drive (flatter, slower, no jump bonus). Wait for it to come down to smash.

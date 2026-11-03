@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.3',
+    title: 'Net kills toned down',
+    date: '3 Nov 2026',
+    changes: [
+      'Net kills nerfed: a kill at the net is now a short, sharp tap (around 130 km/h, was up to 240), and the shuttle has to be well above the tape (25 cm) for a full kill; just above it, it’s a weaker push.',
+      'Swings take a little longer: perfect timing is now 0.14 s after you press (was 0.11 s), and you wait 0.45 s after a hit before you can swing again (was 0.35 s), so fast net and drive exchanges calm down.',
+    ],
+  },
+  {
     version: '2.5.2',
     title: 'Fair lifts and calmer net play',
     date: '3 Nov 2026',

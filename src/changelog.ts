@@ -6,6 +6,14 @@
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
     version: '2.5.5',
+    title: 'No more stuck rallies',
+    date: '4 Nov 2026',
+    changes: [
+      'Fixed online: the shuttle could land and then nothing happened, with both screens waiting forever. A short connection blip (common on school Wi-Fi) could lose the “it landed” or “point” message. Now messages are held and sent when the connection comes back, the host decides any rally left hanging after 2.5 seconds, and the other screen asks for the verdict again, so a rally can’t get stuck (and a point is never counted twice).',
+    ],
+  },
+  {
+    version: '2.5.5',
     title: 'No more frozen rallies',
     date: '4 Nov 2026',
     changes: [

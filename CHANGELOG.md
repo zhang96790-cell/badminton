@@ -10,6 +10,10 @@ of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest c
 - Fixed online rallies that never ended: after a short connection blip, both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived.
 - Moves sent during a connection blip are no longer lost: they’re sent as soon as the connection comes back.
 
+## 2.5.5: No more stuck rallies (4 Nov 2026)
+
+- Fixed online: the shuttle could land and then nothing happened, with both screens waiting forever. A short connection blip (common on school Wi-Fi) could lose the “it landed” or “point” message. Now messages are held and sent when the connection comes back, the host decides any rally left hanging after 2.5 seconds, and the other screen asks for the verdict again, so a rally can’t get stuck (and a point is never counted twice).
+
 ## 2.5.4: Steadier online play (3 Nov 2026)
 
 - Reloading mid-match no longer breaks it: the match carries on for both of you from the last point, same score and same server (the umpire says “Play resumes”).

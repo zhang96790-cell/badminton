@@ -258,6 +258,8 @@ export const ONLINE = {
   hoverRate: 0.08,
   /** Position updates sent per second. */
   posRate: 30,
+  /** A rally left waiting this long (s) after the shuttle landed is decided by the host's screen. */
+  waitMax: 2.5,
   /** An online pause ends on its own after this long (s), even if someone hasn't resumed. */
   pauseMax: 60,
   /** When their hit arrives, the drawn shuttle glides onto its true path over this long (game seconds). */

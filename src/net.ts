@@ -58,7 +58,8 @@ export type GameMsg = (
   | { type: 'hit'; p: [number, number, number]; v: [number, number, number]; label: string; kmh: number; hand: string; detail: string; serve: boolean; g?: number; n?: number }
   | { type: 'land'; p: [number, number]; net: boolean; wide: boolean }
   /** right: doubles, the lineup slot standing in each team's right service court after this point. */
-  | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number]; call?: WireCall | null; right?: [number, number] }
+  /** n: the point's number in the match, so a resent verdict is never counted twice. */
+  | { type: 'point'; winner: 0 | 1; land: [number, number] | null; title: string; why: string | null; callIn: boolean | null; scores: [number, number]; games: [number, number]; call?: WireCall | null; right?: [number, number]; n?: number }
   | { type: 'challenge' }
   /** Guest to host: I was serving and ran out the shot clock. */
   | { type: 'delay' }
@@ -70,6 +71,8 @@ export type GameMsg = (
   | { type: 'forfeit' }
   /** Doubles lobby: move to this team. */
   | { type: 'team'; team: 0 | 1 }
+  /** Not the host: "I've been waiting on this rally too long" (the host resends its verdict). */
+  | { type: 'sync' }
 ) & { from?: Seat };
 
 export type ServerMsg =
@@ -107,8 +110,15 @@ export class RoomConnection {
 
   on(h: Handler): () => void { this.handlers.add(h); return () => this.handlers.delete(h); }
 
+  /** Game messages sent while the connection was down, sent as soon as it's back (positions are skipped: they'd be stale). */
+  private outbox: string[] = [];
+
   send(msg: GameMsg | { type: 'leave' } | { type: 'resumeReq' }) {
-    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg));
+    const raw = JSON.stringify(msg);
+    if (this.ws?.readyState === WebSocket.OPEN) { this.ws.send(raw); return; }
+    if (msg.type === 'pos' || msg.type === 'rtt' || this.closedByUs) return;
+    this.outbox.push(raw);
+    if (this.outbox.length > 60) this.outbox.shift();
   }
 
   close() {
@@ -127,6 +137,7 @@ export class RoomConnection {
       if (this.status === 'reconnecting') for (const h of this.handlers) h({ type: 'peer', status: 'back', self: true });
       this.status = 'open';
       this.retry = 0;
+      for (const raw of this.outbox.splice(0)) ws.send(raw);
       clearInterval(this.pingTimer);
       this.ping();
       this.pingTimer = window.setInterval(() => this.ping(), 2000);

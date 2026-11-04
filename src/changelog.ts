@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.5',
+    title: 'No more frozen rallies',
+    date: '4 Nov 2026',
+    changes: [
+      'Fixed online rallies that never ended: after a short connection blip, both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived.',
+      'Moves sent during a connection blip are no longer lost: they’re sent as soon as the connection comes back.',
+    ],
+  },
+  {
     version: '2.5.4',
     title: 'Steadier online play',
     date: '3 Nov 2026',

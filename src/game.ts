@@ -170,6 +170,12 @@ export class Game {
   private away = new Set<string>();
   /** Online: your team, numbered from the host's side (0 = the host's team). */
   private myTeam: 0 | 1 = 0;
+  /** Online: how long this screen has been waiting on the rally's verdict, and the host's last verdict (to resend). */
+  private waitT = 0;
+  private syncT = 0;
+  private lastPointMsg: GameMsg | null = null;
+  /** Online: points decided so far (host: numbers each verdict; others: the last one applied). */
+  private pointN = 0;
   /** Online doubles: the last hit applied here (rally hit number, lineup slot), to settle simultaneous hits. */
   private lastHit = { n: 0, g: -1 };
   /** When the current online pause began (performance.now()), or null. */
@@ -416,6 +422,7 @@ export class Game {
   update(realDt: number) {
     if (this.online && this.paused && this.pauseLeft <= 0) this.endOnlinePause(true);
     if (this.paused || this.peerAway) return;
+    if (this.state !== 'wait') { this.waitT = 0; this.syncT = 0; }
     const real = Math.min(realDt, 0.05);
     const dt = real * PHYSICS.gameSpeed;
     if (this.drawOffset && (this.drawOffsetT += dt) >= ONLINE.smoothTime) this.drawOffset = null;
@@ -461,6 +468,7 @@ export class Game {
       case 'wait':
         // Keep moving: the other player may still have reached it.
         this.players.forEach((p, i) => p.update(dt, cmds[i].move, cmds[i].jump));
+        this.waitWatchdog(real);
         break;
       case 'point':
         this.settle(dt);
@@ -860,8 +868,8 @@ export class Game {
     this.clockRunning = true;
     this.aiChallengeAt = null;
     if (this.online?.host) {
-      this.online.conn.send({
-        type: 'point', winner, land: [land.x, land.y], title, why, callIn: line ? line.callIn : null,
+      this.online.conn.send(this.lastPointMsg = {
+        type: 'point', n: ++this.pointN, winner, land: [land.x, land.y], title, why, callIn: line ? line.callIn : null,
         call: line ? { rect: line.rect, signed: line.signed, truthIn: line.truthIn, callIn: line.callIn, hitter: line.hitter, isServe: line.isServe } : null,
         scores: [...this.match.scores], games: [...this.match.games], ...this.rightField(),
       });
@@ -1127,7 +1135,7 @@ export class Game {
     this.clock = OFFICIALS.shotClock;
     this.clockRunning = true;
     if (this.online?.host) {
-      this.online.conn.send({ type: 'point', winner, land: null, title, why: null, callIn: null, call: null, scores: [...this.match.scores], games: [...this.match.games], ...this.rightField() });
+      this.online.conn.send(this.lastPointMsg = { type: 'point', n: ++this.pointN, winner, land: null, title, why: null, callIn: null, call: null, scores: [...this.match.scores], games: [...this.match.games], ...this.rightField() });
     }
   }
 
@@ -1434,7 +1442,14 @@ export class Game {
         this.endRally(p);
         break;
       }
-      case 'point': if (!o.host) this.applyRemotePoint(m); break;
+      case 'point':
+        if (o.host) break;
+        // A verdict sent again (after a sync) that already arrived: don't count it twice.
+        if (m.n !== undefined) { if (m.n <= this.pointN) break; this.pointN = m.n; }
+        this.applyRemotePoint(m);
+        break;
+      // Host: someone is still waiting on a rally that's over here, so send the verdict again.
+      case 'sync': if (o.host && this.lastPointMsg && this.state !== 'rally' && this.state !== 'wait') o.conn.send(this.lastPointMsg); break;
       // Host only: whoever was serving ran out their shot clock.
       case 'delay': {
         const i = this.localOfSeat(m.from);
@@ -1469,6 +1484,23 @@ export class Game {
         this.peerAway = this.away.size > 0;
         break;
       }
+    }
+  }
+
+  /**
+   * A rally can't stay unfinished: if a message went missing in a connection blip, the two screens may
+   * each think the other one decides. After a moment the host decides from its own screen; anyone else
+   * asks the host to send its verdict again.
+   */
+  private waitWatchdog(real: number) {
+    const o = this.online;
+    if (!o || this.peerAway) return;
+    this.waitT += real;
+    if (o.host) {
+      if (this.waitT > ONLINE.waitMax) { const p = this.shuttle.pos; this.endRally({ x: p.x, y: p.y }); }
+    } else if (this.waitT > ONLINE.waitMax + 1.5 && (this.syncT -= real) <= 0) {
+      this.syncT = 2;
+      o.conn.send({ type: 'sync' });
     }
   }
 

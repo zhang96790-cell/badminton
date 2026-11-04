@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.5: No more frozen rallies (4 Nov 2026)
+
+- Fixed online rallies that never ended: after a short connection blip, both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived.
+- Moves sent during a connection blip are no longer lost: they’re sent as soon as the connection comes back.
+
 ## 2.5.4: Steadier online play (3 Nov 2026)
 
 - Reloading mid-match no longer breaks it: the match carries on for both of you from the last point, same score and same server (the umpire says “Play resumes”).

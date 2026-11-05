@@ -1448,8 +1448,27 @@ export class Game {
         if (m.n !== undefined) { if (m.n <= this.pointN) break; this.pointN = m.n; }
         this.applyRemotePoint(m);
         break;
-      // Host: someone is still waiting on a rally that's over here, so send the verdict again.
-      case 'sync': if (o.host && this.lastPointMsg && this.state !== 'rally' && this.state !== 'wait') o.conn.send(this.lastPointMsg); break;
+      // Host: someone is still waiting on a rally. If it's still going here, this screen will decide it.
+      // If they've missed a verdict, send it again; if they have every verdict, the rally they're waiting
+      // on never reached this screen (its serve got lost), so it's replayed from the serve.
+      case 'sync':
+        if (!o.host || this.state === 'rally' || this.state === 'wait') break;
+        if (this.lastPointMsg && (m.n === undefined || m.n < this.pointN)) o.conn.send(this.lastPointMsg);
+        else if (this.state === 'serve') o.conn.send({ type: 'resync', scores: [...this.match.scores], games: [...this.match.games], server: this.match.server });
+        break;
+      case 'resync': {
+        if (o.host || (this.state !== 'wait' && this.state !== 'rally')) break;
+        // Back to the serve, at the host's score.
+        const flip = <T,>(a: [T, T]): [T, T] => (this.myTeam === 0 ? [a[0], a[1]] : [a[1], a[0]]);
+        this.match.scores = flip(m.scores);
+        this.match.games = flip(m.games);
+        this.match.server = this.teamHere(m.server);
+        this.shuttle.inFlight = false;
+        this.predicted = null;
+        this.banner = { title: 'Let — replay the point', sub: 'That rally got lost in a connection blip', color: VISUAL.colors.hud, t: 0, ttl: 2.5 };
+        this.startServe();
+        break;
+      }
       // Host only: whoever was serving ran out their shot clock.
       case 'delay': {
         const i = this.localOfSeat(m.from);
@@ -1500,7 +1519,7 @@ export class Game {
       if (this.waitT > ONLINE.waitMax) { const p = this.shuttle.pos; this.endRally({ x: p.x, y: p.y }); }
     } else if (this.waitT > ONLINE.waitMax + 1.5 && (this.syncT -= real) <= 0) {
       this.syncT = 2;
-      o.conn.send({ type: 'sync' });
+      o.conn.send({ type: 'sync', n: this.pointN });
     }
   }
 

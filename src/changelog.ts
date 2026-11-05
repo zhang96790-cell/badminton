@@ -5,19 +5,19 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
-    version: '2.5.5',
-    title: 'No more stuck rallies',
-    date: '4 Nov 2026',
+    version: '2.5.6',
+    title: 'Lost serves replayed',
+    date: '5 Nov 2026',
     changes: [
-      'Fixed online: the shuttle could land and then nothing happened, with both screens waiting forever. A short connection blip (common on school Wi-Fi) could lose the “it landed” or “point” message. Now messages are held and sent when the connection comes back, the host decides any rally left hanging after 2.5 seconds, and the other screen asks for the verdict again, so a rally can’t get stuck (and a point is never counted twice).',
+      'Fixed online: after a point your friend could get stuck, unable to serve, with no one shown as winning it. If a serve got lost in a connection blip, the rally is now replayed as a let (“Let — replay the point”) within a few seconds, and a missed point verdict is sent again.',
     ],
   },
   {
     version: '2.5.5',
-    title: 'No more frozen rallies',
+    title: 'No more stuck rallies',
     date: '4 Nov 2026',
     changes: [
-      'Fixed online rallies that never ended: after a short connection blip, both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived.',
+      'Fixed online rallies that never ended: after a short connection blip (common on school Wi-Fi), both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived (a point is never counted twice).',
       'Moves sent during a connection blip are no longer lost: they’re sent as soon as the connection comes back.',
     ],
   },

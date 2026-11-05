@@ -71,8 +71,10 @@ export type GameMsg = (
   | { type: 'forfeit' }
   /** Doubles lobby: move to this team. */
   | { type: 'team'; team: 0 | 1 }
-  /** Not the host: "I've been waiting on this rally too long" (the host resends its verdict). */
-  | { type: 'sync' }
+  /** Not the host: "I've been waiting on this rally too long; the last point I have is n". */
+  | { type: 'sync'; n?: number }
+  /** Host: "that rally never reached me (its serve was lost): serve it again at this score" (host's view). */
+  | { type: 'resync'; scores: [number, number]; games: [number, number]; server: 0 | 1 }
 ) & { from?: Seat };
 
 export type ServerMsg =

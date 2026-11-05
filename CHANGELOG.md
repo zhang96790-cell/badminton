@@ -5,14 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
-## 2.5.5: No more frozen rallies (4 Nov 2026)
+## 2.5.6: Lost serves replayed (5 Nov 2026)
 
-- Fixed online rallies that never ended: after a short connection blip, both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived.
-- Moves sent during a connection blip are no longer lost: they’re sent as soon as the connection comes back.
+- Fixed online: after a point your friend could get stuck, unable to serve, with no one shown as winning it. If a serve got lost in a connection blip, the rally is now replayed as a let (“Let — replay the point”) within a few seconds, and a missed point verdict is sent again.
 
 ## 2.5.5: No more stuck rallies (4 Nov 2026)
 
-- Fixed online: the shuttle could land and then nothing happened, with both screens waiting forever. A short connection blip (common on school Wi-Fi) could lose the “it landed” or “point” message. Now messages are held and sent when the connection comes back, the host decides any rally left hanging after 2.5 seconds, and the other screen asks for the verdict again, so a rally can’t get stuck (and a point is never counted twice).
+- Fixed online rallies that never ended: after a short connection blip (common on school Wi-Fi), both screens could each wait for the other to call where the shuttle landed. Now the host’s screen calls it after a couple of seconds, and the other screen asks for the call again if it hasn’t arrived (a point is never counted twice).
+- Moves sent during a connection blip are no longer lost: they’re sent as soon as the connection comes back.
 
 ## 2.5.4: Steadier online play (3 Nov 2026)
 

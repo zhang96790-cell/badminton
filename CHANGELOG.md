@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.7: Lifts can’t be cut off (8 Nov 2026)
+
+- Lift protection: for a split second after a lift leaves the racket (0.3 s), nobody can touch it, so standing at the net and tapping or blocking every lift no longer works.
+- Keyboard lifts with no direction held now go to the far corner, away from your opponent.
+- A shuttle that’s still climbing is a little harder to time: its perfect window is three-quarters of the usual one.
+- New fault: meeting a shuttle that’s still climbing within 20 cm of the net counts as reaching over (“Fault — reached over the net”).
+
 ## 2.5.6: Lost serves replayed (5 Nov 2026)
 
 - Fixed online: after a point your friend could get stuck, unable to serve, with no one shown as winning it. If a serve got lost in a connection blip, the rally is now replayed as a let (“Let — replay the point”) within a few seconds, and a missed point verdict is sent again.

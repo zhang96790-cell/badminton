@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.7',
+    title: 'Lifts can’t be cut off',
+    date: '8 Nov 2026',
+    changes: [
+      'Lift protection: for a split second after a lift leaves the racket (0.3 s), nobody can touch it, so standing at the net and tapping or blocking every lift no longer works.',
+      'Keyboard lifts with no direction held now go to the far corner, away from your opponent.',
+      'A shuttle that’s still climbing is a little harder to time: its perfect window is three-quarters of the usual one.',
+      'New fault: meeting a shuttle that’s still climbing within 20 cm of the net counts as reaching over (“Fault — reached over the net”).',
+    ],
+  },
+  {
     version: '2.5.6',
     title: 'Lost serves replayed',
     date: '5 Nov 2026',

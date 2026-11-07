@@ -1,4 +1,4 @@
-import { AI, COURT, DOUBLES, OFFICIALS, PHYSICS, PLAYER, SHOTS, STYLES, SWING, type AILevel, type Level, type Style } from './config';
+import { AI, COURT, DOUBLES, OFFICIALS, PHYSICS, PLAYER, RULES, SHOTS, STYLES, SWING, type AILevel, type Level, type Style } from './config';
 import type { Command, Controller, Observation } from './controllers';
 import { distanceOut, inHalf, netHeightAt } from './court';
 import { coverable, interceptSlack } from './doubles';
@@ -294,8 +294,12 @@ export class AIController implements Controller {
 
     let best: { t: number; p: V3; stand: V2 } | null = null, bestScore = -Infinity;
     let fallback: { t: number; p: V3; stand: V2 } | null = null, fallbackGap = Infinity;
-    for (const s of path.samples) {
+    for (let k = 0; k < path.samples.length; k++) {
+      const s = path.samples[k];
       if (s.p.y * side < 0.3 || s.p.z < PLAYER.reachMinZ + 0.1 || s.p.z > top) continue;
+      // Not while a fresh lift is out of reach, and not climbing right by the net (reaching over).
+      if (s.t < this.game.liftGuard) continue;
+      if (Math.abs(s.p.y) < RULES.overNet + 0.1 && (path.samples[k + 1]?.p.z ?? 0) > s.p.z) continue;
       // Ideally stand so the shuttle is on the forehand, slightly in front...
       // Stand a little behind the shuttle, and never right on the net (that risks touching it).
       const comfy = { x: s.p.x - rs * 0.45, y: side * Math.max(0.6, Math.abs(s.p.y + side * 0.2)) };

@@ -116,6 +116,8 @@ export class Game {
   /** Predicted flight of the shuttle in the air, and how long it's been flying along it. */
   private path: PathSample[] = [];
   private flightT = 0;
+  /** A lift was just played: nobody can touch it for this much longer (game seconds). */
+  liftGuard = 0;
   /** Seconds left on the shot clock (real time). */
   clock: number = OFFICIALS.shotClock;
   clockRunning = false;
@@ -613,6 +615,7 @@ export class Game {
     }
     stepFlight(sh.pos, sh.vel, fdt);
     this.flightT += fdt;
+    if (this.liftGuard > 0) this.liftGuard -= fdt;
     sh.orient(fdt);
     if (sh.tumbling) {
       // Tumbling over the tape: the cork flips end over end.
@@ -674,6 +677,8 @@ export class Game {
         if (this.doubles && sh.isServe && p !== this.receiver) continue;
         // Online: other screens' hits arrive as messages (the host's screen plays its CPUs' hits).
         if (this.online && this.remote(i)) continue;
+        // A lift that has only just left the racket is out of anyone's reach.
+        if (this.liftGuard > 0) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt);
         if (!c) continue;
         c.tumbling = sh.tumbling;
@@ -684,9 +689,20 @@ export class Game {
           const opps = this.players.filter((q) => q.side !== p.side);
           const ox = opps.reduce((a, q) => a + q.pos.x, 0) / opps.length;
           const side = Math.abs(ox) > 0.25 ? -Math.sign(ox) : Math.sign(c.point.x) || 1;
-          req = { ...req, aimX: (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
+          // A lift goes all the way to the far corner, away from them.
+          const lift = req.intent === 'high' && c.point.z < SHOTS.overheadHeight;
+          req = { ...req, aimX: lift ? side : (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
         }
         const incomingKmh = Math.hypot(sh.vel.x, sh.vel.y, sh.vel.z) * 3.6;
+        if (c.rising && Math.abs(c.point.y) < RULES.overNet) {
+          // Still climbing, right by the net: you'd have to reach over to it. Fault; it drops dead.
+          p.onHit(c.point);
+          sh.vel = { x: 0, y: 0, z: -1.5 };
+          this.faultTitle = 'Fault — reached over the net';
+          this.callout = { label: 'OVER THE NET', detail: 'Too close to a rising shuttle · fault', color: VISUAL.colors.callOut, t: 0 };
+          this.events.push({ type: 'net' });
+          break;
+        }
         if (this.touchesNet(p, req, c)) {
           // Hit hard from right on top of the net: the racket clips it. The shuttle drops dead on this side.
           p.onHit(c.point);
@@ -700,6 +716,7 @@ export class Game {
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
         if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
+        if (/Lift/.test(shot.label)) this.liftGuard = SHOTS.liftGuard;
         if (req.kind === 'intent' && req.disguise) {
           // Disguised: the landing marker shows up late and the other side is caught going the wrong way.
           shot.label = `${shot.label} (disguised)`;
@@ -1570,6 +1587,7 @@ export class Game {
     // The message took about one trip to get here: make that up by playing this shot a little fast.
     this.catchUp = Math.min(ONLINE.catchUpMax, this.online!.conn.latency / 1000 * PHYSICS.gameSpeed);
     sh.tumbling = /tumbling/.test(m.label);
+    this.liftGuard = /Lift/.test(m.label) ? SHOTS.liftGuard : 0;
     hitter.onHit(pos, m.serve);
     for (const p of this.players) if (p.side !== hitter.side) p.splitStep();
     this.rallyHits++;

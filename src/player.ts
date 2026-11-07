@@ -275,10 +275,12 @@ export class Player implements PlayerView {
 
     const err = sw.t - SWING.idealDelay; // < 0: pressed late, > 0: pressed early
     const e = Math.abs(err);
-    const timing = e <= SWING.perfectTolerance
+    // A shuttle still climbing is harder to time: a slightly smaller perfect window.
+    const tol = SWING.perfectTolerance * (v.z > SHOTS.rising.speed ? SWING.risingTolerance : 1);
+    const timing = e <= tol
       ? 1
-      : Math.max(SWING.minQuality, 1 - ((e - SWING.perfectTolerance) / SWING.falloff) * (1 - SWING.minQuality));
-    const timingLabel: TimingLabel = e <= SWING.perfectTolerance ? 'Perfect' : e <= SWING.perfectTolerance * 2.2 ? 'Good' : err < 0 ? 'Late' : 'Early';
+      : Math.max(SWING.minQuality, 1 - ((e - tol) / SWING.falloff) * (1 - SWING.minQuality));
+    const timingLabel: TimingLabel = e <= tol ? 'Perfect' : e <= tol * 2.2 ? 'Good' : err < 0 ? 'Late' : 'Early';
 
     const lateral = (s.x - this.pos.x) * this.racketSide;
     let hand: Hand = 'forehand';

@@ -85,6 +85,8 @@ export const SWING = {
   /** Press-to-contact time for a perfectly timed hit. */
   idealDelay: 0.14,
   perfectTolerance: 0.08,
+  /** On a shuttle still climbing, the perfect window is this much of the usual one. */
+  risingTolerance: 0.75,
   /** Timing error beyond the tolerance at which quality bottoms out. */
   falloff: 0.24,
   minQuality: 0.55,
@@ -162,6 +164,8 @@ export const SHOTS = {
   tumble: { margin: 0.02, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
   /** A hard overhead taken while the shuttle is still rising (faster upward than this, m/s) is only a drive, at this power. */
   rising: { speed: 0.4, power: 0.8 },
+  /** Lift protection: nobody can touch a lift for this long after it leaves the racket (game seconds). */
+  liftGuard: 0.3,
   /**
    * Hard shots at the net above the tape (net kills) play at this power; only just above the tape
    * (less than minAbove, m) they're a weaker push.
@@ -302,6 +306,8 @@ export const RULES = {
    * metres of the net always touches it. Never random, never for a gentle net shot.
    */
   netFault: { within: 0.35 },
+  /** Meeting a shuttle that's still climbing within this far of the net (m) is reaching over: a fault. */
+  overNet: 0.2,
   /** Online: after each point the server waits this long (s) before they can serve, so the receiver is ready. */
   onlineServeWait: 2.2,
   /** Extra pause after a line call the human could challenge. */

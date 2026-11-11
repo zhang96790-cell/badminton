@@ -17,7 +17,7 @@ const SEATS: Seat[] = ['host', 'guest', 'p3', 'p4'];
 /** The two sides of a result: the host's team ('host') or the other team ('guest'). Ranked rooms are always these two seats. */
 type Side = 'host' | 'guest';
 /** Team 0 is always the host's team. In singles the guest is team 1. */
-interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null; team?: 0 | 1; /** Game version they're running ('' if too old to say). */ v?: string }
+interface SeatInfo { token: string; name: string; connected: boolean; awaySince: number | null; team?: 0 | 1; /** Game version they're running ('' if too old to say). */ v?: string; /** Connection drops during this match. */ drops?: number }
 /** A quick-match room: only the two matched players may sit, and the result counts for ranking. */
 interface Ranked {
   tickets: Record<Side, string>;
@@ -41,6 +41,8 @@ interface Attachment { seat: Seat }
 const RECONNECT_MS = 60_000;
 /** After the last point, wait this long before saving a ranked result: the loser may challenge the call. */
 const CHALLENGE_GRACE_MS = 9_000;
+/** Dropping this many times in one match makes your connection the problem: leaving on you cancels instead of losing. */
+const FLAKY_DROPS = 3;
 const CODE = /^[A-HJ-NP-Z2-9]{5}$/;
 /** Sites allowed to open game connections (plus local development). */
 const ORIGINS = [/^https:\/\/(www\.)?airphysicsrevision\.online$/, /^https:\/\/(www\.)?badmintongames\.site$/, /^https:\/\/[a-z0-9-]+\.vercel\.app$/, /^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
@@ -147,7 +149,7 @@ export class Room extends DurableObject<Env> {
       const count = (t: 0 | 1) => SEATS.filter((k) => s[k] && this.teamOf(s, k) === t).length;
       team = count(1) <= count(0) ? 1 : 0;
     }
-    s[seat] = { token, name, connected: true, awaySince: null, team, v: (url.searchParams.get('v') ?? '').slice(0, 16) };
+    s[seat] = { token, name, connected: true, awaySince: null, team, v: (url.searchParams.get('v') ?? '').slice(0, 16), drops: s[seat]?.drops ?? 0 };
     await this.save();
     this.broadcastRoster(s);
     if (wasAway) this.others(seat, { type: 'peer', status: 'back', seat });
@@ -182,6 +184,7 @@ export class Room extends DurableObject<Env> {
       const s = await this.load();
       const games = (msg.settings as { games?: number } | null)?.games === 3 ? 2 : 1;
       s.progress = { playing: true, gamesToWin: games, games: [0, 0], scores: [0, 0], pending: null, history: [], server: 0 };
+      for (const k of SEATS) if (s[k]) s[k]!.drops = 0;
       if (s.ranked?.recorded) s.ranked = null; // a rematch in a ranked room doesn't count again
       await this.save();
     }
@@ -208,7 +211,8 @@ export class Room extends DurableObject<Env> {
     if (msg.type === 'resumeReq') {
       const s = await this.load();
       const p = s.progress;
-      if (p?.playing && !p.pending && s.host?.connected && s.guest?.connected) {
+      // (Even if the other player is away right now: this screen carries on and waits for them in the match.)
+      if (p?.playing && !p.pending) {
         const resume = { type: 'resume', settings: s.settings, match: { games: p.games, scores: p.scores, history: p.history ?? [], server: p.server ?? 0 } };
         for (const seat of SEATS) this.send(this.socket(seat), resume);
       }
@@ -271,17 +275,35 @@ export class Room extends DurableObject<Env> {
     if (!info || this.ctx.getWebSockets(att.seat).some((o) => o !== ws && o.readyState === WebSocket.OPEN)) return;
     info.connected = false;
     info.awaySince = Date.now();
+    if (s.progress?.playing) info.drops = (info.drops ?? 0) + 1;
     await this.save();
     this.others(att.seat, { type: 'peer', status: 'away', seconds: RECONNECT_MS / 1000, seat: att.seat });
     this.broadcastRoster(s);
     await this.scheduleAlarm(s);
   }
 
-  /** Someone forfeited or left: the other team wins, unless the match was already decided. */
+  /**
+   * Someone forfeited or left: the other team wins, unless the match was already decided. But if the
+   * other side is the one whose connection is the problem (gone right now, or dropped 3+ times this
+   * match), nobody is punished: the match is cancelled with no result.
+   */
   private async quit(seat: Seat) {
     const s = await this.load();
     const decided = s.progress?.pending?.winner;
-    await this.finish(decided ?? (this.teamOf(s, seat) === 0 ? 'guest' : 'host'), !decided);
+    if (decided) { await this.finish(decided, false); return; }
+    const theirs = SEATS.filter((k) => s[k] && this.teamOf(s, k) !== this.teamOf(s, seat));
+    if (theirs.some((k) => !s[k]!.connected || (s[k]!.drops ?? 0) >= FLAKY_DROPS)) { await this.cancel(); return; }
+    await this.finish(this.teamOf(s, seat) === 0 ? 'guest' : 'host', true);
+  }
+
+  /** End the match with no result (and no rating change): a connection problem, not a defeat. */
+  private async cancel() {
+    const s = await this.load();
+    if (!s.progress?.playing) return;
+    s.progress.playing = false;
+    if (s.ranked) s.ranked.recorded = true;
+    await this.save();
+    for (const seat of SEATS) this.send(this.socket(seat), { type: 'result', cancelled: true });
   }
 
   /** One alarm covers both timers: dropped players' reconnect window and a result waiting to be saved. */

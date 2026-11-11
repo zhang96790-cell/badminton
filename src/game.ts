@@ -169,7 +169,8 @@ export class Game {
   pausedBy = new Set<Seat>();
   get pauseTheirs(): boolean { return this.pausedBy.size > 0; }
   /** Online: whose connection is down ('self' for your own). */
-  private away = new Set<string>();
+  /** Whose connection is down ('self' for your own), and since when (performance.now()). */
+  private away = new Map<string, number>();
   /** Online: your team, numbered from the host's side (0 = the host's team). */
   private myTeam: 0 | 1 = 0;
   /** Online: how long this screen has been waiting on the rally's verdict, and the host's last verdict (to resend). */
@@ -423,6 +424,7 @@ export class Game {
 
   update(realDt: number) {
     if (this.online && this.paused && this.pauseLeft <= 0) this.endOnlinePause(true);
+    if (this.away.size) this.syncAway();
     if (this.paused || this.peerAway) return;
     if (this.state !== 'wait') { this.waitT = 0; this.syncT = 0; }
     const real = Math.min(realDt, 0.05);
@@ -1514,10 +1516,10 @@ export class Game {
       case 'forfeit': this.winByForfeit(this.turned(m) ? 1 : 0); break;
       case 'peer': {
         const who = m.self ? 'self' : m.seat ?? 'peer';
-        if (m.status === 'away') this.away.add(who);
+        if (m.status === 'away') { if (!this.away.has(who)) this.away.set(who, performance.now()); }
         else if (m.status === 'back') this.away.delete(who);
         else this.winByForfeit(this.teamOfSeat(m.seat) === this.myTeam ? 0 : 1);
-        this.peerAway = this.away.size > 0;
+        this.syncAway();
         break;
       }
     }
@@ -1530,7 +1532,7 @@ export class Game {
    */
   private waitWatchdog(real: number) {
     const o = this.online;
-    if (!o || this.peerAway) return;
+    if (!o) return;
     this.waitT += real;
     if (o.host) {
       if (this.waitT > ONLINE.waitMax) { const p = this.shuttle.pos; this.endRally({ x: p.x, y: p.y }); }
@@ -1540,9 +1542,21 @@ export class Game {
     }
   }
 
+  /**
+   * Pause for a dropped connection only once it has been gone a few seconds: short blips just carry on
+   * (their messages are held and arrive when the connection is back).
+   */
+  private syncAway() {
+    const now = performance.now();
+    this.peerAway = [...this.away.values()].some((t) => now - t > ONLINE.awayGrace * 1000);
+  }
+
+  /** Someone's connection was already down when this match (re)started here. */
+  markAway(seat: string) { if (!this.away.has(seat)) this.away.set(seat, performance.now() - ONLINE.awayGrace * 1000 - 1); this.syncAway(); }
+
   /** Whose connection is down, for the "disconnected" screen. */
   get awayName(): string {
-    const who = [...this.away][0];
+    const who = [...this.away.keys()][0];
     return who === 'peer' ? this.players[1].name : this.nameOfSeat(who);
   }
 

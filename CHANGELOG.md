@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.5.8: Fair play when connections drop (11 Nov 2026)
+
+- A dropped connection only pauses the match after 4 seconds, so a shaky connection no longer makes the game flicker between paused and playing; short blips just carry on.
+- Reloading mid-match puts you straight back into the match, even if your opponent is disconnected right then: you wait for them on court instead of on the room code screen, and when they’re back you both carry on from the same point.
+- Rallies can’t hang while someone’s connection is down: the host’s screen still calls the point.
+- Fairer ratings: leaving a live ranked match now asks first. And if your opponent is the one with the connection problem (disconnected, or dropped 3 or more times this match), leaving cancels the match with no rating change for either of you, instead of counting as your loss.
+
 ## 2.5.7: Lifts can’t be cut off (8 Nov 2026)
 
 - Lift protection: for a split second after a lift leaves the racket (0.3 s), nobody can touch it, so standing at the net and tapping or blocking every lift no longer works.

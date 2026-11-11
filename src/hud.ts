@@ -393,6 +393,7 @@ export class Hud {
       const r = game.rankedResult, me = game.online.host ? 'host' : 'guest';
       ctx.font = font(15, 700);
       if (!r) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · saving the result…', x + 28, y + 96); }
+      else if (r.cancelled) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · cancelled because of a connection problem: no rating change', x + 28, y + 96); }
       else if (r.error || !r.ratings || r.change === undefined) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · this result couldn’t be saved, so ratings didn’t change', x + 28, y + 96); }
       else {
         const mine = r.ratings[me], up = r.winner === me;

@@ -36,7 +36,8 @@ export interface Roster {
 }
 
 /** The room's verdict on a ranked match: new ratings, or why they couldn't be saved. */
-export type RankedResult = { winner: Seat; forfeit: boolean; change?: number; ratings?: { host: number; guest: number }; error?: string };
+/** cancelled: ended by a connection problem, so there's no result and no rating change. */
+export type RankedResult = { winner?: Seat; forfeit?: boolean; change?: number; ratings?: { host: number; guest: number }; error?: string; cancelled?: boolean };
 
 /**
  * Doubles: who stands where. Four slots in court order (0 and 2 are the host's team, 1 and 3 the other

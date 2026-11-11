@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.5.8',
+    title: 'Fair play when connections drop',
+    date: '11 Nov 2026',
+    changes: [
+      'A dropped connection only pauses the match after 4 seconds, so a shaky connection no longer makes the game flicker between paused and playing; short blips just carry on.',
+      'Reloading mid-match puts you straight back into the match, even if your opponent is disconnected right then: you wait for them on court instead of on the room code screen, and when they’re back you both carry on from the same point.',
+      'Rallies can’t hang while someone’s connection is down: the host’s screen still calls the point.',
+      'Fairer ratings: leaving a live ranked match now asks first. And if your opponent is the one with the connection problem (disconnected, or dropped 3 or more times this match), leaving cancels the match with no rating change for either of you, instead of counting as your loss.',
+    ],
+  },
+  {
     version: '2.5.7',
     title: 'Lifts can’t be cut off',
     date: '8 Nov 2026',

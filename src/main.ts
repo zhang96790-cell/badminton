@@ -1103,6 +1103,21 @@ function renderLobby() {
 let roomOpenedAt = 0;
 /** Asked the room to carry on a match in progress (after a reload), once per connection. */
 let resumeAsked = false;
+/** Carried on a match while these players were away: when one comes back, everyone lines up again. */
+const resumedWithout = new Set<string>();
+/**
+ * Leaving a live ranked match: ask first. If the opponent is the one who's disconnected, leaving
+ * cancels the match instead (no rating change), and the question says so.
+ */
+function confirmLeave(): boolean {
+  const r = room?.roster;
+  const live = !!r?.ranked && (!!r.match?.playing || (!!game?.online && game.state !== 'matchOver' && game.forfeitWinner === null));
+  if (!live) return true;
+  const opp = r!.you === 'host' ? r!.guest : r!.host;
+  return confirm(opp?.connected
+    ? 'Leave this ranked match? Leaving counts as a loss, so your rating goes down.'
+    : `${opp?.name ?? 'Your opponent'} is disconnected, so leaving now cancels the match: no rating change for either of you. Leave?`);
+}
 function openRoom(code: string) {
   leaveRoom();
   room = new RoomConnection(code, roomToken(code), myName(), GAME_VERSION);
@@ -1132,16 +1147,25 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
       else if (m.settings) roomSettings = m.settings as typeof roomSettings;
       {
         const both = !!(m.host?.connected && m.guest?.connected), same = !versionClash(m);
-        // A match is already under way and this page has none (it was reloaded): ask everyone to carry on.
-        if (m.match?.playing && !game && both && same && !resumeAsked) { resumeAsked = true; room.send({ type: 'resumeReq' }); }
+        // A match is already under way and this page has none (it was reloaded): carry on, even if the
+        // other player is away right now (you wait for them in the match, not on the room screen).
+        if (m.match?.playing && !game && same && !resumeAsked) { resumeAsked = true; room.send({ type: 'resumeReq' }); }
         // Ranked: the host's screen starts the match as soon as both players are connected (and on the same version).
         else if (m.ranked && m.you === 'host' && both && same && !game && !m.match) hostStart();
       }
       break;
-    case 'resume':
+    case 'resume': {
       // Someone's page reloaded mid-match: everyone restarts from the last point.
       roomSettings = { ...roomSettings, ...(m.settings as typeof roomSettings) };
       startOnline(room.roster?.you === 'host', undefined, m.match);
+      // Anyone not connected yet: wait for them in the match. When they're back, line everyone up again.
+      const r = room.roster;
+      resumedWithout.clear();
+      for (const seat of SEATS) if (seat !== r?.you && r?.[seat] && !r[seat]!.connected) { game?.markAway(seat); resumedWithout.add(seat); }
+      break;
+    }
+    case 'peer':
+      if (m.status === 'back' && m.seat && resumedWithout.delete(m.seat)) room.send({ type: 'resumeReq' });
       break;
     case 'result':
       if (game?.online) game.rankedResult = m;
@@ -1296,7 +1320,7 @@ document.getElementById('roomCopy')!.addEventListener('click', async (e) => {
   catch { btn.textContent = room.code; }
   setTimeout(() => { btn.textContent = 'Copy invite link'; }, 1600);
 });
-const closeRoom = () => { cancelQuickMatch(); leaveRoom(); roomModal.classList.add('hidden'); };
+const closeRoom = () => { if (!confirmLeave()) return; cancelQuickMatch(); leaveRoom(); roomModal.classList.add('hidden'); };
 document.getElementById('roomClose')!.addEventListener('click', closeRoom);
 document.getElementById('roomLeave')!.addEventListener('click', closeRoom);
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && !roomModal.classList.contains('hidden')) closeRoom(); });
@@ -1504,8 +1528,9 @@ function onlineKeys(g: Game, over: boolean) {
     if (!g.peerAway) g.setOnlinePause(!g.pauseMine);
   }
   // Stuck waiting on a lost connection: Q always gets you out.
-  if (g.peerAway && input.tapped(['KeyQ'])) { leaveRoom(); showMenu(); return; }
+  if (g.peerAway && input.tapped(['KeyQ'])) { if (confirmLeave()) { leaveRoom(); showMenu(); } return; }
   if (g.pauseMine && input.tapped(['KeyQ'])) {
+    if (!confirmLeave()) return;
     room?.send({ type: 'forfeit' });
     leaveRoom();
     showMenu();

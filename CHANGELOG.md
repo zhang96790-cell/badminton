@@ -5,11 +5,6 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
-## 2.6: Net play toned down (13 Nov 2026)
-
-- Net kills a little gentler: they play at 55% power (was 62%), so a good defender can get more of them back.
-- Net shots aren’t quite as tight: they clear the tape by about 11 cm on average (was 8 cm), so they’re easier to attack if they’re not perfect.
-
 ## 2.5.8: Fair play when connections drop (11 Nov 2026)
 
 - A dropped connection only pauses the match after 4 seconds, so a shaky connection no longer makes the game flicker between paused and playing; short blips just carry on.

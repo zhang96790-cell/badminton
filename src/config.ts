@@ -170,7 +170,7 @@ export const SHOTS = {
    * Hard shots at the net above the tape (net kills) play at this power; only just above the tape
    * (less than minAbove, m) they're a weaker push.
    */
-  netKill: { power: 0.62, minAbove: 0.25, lowPower: 0.5 },
+  netKill: { power: 0.55, minAbove: 0.25, lowPower: 0.5 },
   /** Hard shots from within nearNet of the net and below the tape lose this much pace. */
   netDrivePower: 0.85,
   /** Disguised shots (Deceptive CPU): landing marker hidden for markerDelay, opponents slowed for wrongFoot (s). */
@@ -190,7 +190,7 @@ export const SHOTS = {
   mouseHighAngleMax: 52,
   /** Soft shots: how far above the tape they aim to pass (m). */
   dropClearance: 0.28,
-  netShotClearance: 0.06,
+  netShotClearance: 0.10,
   blockClearance: 0.2,
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
   softMaxAngle: { overhead: 12, mid: 30, low: 45, net: 80 },

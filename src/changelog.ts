@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.6',
+    title: 'Net play toned down',
+    date: '13 Nov 2026',
+    changes: [
+      'Net kills a little gentler: they play at 55% power (was 62%), so a good defender can get more of them back.',
+      'Net shots aren’t quite as tight: they clear the tape by about 11 cm on average (was 8 cm), so they’re easier to attack if they’re not perfect.',
+    ],
+  },
+  {
     version: '2.5.8',
     title: 'Fair play when connections drop',
     date: '11 Nov 2026',

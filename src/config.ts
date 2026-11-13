@@ -54,6 +54,8 @@ export const PLAYER = {
   humanExtraReach: 0.1,
   /** Lunging adds reach for low shuttles, then slows you while you recover. */
   lungeReach: 0.25,
+  /** A lunge needs time: against a shot that arrives in under `full` game seconds it reaches less, down to `min` of the bonus at `quick`. */
+  lungeQuick: { full: 0.85, quick: 0.4, min: 0.3 },
   lungeMaxZ: 1.2,
   lungeTime: 0.4,
   lungeRecoverySpeed: 0.6,
@@ -87,6 +89,11 @@ export const SWING = {
   perfectTolerance: 0.08,
   /** On a shuttle still climbing, the perfect window is this much of the usual one. */
   risingTolerance: 0.75,
+  /**
+   * Less time to react, harder to time: a shot that reaches you in under `full` game seconds after it was
+   * hit (a push or smash, not a clear or drop) shrinks the perfect window, down to `min` of normal at `quick`.
+   */
+  quickTolerance: { full: 0.9, quick: 0.4, min: 0.6 },
   /** Timing error beyond the tolerance at which quality bottoms out. */
   falloff: 0.24,
   minQuality: 0.55,
@@ -171,8 +178,9 @@ export const SHOTS = {
    * (less than minAbove, m) they're a weaker push.
    */
   netKill: { power: 0.62, minAbove: 0.25, lowPower: 0.5 },
-  /** Hard shots from within nearNet of the net and below the tape lose this much pace. */
+  /** Hard shots from within netDriveWithin (m) of the net and below the tape lose this much pace (pushes from further back don't). */
   netDrivePower: 0.85,
+  netDriveWithin: 1.0,
   /** Disguised shots (Deceptive CPU): landing marker hidden for markerDelay, opponents slowed for wrongFoot (s). */
   disguise: { markerDelay: 0.32, wrongFoot: 0.16 },
   /** An overhead more than this far behind the body (m) is hit weaker (behindPower) and less accurately (behindNoise), whatever the shot. */
@@ -204,7 +212,7 @@ export const SHOTS = {
   /** Targets are kept at least this far past the net. */
   minTargetDepth: 0.4,
   /** Keyboard / AI default target, as distance past the net on the opponent's side. */
-  depth: { high: 5.9, lift: 6.2, smash: 4.2, drive: 5.0, kill: 3.2, push: 4.6, drop: 2.1, netShot: 0.9, block: 2.2 },
+  depth: { high: 5.9, lift: 6.2, smash: 4.2, drive: 5.0, kill: 3.2, push: 5.2, drop: 2.1, netShot: 0.9, block: 2.2 },
   /** Holding toward the opponent at contact = deeper, away = shorter. */
   depthToward: 1.1,
   depthAway: -1.0,

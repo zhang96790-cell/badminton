@@ -116,6 +116,8 @@ export class Game {
   /** Predicted flight of the shuttle in the air, and how long it's been flying along it. */
   private path: PathSample[] = [];
   private flightT = 0;
+  /** Game seconds since the shuttle was last hit. */
+  get flightTime(): number { return this.flightT; }
   /** A lift was just played: nobody can touch it for this much longer (game seconds). */
   liftGuard = 0;
   /** Seconds left on the shot clock (real time). */
@@ -654,7 +656,7 @@ export class Game {
     if (sh.inFlight && !sh.touchedNet) {
       this.players.forEach((p, i) => {
         if (p.charge === null || p.swing || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
-        if (!p.aboutToMiss(sh.pos, sh.vel, dt)) return;
+        if (!p.aboutToMiss(sh.pos, sh.vel, dt, this.flightT)) return;
         const req = this.controllers[i].forceRelease?.();
         if (req) p.startSwing(req);
       });
@@ -665,7 +667,7 @@ export class Game {
           if (!this.isHuman(i) || p.swing || p.charge !== null || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
           // Attacking shots slow down a lot in the air, so judge by what was hit, not current speed.
           if (/smash|kill|drive|push/i.test(this.lastShot?.label ?? '')) return;
-          if (p.aboutToMiss(sh.pos, sh.vel, dt)) p.startSwing({ kind: 'intent', intent: 'high', aimX: 0, aimDepth: -1 }, true);
+          if (p.aboutToMiss(sh.pos, sh.vel, dt, this.flightT)) p.startSwing({ kind: 'intent', intent: 'high', aimX: 0, aimDepth: -1 }, true);
         });
       }
     }
@@ -681,7 +683,7 @@ export class Game {
         if (this.online && this.remote(i)) continue;
         // A lift that has only just left the racket is out of anyone's reach.
         if (this.liftGuard > 0) continue;
-        const c = p.tryContact(sh.pos, sh.vel, dt);
+        const c = p.tryContact(sh.pos, sh.vel, dt, this.flightT);
         if (!c) continue;
         c.tumbling = sh.tumbling;
         const ctrl = this.controllers[i];
@@ -692,8 +694,9 @@ export class Game {
           const ox = opps.reduce((a, q) => a + q.pos.x, 0) / opps.length;
           const side = Math.abs(ox) > 0.25 ? -Math.sign(ox) : Math.sign(c.point.x) || 1;
           // A lift goes all the way to the far corner, away from them.
-          const lift = req.intent === 'high' && c.point.z < SHOTS.overheadHeight;
-          req = { ...req, aimX: lift ? side : (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
+          // A lift, push or drive goes all the way to the far side, away from them.
+          const corner = (req.intent === 'high' || req.intent === 'fast') && c.point.z < SHOTS.overheadHeight;
+          req = { ...req, aimX: corner ? side : (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
         }
         const incomingKmh = Math.hypot(sh.vel.x, sh.vel.y, sh.vel.z) * 3.6;
         if (c.rising && Math.abs(c.point.y) < RULES.overNet) {

@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.6',
+    title: 'Pushes that bite',
+    date: '13 Nov 2026',
+    changes: [
+      'Pushes hit harder: pushes from the front of the court (more than 1 m from the net) are no longer slowed down; only drives fired from right by the net are.',
+      'Pushes go deeper (about 5.2 m) and, on the keyboard with no direction held, to the side away from your opponent.',
+      'Quick shots are harder to return: a shot that reaches you fast (a push or smash, not a clear or drop) gives you a smaller perfect-timing window, for the CPU too, so more replies come back weak.',
+      'Less time to lunge: against a quick shot, a low lunge reaches less far, so pushes and drives get past more often.',
+    ],
+  },
+  {
     version: '2.5.8',
     title: 'Fair play when connections drop',
     date: '11 Nov 2026',

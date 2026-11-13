@@ -4,7 +4,7 @@ import { distanceOut, inHalf, netHeightAt } from './court';
 import { coverable, interceptSlack } from './doubles';
 import { chance, clamp, gauss, pick, weightedPick, type V2, type V3 } from './math';
 import type { LineCall } from './officials';
-import type { Player } from './player';
+import { lungeScale, quickScale, type Player } from './player';
 import { intentTarget, type Intent, type ShotRequest } from './shots';
 import { predictPath } from './shuttle';
 import type { Game } from './game';
@@ -21,6 +21,8 @@ interface Plan {
 }
 
 /** Six target zones on a half: front/mid/back × left/right. */
+/** How much more the CPU's timing wobbles against the quickest shots (×(1 + this)). */
+const AI_QUICK_SHAKE = 5;
 const zoneOf = (p: V2) => (Math.abs(p.y) < 2.6 ? 0 : Math.abs(p.y) < 4.6 ? 2 : 4) + (p.x < 0 ? 0 : 1);
 /** The zones as you see them from your end (your left is the screen's left). */
 export const ZONE_NAMES = ['front left', 'front right', 'mid-court left', 'mid-court right', 'back left', 'back right'];
@@ -305,7 +307,7 @@ export class AIController implements Controller {
       const comfy = { x: s.p.x - rs * 0.45, y: side * Math.max(0.6, Math.abs(s.p.y + side * 0.2)) };
       const needComfy = Math.hypot(comfy.x - me.pos.x, comfy.y - me.pos.y);
       // ...but against fast shots, just get within reach and stretch for it.
-      const reachZ = (PLAYER.reach + (s.p.z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0)) * 0.85;
+      const reachZ = (PLAYER.reach + (s.p.z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(this.game.flightTime + s.t) : 0)) * 0.85;
       const d = Math.hypot(s.p.x - me.pos.x, s.p.y - me.pos.y);
       const stretch = d > reachZ
         ? { x: s.p.x + ((me.pos.x - s.p.x) / d) * reachZ, y: s.p.y + ((me.pos.y - s.p.y) / d) * reachZ }
@@ -331,7 +333,8 @@ export class AIController implements Controller {
       leave: false,
       contact: chosen.p,
       stand: chosen.stand,
-      swingAt: chosen.t - SWING.idealDelay + gauss() * L.timingError,
+      // A shot that's on it quickly (a push or smash) is harder to time for the CPU too.
+      swingAt: chosen.t - SWING.idealDelay + gauss() * L.timingError * (1 + AI_QUICK_SHAKE * (1 - quickScale(this.game.flightTime + chosen.t)) / (1 - SWING.quickTolerance.min)),
       jumpAt,
       intent: this.chooseIntent(chosen.p),
       swung: false,

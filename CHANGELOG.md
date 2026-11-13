@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 2.6: Pushes that bite (13 Nov 2026)
+
+- Pushes hit harder: pushes from the front of the court (more than 1 m from the net) are no longer slowed down; only drives fired from right by the net are.
+- Pushes go deeper (about 5.2 m) and, on the keyboard with no direction held, to the side away from your opponent.
+- Quick shots are harder to return: a shot that reaches you fast (a push or smash, not a clear or drop) gives you a smaller perfect-timing window, for the CPU too, so more replies come back weak.
+- Less time to lunge: against a quick shot, a low lunge reaches less far, so pushes and drives get past more often.
+
 ## 2.5.8: Fair play when connections drop (11 Nov 2026)
 
 - A dropped connection only pauses the match after 4 seconds, so a shaky connection no longer makes the game flicker between paused and playing; short blips just carry on.

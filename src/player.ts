@@ -54,6 +54,15 @@ export function shoulderOf(v: PlayerView): V3 {
   };
 }
 
+/** 1 when there's plenty of time to react, down to `min` for a shot that's on you in `quick` game seconds. */
+function hurry(flight: number, c: { full: number; quick: number; min: number }): number {
+  return 1 - (1 - c.min) * Math.min(1, Math.max(0, (c.full - flight) / (c.full - c.quick)));
+}
+/** How much of the lunge bonus is left against a shot that's taken this long to reach you: lunging takes time. */
+export const lungeScale = (flight: number) => hurry(flight, PLAYER.lungeQuick);
+/** How much of the perfect window is left against a shot that's taken this long to reach you. */
+export const quickScale = (flight: number) => hurry(flight, SWING.quickTolerance);
+
 export class Player implements PlayerView {
   /** Stable identity (0–3) for stats; array positions can swap when auto-switch changes who you control. */
   id = 0;
@@ -246,18 +255,19 @@ export class Player implements PlayerView {
     return result;
   }
 
-  reachFor(z: number): number {
-    return PLAYER.reach + this.extraReach + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach : 0);
+  /** How far you can reach at this height; a low lunge reaches less against a shot that's on you quickly (flight: game seconds since it was hit). */
+  reachFor(z: number, flight = Infinity): number {
+    return PLAYER.reach + this.extraReach + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(flight) : 0);
   }
 
   /** The shuttle is within reach now but won't be next step. */
-  aboutToMiss(s: V3, v: V3, dt: number): boolean {
-    return this.inReach(s) && !this.inReach({ x: s.x + v.x * dt, y: s.y + v.y * dt, z: s.z + v.z * dt });
+  aboutToMiss(s: V3, v: V3, dt: number, flight = Infinity): boolean {
+    return this.inReach(s, flight) && !this.inReach({ x: s.x + v.x * dt, y: s.y + v.y * dt, z: s.z + v.z * dt }, flight);
   }
 
-  private inReach(p: V3): boolean {
+  private inReach(p: V3, flight = Infinity): boolean {
     const d = Math.hypot(p.x - this.pos.x, p.y - this.pos.y);
-    return d <= this.reachFor(p.z) && p.z >= PLAYER.reachMinZ && p.z <= PLAYER.reachMaxZ + this.z;
+    return d <= this.reachFor(p.z, flight) && p.z >= PLAYER.reachMinZ && p.z <= PLAYER.reachMaxZ + this.z;
   }
 
   /**
@@ -266,17 +276,19 @@ export class Player implements PlayerView {
    * Pressed too early: contact happens late in the swing when the shuttle finally arrives.
    * Pressed too late: contact is forced just before the shuttle leaves reach.
    */
-  tryContact(s: V3, v: V3, dt: number): Contact | null {
+  /** flight: game seconds since the shuttle was hit (less time to react makes timing and lunging harder). */
+  tryContact(s: V3, v: V3, dt: number, flight = Infinity): Contact | null {
     const sw = this.swing;
-    if (!sw || !this.inReach(s)) return null;
+    if (!sw || !this.inReach(s, flight)) return null;
     const next = { x: s.x + v.x * dt, y: s.y + v.y * dt, z: s.z + v.z * dt };
-    const leaving = !this.inReach(next) || next.z <= 0;
+    const leaving = !this.inReach(next, flight) || next.z <= 0;
     if (sw.t < SWING.idealDelay && !leaving) return null;
 
     const err = sw.t - SWING.idealDelay; // < 0: pressed late, > 0: pressed early
     const e = Math.abs(err);
     // A shuttle still climbing is harder to time: a slightly smaller perfect window.
-    const tol = SWING.perfectTolerance * (v.z > SHOTS.rising.speed ? SWING.risingTolerance : 1);
+    // ...and so is one that's on you quickly (a push or smash), with little time to react.
+    const tol = SWING.perfectTolerance * (v.z > SHOTS.rising.speed ? SWING.risingTolerance : 1) * quickScale(flight);
     const timing = e <= tol
       ? 1
       : Math.max(SWING.minQuality, 1 - ((e - tol) / SWING.falloff) * (1 - SWING.minQuality));

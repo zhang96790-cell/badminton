@@ -960,3 +960,63 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .board-seg { margin-bottom: 8px; }
 .board-seg button { padding: 6px 10px; font-size: 12px; }
 .profile-row[hidden] { display: none; }
+
+/* Players (characters) */
+.players-wrap { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+.player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; align-content: start; }
+.pcard { display: grid; gap: 4px; padding: 10px 12px; text-align: left; border: 2px solid var(--rar); border-radius: 8px; background: var(--card); cursor: pointer; font: 600 14px/1.2 var(--text); color: var(--card-ink); }
+.pcard.on { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--rar); }
+.pcard.locked { opacity: 0.55; border-style: dashed; }
+.pcard .rar, .rar-line .rar { justify-self: start; padding: 2px 6px; border-radius: 3px; background: var(--rar); color: #10161f; font: 800 10px/1.2 var(--text); letter-spacing: 0.08em; text-transform: uppercase; }
+.pcard .sub, .player-detail .sub { font: 500 12px/1.3 var(--text); color: var(--card-ink-2); }
+.pcard .tag { font: 700 11px/1 var(--text); color: var(--card-ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.player-grid .coming { grid-column: 1 / -1; margin: 4px 0; font: 600 13px/1.4 var(--text); color: var(--card-ink-2); }
+.player-detail { padding: 12px 14px; border: 1px solid var(--card-rule); border-radius: 8px; display: grid; gap: 6px; align-content: start; }
+.player-detail h3 { margin: 0; font: 800 22px/1.1 var(--display); }
+.player-detail p { margin: 0; font: 500 13px/1.4 var(--text); }
+.player-detail .pentagon { width: 100%; height: 220px; }
+.player-detail .cmp { font: 600 12px/1 var(--text); color: var(--card-ink-2); display: flex; gap: 8px; align-items: center; }
+.player-detail .tag-on { font: 800 12px/1 var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: #157f3d; }
+.pick-offer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 14px; margin-bottom: 12px; border: 1px solid #d9a400; border-radius: 8px; background: rgba(255, 209, 102, 0.12); font: 500 14px/1.3 var(--text); }
+
+/* 2.7: rank bar and rating graph */
+.rank-card { display: grid; gap: 14px; margin-bottom: 8px; padding: 18px 20px; border: 1px solid var(--card-rule); border-radius: 10px; background: #fff; }
+.rank-card[hidden] { display: none; }
+.rank-card .rc-season { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font: 600 13px/1.3 var(--text); color: var(--card-ink-2); }
+.rank-card .rc-title { padding: 3px 8px; border: 1px solid var(--c, var(--amber)); border-radius: 4px; color: var(--c, var(--amber)); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.rank-card canvas { width: 100%; height: 140px; display: block; }
+.rank-bar { display: grid; gap: 8px; }
+.rb-head { display: flex; align-items: baseline; gap: 10px; }
+.rb-head b { font: 800 22px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; }
+.rb-head > span { font: 700 15px/1 var(--text); color: var(--card-ink-2); font-variant-numeric: tabular-nums; }
+.rb-peak { margin-left: auto; padding: 3px 8px; border: 1px solid var(--c); border-radius: 4px; font: 800 11px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--c); }
+.rb-track { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.rb-seg { position: relative; height: 10px; border-radius: 2px; background: color-mix(in srgb, var(--c) 18%, transparent); }
+.rb-seg.done { background: color-mix(in srgb, var(--c) 70%, transparent); }
+.rb-seg.now { background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 25%, transparent)); box-shadow: 0 0 0 1px var(--c); }
+.rb-seg em { position: absolute; top: 14px; left: 0; right: 0; font: 600 11px/1.1 var(--text); font-style: normal; text-align: center; color: var(--card-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rb-seg.now em { color: var(--card-ink); font-weight: 800; }
+.rb-mark { position: absolute; top: -4px; width: 3px; height: 18px; margin-left: -1.5px; border-radius: 2px; background: var(--card-ink); box-shadow: 0 0 0 2px #fff; }
+.rank-bar:not(.compact) .rb-track { margin-bottom: 16px; }
+.rb-caption { margin: 0; font: 600 13px/1.3 var(--text); color: var(--card-ink); }
+.rank-bar.compact { margin: 6px auto 0; max-width: 360px; text-align: left; }
+.rank-bar.compact .rb-head b { font-size: 16px; }
+.rank-bar.anim-up .rb-seg.now { animation: rb-up 1.2s ease-out 2; }
+.rank-bar.anim-down .rb-seg.now { animation: rb-down 1s ease-out 1; }
+@keyframes rb-up { 0% { transform: scaleY(1); filter: brightness(1); } 40% { transform: scaleY(1.8); filter: brightness(1.8); } 100% { transform: scaleY(1); filter: brightness(1); } }
+@keyframes rb-down { 0% { opacity: 1; } 30% { opacity: 0.3; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rank-bar.anim-up .rb-seg.now, .rank-bar.anim-down .rb-seg.now { animation: none; } }
+.hero-tier .season-title { margin-left: 8px; opacity: 0.8; }
+
+/* 2.7: players online */
+.online-wrap { position: relative; display: inline-flex; }
+.online-btn i { background: var(--live); box-shadow: 0 0 8px var(--live); }
+.online-btn.off i { background: var(--ink-3); box-shadow: none; }
+.online-btn span { font-variant-numeric: tabular-nums; }
+.online-panel { position: absolute; top: calc(100% - 2px); right: 0; z-index: 7; width: 260px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 10px; background: rgba(8, 14, 30, 0.97); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); text-align: left; }
+.online-panel[hidden] { display: none; }
+.online-panel b { display: block; font: 800 28px/1 var(--display); color: var(--amber); font-variant-numeric: tabular-nums; }
+.online-panel ul { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 600 13px/1.2 var(--text); color: var(--ink-2); }
+.online-panel li { display: flex; justify-content: space-between; }
+.online-panel li span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+.online-panel p { margin: 10px 0 0; font: 500 12px/1.4 var(--text); color: var(--ink-2); }

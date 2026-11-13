@@ -44,6 +44,10 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2.5 19c.6-3.1 2.8-5 5.5-5s4.9 1.9 5.5 5M13.8 14.6c.8-.4 1.7-.6 2.7-.6 2.4 0 4.3 1.6 5 4.4" /></svg>
                 Social
               </button>
+              <span class="online-wrap">
+                <button id="onlineBtn" class="account-btn online-btn" aria-haspopup="dialog" aria-expanded="false" title="Players online"><i></i><span id="onlineCount">--</span> online</button>
+                <div id="onlinePanel" class="online-panel" role="dialog" aria-label="Players online" hidden></div>
+              </span>
               <button id="accountBtn" class="account-btn" aria-haspopup="dialog"><i></i><span id="accountLabel">Log in</span></button>
             </div>
             <p class="oop">Order of play</p>
@@ -245,6 +249,11 @@
             <p class="help">Spoken score calls and line calls.</p>
             <div class="seg" data-group="voice"><button data-value="true">On</button><button data-value="false">Off</button></div>
           </div>
+          <div class="field">
+            <h3>Online chat</h3>
+            <p class="help">Quick-chat lines from the other player (keys 1–6 send yours).</p>
+            <div class="seg" data-group="hideChat"><button data-value="false">Show</button><button data-value="true">Hide</button></div>
+          </div>
         </section>
 
         <section class="mc-pane" data-pane="controls" hidden>
@@ -356,6 +365,8 @@
           <p class="pass-name" id="queueTitle">Finding an opponent…</p>
           <p class="help" id="queueInfo">Looking for someone near your rating.</p>
           <p class="pass-note" id="queueTime">0:00</p>
+          <div id="queueRank"></div>
+          <p class="pass-note" id="queueOnline"></p>
           <div class="pass-actions"><button id="queueCancel" type="button">Cancel</button></div>
         </div>
         <div id="roomJoin" class="pass-body">
@@ -379,6 +390,9 @@
           <div class="field-row room-format">
             <div class="field"><h3>Match</h3><div class="seg" id="roomGames"><button data-value="1">1 game</button><button data-value="3">Best of 3</button></div></div>
             <div class="field"><h3>Points</h3><div class="seg" id="roomPoints"><button data-value="15">15</button><button data-value="21">21</button></div></div>
+          </div>
+          <div class="field-row room-elo">
+            <div class="field"><h3>Counts for rating</h3><div class="seg" id="roomElo"><button data-value="off">Off</button><button data-value="on">On</button></div><p class="pass-note" id="roomEloNote"></p></div>
           </div>
           <p id="roomStatus" class="pass-note" aria-live="polite"></p>
           <div class="pass-actions">
@@ -411,6 +425,7 @@
           <button role="tab" data-hub="leaders" aria-selected="false">Leaderboard</button>
           <button role="tab" data-hub="matches" aria-selected="false">Matches</button>
           <button role="tab" data-hub="heat" aria-selected="false">Heatmap</button>
+          <button role="tab" data-hub="players" aria-selected="false">Players</button>
           <button role="tab" data-hub="awards" aria-selected="false">Awards</button>
           <button role="tab" data-hub="highlights" aria-selected="false">Highlights</button>
           <button role="tab" data-hub="account" aria-selected="false" id="accountTab">Account</button>
@@ -418,6 +433,11 @@
         </nav>
         <div class="social-body">
           <section data-hubpane="overview">
+            <div class="rank-card" id="rankCard" hidden>
+              <div id="rankBar"></div>
+              <p class="rc-season" id="rankSeason"></p>
+              <canvas id="rankGraph" aria-label="Your rating over your last rated matches"></canvas>
+            </div>
             <div class="evaluation" id="evaluation"></div>
             <div class="scope" id="statsScope"></div>
             <div id="statGroups" class="stat-groups"></div>
@@ -451,6 +471,13 @@
             <div class="heat-row">
               <figure><canvas id="heatRecent"></canvas><figcaption><b>Last 5 sessions</b><span id="heatRecentNote"></span></figcaption></figure>
               <figure><canvas id="heatAll"></canvas><figcaption><b>All time</b><span id="heatAllNote"></span></figcaption></figure>
+            </div>
+          </section>
+          <section data-hubpane="players" hidden>
+            <div id="pickOffer" class="pick-offer" hidden></div>
+            <div class="players-wrap">
+              <div id="playerGrid" class="player-grid"></div>
+              <aside id="playerDetail" class="player-detail"></aside>
             </div>
           </section>
           <section data-hubpane="awards" hidden>

@@ -5,6 +5,24 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '2.7',
+    title: 'Ranks, players and seasons',
+    date: '13 Nov 2026',
+    changes: [
+      "Eight ranks instead of five: Rookie (below 900), Club (900), Regional (1050), National (1200), International (1350), Elite (1500), World Class (1700) and Legend (1900). You move up as soon as you reach a rank, and only drop back once you’re 20 points below it.",
+      "Your rank bar on the Stats tab shows all eight ranks, where you are, how many points to the next one, your best rank ever, and a graph of your last 30 rated matches. It flashes when you go up or down.",
+      "Ratings now notice the score: a close win moves ratings a little less, a big win a little more (between 0.9× and 1.15×). The result screen shows how your change was worked out.",
+      "Seasons: Season 1 ends on 31 December 2026. At the end, everyone who played a rated match keeps a title for the best rank they reached that season, and ratings move halfway back towards 1000 for a fresh start. The leaderboard shows this season’s players.",
+      "Friend rooms can count for rating: the host turns on “Counts for rating” (both players need to be logged in). These count at 0.75× a quick match, up to 3 a day against the same friend.",
+      "Fairer results: both screens now confirm the final score before a rated result is saved. If they disagree, nobody’s rating changes.",
+      "The reconnect window is now 40 seconds (was a minute), so nobody waits as long for a player who’s gone.",
+      "Players: a new Players tab in Social with player cards, a five-stat chart and comparisons. For now there’s one player, the Club Player, who plays exactly like before; more players are coming in a later update.",
+      "See how many people are online: the new button at the top of the start screen shows who’s playing, waiting for a quick match or in a room.",
+      "The result screen now also shows smash, net-shot and drop winners.",
+      "Quick chat is limited to one line every 3 seconds, and you can hide the other player’s chat in Settings.",
+    ],
+  },
+  {
     version: '2.6',
     title: 'Pushes that bite',
     date: '13 Nov 2026',

@@ -1,0 +1,18 @@
+{
+  "data_version": 1,
+  "characters": [
+    {
+      "id": "default_player",
+      "name": "Club Player",
+      "country": "XXX",
+      "rarity": "common",
+      "style": "all-rounder",
+      "handedness": "right",
+      "stats": [20, 20, 20, 20, 20],
+      "career_strength": 0,
+      "released_in": "2.7",
+      "enabled": true,
+      "description": "A solid club player with no weak spots. Everyone has this player."
+    }
+  ]
+}

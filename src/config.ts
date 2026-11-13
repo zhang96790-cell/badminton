@@ -163,7 +163,8 @@ export const SHOTS = {
    * A perfectly timed smash from the back (deeper than 4 m, in front of you) gets only a small bonus.
    * A perfectly timed drop lands shorter (depth × perfectDrop).
    */
-  backCourt: { clearDeep: 6.2, clearAim: 0.75, deepFrom: 5.6, deepPower: 0.88, deepNoise: 1.3, smashBonus: 1.03, perfectDrop: 0.8 },
+  // powerDeepMax: Power (characters) can push a clear only this deep, so it never aims at the baseline.
+  backCourt: { clearDeep: 6.2, powerDeepMax: 6.3, clearAim: 0.75, deepFrom: 5.6, deepPower: 0.88, deepNoise: 1.3, smashBonus: 1.03, perfectDrop: 0.8 },
   /**
    * Tumbling: only a perfectly timed net shot that crosses within margin (m) of the tape tumbles. Netting it
    * back or hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.

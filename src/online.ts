@@ -19,6 +19,8 @@ export interface OnlineLink {
   me?: number;
   /** Carry on a match from this point (after someone's page reloaded), in the host's view. */
   resume?: MatchSnapshot;
+  /** A friend room set to count for rating (both logged in). */
+  friendRated?: boolean;
 }
 
 /** Quick chat: number keys 1–6 during an online match. Preset only, no typing. */

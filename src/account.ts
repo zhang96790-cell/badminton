@@ -147,6 +147,20 @@ export interface AdminOverview {
 export const amIAdmin = async () => (await rpc<boolean>('am_i_admin')) === true;
 export const adminOverview = () => rpc<AdminOverview>('admin_overview');
 
+// ── 2.7: characters, seasons, ranks ───────────────────────────────────────────
+/** Which characters you can use: ones you've earned, plus this season's free ones, plus unlock picks waiting. */
+export interface MyCharacters { owned: string[]; featured: string[]; pending: number }
+export const myCharacters = () => rpc<MyCharacters>('my_characters');
+/** This season's free characters (for anyone, logged in or not). */
+export const featuredNow = async () => (await rpc<string[]>('featured_now')) ?? [];
+/** An unlock pick: the server offers 3 locked characters (or none yet: "more players coming soon"). */
+export const offerPick = async () => (await rpc<string[]>('offer_pick')) ?? [];
+export const choosePick = (character: string) => rpc<string>('choose_pick', { p_character: character });
+export interface RankInfo { rating: number; tier: number; peak_tier: number; peak_rating: number; season: number; season_end: string; title: string | null; frame: string | null; matches: number }
+export const myRank = async () => (await rpc<RankInfo[]>('my_rank'))?.[0] ?? null;
+export interface RatingPoint { delta: number; rating_after: number; source: string; created_at: string }
+export const myRatingHistory = async () => (await rpc<RatingPoint[]>('my_rating_history')) ?? [];
+
 // ── 2.2: career stats ─────────────────────────────────────────────────────────
 export const myCareer = async () => (await rpc<Record<string, number>>('my_career')) ?? null;
 export const addCareer = (delta: Record<string, number>) => rpc<Record<string, number>>('add_career', { delta });

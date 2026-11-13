@@ -8,6 +8,9 @@ import { Sound } from './audio';
 import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
 import { ZONE_NAMES, loadMemory } from './ai';
 import { drawHeat, loadSessions, recordHeat, type ShotKind } from './heatmap';
+import { DEFAULT_CHARACTER, RARITY, ROSTER, ROSTER_HASH, characterById, statTotal } from '../shared/characters';
+import { drawPentagon } from './pentagon';
+import { defaultSetup } from './setup';
 import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
 import { CHALLENGES, Challenges, loadStars, totalStars, type ChallengeDef } from './challenges';
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
@@ -20,7 +23,9 @@ import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
 import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type MatchSnapshot, type QueueEvent, type Roster, type ServerMsg } from './net';
-import { tierOf } from './rating';
+import { tierIndex, tierOf, TIERS } from './rating';
+import { drawRatingGraph, rankBarHtml } from './rankbar';
+import { PresenceLink, type PresenceCounts } from './presence';
 import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
@@ -46,7 +51,7 @@ const STORE = 'badminton.settings';
 const settings: Settings = {
   event: 'singles', opponent: 'beginner', style: 'allround', partnerStyle: 'allround', autoSwitch: false, p1Control: 'mouse', games: 3, points: 15,
   // Assists start off except the landing marker.
-  guides: true, timingLight: false, swingAssist: false, aim: 'realistic', voice: false,
+  guides: true, timingLight: false, swingAssist: false, aim: 'realistic', voice: false, hideChat: false,
   view: 'close', performance: false,
 };
 /** A fresh start, for new settings profiles. */
@@ -241,6 +246,8 @@ function queueAccountSave() {
 
 /** Your rating and record, once loaded (logged in only). */
 let myRating: { rating: number; wins: number; losses: number } | null = null;
+/** Your tier from the account server (null until the 2.7 update has been run there). */
+let myRankInfo: import('./account').RankInfo | null = null;
 /** This account is in the database's admins table (shows the Admin tab). */
 let isAdmin = false;
 
@@ -254,8 +261,9 @@ function syncAccountUi() {
   document.getElementById('socialName')!.textContent = account ? account.username : 'Guest';
   document.getElementById('socialKicker')!.textContent = account ? 'Player profile' : 'Not logged in · stats on this computer';
   const tierEl = document.getElementById('socialTier')!;
-  const t = myRating ? tierOf(myRating.rating) : null;
+  const t = myRating ? tierOf(myRankInfo?.rating ?? myRating.rating, myRankInfo?.tier) : null;
   tierEl.textContent = t ? t.name : account ? '' : 'Log in to get a rating';
+  if (t && myRankInfo?.title) tierEl.insertAdjacentHTML('beforeend', `<span class="season-title">· ${hubEsc(myRankInfo.title)}</span>`);
   tierEl.style.setProperty('--tier', t?.color ?? '#8ea6d8');
   document.getElementById('heroRating')!.textContent = myRating ? String(myRating.rating) : '–';
   document.getElementById('heroRecord')!.textContent = myRating ? `${myRating.wins}–${myRating.losses}` : '–';
@@ -300,6 +308,44 @@ async function refreshStats() {
   const s = await m.myStats();
   if (s) myRating = { rating: s.rating, wins: s.wins, losses: s.losses };
   syncAccountUi();
+  void renderRank();
+}
+
+/** The rank bar, season and rating graph on the Stats tab (and the small bar while waiting for a match). */
+async function renderRank() {
+  const card = document.getElementById('rankCard')!;
+  if (!account || !myRating) { card.hidden = true; document.getElementById('queueRank')!.innerHTML = ''; return; }
+  const m = await loadAccount();
+  const [info, hist] = await Promise.all([m.myRank().catch(() => null), m.myRatingHistory().catch(() => [])]);
+  myRankInfo = info;
+  const rating = info?.rating ?? myRating.rating;
+  const tier = info?.tier ?? tierIndex(rating);
+  // Promoted or dropped since you last looked: animate the bar once and say so.
+  let anim: 'up' | 'down' | null = null;
+  try {
+    const key = `badminton.tier.${account.id}`, was = localStorage.getItem(key);
+    if (was !== null && Number(was) !== tier) {
+      anim = tier > Number(was) ? 'up' : 'down';
+      toast(anim === 'up' ? `Promoted to ${TIERS[tier].name}` : `Down to ${TIERS[tier].name}`, anim === 'up' ? 'Nice work. Your new tier shows beside your name.' : 'Win a match or two to climb back.');
+    }
+    localStorage.setItem(key, String(tier));
+  } catch { /* storage blocked: no animation */ }
+  card.hidden = false;
+  document.getElementById('rankBar')!.innerHTML = rankBarHtml(rating, tier, { peakTier: info?.peak_tier, anim });
+  document.getElementById('queueRank')!.innerHTML = rankBarHtml(rating, tier, { compact: true });
+  const season = document.getElementById('rankSeason')!;
+  if (info) {
+    const end = new Date(info.season_end);
+    const days = Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86_400_000));
+    season.innerHTML = `<span>Season ${info.season} · ends ${end.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} (${days} day${days === 1 ? '' : 's'})</span>`
+      + `<span>${info.matches} rated match${info.matches === 1 ? '' : 'es'} this season</span>`
+      + (info.title ? `<span class="rc-title" style="--c:${TIERS[Number(info.frame?.replace('tier_', '') ?? 1)]?.color ?? '#f2b544'}">${hubEsc(info.title)}</span>` : '');
+  } else season.textContent = 'Seasons start once the account server is updated.';
+  // Oldest first: the rating before the first change, then after each one.
+  const pts = [...hist].reverse();
+  const series = pts.length ? [pts[0].rating_after - pts[0].delta, ...pts.map((p) => p.rating_after)] : [];
+  drawRatingGraph(document.getElementById('rankGraph') as HTMLCanvasElement, series);
+  syncAccountUi();
 }
 
 // Logins: renew when you come back to the tab (a sleeping laptop can miss the automatic renewal), and
@@ -310,6 +356,7 @@ void loadAccount().then((m) => m.onLoggedOut(() => {
   if (loggingOut || !account) return;
   account = null;
   myRating = null;
+  myRankInfo = null;
   isAdmin = false;
   career = loadLocalCareer();
   stopPresence();
@@ -472,6 +519,7 @@ document.getElementById('acLogout')!.addEventListener('click', async () => {
   loggingOut = false;
   account = null;
   myRating = null;
+  myRankInfo = null;
   isAdmin = false;
   career = loadLocalCareer();
   stopPresence();
@@ -490,6 +538,7 @@ function showHubTab(name: string) {
   if (name === 'admin') void renderAdmin();
   if (name === 'highlights') renderHighlights();
   if (name === 'awards') renderAwards();
+  if (name === 'players') void renderPlayers();
   if (name === 'heat') renderHeat();
 }
 
@@ -514,6 +563,95 @@ function renderHeat() {
   document.getElementById('heatAllNote')!.textContent = ever.n ? `${ever.n} shots over ${all.length} session${all.length === 1 ? '' : 's'} · ${pct(ever.inShare)} in` : 'No shots yet';
 }
 document.querySelectorAll<HTMLButtonElement>('#heatKind button').forEach((b) => b.addEventListener('click', () => { heatKind = b.dataset.value as ShotKind | 'all'; renderHeat(); }));
+
+// ── Players (characters) ─────────────────────────────────────────────────────
+/** Characters you can use right now: the Club Player, this season's free ones, and ones you've earned. */
+let ownedIds = new Set<string>([DEFAULT_CHARACTER]);
+let featuredIds = new Set<string>();
+let pendingPicks = 0;
+let selectedPlayer = DEFAULT_CHARACTER;
+let comparePlayer: string | null = null;
+const canUse = (id: string) => id === DEFAULT_CHARACTER || ownedIds.has(id) || featuredIds.has(id);
+/** Your player for the next match (falls back to the Club Player if you can't use the one saved). */
+const myCharacter = () => (settings.character && canUse(settings.character) ? settings.character : DEFAULT_CHARACTER);
+
+async function refreshOwned() {
+  const m = await loadAccount();
+  if (account) {
+    const r = await m.myCharacters();
+    if (r) { ownedIds = new Set([DEFAULT_CHARACTER, ...r.owned]); featuredIds = new Set(r.featured); pendingPicks = r.pending; }
+  } else {
+    ownedIds = new Set([DEFAULT_CHARACTER]);
+    featuredIds = new Set(await m.featuredNow());
+    pendingPicks = 0;
+  }
+}
+
+const countryName = (code: string) => {
+  if (code === 'XXX') return '—';
+  try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code.slice(0, 2)) ?? code; } catch { return code; }
+};
+
+async function renderPlayers() {
+  await refreshOwned();
+  const grid = document.getElementById('playerGrid')!;
+  grid.innerHTML = ROSTER.map((c) => {
+    const r = RARITY[c.rarity], use = canUse(c.id);
+    return `<button type="button" class="pcard${use ? '' : ' locked'}${c.id === selectedPlayer ? ' on' : ''}" data-player="${c.id}" style="--rar:${r.color}">
+      <span class="rar">${r.label}</span><b>${hubEsc(c.name)}</b>
+      <span class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'}</span>
+      <span class="tag">${c.id === myCharacter() ? 'Your player' : featuredIds.has(c.id) ? 'Free this season' : use ? 'Owned' : 'Locked'}</span>
+    </button>`;
+  }).join('') + (ROSTER.length <= 1 ? '<p class="coming">More players coming soon.</p>' : '');
+  renderPlayerDetail();
+  // An unlock pick waiting: offer three locked players, or say they're coming.
+  const offer = document.getElementById('pickOffer')!;
+  offer.hidden = !account || pendingPicks <= 0;
+  if (!offer.hidden) {
+    const m = await loadAccount();
+    const ids = await m.offerPick();
+    offer.innerHTML = ids.length
+      ? `<b>You’ve earned a new player!</b> Pick one:${ids.map((id) => `<button type="button" class="primary" data-pick="${id}">${hubEsc(characterById(id).name)}</button>`).join('')}`
+      : `<b>You’ve earned a new player.</b> More players are coming soon: your pick will be waiting for you.`;
+  }
+}
+
+function renderPlayerDetail() {
+  const c = characterById(selectedPlayer), r = RARITY[c.rarity], use = canUse(c.id);
+  const wins = career[`char_wins_${c.id}`] ?? 0, losses = career[`char_losses_${c.id}`] ?? 0;
+  const others = ROSTER.filter((o) => o.id !== c.id);
+  document.getElementById('playerDetail')!.innerHTML = `
+    <p class="rar-line" style="--rar:${r.color}"><span class="rar">${r.label}</span> ${hubEsc(countryName(c.country))}</p>
+    <h3>${hubEsc(c.name)}</h3>
+    <canvas id="playerPentagon" class="pentagon"></canvas>
+    <p class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'} · stats total ${statTotal(c)}</p>
+    <p>${hubEsc(c.description)}</p>
+    <p class="sub">With this player: ${wins} won, ${losses} lost</p>
+    ${others.length ? `<label class="cmp">Compare with <select id="playerCompare"><option value="">Nobody</option>${others.map((o) => `<option value="${o.id}"${o.id === comparePlayer ? ' selected' : ''}>${hubEsc(o.name)}</option>`).join('')}</select></label>` : ''}
+    ${use ? (c.id === myCharacter() ? '<p class="tag-on">This is your player</p>' : `<button type="button" class="primary" data-use="${c.id}">Play as ${hubEsc(c.name)}</button>`)
+      : '<p class="sub">Locked. Earn new players by reaching a new rank tier for the first time (from Regional up).</p>'}`;
+  const cmp = comparePlayer && comparePlayer !== c.id ? characterById(comparePlayer) : null;
+  drawPentagon(document.getElementById('playerPentagon') as HTMLCanvasElement, c.stats, r.color, cmp ? { stats: cmp.stats, color: '#1f2937' } : undefined);
+}
+
+document.getElementById('playerGrid')!.addEventListener('click', (e) => {
+  const id = (e.target as HTMLElement).closest<HTMLElement>('[data-player]')?.dataset.player;
+  if (id) { selectedPlayer = id; void renderPlayers(); }
+});
+document.getElementById('playerDetail')!.addEventListener('click', (e) => {
+  const id = (e.target as HTMLElement).closest<HTMLElement>('[data-use]')?.dataset.use;
+  if (id && canUse(id)) { settings.character = id; saveSettings(); void renderPlayers(); }
+});
+document.getElementById('playerDetail')!.addEventListener('change', (e) => {
+  if ((e.target as HTMLElement).id === 'playerCompare') { comparePlayer = (e.target as HTMLSelectElement).value || null; renderPlayerDetail(); }
+});
+document.getElementById('pickOffer')!.addEventListener('click', async (e) => {
+  const id = (e.target as HTMLElement).closest<HTMLElement>('[data-pick]')?.dataset.pick;
+  if (!id) return;
+  const m = await loadAccount();
+  if (await m.choosePick(id)) { toast('New player unlocked', characterById(id).name); selectedPlayer = id; }
+  void renderPlayers();
+});
 
 /** Awards tab: achievements, and your stars from the challenges. */
 function renderAwards() {
@@ -619,13 +757,13 @@ async function renderLeaders(listId = 'leaderList') {
         : '<li class="empty">Nobody on this board yet. Be the first.</li>';
       return;
     }
-    document.getElementById('boardNote')!.textContent = 'Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.';
+    document.getElementById('boardNote')!.textContent = 'This season’s top 50 by rating (quick matches and rated friend matches). Everyone starts at 1000; ranks are shown beside each name.';
   }
   const rows = await m.leaderboard();
   if (req !== boardReq) return;
   document.getElementById(listId)!.innerHTML = rows.length ? rows.map((r, i) => {
     const t = tierOf(r.rating);
-    return `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color === '#cbd5e1' ? '#64748b' : t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
+    return `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
   }).join('') : '<li class="empty">Nobody has played a ranked match yet. Be the first.</li>';
 }
 
@@ -946,10 +1084,12 @@ let room: RoomConnection | null = null;
 /** This game's version: the room compares it so players on an old page are told to refresh. */
 const GAME_VERSION = CHANGELOG[0].version;
 /** Someone in the room is on a different version: who, and whether it's you that's out of date. */
-function versionClash(r: Roster | null | undefined): { name: string; mineOld: boolean } | null {
+function versionClash(r: Roster | null | undefined): { name: string; mineOld: boolean; roster?: boolean } | null {
   for (const p of seated(r)) {
     // (A room server from before 2.5.4 doesn't report versions at all: nothing to compare.)
-    if (p.seat === r?.you || p.v === undefined || p.v === GAME_VERSION) continue;
+    if (p.seat === r?.you || p.v === undefined) continue;
+    // Same version but a different list of players (a roster update): whoever loaded first refreshes.
+    if (p.v === GAME_VERSION) { if (p.r && p.r !== ROSTER_HASH) return { name: p.name, mineOld: false, roster: true }; continue; }
     // An empty version is a page from before 2.5.4: always the older one.
     const theirs = (p.v || '0').split(/[.–-]/).map(Number), mine = GAME_VERSION.split(/[.–-]/).map(Number);
     let mineOld = false;
@@ -958,10 +1098,14 @@ function versionClash(r: Roster | null | undefined): { name: string; mineOld: bo
   }
   return null;
 }
+/** What a room needs besides your name: roster fingerprint, your player, and your login (friend rooms only). */
+function roomExtra(auth = true) {
+  return { roster: ROSTER_HASH, character: myCharacter(), auth: auth && account ? () => loadAccount().then((a) => a.accessToken()) : undefined };
+}
 /** Online doubles is held back while it's made steadier: rooms are singles only (doubles is still there against the CPU). */
 const ONLINE_DOUBLES = false;
 /** The room's match settings (the host's choice). Doubles fills empty places with CPUs at `level`. */
-let roomSettings: { games: number; points: number; event?: 'singles' | 'doubles'; level?: Level } = { games: settings.games, points: settings.points, event: 'singles', level: 'medium' };
+let roomSettings: { games: number; points: number; event?: 'singles' | 'doubles'; level?: Level; elo?: boolean } = { games: settings.games, points: settings.points, event: 'singles', level: 'medium' };
 /** The other player asked for a rematch. */
 let peerRematch = false;
 
@@ -1054,6 +1198,15 @@ function renderLobby() {
   lockSeg('roomPoints', roomSettings.points);
   lockSeg('roomEvent', roomSettings.event ?? 'singles');
   lockSeg('roomLevel', roomSettings.level ?? 'medium');
+  lockSeg('roomElo', roomSettings.elo ? 'on' : 'off');
+  // Counts for rating: both players must be logged in (as different people). Friend matches count 0.75×, 3 a day each.
+  {
+    const both = !!r?.host?.account && !!r?.guest?.account;
+    const note = document.getElementById('roomEloNote')!;
+    note.textContent = !roomSettings.elo ? 'Off: this match won’t change anyone’s rating.'
+      : both ? 'On: counts at 0.75× a quick match, up to 3 a day against the same friend.'
+      : 'On, but both players need to be logged in for it to count.';
+  }
   // Singles can't seat more than two.
   document.querySelector<HTMLButtonElement>('#roomEvent [data-value="singles"]')!.classList.toggle('disabled', people.length > 2);
   document.getElementById('roomLevelField')!.hidden = !doubles || people.length >= 4;
@@ -1076,7 +1229,10 @@ function renderLobby() {
   if (clash) {
     roomStart.hidden = !host;
     roomStart.disabled = true;
-    roomStatus.textContent = clash.mineOld
+    refresh.hidden = !clash.mineOld && !clash.roster;
+    roomStatus.textContent = clash.roster
+      ? `You and ${clash.name} have different player lists. Whoever loaded the game first should refresh their page (seats are kept).`
+      : clash.mineOld
       ? 'There’s a newer version of the game. Refresh this page to play (your seat is kept).'
       : `Waiting for ${clash.name} to refresh their page: they’re on an older version of the game.`;
     return;
@@ -1120,7 +1276,7 @@ function confirmLeave(): boolean {
 }
 function openRoom(code: string) {
   leaveRoom();
-  room = new RoomConnection(code, roomToken(code), myName(), GAME_VERSION);
+  room = new RoomConnection(code, roomToken(code), myName(), GAME_VERSION, roomExtra());
   roomOpenedAt = Date.now();
   resumeAsked = false;
   room.on(onRoomMsg);
@@ -1128,6 +1284,7 @@ function openRoom(code: string) {
   history.replaceState(null, '', `/play?room=${code}`);
   showRoomView('lobby');
   renderLobby();
+  presenceNow();
 }
 
 function leaveRoom() {
@@ -1201,7 +1358,8 @@ function startOnline(host: boolean, lineup?: LineupSlot[], resume?: MatchSnapsho
   const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
   const level = lineup ? roomSettings.level ?? 'medium' : settings.opponent;
   game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21, opponent: level }, input, broadcast, 'online',
-    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined, resume });
+    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined, resume, friendRated: !ranked && !lineup && !!roomSettings.elo && !!r.host?.account && !!r.guest?.account },
+    defaultSetup(ranked ? 'ranked' : 'friendly', roomSettings.games as 1 | 3, roomSettings.points as 15 | 21, myCharacter()));
   game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
@@ -1238,6 +1396,7 @@ async function startQuickMatch() {
   leaveRoom();
   showRoomView('queue');
   const started = Date.now();
+  window.setTimeout(() => presenceNow(true), 300);
   const info = document.getElementById('queueInfo')!, title = document.getElementById('queueTitle')!, time = document.getElementById('queueTime')!;
   title.textContent = 'Finding an opponent…';
   info.textContent = 'Connecting…';
@@ -1259,7 +1418,7 @@ async function startQuickMatch() {
       // Your ticket is your seat: keep it for this tab so a reload gets you back in.
       try { sessionStorage.setItem(`badminton.room.${e.code}`, e.ticket); } catch { /* storage unavailable */ }
       history.replaceState(null, '', `/play?room=${e.code}`);
-      room = new RoomConnection(e.code, e.ticket, myName(), GAME_VERSION);
+      room = new RoomConnection(e.code, e.ticket, myName(), GAME_VERSION, roomExtra(false));
       roomOpenedAt = Date.now();
       resumeAsked = false;
       room.on(onRoomMsg);
@@ -1300,11 +1459,11 @@ roomCodeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preve
 roomStart.addEventListener('click', hostStart);
 document.getElementById('roomRefresh')!.addEventListener('click', () => location.reload());
 document.getElementById('roomNext')!.addEventListener('click', () => void startQuickMatch());
-for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points'], ['roomEvent', 'event'], ['roomLevel', 'level']] as const) {
+for (const [id, key] of [['roomGames', 'games'], ['roomPoints', 'points'], ['roomEvent', 'event'], ['roomLevel', 'level'], ['roomElo', 'elo']] as const) {
   document.getElementById(id)!.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => {
     if (room?.roster?.you !== 'host' || b.classList.contains('disabled')) return;
     const v = b.dataset.value!;
-    roomSettings = { ...roomSettings, [key]: key === 'games' || key === 'points' ? Number(v) : v };
+    roomSettings = { ...roomSettings, [key]: key === 'games' || key === 'points' ? Number(v) : key === 'elo' ? v === 'on' : v };
     room.send({ type: 'settings', settings: roomSettings });
     renderLobby();
   }));
@@ -1494,7 +1653,8 @@ function startMatch(mode: Mode = 'match') {
   sound.init();
   voice.enabled = settings.voice;
   voice.unlock();
-  game = new Game({ ...settings }, input, broadcast, mode);
+  const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, myCharacter());
+  game = new Game({ ...settings }, input, broadcast, mode, null, setup);
   game.onMatchOver = recordCareer;
   if (game.session instanceof Challenges) game.session.onResult = challengeResult;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
@@ -1661,3 +1821,48 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// ── Players online (2.7) ─────────────────────────────────────────────────────
+/** A random id for this guest tab, so a guest counts once however often the socket reconnects. */
+function guestPresenceKey(): string {
+  try {
+    let k = sessionStorage.getItem('badminton.presenceKey');
+    if (!k) { k = 'g_' + Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join(''); sessionStorage.setItem('badminton.presenceKey', k); }
+    return k;
+  } catch { return 'g_' + Math.random().toString(36).slice(2, 12); }
+}
+const presence = new PresenceLink(
+  () => (account ? account.id : guestPresenceKey()),
+  () => (queue ? 'queue' : game?.online ? 'match' : room ? 'room' : 'menu'),
+);
+const onlineBtn = document.getElementById('onlineBtn')!, onlinePanel = document.getElementById('onlinePanel')!;
+let onlineTimer = 0;
+function showCounts(c: PresenceCounts | null) {
+  document.getElementById('onlineCount')!.textContent = c ? String(c.online) : '--';
+  onlineBtn.classList.toggle('off', !c);
+  const q = document.getElementById('queueOnline');
+  if (q) q.textContent = c ? (c.online <= 1 ? 'You’re the only one online right now.' : `${c.online} online · ${c.inQueue} looking for a match`) : '';
+  if (onlinePanel.hidden) return;
+  if (!c) { onlinePanel.innerHTML = '<b>--</b><p>Can’t reach the game server right now.</p>'; return; }
+  onlinePanel.innerHTML = `<b>${c.online}</b><ul>
+    <li><span>Playing a match</span><span>${c.inMatch}</span></li>
+    <li><span>Looking for a quick match</span><span>${c.inQueue}</span></li>
+    <li><span>In a friend’s room</span><span>${c.inRoom}</span></li>
+    <li><span>On the menu</span><span>${Math.max(0, c.online - c.inMatch - c.inQueue - c.inRoom)}</span></li></ul>
+    <p>${c.online <= 1 ? 'You’re the only one online right now. Make a room on Court 4 and send a friend the code.' : 'Quick match pairs you with someone near your rating.'}</p>`;
+}
+presence.onCounts(showCounts);
+onlineBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  onlinePanel.hidden = !onlinePanel.hidden;
+  onlineBtn.setAttribute('aria-expanded', String(!onlinePanel.hidden));
+  clearInterval(onlineTimer);
+  if (!onlinePanel.hidden) { showCounts(presence.counts); presence.ask(); onlineTimer = window.setInterval(() => presence.ask(), 15_000); }
+});
+document.addEventListener('click', (e) => {
+  if (!onlinePanel.hidden && !onlinePanel.contains(e.target as Node)) { onlinePanel.hidden = true; onlineBtn.setAttribute('aria-expanded', 'false'); clearInterval(onlineTimer); }
+});
+/** Tell the presence server what you're doing now (safe to call before it's set up). */
+function presenceNow(ask = false) { try { presence.beat(); if (ask) presence.ask(); } catch { /* not ready yet */ } }
+// One count on load, so the button isn't blank.
+window.setTimeout(() => presence.ask(), 1500);

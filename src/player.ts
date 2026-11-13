@@ -1,4 +1,5 @@
 import { COURT, PHYSICS, PLAYER, SHOTS, SWING } from './config';
+import { NEUTRAL, type Effective } from '../shared/characters';
 import { add3, clamp, len3, mul3, norm3, sub3, type Side, type V2, type V3 } from './math';
 import type { Contact, Hand, ShotRequest, TimingLabel } from './shots';
 
@@ -98,6 +99,19 @@ export class Player implements PlayerView {
   /** A click made during recovery, played as soon as it ends. */
   private queued: { req: ShotRequest; assisted: boolean } | null = null;
   private landLag = 0;
+
+  /** This player's character stats in play (neutral = today's game). */
+  eff: Effective = NEUTRAL;
+
+  /** Character stats widen or narrow the perfect window: Net for net shots, Defence for lifts and blocks. */
+  private statTiming(req: ShotRequest, s: V3): number {
+    const netArea = Math.abs(s.y) < SHOTS.nearNet, overhead = s.z >= SHOTS.overheadHeight;
+    const soft = req.kind === 'intent' ? req.intent === 'soft' : req.arc === 'high' && req.power < SHOTS.mouse.dropMaxPower;
+    const high = req.kind === 'intent' ? req.intent === 'high' : req.arc === 'high' && req.power >= SHOTS.mouse.dropMaxPower;
+    if (soft && netArea && !overhead) return this.eff.netTiming;
+    if (!overhead && (high || soft)) return this.eff.defenceTiming;
+    return 1;
+  }
 
   /** Racket frame colour, if not the standard one. */
   racket: string | undefined = undefined;
@@ -288,7 +302,7 @@ export class Player implements PlayerView {
     const e = Math.abs(err);
     // A shuttle still climbing is harder to time: a slightly smaller perfect window.
     // ...and so is one that's on you quickly (a push or smash), with little time to react.
-    const tol = SWING.perfectTolerance * (v.z > SHOTS.rising.speed ? SWING.risingTolerance : 1) * quickScale(flight);
+    const tol = SWING.perfectTolerance * (v.z > SHOTS.rising.speed ? SWING.risingTolerance : 1) * quickScale(flight) * this.statTiming(sw.req, s);
     const timing = e <= tol
       ? 1
       : Math.max(SWING.minQuality, 1 - ((e - tol) / SWING.falloff) * (1 - SWING.minQuality));
@@ -316,7 +330,7 @@ export class Player implements PlayerView {
 
   onHit(point: V3, serve = false) {
     this.swing = null;
-    this.recover = SWING.hitRecovery;
+    this.recover = SWING.hitRecovery * this.eff.swingWait;
     this.anim = { kind: serve ? 'serve' : 'hit', t: 0, point: { ...point } };
     const dx = point.x - this.pos.x, dy = point.y - this.pos.y, d = Math.hypot(dx, dy);
     if (point.z < PLAYER.lungeMaxZ && d > 0.75 && !this.airborne) {

@@ -18,6 +18,8 @@ import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
 import type { Seat } from './net';
+import { characterById, getEffectiveStats } from '../shared/characters';
+import { defaultSetup, restrictionsAllowed, type MatchSetup, type Restrictions } from './setup';
 import { REPLAY_CAMS, type ReplayCam } from './camera';
 import type { Highlight } from './highlights';
 import type { MatchFacts } from './achievements';
@@ -52,8 +54,12 @@ export interface Settings {
   racket?: string;
   /** Lighter drawing for slow laptops: smaller crowd, lower resolution, fewer effects, 30 frames a second. */
   performance?: boolean;
+  /** Your player (character id); the placeholder Club Player if not set. */
+  character?: string;
   aim: 'realistic' | 'casual';
   voice: boolean;
+  /** Online quick chat from other players: shown (default) or hidden. */
+  hideChat?: boolean;
   /** Camera: 'close' fills the screen with the court, 'broadcast' is the wider TV view. */
   view: View;
   /** Your custom keys (single player); anything not set uses the default. */
@@ -116,6 +122,8 @@ export class Game {
   /** Predicted flight of the shuttle in the air, and how long it's been flying along it. */
   private path: PathSample[] = [];
   private flightT = 0;
+  /** Developer restrictions in force for this match (none in normal play). */
+  private limits: Restrictions = {};
   /** Game seconds since the shuttle was last hit. */
   get flightTime(): number { return this.flightT; }
   /** A lift was just played: nobody can touch it for this much longer (game seconds). */
@@ -209,7 +217,11 @@ export class Game {
   private drawOffset: V3 | null = null;
   private drawOffsetT = 0;
 
-  constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null) {
+  /** The match as described when it started (characters, opponent, restrictions). */
+  readonly setup: MatchSetup;
+
+  constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null, setup?: MatchSetup) {
+    this.setup = setup ?? defaultSetup(online ? (online.ranked ? 'ranked' : 'friendly') : mode === 'practice' || mode === 'tutorial' || mode === 'challenge' ? 'practice' : 'cpu', settings.games, settings.points);
     this.online = online;
     const drill = mode === 'practice' || mode === 'tutorial' || mode === 'challenge';
     // Online: doubles when the room has a lineup of four, otherwise singles. Nobody switches players online.
@@ -272,6 +284,12 @@ export class Game {
       }
     }
     this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
+    // Characters: you, and a CPU opponent if one was picked. Neutral stats leave everything as it was.
+    this.players[0].eff = getEffectiveStats(characterById(this.setup.player.characterId));
+    if (this.setup.opponent.characterId && !online) this.players[1].eff = getEffectiveStats(characterById(this.setup.opponent.characterId));
+    for (const p of this.players) p.speedMult *= p.eff.move;
+    this.limits = restrictionsAllowed() ? this.setup.restrictions : {};
+    if (this.limits.opponentSpeedMult) this.players[1].speedMult *= this.limits.opponentSpeedMult;
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : mode === 'challenge' ? new Challenges() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
       p1.place(0, -PLAYER.baseDepth);
@@ -298,6 +316,7 @@ export class Game {
       this.match.resumeFrom(flip(r.scores), flip(r.games), r.history.map((h) => flip(h)), this.teamHere(r.server));
       this.say('umpire', `Play resumes. ${scoreCall(this.match, false)}`);
     } else this.say('umpire', gameStartCall(1, this.match.gamesToWin));
+    if (this.limits.startScore && !online) this.match.scores = [...this.limits.startScore];
     // Singles against the CPU: it remembers your habits from earlier matches on this computer.
     if (mode === 'match' && !online && !doubles && this.controllers[1] instanceof AIController && vsAI) {
       const weak = this.controllers[1].useMemory();
@@ -685,6 +704,9 @@ export class Game {
         if (this.liftGuard > 0) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt, this.flightT);
         if (!c) continue;
+        // Developer restrictions: no smashing (a hard overhead is only a drive), no dropping (it's a clear).
+        if (i === 0 && this.limits.noSmash && c.point.z >= SHOTS.overheadHeight) c.rising = true;
+        if (i === 0 && this.limits.noDropShot && c.point.z >= SHOTS.overheadHeight && p.swing.req.kind === 'intent' && p.swing.req.intent === 'soft') p.swing = { ...p.swing, req: { ...p.swing.req, intent: 'high' } };
         c.tumbling = sh.tumbling;
         const ctrl = this.controllers[i];
         let req = ctrl.aimAtContact ? ctrl.aimAtContact(p.swing.req) : p.swing.req;
@@ -717,7 +739,7 @@ export class Game {
           this.events.push({ type: 'net' });
           break;
         }
-        const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1, this.isHuman(i));
+        const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1, this.isHuman(i), p.eff);
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
         if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
@@ -968,6 +990,9 @@ export class Game {
     if (this.state === 'point' && o?.matchOver) {
       const wi = (m.games[0] > m.games[1] ? 0 : 1) as 0 | 1;
       this.state = 'matchOver';
+      // The guest's screen confirms the final score to the room (in the host's order), so a rated
+      // result is only saved when both screens agree.
+      if (this.online && !this.online.host && !this.doubles) this.online.conn.send({ type: 'final', games: [m.games[1], m.games[0]] });
       this.onMatchOver?.(this);
       this.banner = null;
       this.clockRunning = false;
@@ -1209,6 +1234,8 @@ export class Game {
   // ── Commentary (text only) ────────────────────────────────────────────────
   /** The latest line from the commentator, shown at the top for a few seconds. */
   commentary: { text: string; t: number } | null = null;
+  /** When each other player's last quick-chat line arrived (match seconds). */
+  private chatHeard = new Map<string, number>();
   private run = { team: -1, n: 0 };
   /** Game or match points saved in a row by the same side. */
   private saves = { team: -1, n: 0 };
@@ -1509,7 +1536,14 @@ export class Game {
           this.setRightSlots(m.right);
         }
         break;
-      case 'chat': if (CHAT[m.i]) this.shout(this.players[this.localOfSeat(m.from)], CHAT[m.i], 2.5); break;
+      case 'chat': {
+        // Hidden in settings, or more than one every 3 seconds from the same player (an old page): ignore.
+        const now = this.stats.seconds, k = m.from ?? 'host';
+        if (!CHAT[m.i] || this.settings.hideChat || now - (this.chatHeard.get(k) ?? -99) < 2.5) break;
+        this.chatHeard.set(k, now);
+        this.shout(this.players[this.localOfSeat(m.from)], CHAT[m.i], 2.5);
+        break;
+      }
       case 'pause':
         if (m.from) { if (m.on) this.pausedBy.add(m.from); else this.pausedBy.delete(m.from); }
         // Their pause ran out of time: it ends for everyone.
@@ -1693,7 +1727,8 @@ export class Game {
 
   /** Quick chat (online): a preset line over your head and on everyone's screen. */
   sendChat(i: number) {
-    if (!this.online || !CHAT[i] || this.stats.seconds - this.lastChat < 1.5) return;
+    // One message every 3 seconds, so nobody can spam the other screen.
+    if (!this.online || !CHAT[i] || this.stats.seconds - this.lastChat < 3) return;
     this.lastChat = this.stats.seconds;
     this.shout(this.players[0], CHAT[i], 2.5);
     this.online.conn.send({ type: 'chat', i });

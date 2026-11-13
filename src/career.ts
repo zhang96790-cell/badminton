@@ -55,6 +55,9 @@ export function careerDelta(g: Game, prev: Career): Career {
     max_rally: st.longestRally,
     max_streak: streak,
     now_streak: streak,
+    // Wins and losses with the player (character) you used.
+    [`char_wins_${g.setup.player.characterId}`]: won ? 1 : 0,
+    [`char_losses_${g.setup.player.characterId}`]: won ? 0 : 1,
   };
 }
 

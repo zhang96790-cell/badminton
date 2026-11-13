@@ -16,7 +16,13 @@ export function newRoomCode(): string {
 export type Seat = 'host' | 'guest' | 'p3' | 'p4';
 export const SEATS: Seat[] = ['host', 'guest', 'p3', 'p4'];
 /** Someone in the room. Team 0 is always the host's team (in singles the guest is team 1). */
-export interface RosterSeat { name: string; connected: boolean; team?: 0 | 1; /** Their game version ('' if too old to say). */ v?: string }
+export interface RosterSeat {
+  name: string; connected: boolean; team?: 0 | 1;
+  /** Their game version ('' if too old to say) and roster fingerprint. */
+  v?: string; r?: string;
+  /** Their player (character id), and whether the room has checked they're logged in. */
+  character?: string | null; account?: boolean;
+}
 /** Where a match stands, in the host's view (side 0 = the host). */
 export interface MatchSnapshot { games: [number, number]; scores: [number, number]; history: [number, number][]; server: 0 | 1 }
 
@@ -32,12 +38,19 @@ export interface Roster {
   /** Quick-match rooms: both players' ratings. Null for private rooms. */
   ranked: { host: number; guest: number } | null;
   /** The room's match: still being played (a reloaded page can resume it) or finished. */
-  match?: (MatchSnapshot & { playing: boolean; finished: boolean }) | null;
+  match?: (MatchSnapshot & { playing: boolean; finished: boolean; rated?: 'ranked' | 'friendly' | null }) | null;
 }
 
 /** The room's verdict on a ranked match: new ratings, or why they couldn't be saved. */
 /** cancelled: ended by a connection problem, so there's no result and no rating change. */
-export type RankedResult = { winner?: Seat; forfeit?: boolean; change?: number; ratings?: { host: number; guest: number }; error?: string; cancelled?: boolean };
+/**
+ * 2.7: base × margin × mult is how the change was worked out (mult is 0.75 in a friend room); capped: the
+ * friend-room daily limit was reached; disputed: the two screens disagreed on the score; tiers: each seat's tier (0–7).
+ */
+export type RankedResult = {
+  winner?: Seat; forfeit?: boolean; change?: number; loserChange?: number; ratings?: { host: number; guest: number }; error?: string; cancelled?: boolean;
+  base?: number; margin?: number; mult?: number; source?: 'ranked' | 'friendly'; capped?: boolean; disputed?: boolean; tiers?: Partial<Record<Seat, number>>;
+};
 
 /**
  * Doubles: who stands where. Four slots in court order (0 and 2 are the host's team, 1 and 3 the other
@@ -76,6 +89,8 @@ export type GameMsg = (
   | { type: 'sync'; n?: number }
   /** Host: "that rally never reached me (its serve was lost): serve it again at this score" (host's view). */
   | { type: 'resync'; scores: [number, number]; games: [number, number]; server: 0 | 1 }
+  /** Guest to the room: the final games as my screen has them (host's order), so a rated result is only saved if both agree. */
+  | { type: 'final'; games: [number, number] }
 ) & { from?: Seat };
 
 export type ServerMsg =
@@ -102,9 +117,15 @@ export class RoomConnection {
   private pingTimer = 0;
   private retry = 0;
   private closedByUs = false;
+  private authSent = false;
 
-  /** version: this game's version, so the room can spot players who need to refresh. */
-  constructor(readonly code: string, private token: string, private name: string, private version = '') {
+  /**
+   * version: this game's version, so the room can spot players who need to refresh. extra: your roster
+   * fingerprint and player, and (logged in) a way to get your login, which is sent once connected so a
+   * friend room can count for rating.
+   */
+  constructor(readonly code: string, private token: string, private name: string, private version = '',
+    private extra: { roster?: string; character?: string; auth?: () => Promise<string | null> } = {}) {
     this.open();
   }
 
@@ -116,7 +137,7 @@ export class RoomConnection {
   /** Game messages sent while the connection was down, sent as soon as it's back (positions are skipped: they'd be stale). */
   private outbox: string[] = [];
 
-  send(msg: GameMsg | { type: 'leave' } | { type: 'resumeReq' }) {
+  send(msg: GameMsg | { type: 'leave' } | { type: 'resumeReq' } | { type: 'auth'; token: string }) {
     const raw = JSON.stringify(msg);
     if (this.ws?.readyState === WebSocket.OPEN) { this.ws.send(raw); return; }
     if (msg.type === 'pos' || msg.type === 'rtt' || this.closedByUs) return;
@@ -133,13 +154,14 @@ export class RoomConnection {
   }
 
   private open() {
-    const url = `${ROOM_SERVER}/room/${this.code}?token=${encodeURIComponent(this.token)}&name=${encodeURIComponent(this.name)}&v=${encodeURIComponent(this.version)}`;
+    const url = `${ROOM_SERVER}/room/${this.code}?token=${encodeURIComponent(this.token)}&name=${encodeURIComponent(this.name)}&v=${encodeURIComponent(this.version)}&r=${encodeURIComponent(this.extra.roster ?? '')}&c=${encodeURIComponent(this.extra.character ?? '')}`;
     const ws = new WebSocket(url);
     this.ws = ws;
     ws.addEventListener('open', () => {
       if (this.status === 'reconnecting') for (const h of this.handlers) h({ type: 'peer', status: 'back', self: true });
       this.status = 'open';
       this.retry = 0;
+      this.authSent = false;
       for (const raw of this.outbox.splice(0)) ws.send(raw);
       clearInterval(this.pingTimer);
       this.ping();
@@ -155,14 +177,22 @@ export class RoomConnection {
         return;
       }
       if (msg.type === 'rtt') { this.peerRtt = msg.ms; return; }
-      if (msg.type === 'roster') this.roster = msg;
+      if (msg.type === 'roster') {
+        this.roster = msg;
+        // Logged in: say who you are, once per connection, and only to a room server new enough to keep
+        // it to itself (it reports `account` for each seat; an older one would pass the message on).
+        if (!this.authSent && this.extra.auth && msg[msg.you]?.account === false) {
+          this.authSent = true;
+          void this.extra.auth().then((t) => { if (t && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'auth', token: t })); }).catch(() => {});
+        }
+      }
       if (msg.type === 'full') this.status = 'full';
       for (const h of this.handlers) h(msg);
     });
     ws.addEventListener('close', () => {
       clearInterval(this.pingTimer);
       if (this.closedByUs || this.status === 'full') return;
-      // Dropped: try again with backoff; the room keeps our seat for a minute.
+      // Dropped: try again with backoff; the room keeps our seat for 40 seconds.
       this.status = 'reconnecting';
       for (const h of this.handlers) h({ type: 'peer', status: 'away', self: true });
       const wait = Math.min(5000, 500 * 2 ** this.retry++);

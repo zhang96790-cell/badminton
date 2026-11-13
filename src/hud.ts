@@ -146,8 +146,8 @@ export class Hud {
       const them = game.pausers, gone = game.awayName;
       const [title, sub] = game.peerAway
         ? gone === 'You'
-          ? ['Connection lost', 'Reconnecting… your place is kept for a minute  ·  Q to leave']
-          : [`${gone} disconnected`, 'Waiting up to a minute for them to come back. If they don’t, their side retires  ·  Q to leave']
+          ? ['Connection lost', 'Reconnecting… your place is kept for 40 seconds  ·  Q to leave']
+          : [`${gone} disconnected`, 'Waiting up to 40 seconds for them to come back. If they don’t, their side retires  ·  Q to leave']
         : !game.online
           ? ['Paused', 'Esc to resume  ·  Q to quit to menu']
           : game.pauseMine && game.pauseTheirs
@@ -388,17 +388,35 @@ export class Hud {
     const shared = game.settings.opponent === 'human' && !game.online;
     const won = wi === 0 && !shared ? (game.doubles ? 'You and your partner win!' : 'You win!') : `${winner.name} win${game.doubles ? '' : 's'}`;
     ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.teamName((1 - wi) as 0 | 1)} left)` : won, x + 28, y + 72);
-    // Ranked: how your rating changed (it arrives from the server a moment after the last point).
-    if (game.online?.ranked) {
+    // Rated (a quick match, or a friend room set to count): how your rating changed. It arrives from the
+    // server a moment after the last point.
+    const rated = !!game.online?.ranked || !!game.online?.friendRated;
+    if (rated && game.online) {
       const r = game.rankedResult, me = game.online.host ? 'host' : 'guest';
+      const label = game.online.ranked ? 'Ranked' : 'Friend match';
       ctx.font = font(15, 700);
-      if (!r) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · saving the result…', x + 28, y + 96); }
-      else if (r.cancelled) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · cancelled because of a connection problem: no rating change', x + 28, y + 96); }
-      else if (r.error || !r.ratings || r.change === undefined) { ctx.fillStyle = C.hudDim; ctx.fillText('Ranked · this result couldn’t be saved, so ratings didn’t change', x + 28, y + 96); }
+      ctx.fillStyle = C.hudDim;
+      if (!r) ctx.fillText(`${label} · checking the score with both screens…`, x + 28, y + 96);
+      else if (r.cancelled) ctx.fillText(`${label} · cancelled because of a connection problem: no rating change`, x + 28, y + 96);
+      else if (r.disputed) ctx.fillText(`${label} · the two screens disagreed on the score, so ratings didn’t change`, x + 28, y + 96);
+      else if (r.capped) ctx.fillText(`${label} · you’ve played 3 rated matches against each other today, so this one didn’t count`, x + 28, y + 96);
+      else if (r.error || !r.ratings || r.change === undefined) ctx.fillText(`${label} · this result couldn’t be saved, so ratings didn’t change`, x + 28, y + 96);
       else {
         const mine = r.ratings[me], up = r.winner === me;
+        const delta = up ? r.change : r.loserChange ?? r.change;
+        const tier = tierOf(mine, r.tiers?.[me]);
         ctx.fillStyle = up ? C.callIn : C.callOut;
-        ctx.fillText(`${up ? '+' : '−'}${r.change} rating  →  ${mine} (${tierOf(mine).name})`, x + 28, y + 96);
+        ctx.fillText(`${up ? '+' : '−'}${Math.abs(delta)} rating  →  ${mine} (${tier.name})`, x + 28, y + 96);
+        // How it was worked out, in plain words.
+        if (r.base !== undefined) {
+          const w = ctx.measureText(`${up ? '+' : '−'}${Math.abs(delta)} rating  →  ${mine} (${tier.name})`).width;
+          const bits = [`${r.base} from the ratings`];
+          if (r.margin !== undefined && Math.abs(r.margin - 1) > 0.005) bits.push(`× ${r.margin.toFixed(2)} for the margin`);
+          if (r.mult !== undefined && r.mult !== 1) bits.push(`× ${r.mult} friend match`);
+          ctx.fillStyle = C.hudDim;
+          ctx.font = font(13, 600);
+          ctx.fillText(`(${bits.join(' ')})`, x + 40 + w, y + 96);
+        }
       }
     }
     const mins = Math.floor(st.seconds / 60), secs = Math.floor(st.seconds % 60);
@@ -408,7 +426,7 @@ export class Hud {
     ctx.fillText(`${mins}:${String(secs).padStart(2, '0')} match time  ·  longest rally ${st.longestRally} shots`, x + pw - 28, y + 36);
 
     // Game-by-game table
-    const tx = x + 28, ty = y + (game.online?.ranked ? 112 : 96);
+    const tx = x + 28, ty = y + (rated ? 112 : 96);
     [p1, p2].forEach((p, i) => {
       const ry = ty + i * 40;
       panel(ctx, tx, ry, pw - 56, 34, 8, 'rgba(255,255,255,0.04)');
@@ -439,6 +457,9 @@ export class Hud {
       ['Forced errors', (s) => s.forced],
       ['Smashes', (s) => s.smashes],
       ['Fastest smash', (s) => Math.round(s.topSmash), ' km/h'],
+      ['Smash winners', (s) => s.smashWinners],
+      ['Net-shot winners', (s) => s.netWinners],
+      ['Drop winners', (s) => s.dropWinners],
       ['Forehand winners', (s) => s.forehandWinners],
       ['Backhand winners', (s) => s.backhandWinners],
       ['Challenges won', (s) => s.challengesWon],

@@ -1,0 +1,17 @@
+{
+  "note": "Synthetic test characters for balance simulations only. Never imported by the game, never shipped.",
+  "characters": [
+    { "id": "test_common_even", "rarity": "common", "stats": [20, 20, 20, 20, 20] },
+    { "id": "test_common_power", "rarity": "common", "stats": [25, 20, 15, 20, 20] },
+    { "id": "test_rare_speed", "rarity": "rare", "stats": [21, 25, 20, 15, 20] },
+    { "id": "test_super_net", "rarity": "super_rare", "stats": [15, 22, 26, 20, 20] },
+    { "id": "test_epic_defence", "rarity": "epic", "stats": [20, 20, 20, 26, 18] },
+    { "id": "test_epic_attack", "rarity": "epic", "stats": [28, 22, 18, 18, 18] },
+    { "id": "test_elite_even", "rarity": "elite", "stats": [22, 24, 20, 20, 20] },
+    { "id": "test_elite_runner", "rarity": "elite", "stats": [16, 28, 22, 20, 20] },
+    { "id": "test_mythic_power", "rarity": "mythic", "stats": [27, 20, 20, 20, 20] },
+    { "id": "test_legend_even", "rarity": "legendary", "stats": [22, 22, 22, 22, 21] },
+    { "id": "test_champ_even", "rarity": "champion", "stats": [22, 22, 22, 22, 22] },
+    { "id": "test_champ_attack", "rarity": "champion", "stats": [30, 26, 18, 18, 18] }
+  ]
+}

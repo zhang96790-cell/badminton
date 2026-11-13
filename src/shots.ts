@@ -1,6 +1,7 @@
 // Turns "what the player asked for" + "how and where they made contact" into a launch velocity.
 // The button only expresses intent; contact height, net distance, timing, hand and stretch decide the shot.
 import { SERVE, SHOTS, SWING } from './config';
+import { NEUTRAL, type Effective } from '../shared/characters';
 import { netHeightAt, type Rect } from './court';
 import { DEG, clamp, gauss, lerp, table, type Side, type V2, type V3 } from './math';
 import { angleForSpeed, clearNetAngle, fly2d, softShot, speedForAngle } from './solver';
@@ -133,7 +134,8 @@ function fastSolve(z0: number, g: ReturnType<typeof geometry>, speed: number, ex
  * aimScale: multiplier on aim error (the menu's Casual setting for humans).
  * perfectJumps: whether a perfect jump smash earns its bonus (players only; the CPU's timing is too exact).
  */
-export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJumps = false): Shot {
+/** eff: the hitter's character stats in play (neutral = today's game). */
+export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJumps = false, eff: Effective = NEUTRAL): Shot {
   const z0 = c.point.z;
   const zone = zoneOf(z0);
   const netArea = Math.abs(c.point.y) < SHOTS.nearNet;
@@ -167,10 +169,14 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (netDrive ? SHOTS.netDrivePower : 1)
     * (netKill ? (lowKill ? SHOTS.netKill.lowPower : SHOTS.netKill.power) : 1)
     * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
+    * (shotZone === 'overhead' && kindOf === 'fast' ? eff.smash : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);
+  // Character stats: net shots (Net) and lifts and blocks (Defence) are a little more or less accurate.
+  const netPlay = kindOf === 'soft' && netArea, defence = !netPlay && zone !== 'overhead' && kindOf !== 'fast';
   const noiseMult = (scrambled ? SHOTS.behindNoise : 1) * (deep ? B.deepNoise : 1)
     * (tumbleSoft ? T.softNoise : tumbleFast ? T.fastNoise : 1)
     * (perfect && zone === 'overhead' && kindOf === 'high' ? B.clearAim : 1)
+    * (netPlay ? eff.netAim : 1)
     * (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;
   const softClearance = netArea ? SHOTS.netShotClearance : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;
@@ -220,6 +226,11 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
 
   // Back court: perfect clears go deep, perfect drops land short.
   if (perfect && zone === 'overhead' && kindOf === 'high') target = { x: target.x, y: opp * Math.max(Math.abs(target.y), B.clearDeep) };
+  // Power: clears go a touch deeper (never past powerDeepMax, or they'd sail long) or a touch shorter.
+  if (zone === 'overhead' && kindOf === 'high' && eff.clearDepth !== 1) {
+    const d = Math.abs(target.y), want = d * eff.clearDepth;
+    target = { x: target.x, y: opp * (eff.clearDepth > 1 ? Math.min(want, Math.max(d, B.powerDeepMax)) : want) };
+  }
   if (perfect && zone === 'overhead' && kindOf === 'soft') target = { x: target.x, y: target.y * B.perfectDrop };
 
   // Longer and harder shots are less accurate: you still aim at a point, it just lands further from it.
@@ -229,7 +240,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const A = SHOTS.aim;
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
   const sigma = (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
-  target = clampTarget({ x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor }, opp, 0.1);
+  target = clampTarget({ x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor * (defence ? eff.defenceDepth : 1) }, opp, 0.1);
   const clearance = Math.max(-0.1, softClearance + (tumbleSoft ? T.softClearance : 0) + gauss() * SHOTS.clearanceNoise * noiseMult * aimScale);
   const g = geometry(c.point, target);
 

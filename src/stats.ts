@@ -25,6 +25,10 @@ export interface PlayerSummary {
   topSmash: number;
   forehandWinners: number;
   backhandWinners: number;
+  /** Winners by the shot that won them. */
+  smashWinners: number;
+  netWinners: number;
+  dropWinners: number;
   challengesWon: number;
   challengesMade: number;
   landings: V2[];
@@ -85,6 +89,9 @@ export class MatchStats {
       topSmash: smashes.reduce((m, s) => Math.max(m, s.speedKmh), 0),
       forehandWinners: myWinners.filter((r) => r.lastHand === 'forehand' || r.lastHand === 'round-the-head').length,
       backhandWinners: myWinners.filter((r) => r.lastHand === 'backhand').length,
+      smashWinners: myWinners.filter((r) => /smash/i.test(r.lastLabel)).length,
+      netWinners: myWinners.filter((r) => /^Net /.test(r.lastLabel)).length,
+      dropWinners: myWinners.filter((r) => /drop/i.test(r.lastLabel)).length,
       challengesWon: this.challenges[i].won,
       challengesMade: this.challenges[i].made,
       landings: mine.map((s) => s.landing).filter((l): l is V2 => l !== null),

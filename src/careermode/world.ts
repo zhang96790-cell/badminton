@@ -146,7 +146,7 @@ export function pointsFor(tier: string, round: Round, drawSize: number): number 
   return t[drawSize <= 16 && round === 'R16' ? 'R32' : round] ?? 0;
 }
 
-export interface PlayerResult { tournamentId: string; year: number; week: number; tier: string; round: Round; points: number; prize: number; costs: number; opponents?: string[]; /** Who you played as (left out of that draw). */ as: string }
+export interface PlayerResult { tournamentId: string; year: number; week: number; tier: string; round: Round; points: number; prize: number; costs: number; opponents?: string[]; /** Your games in each round you played ([yours, theirs]). */ scores?: [number, number][][]; /** Who you played as (left out of that draw). */ as: string }
 
 /** Everyone's ranking results: id → list of (absolute week, points). */
 export type Results = Map<string, { at: number; pts: number; ev: string }[]>;

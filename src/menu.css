@@ -1195,3 +1195,22 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .c-board .tag-on { color: var(--live); }
 .career.c-board .social-hero { padding-right: 84px; }
 .career.c-board .social-panel { height: auto; max-height: calc(100vh - 32px); }
+
+/* 3.0.4: the draw table (a column per round) */
+.d-draw { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.d-col { display: flex; flex-direction: column; min-width: 0; }
+.d-col h4 { margin: 0 0 6px; font: 700 11px/1.2 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.d-ms { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px; }
+.d-m { position: relative; padding: 4px 8px; border-radius: 3px; background: var(--board-deep); border-left: 3px solid transparent; }
+.d-m.mine { border-left-color: var(--amber); }
+.d-m.next { box-shadow: 0 0 0 1px var(--amber); }
+.d-p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 500 13px/1.45 var(--text); color: var(--ink-2); }
+.d-p small { font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em; }
+.d-p sup { margin-left: 2px; font: 800 9px/1 var(--text); color: var(--amber); }
+.d-p.won { font-weight: 800; color: var(--ink); }
+.d-p.lost { color: var(--ink-3); text-decoration: line-through; text-decoration-color: rgba(142, 166, 216, 0.5); }
+.d-p.me { color: var(--amber-hi); }
+.d-p .tbd { font-style: italic; color: var(--ink-3); }
+.d-sc { font: 700 11px/1.3 var(--text); color: var(--amber); font-variant-numeric: tabular-nums; }
+.d-win .d-p { font-size: 15px; }
+.c-lead.small { font-size: 13px; }

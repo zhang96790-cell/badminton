@@ -11,7 +11,7 @@ import {
   advanceWeek, canEnter, clubEvent, currentPlan, energyModifier, energyPenalty, enter, eventThisWeek, findEvent, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
 } from './state';
-import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, rng, roundsFor, travelBand, type World } from './world';
+import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
 import { setWhere } from '../errorlog';
 
@@ -168,10 +168,10 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${ROUND_LABEL[a.round]}</h3>
         ${versus(nm.opponent)}
         <div class="c-facts">${fact('Format', nm.games === 1 ? '1 game to 15' : 'Best of 3 to 21')}${fact('Your energy', `${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}%)` : ''}`, !!energyPenalty(s!.energy))}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
-        <div class="c-cta"><button class="walk" data-playnext>Play ${ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-withdraw>Withdraw</button></div>
+        <div class="c-cta"><button class="walk" data-playnext>Play ${ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
         ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: beat ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
         ${recover()}
-        <details class="c-bracket"><summary>The draw</summary><ol>${currentPlan(s!, W(), ev2).slots.map((id) => `<li${id === YOU ? ' class="me"' : ''}>${id === YOU ? e(s!.name) : id === 'bye' ? 'bye' : e(characterById(id).name)}</li>`).join('')}</ol></details>`;
+`;
     } else if (softLocked(s!, W())) {
       hero = `<p class="c-kicker">Next up</p><h3 class="c-title">Local Club Open</h3>
         <p class="c-lead">You can’t afford any tour events right now. The club open is free and close by: win a little money and some ranking points to get going again.</p>
@@ -196,6 +196,52 @@ export function initCareer(d: CareerDeps) {
     body.innerHTML = `<section class="c-hero">${hero}</section>${seasonStrip()}`;
   }
 
+  /**
+   * The draw as a table: a column per round, who plays whom, winners in bold, seeds marked. Results are known
+   * for finished rounds (your matches show your scores; other matches are simulated, so they show the winner only).
+   */
+  function drawTable(x: TourEvent): string {
+    const cur = s!.current && s!.current.eventId === x.id ? s!.current : null;
+    const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === x.id) ?? null;
+    const plan = cur ? currentPlan(s!, W(), x) : W().plan(x, s!.year, h ? h.as : null);
+    const order = roundsFor(plan.slots.length);
+    const withW = [...order, 'W' as Round];
+    const finished = x.week < s!.week || !!h;
+    const known = cur ? order.indexOf(cur.round) : finished ? order.length : 0;
+    const decide = cur ? (a: string, b: string) => (a === YOU || b === YOU ? YOU : null)
+      : h ? (a: string, b: string, rd: Round) => (a !== YOU && b !== YOU ? null : withW.indexOf(h.round) > withW.indexOf(rd) ? YOU : a === YOU ? b : a) : undefined;
+    const { rounds } = playOut(plan.slots, W().strength, hash(s!.rngSeed, s!.year, x.id, 'play'), decide);
+    const myScores = cur?.scores ?? h?.scores ?? [];
+    const seed = (id: string) => (plan.seeds.includes(id) ? `<sup>${plan.seeds.indexOf(id) + 1}</sup>` : '');
+    const nm = (id: string) => (id === YOU ? e(s!.name) : id === 'bye' ? 'Bye' : e(characterById(id).name));
+    const who = (id: string) => (id === YOU ? '' : id === 'bye' ? '' : `<small>${e(characterById(id).country)}</small>`);
+    const cols = order.map((rd, i) => {
+      const alive = rounds[i];
+      const matches = [];
+      for (let m = 0; m < alive.length; m += 2) {
+        const a = alive[m], b = alive[m + 1];
+        const shown = i <= known;
+        const winner = i < known ? rounds[i + 1][m / 2] : null;
+        const mine = a === YOU || b === YOU;
+        const sc = mine && i < myScores.length ? myScores[i].map(([p, q]) => `${p}–${q}`).join(', ') : '';
+        const line = (id: string) => `<div class="d-p${winner === id ? ' won' : winner ? ' lost' : ''}${id === YOU ? ' me' : ''}">${shown ? `${nm(id)}${seed(id)} ${who(id)}` : '<span class="tbd">To be decided</span>'}</div>`;
+        matches.push(`<div class="d-m${mine && shown ? ' mine' : ''}${cur && i === known && mine ? ' next' : ''}">${line(a)}${line(b)}${sc ? `<div class="d-sc">${sc}</div>` : ''}</div>`);
+      }
+      return `<div class="d-col"><h4>${ROUND_LABEL[rd]}</h4><div class="d-ms">${matches.join('')}</div></div>`;
+    });
+    const champ = known >= order.length ? rounds[order.length][0] : null;
+    cols.push(`<div class="d-col d-win"><h4>Winner</h4><div class="d-ms"><div class="d-m${champ === YOU ? ' mine' : ''}"><div class="d-p won${champ === YOU ? ' me' : ''}">${champ ? `🏆 ${nm(champ)}${seed(champ)}` : '<span class="tbd">To be decided</span>'}</div></div></div></div>`);
+    return `<div class="d-draw" role="table" aria-label="${e(x.name)} draw">${cols.join('')}</div>
+      <p class="c-lead small">${known === 0 ? 'The first-round pairings. Seeds (top 4 in the world ranking) are marked with their number.' : 'Winners in bold. Your matches show your scores; other results are the winner only.'}</p>`;
+  }
+
+  function renderDraw(id: string) {
+    const x = findEvent(s!, id, d.appVersion);
+    if (!x) return;
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">${TIER_LABEL[x.tier]} · week ${x.week}</p><h3 class="c-title">${e(x.name)}: the draw</h3>
+      ${drawTable(x)}<div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
+  }
+
   function renderDetail(id: string) {
     const x = findEvent(s!, id, d.appVersion);
     if (!x) return;
@@ -208,6 +254,7 @@ export function initCareer(d: CareerDeps) {
       <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players: ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}${h ? ` · you reached the ${ROUND_LABEL[h.round].toLowerCase()}` : ''}</p>
       <table class="c-table"><tr><th>If you go out in</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${r === 'W' ? 'Win it' : ROUND_LABEL[r]}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
       <div class="c-facts">${fact('Travel (economy / business)', `${money(travelCost(s!, x, false))} / ${money(travelCost(s!, x, true))}`)}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy per round', `about ${Math.round(roundEnergy(s!, x))}`)}</div>
+      <h3 class="c-title small">The draw</h3>${drawTable(x)}
       <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
 
@@ -444,6 +491,8 @@ export function initCareer(d: CareerDeps) {
       return;
     }
     if (busy) return;
+    const dr = at('[data-draw]')?.dataset.draw;
+    if (dr) { renderDraw(dr); return; }
     const det = at('[data-detail]')?.dataset.detail;
     if (det) { renderDetail(det); return; }
     const en = at('[data-enter]')?.dataset.enter;

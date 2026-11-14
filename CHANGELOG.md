@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.0.4: Tournament draws (14 Nov 2026)
+
+- Every career tournament now has a proper draw: a column for each round (Round of 16 to the Final and the winner), showing who plays whom, winners in bold and the top 4 seeds numbered.
+- See it with “See the draw” while you’re playing an event, or by clicking any event on the season timeline: finished events show every result, upcoming ones the first-round pairings. Your own matches show your scores.
+
 ## 3.0.3: Real rivals and harder CPUs (14 Nov 2026)
 
 - Career matches are against real players: the scoreboard and the umpire use your opponent’s name, with the event and round, their country and style (no more “CPU Easy”).

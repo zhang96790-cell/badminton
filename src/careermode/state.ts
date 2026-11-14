@@ -191,7 +191,7 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
   const pts = noReward ? 0 : pointsFor(ev.tier, reached, ev.draw_size);
   const prize = noReward ? 0 : prizeFor(ev, reached);
   if (prize) book(s, `Prize money: ${ev.name}`, prize);
-  const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, as: a.as };
+  const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, scores: a.scores, as: a.as };
   s.history.push(res);
   if (ev.tier !== 'CLUB') s.currentLocation = ev.host_country;
   if (reached === 'W') s.titles++;

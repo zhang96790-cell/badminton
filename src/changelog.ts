@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0.4',
+    title: 'Tournament draws',
+    date: '14 Nov 2026',
+    changes: [
+      "Every career tournament now has a proper draw: a column for each round (Round of 16 to the Final and the winner), showing who plays whom, winners in bold and the top 4 seeds numbered.",
+      "See it with “See the draw” while you’re playing an event, or by clicking any event on the season timeline: finished events show every result, upcoming ones the first-round pairings. Your own matches show your scores.",
+    ],
+  },
+  {
     version: '3.0.3',
     title: 'Real rivals and harder CPUs',
     date: '14 Nov 2026',

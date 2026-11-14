@@ -151,6 +151,8 @@ export class Player implements PlayerView {
    */
   startSwing(req: ShotRequest, assisted = false, queue = false): boolean {
     if (!this.swing && this.recover > 0 && queue) this.queued = { req, assisted };
+    // Swing assist had just started its automatic lift and you pressed a shot: play yours instead.
+    if (this.swing && this.assisted && !assisted && this.swing.t < 0.15) { this.swing = { t: this.swing.t, req }; this.assisted = false; return true; }
     if (this.swing || this.recover > 0) return false;
     this.swing = { t: 0, req };
     this.assisted = assisted;

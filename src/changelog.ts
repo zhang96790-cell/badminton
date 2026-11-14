@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.6',
+    title: 'Soft means soft',
+    date: '14 Nov 2026',
+    changes: [
+      "Fixed: pressing L (soft) could play a lob. In the daily challenge’s “no drop shots” handicap, an overhead soft shot now goes flat instead of becoming a clear, with a note the first time; mouse players get the same rule.",
+      "Fixed: with swing assist on, pressing a shot just after the assist started its automatic lift now plays your shot instead of the lift.",
+    ],
+  },
+  {
     version: '3.3.5',
     title: 'Read it yourself',
     date: '14 Nov 2026',

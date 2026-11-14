@@ -23,7 +23,7 @@ import { Signatures, shotKind, type ShotCtx, type SigDef } from './careermode/si
 import { REPLAY_CAMS, type ReplayCam } from './camera';
 import type { Highlight } from './highlights';
 import type { MatchFacts } from './achievements';
-import { isPerfectJump, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
+import { isPerfectJump, mouseShotKind, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
 import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
 import type { Speaker } from './voice';
@@ -211,6 +211,8 @@ export class Game {
   private hoverHit = -1;
   /** A disguised shot was just played: the landing marker stays hidden this long (game seconds). */
   disguiseT = 0;
+  /** The daily challenge's 'no drop shots' note has been shown. */
+  private noDropTold = false;
   /** Signature abilities in this match (null when off). */
   sigs: Signatures | null = null;
   /** The last ability that fired, for the screen. */
@@ -741,7 +743,13 @@ export class Game {
         if (!c) continue;
         // Developer restrictions: no smashing (a hard overhead is only a drive), no dropping (it's a clear).
         if (i === 0 && this.limits.noSmash && c.point.z >= SHOTS.overheadHeight) c.rising = true;
-        if (i === 0 && this.limits.noDropShot && c.point.z >= SHOTS.overheadHeight && p.swing.req.kind === 'intent' && p.swing.req.intent === 'soft') p.swing = { ...p.swing, req: { ...p.swing.req, intent: 'high' } };
+        // No drop shots (daily challenge): an overhead soft shot is played flat and fast instead (not lobbed).
+        const r0 = p.swing.req;
+        const softSwing = r0.kind === 'intent' ? r0.intent === 'soft' : mouseShotKind(r0.arc, r0.power) === 'drop';
+        if (i === 0 && this.limits.noDropShot && c.point.z >= SHOTS.overheadHeight && softSwing) {
+          p.swing = { ...p.swing, req: r0.kind === 'intent' ? { ...r0, intent: 'fast', strength: 0.75 } : { ...r0, arc: 'low', power: 0.6 } };
+          if (!this.noDropTold) { this.noDropTold = true; this.banner = { title: 'No drop shots today', sub: 'An overhead soft shot is played flat instead', color: VISUAL.colors.hud, t: 0, ttl: 2.5 }; }
+        }
         c.tumbling = sh.tumbling;
         const ctrl = this.controllers[i];
         let req = ctrl.aimAtContact ? ctrl.aimAtContact(p.swing.req) : p.swing.req;

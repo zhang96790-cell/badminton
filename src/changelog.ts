@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.12',
+    title: 'Leaderboard loading fix',
+    date: '14 Nov 2026',
+    changes: [
+      "Fixed: the stat leaderboards sometimes said they needed a database update when the real problem was a dropped connection. They now try again, and say so plainly if they still can’t load.",
+    ],
+  },
+  {
     version: '3.3.11',
     title: 'Stuck careers repaired',
     date: '14 Nov 2026',

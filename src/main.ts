@@ -826,9 +826,11 @@ async function renderLeaders(listId = 'leaderList') {
       const B = BOARDS[board], list = document.getElementById(listId)!;
       document.getElementById('boardNote')!.textContent = `${B.note} Stats count when you’re logged in.`;
       list.innerHTML = '<li class="empty">Loading…</li>';
-      const rows = await m.leaderboardStat(board);
+      // One failed request (a network blip, a login that needs refreshing) shouldn't blank the board: try again once.
+      let rows = await m.leaderboardStat(board);
+      if (rows === null && req === boardReq) { await new Promise((r) => setTimeout(r, 800)); rows = await m.leaderboardStat(board); }
       if (req !== boardReq) return;
-      list.innerHTML = rows === null ? '<li class="empty">This leaderboard needs a quick database update (supabase/leaderboards.sql).</li>'
+      list.innerHTML = rows === null ? '<li class="empty">Couldn’t load this leaderboard. Check your connection, then click the tab again.</li>'
         : rows.length ? rows.map((r, i) => `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}</span><b>${B.unit(Number(r.value))}</b></li>`).join('')
         : '<li class="empty">Nobody on this board yet. Be the first.</li>';
       return;

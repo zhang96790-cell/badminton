@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.12: Leaderboard loading fix (14 Nov 2026)
+
+- Fixed: the stat leaderboards sometimes said they needed a database update when the real problem was a dropped connection. They now try again, and say so plainly if they still can’t load.
+
 ## 3.3.11: Stuck careers repaired (14 Nov 2026)
 
 - Fixed: careers that got stuck after a Round of 64 win (always facing the same opponent) are repaired when you open career mode: you carry on in the Round of 32.

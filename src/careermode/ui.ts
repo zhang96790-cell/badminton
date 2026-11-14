@@ -5,13 +5,13 @@ import type { Game } from '../game';
 import type { Settings } from '../game';
 import { STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
-import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type Difficulty, type Round } from './config';
+import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, skipByes, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, coachModifier, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, hotelCost, hotelOf, medalOf, milestones, newMilestones, refuelCost, retire, setStaff, skipByes, sponsorUpgrade, travelClassOf, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
 } from './state';
-import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
+import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
 import { setWhere } from '../errorlog';
 
@@ -106,10 +106,12 @@ export function initCareer(d: CareerDeps) {
   // ── Rendering ──
   const NAV: [string, string, string][] = [
     ['hub', 'Next up', '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'],
+    ['energy', 'Energy & travel', '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'],
     ['ranking', 'Ranking', '<path d="M5 20V10M12 20V4M19 20v-7"/>'],
     ['squad', 'Squad', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M14.5 15c.8-.4 1.6-.5 2.5-.5 2.3 0 4 1.5 4.5 4.5"/>'],
     ['ledger', 'Money', '<path d="M12 3v18M16.5 7.5c-.8-1.2-2.4-2-4.5-2-2.6 0-4.5 1.3-4.5 3.2 0 4.6 9 2.4 9 6.8 0 1.9-1.9 3.3-4.5 3.3-2.2 0-4-.9-4.8-2.3"/>'],
     ['daily', 'Daily challenge', '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>'],
+    ['trophies', 'Trophies', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/>'],
     ['settings', 'Settings', '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'],
   ];
   const icon = (paths: string) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
@@ -127,7 +129,7 @@ export function initCareer(d: CareerDeps) {
       <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
     $('careerTabs').innerHTML = NAV.map(([k, l, p]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span></button>`).join('');
     if (s.pendingRecruitOffer || s.offerDue) { void renderOffer(); return; }
-    ({ hub: renderHub, ranking: renderRanking, squad: renderSquad, ledger: renderLedger, daily: renderDaily, settings: renderSettings } as Record<string, () => void>)[tab]?.();
+    ({ hub: renderHub, energy: renderEnergy, ranking: renderRanking, squad: renderSquad, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
   }
 
   /** You v them, for the next match. */
@@ -140,10 +142,9 @@ export function initCareer(d: CareerDeps) {
       <p class="c-trait"><b>${e(STYLES[STYLE_AI[opp.style]].label)}:</b> ${e(STYLES[STYLE_AI[opp.style]].trait)}</p>`;
   };
   const fact = (label: string, value: string, warn = false) => `<div class="c-fact${warn ? ' warn' : ''}"><span>${label}</span><b>${value}</b></div>`;
-  const recover = () => `<div class="c-recover"><span>Recover</span>
-    <button data-refuel="food">Good food <small>+${CFG.food.energy} · ${money(CFG.food.cost)}</small></button>
-    <button data-refuel="physio">Physio <small>+${CFG.physio.energy} · ${money(CFG.physio.cost)}</small></button>
-    ${s!.current ? '' : `<button data-week="rest">Rest a week <small>+${CFG.rest.energy} · ${money(CFG.rest.cost)}</small></button>`}</div>`;
+  const recover = () => `<div class="c-recover"><span>Travelling ${e(CFG.travelClass[travelClassOf(s!)].label.toLowerCase())} · ${e(CFG.hotels[hotelOf(s!)].label)} hotels${s!.staff?.physio ? ' · physio' : ''}${s!.staff?.coach ? ' · coach' : ''}</span>
+    <button data-ctab="energy">Energy & travel</button>
+</div>`;
 
   /** The season at a glance: every event on a 52-week line, your results on the ones you played. */
   function seasonStrip() {
@@ -154,7 +155,7 @@ export function initCareer(d: CareerDeps) {
       return `<button class="c-mark ${v.tier.toLowerCase()}${now ? ' now' : ''}${past ? ' past' : ''}" style="left:${((v.week - 1) / 51) * 100}%" data-detail="${v.id}" title="${e(v.name)} · week ${v.week}${h ? ` · you: ${ROUND_LABEL[h.round]}` : ''}"><i></i>${res ? `<em>${res}</em>` : ''}</button>`;
     }).join('');
     return `<div class="c-strip" aria-label="${s!.year} season"><div class="c-line"><span class="c-you" style="left:${((s!.week - 1) / 51) * 100}%"></span>${marks}</div>
-      <div class="c-strip-key">${['S100', 'S300', 'S500', 'S750', 'S1000', 'WORLDS', 'WTF'].map((t) => `<span><i class="${t.toLowerCase()}"></i>${TIER_LABEL[t]}</span>`).join('')}
+      <div class="c-strip-key">${['S100', 'S300', 'S500', 'S750', 'S1000', 'WORLDS', 'OLYMPICS', 'WTF'].filter((t) => W().cal.some((v) => v.tier === t)).map((t) => `<span><i class="${t.toLowerCase()}"></i>${TIER_LABEL[t]}</span>`).join('')}
         <button class="c-listbtn" data-list>All tournaments</button></div></div>`;
   }
 
@@ -170,12 +171,16 @@ export function initCareer(d: CareerDeps) {
     const upcoming = W().cal.filter((v) => v.week > s!.week);
     const next = upcoming.find((v) => reachable(v)) ?? upcoming[0] ?? null;
     let hero = '';
-    if (s!.current) {
+    if (s!.injury && !s!.current) {
+      hero = `<p class="c-kicker">Injured</p><h3 class="c-title">${s!.injury.weeks} week${s!.injury.weeks === 1 ? '' : 's'} out</h3>
+        <p class="c-lead">You played too tired and picked up an injury. You can’t enter events until it heals; each week counts down${s!.staff?.physio ? ' (your physio keeps your energy up meanwhile)' : ''}.</p>
+        <div class="c-cta"><button class="walk" data-week="next">Next week ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="rest">Rest week (+${CFG.rest.energy}, ${money(CFG.rest.cost)})</button></div>${recover()}`;
+    } else if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
       const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
       hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${ROUND_LABEL[a.round]}</h3>
         ${versus(nm.opponent)}
-        <div class="c-facts">${fact('Format', nm.games === 1 ? '1 game to 15' : 'Best of 3 to 21')}${fact('Your energy', `${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}%)` : ''}`, !!energyPenalty(s!.energy))}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
+        <div class="c-facts">${fact('Format', 'Best of 3 to 15')}${fact('Your energy', `${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}%)` : ''}`, !!energyPenalty(s!.energy))}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
         <div class="c-cta"><button class="walk" data-playnext>Play ${ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
         ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: beat ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
         ${recover()}
@@ -189,15 +194,14 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">This week · ${TIER_LABEL[x.tier]}${x.dates ? ` · ${e(x.dates)}` : ''}</p><h3 class="c-title">${e(x.name)}</h3>
         <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players</p>
         ${also.length ? `<p class="c-also">Also this week (you can play one): ${also.map((v) => `<button class="linkish" data-pickev="${v.id}">${e(v.name)} · ${TIER_LABEL[v.tier]}</button>`).join(' ')}</p>` : ''}
-        <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy to go all the way', `about ${Math.round(travelEnergy(s!, x) + roundEnergy(s!, x) * roundsFor(x.draw_size).length)}`)}</div>
-        ${c.ok ? `<label class="c-check"><input type="checkbox" id="cBusiness" ${s!.settings.business ? 'checked' : ''}/> Fly business class (${money(travelCost(s!, x, true))}, saves energy)</label>` : ''}
-        <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">Enter · ${money(travelCost(s!, x) + CFG.hotelPerRound)} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
+        <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact(`Hotel (${CFG.hotels[hotelOf(s!)].label})`, `${money(hotelCost(s!, x))} a night`)}${fact('Energy to go all the way', `about ${Math.round(travelEnergy(s!, x) + roundEnergy(s!, x) * roundsFor(x.draw_size).length)}`)}</div>
+        <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
           <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>${recover()}`;
     } else if (next) {
       const weeks = next.week - s!.week;
       hero = `<p class="c-kicker">Next event in ${weeks} week${weeks === 1 ? '' : 's'} · ${TIER_LABEL[next.tier]}</p><h3 class="c-title">${e(next.name)}</h3>
         <p class="c-lead">${e(countryName(next.host_country))} · week ${next.week}${canEnter(s!, next, W()).ok ? '' : ` · ${e(canEnter(s!, next, W()).why ?? '')}`}</p>
-        <div class="c-cta"><button class="walk" data-skip>Go to week ${next.week} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="next">Just one week (+${CFG.idleWeekEnergy} energy)</button></div>${recover()}`;
+        <div class="c-cta"><button class="walk" data-skip>Go to week ${next.week} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="next">Just one week</button><button class="edit" data-week="rest">Rest a week (+${CFG.rest.energy}, ${money(CFG.rest.cost)})</button></div>${recover()}`;
     } else {
       hero = `<p class="c-kicker">Season over</p><h3 class="c-title">That’s the ${s!.year} season</h3>
         <div class="c-cta"><button class="walk" data-skip>See your season ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
@@ -279,7 +283,7 @@ export function initCareer(d: CareerDeps) {
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">${e(x.dates ?? `Week ${x.week}`)} · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
       <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players: ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}${h ? ` · you reached the ${ROUND_LABEL[h.round].toLowerCase()}` : ''}</p>
       <table class="c-table"><tr><th>If you go out in</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${r === 'W' ? 'Win it' : ROUND_LABEL[r]}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
-      <div class="c-facts">${fact('Travel (economy / business)', `${money(travelCost(s!, x, false))} / ${money(travelCost(s!, x, true))}`)}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy per round', `about ${Math.round(roundEnergy(s!, x))}`)}</div>
+      <div class="c-facts">${fact('Travel (economy / premium / business)', `${money(travelCost(s!, x, 'economy'))} / ${money(travelCost(s!, x, 'premium'))} / ${money(travelCost(s!, x, 'business'))}`)}${fact('Hotel a night (hostel–5-star)', `${money(hotelCost(s!, x, 'hostel'))}–${money(hotelCost(s!, x, 'five'))}`)}${fact('Energy per round', `about ${Math.round(roundEnergy(s!, x))}`)}</div>
       <h3 class="c-title small">The draw</h3>${drawTable(x)}
       <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
@@ -307,16 +311,77 @@ export function initCareer(d: CareerDeps) {
       <div class="c-squad">${mine.map((c) => `<button class="${c.id === s!.characterId ? 'on' : ''}" data-pick="${c.id}" ${s!.current ? 'disabled' : ''}>${card(c, `<span class="sub">career strength ${c.career_strength}${c.abilities.length ? ` · ${c.abilities.map((ab) => `★ ${e(ab.name)}`).join(', ')}` : ''}</span>`)}</button>`).join('') || '<p>No players yet.</p>'}</div></div>`;
   }
 
+  /** Energy & travel: how tired you are, how you travel and where you stay, and ways to recover. */
+  function renderEnergy() {
+    const pen = energyPenalty(s!.energy);
+    const nextEv = s!.current ? ev() : eventsThisWeek(s!, d.appVersion)[0] ?? W().cal.find((v) => v.week > s!.week) ?? null;
+    const cls = travelClassOf(s!), ht = hotelOf(s!);
+    const clsCards = (Object.keys(CFG.travelClass) as TravelClass[]).map((k) => {
+      const t = CFG.travelClass[k];
+      return `<button class="c-opt${k === cls ? ' on' : ''}" data-class="${k}"><b>${t.label}</b><span>${t.cost === 1 ? 'Cheapest' : `${t.cost}× the fare`}${nextEv ? ` · ${money(travelCost(s!, nextEv, k))} to ${e(nextEv.city ?? countryName(nextEv.host_country))}` : ''}</span><span>${t.energySaved ? `Saves ${Math.round(t.energySaved * 100)}% of travel energy` : 'Full travel tiredness'}${nextEv ? ` · uses ${travelEnergy(s!, nextEv, k)}` : ''}</span></button>`;
+    }).join('');
+    const hotelCards = (Object.keys(CFG.hotels) as HotelTier[]).map((k) => {
+      const h = CFG.hotels[k];
+      return `<button class="c-opt${k === ht ? ' on' : ''}" data-hotel="${k}"><b>${h.label}</b><span>${nextEv ? `${money(hotelCost(s!, nextEv, k))} a night in ${e(nextEv.city ?? countryName(nextEv.host_country))}` : `${money(h.perNight)} a night (more in pricier cities)`}</span><span>${h.recover ? `+${h.recover} energy a night` : 'No energy back'} · ${e(h.note)}</span></button>`;
+    }).join('');
+    const injuryRisk = Math.round(Math.min(CFG.injury.max, Math.max(0, CFG.injury.below - s!.energy) * CFG.injury.perPoint) * (s!.staff?.physio ? 0.5 : 1) * 100);
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Energy & travel</p>
+      <div class="c-energybar${pen ? ' low' : ''}"><i style="width:${s!.energy}%"></i><b>${s!.energy}</b></div>
+      <p class="c-lead">${s!.injury ? `<b>Injured:</b> ${s!.injury.weeks} more week${s!.injury.weeks === 1 ? '' : 's'}. ` : ''}${pen ? `Tired: you’re ${Math.round(pen * 100)}% slower and your timing is ${Math.round(pen * 100)}% harder in matches. ` : 'Fresh: no penalty in matches. '}Below ${CFG.energyPenaltyFrom} energy you start to slow down; below ${CFG.injury.below} you can get injured${injuryRisk ? ` (${injuryRisk}% a match right now)` : ''}. A match uses about ${Math.round(roundEnergy(s!, nextEv ?? clubEvent(s!)))}; a week off gives nothing back.</p>
+      <h3 class="c-title small">How you travel</h3><div class="c-opts">${clsCards}</div>
+      <h3 class="c-title small">Where you stay</h3><p class="c-lead small">One night for each round you play.</p><div class="c-opts">${hotelCards}</div>
+      <h3 class="c-title small">Recover now</h3>
+      <div class="c-opts">
+        <button class="c-opt" data-refuel="food"><b>Good food</b><span>+${CFG.food.energy} energy</span><span>${money(refuelCost(s!, 'food'))}</span></button>
+        <button class="c-opt" data-refuel="physio"><b>Physio session</b><span>+${CFG.physio.energy} energy</span><span>${money(refuelCost(s!, 'physio'))}${s!.staff?.physio ? ' (half price with your physio)' : ''}</span></button>
+        ${s!.current ? '' : `<button class="c-opt" data-week="rest"><b>Rest a week</b><span>+${CFG.rest.energy} energy</span><span>${money(CFG.rest.cost)} living costs · the week passes</span></button>`}
+      </div></section>`;
+  }
+
+  /** Sponsors and staff (in the Money tab). */
+  function teamHtml() {
+    const offers = sponsorUpgrade(s!, myRank(s!, W()));
+    const sp = s!.sponsor;
+    const staff = (Object.keys(CFG.staff) as StaffRole[]).map((k) => {
+      const st = CFG.staff[k], on = !!s!.staff?.[k];
+      return `<button class="c-opt${on ? ' on' : ''}" data-staff="${k}"><b>${st.label}${on ? ' (hired)' : ''}</b><span>${money(st.wage)} a week</span><span>${e(st.note)}</span><span>${on ? 'Click to let them go' : 'Click to hire'}</span></button>`;
+    }).join('');
+    return `<section class="c-hero"><p class="c-kicker">Sponsor</p>
+      ${sp ? `<p class="c-lead"><b>${e(sp.name)}</b> pays you ${money(sp.weekly)} a week and ${money(sp.bonus)} for every title, until the end of ${sp.year}.</p>` : '<p class="c-lead">No sponsor yet. Sponsors come to you once you’re in the world top 200, and better deals open as you climb.</p>'}
+      ${offers ? `<p class="c-lead">${sp ? 'A better deal is on offer:' : 'Sponsors want you:'}</p><div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${i}"><b>${e(o.name)}</b><span>${money(o.weekly)} a week</span><span>${money(o.bonus)} a title</span><span>Until the end of ${o.year}</span></button>`).join('')}</div>` : ''}
+      <h3 class="c-title small">Your team</h3><div class="c-opts">${staff}</div></section>`;
+  }
+
+  function renderTrophies() {
+    const h = s!.history;
+    const titles = h.filter((x) => x.round === 'W');
+    const byTier = new Map<string, number>();
+    for (const t of titles) byTier.set(t.tier, (byTier.get(t.tier) ?? 0) + 1);
+    const medals = h.map((x) => ({ x, m: medalOf(x) })).filter((y) => y.m);
+    const ms = milestones(s!);
+    const hof = s!.hallOfFame ?? [];
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Trophy cabinet</p>
+      <div class="c-facts">${fact('Titles', String(s!.titles))}${fact('Best world ranking', s!.bestRank ? `#${s!.bestRank}` : '–')}${fact('Medals', medals.length ? medals.map((y) => (y.m === 'gold' ? '🥇' : y.m === 'silver' ? '🥈' : '🥉')).join('') : 'None yet')}${fact('Prize money won', money(h.reduce((t, x) => t + x.prize, 0)))}</div>
+      ${titles.length ? `<p class="c-lead">${[...byTier].map(([t, n]) => `${n} × ${TIER_LABEL[t]}`).join(' · ')}</p><ul class="c-results">${titles.slice(-12).reverse().map((t) => `<li>🏆 ${t.year} ${e(calendar(d.appVersion, t.year).find((v) => v.id === t.tournamentId)?.name ?? 'Local Club Open')}</li>`).join('')}</ul>` : '<p class="c-lead">No titles yet.</p>'}
+      ${medals.length ? `<ul class="c-results">${medals.map((y) => `<li>${y.m === 'gold' ? '🥇 Gold' : y.m === 'silver' ? '🥈 Silver' : '🥉 Bronze'}: ${y.x.tier === 'OLYMPICS' ? 'Olympic Games' : 'World Championships'} ${y.x.year}</li>`).join('')}</ul>` : ''}
+      <h3 class="c-title small">Milestones · ${ms.filter((m) => m.done).length} of ${ms.length}</h3>
+      <div class="c-miles">${ms.map((m) => `<span class="${m.done ? 'done' : ''}">${m.done ? '★' : '☆'} ${e(m.label)}</span>`).join('')}</div>
+      <h3 class="c-title small">Hall of Fame</h3>
+      ${hof.length ? `<table class="c-table"><tr><th>Player</th><th>Years</th><th>Titles</th><th>Best rank</th><th>Medals</th></tr>${hof.map((x) => `<tr><td>${e(x.name)} <span class="sub">(as ${e(x.as)})</span></td><td>${x.from}–${x.to}</td><td>${x.titles}</td><td>${x.bestRank ? `#${x.bestRank}` : '–'}</td><td>${'🥇'.repeat(x.golds)}${'🥈'.repeat(x.silvers)}${'🥉'.repeat(x.bronzes)}</td></tr>`).join('')}</table>` : '<p class="c-lead small">Retire a career to put it in the Hall of Fame.</p>'}
+      ${s!.year > CFG.startYear && !s!.current ? `<div class="c-cta"><button class="edit" data-retire>Retire and enter the Hall of Fame</button></div>` : '<p class="c-lead small">You can retire after your first season.</p>'}
+      </section>`;
+  }
+
   function renderLedger() {
     const year = s!.ledger.filter((l) => l.year === s!.year);
     const inc = year.filter((l) => l.amount > 0).reduce((t, l) => t + l.amount, 0), out = year.filter((l) => l.amount < 0).reduce((t, l) => t + l.amount, 0);
-    body.innerHTML = `<div class="c-card"><h3>Money</h3><p>${s!.year} so far: income ${money(inc)}, costs ${money(-out)}, net ${money(inc + out)}.</p>
+    body.innerHTML = teamHtml() + `<div class="c-card"><h3>Money</h3><p>${s!.year} so far: income ${money(inc)}, costs ${money(-out)}, net ${money(inc + out)}.</p>
       <table class="c-table"><tr><th>Week</th><th>What</th><th>Amount</th></tr>${s!.ledger.slice(-60).reverse().map((l) => `<tr><td>${l.year} w${l.week}</td><td>${e(l.label)}</td><td class="${l.amount >= 0 ? 'up' : 'down'}">${money(l.amount)}</td></tr>`).join('')}</table></div>`;
   }
 
   function renderSettings() {
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">Settings</p>
-      <label class="c-check"><input type="checkbox" id="cFaster" ${s!.settings.fasterEarlyRounds ? 'checked' : ''}/> Faster early rounds: rounds before the quarter-finals are a single game to 15</label>
+      <p class="c-lead">Career matches are best of 3 games to 15 points.</p>
       <p class="c-lead">Opponents get harder as you meet stronger players and enter bigger events: Commons play like a Hard or Expert CPU, Rares up to Elite, and Super 300 players a level higher.</p>
       <h3 class="c-title small">Start again</h3><p class="c-lead">Restarting replaces this career. Players you recruited stay on your account.</p>
       <div class="c-cta"><button class="edit" data-restart>Restart career</button></div></section>`;
@@ -336,6 +401,8 @@ export function initCareer(d: CareerDeps) {
     void fillStarters();
   }
   let starter: { id: string; free: boolean } | null = null;
+  /** A retired career's Hall of Fame, carried into the next career. */
+  let retiredHall: import('./state').HallEntry[] | null = null;
   async function fillStarters() {
     const home = ($('cHome') as HTMLSelectElement).value;
     const owned = await d.owned();
@@ -363,7 +430,10 @@ export function initCareer(d: CareerDeps) {
         const owned = await d.owned();
         if (!got && !owned.has(starter.id)) { d.toast('Free player already used', 'Each account gets one free career player. Pick one you own.'); return; }
       }
+      const hall = retiredHall ?? [];
+      retiredHall = null;
       s = newCareer({ name: ($('cName') as HTMLInputElement).value.trim() || 'Player', homeCountry: ($('cHome') as HTMLSelectElement).value, characterId: starter.id, difficulty: 'relaxed' });
+      s.hallOfFame = hall;
       const prevRev = saves!.rev;
       saves!.rev = prevRev; // a restart replaces the old save from the same revision
       await save();
@@ -476,7 +546,7 @@ export function initCareer(d: CareerDeps) {
     d.play({
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${ROUND_LABEL[nm.round]}`,
-        player: { characterId: a.as, modifiers: [energyModifier(s!.energy)], abilities: true },
+        player: { characterId: a.as, modifiers: [energyModifier(s!.energy), coachModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
         restrictions: {},
       },
@@ -495,6 +565,9 @@ export function initCareer(d: CareerDeps) {
         const after = myRank(s!, W());
         if (after && (!s!.bestRank || after < s!.bestRank)) { s!.bestRank = after; d.saveStats({ max_career_best_rank: 1000 - after }); await save(); }
         panel.classList.remove('hidden');
+        if (r.injured) d.toast(`Injured: out for ${r.injured} weeks`, 'You played too tired. Rest up: you can’t enter events until it heals.');
+        for (const m of newMilestones(s!)) d.toast(`Milestone: ${m.label}`, 'See it in Trophies.');
+        await save();
         if (r.finished && r.result) {
           d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
         }
@@ -542,6 +615,18 @@ export function initCareer(d: CareerDeps) {
       else while (s.week < target.week && s.recap === null) advanceWeek(s, 'next', d.appVersion);
       await save(); render(); return;
     }
+    const cl = at('[data-class]')?.dataset.class as TravelClass | undefined;
+    if (cl) { s.settings.travelClass = cl; s.settings.business = cl === 'business'; await save(); render(); return; }
+    const ho = at('[data-hotel]')?.dataset.hotel as HotelTier | undefined;
+    if (ho) { s.settings.hotel = ho; if (s.current) s.current.hotelTier = ho; await save(); render(); return; }
+    const stf = at('[data-staff]')?.dataset.staff as StaffRole | undefined;
+    if (stf) { setStaff(s, stf, !s.staff?.[stf]); await save(); render(); return; }
+    const spn = at('[data-sponsor]')?.dataset.sponsor;
+    if (spn !== undefined) { const offers = sponsorUpgrade(s, myRank(s, W())); if (offers) { s.sponsor = offers[Number(spn)]; d.toast(`Signed with ${s.sponsor.name}`, `${money(s.sponsor.weekly)} a week and ${money(s.sponsor.bonus)} a title.`); await save(); render(); } return; }
+    if (at('[data-retire]')) {
+      if (!confirm('Retire? This career goes into the Hall of Fame and you start a new one. Players you recruited stay on your account.')) return;
+      retiredHall = retire(s); s = null; render(); return;
+    }
     const rf = at('[data-refuel]')?.dataset.refuel as 'food' | 'physio' | undefined;
     if (rf) { if (!refuel(s, rf)) d.toast('Not enough money', ''); else { await save(); render(); } return; }
     if (at('[data-playnext]')) { void playNext(); return; }
@@ -551,7 +636,7 @@ export function initCareer(d: CareerDeps) {
     if (at('[data-recapdone]')) { s.recap = null; await save(); render(); return; }
     const df = at('[data-diff]')?.dataset.diff as Difficulty | undefined;
     if (df) { s.difficulty = df; await save(); render(); return; }
-    if (at('[data-restart]')) { if (confirm('Restart your career? This one is replaced (recruited players stay on your account).')) { s = null; render(); } return; }
+    if (at('[data-restart]')) { if (confirm('Restart your career? This one is replaced (recruited players stay on your account).')) { retiredHall = s.hallOfFame ?? []; s = null; render(); } return; }
     // Recruiting
     const rc = at('[data-recruit]')?.dataset.recruit;
     const o = s.pendingRecruitOffer;
@@ -591,8 +676,7 @@ export function initCareer(d: CareerDeps) {
   panel.addEventListener('change', async (ev2) => {
     const t = ev2.target as HTMLInputElement;
     if (!s) { if (t.id === 'cHome') void fillStarters(); return; }
-    if (t.id === 'cBusiness') { s.settings.business = t.checked; await save(); render(); }
-    if (t.id === 'cFaster') { s.settings.fasterEarlyRounds = t.checked; await save(); }
+
   });
 
   return { open, close, isOpen: () => !panel.classList.contains('hidden'), get offerLater() { return offerLater; } };

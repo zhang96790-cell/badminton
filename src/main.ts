@@ -1964,6 +1964,7 @@ const careerUi = initCareer({
     voice.enabled = settings.voice;
     voice.unlock();
     careerDone = o.onDone;
+    renderer.eventTitle = o.setup.label?.split(' · ')[0] ?? null;
     game = new Game({ ...settings, ...o.settings }, input, broadcast, 'match', null, o.setup);
     game.onMatchOver = recordCareer;
     if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
@@ -1979,6 +1980,7 @@ const careerUi = initCareer({
 function endCareerMatch(retired: boolean) {
   const g = game!, done = careerDone;
   careerDone = null;
+  renderer.eventTitle = null;
   showMenu();
   done?.(g, retired);
 }

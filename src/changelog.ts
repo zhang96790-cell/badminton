@@ -5,6 +5,21 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3',
+    title: 'The tough tour',
+    date: '14 Nov 2026',
+    changes: [
+      "Career is much tougher. Matches and travel use about twice the energy, a week off gives nothing back, and recovering costs far more (good food +5 for $90, a physio +15 for $450, a rest week +10 for $200). Flights cost more too.",
+      "A new Energy & travel tab: choose how you travel (economy, premium economy or business: dearer, but less tiring) and where you stay (hostel, 3-star, 4-star or 5-star by the venue). Better hotels give energy back every night, and prices change from city to city.",
+      "Injuries: start a match below 25 energy and you might get hurt. That puts you out of the event and off the tour for 2 to 4 weeks, plus the treatment bill.",
+      "Sponsors and staff: sponsors pay you every week (and a bonus for each title) once you’re in the world top 200, with better deals as you climb. Hire a coach (sharper timing and aim) or a physio (energy every week, half the injury risk, cheaper sessions) for weekly wages.",
+      "Seasons up to 2032 and beyond: the Olympics replace the World Championships in 2028 (Los Angeles, July) and 2032 (Brisbane, late July). The world’s top 32 can enter, at most 2 per country. The Worlds and the World Tour Finals move to a new city each year, and some years bring new events like the Spain Masters, Korea Masters, Odisha Masters and Mexico Open.",
+      "Career matches are best of 3 games to 15, the new scoring.",
+      "The tournament’s name is on the boards around the court in career matches.",
+      "A Trophies tab: your titles, Olympic and World medals, 16 milestones to chase (first title, world top 10, Olympic gold and more), and a Hall of Fame. Retire after your first season to put your career in it, then start a new one.",
+    ],
+  },
+  {
     version: '3.2',
     title: 'Super Rares and Epics',
     date: '14 Nov 2026',

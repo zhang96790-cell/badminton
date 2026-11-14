@@ -1240,3 +1240,20 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .c-tier.s300 { background: var(--amber); } .c-tier.s500 { background: #2ec4b6; } .c-tier.s750 { background: #b18cff; }
 .c-tier.s1000 { background: #ff6b9a; } .c-tier.worlds { background: #fff; } .c-tier.wtf { background: #ffd700; }
 .d-draw { grid-template-columns: repeat(var(--rounds, 5), minmax(120px, 1fr)); overflow-x: auto; }
+.c-mark.olympics i, .c-strip-key i.olympics { background: conic-gradient(#0081c8 0 20%, #fcb131 0 40%, #000 0 60%, #00a651 0 80%, #ee334e 0); }
+.c-tier.olympics { background: linear-gradient(90deg, #0081c8, #00a651, #ee334e); color: #fff; }
+
+/* 3.3: energy & travel, team, trophies */
+.c-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.c-opt { display: grid; gap: 3px; align-content: start; padding: 10px 12px; text-align: left; border: 1px solid var(--rule); border-radius: 4px; background: var(--board); color: var(--ink); cursor: pointer; font: 500 13px/1.35 var(--text); }
+.c-opt b { font: 800 15px/1.2 var(--text); }
+.c-opt span { color: var(--ink-2); }
+.c-opt:hover { border-color: rgba(214, 228, 255, 0.5); }
+.c-opt.on { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset; }
+.c-opt.on b { color: var(--amber-hi); }
+.c-energybar { position: relative; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.c-energybar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #2fbf71, var(--live)); }
+.c-energybar.low i { background: linear-gradient(90deg, #d9534f, #ff8a65); }
+.c-energybar b { position: absolute; right: 10px; top: 4px; font: 800 16px/1 var(--text); color: var(--ink); }
+.c-miles { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 600 13px/1.4 var(--text); color: var(--ink-3); }
+.c-miles .done { color: var(--amber-hi); }

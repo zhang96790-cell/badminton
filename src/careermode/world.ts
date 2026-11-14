@@ -2,6 +2,7 @@
 // out from the save's seed and the player's own results, so it comes out the same on every reload.
 import tournamentsData from '../../data/tournaments.json';
 import regionsData from '../../data/country_regions.json';
+import yearsData from '../../data/calendar_years.json';
 import { RARITY, ROSTER, compareVersions, type Character, type Rarity } from '../../shared/characters';
 import { CAREER_CFG as CFG, LEVELS, type Round, type Tier } from './config';
 import type { Level } from '../config';
@@ -21,11 +22,35 @@ export function rng(seed: number) {
 export interface TourEvent { id: string; name: string; tier: Tier | 'CLUB'; host_country: string; city: string | null; order: number; week: number; dates?: string; draw_size: number; prize_pool_usd: number; sponsor: string | null; released_in: string; enabled: boolean }
 type RawEvent = Omit<TourEvent, 'week'> & { week: number | null };
 
-/** Enabled events out in this version, in calendar order. Blank weeks are spread evenly through the year by order. */
-export function calendar(appVersion: string): TourEvent[] {
-  const list = (tournamentsData.tournaments as RawEvent[]).filter((e) => e.enabled && compareVersions(e.released_in, appVersion) <= 0).sort((a, b) => a.order - b.order);
+/** How a year changes the base calendar (data/calendar_years.json). */
+interface YearRules { set?: Record<string, Partial<RawEvent>>; replace?: Record<string, Partial<RawEvent> & { id: string }>; add?: (Partial<RawEvent> & { id: string })[]; remove?: string[] }
+const YEARS = yearsData.years as Record<string, YearRules>;
+/** Years after the last one written repeat the non-Olympic years before it. */
+function rulesFor(year: number): YearRules {
+  if (YEARS[year]) return YEARS[year];
+  const cycle = [2029, 2030, 2031];
+  return YEARS[cycle[(year - 2029) % cycle.length]] ?? {};
+}
+
+const calCache = new Map<string, TourEvent[]>();
+/**
+ * The calendar for a career year: enabled events out in this version, in week order. Each year can move,
+ * swap, add or drop events (Olympics in 2028 and 2032, new Worlds and Finals hosts every year).
+ */
+export function calendar(appVersion: string, year = 2027): TourEvent[] {
+  const key = `${appVersion}:${year}`;
+  const hit = calCache.get(key);
+  if (hit) return hit;
+  const r = rulesFor(year);
+  let list = (tournamentsData.tournaments as RawEvent[]).map((e) => ({ ...e }));
+  for (const [id, patch] of Object.entries(r.set ?? {})) list = list.map((e) => (e.id === id ? { ...e, ...patch } : e));
+  for (const [id, ev] of Object.entries(r.replace ?? {})) list = list.map((e) => (e.id === id ? { ...e, notes: '', ...ev } as RawEvent : e));
+  for (const ev of r.add ?? []) list.push({ order: 99, sponsor: null, released_in: '3.0', enabled: true, notes: '', city: null, week: null, draw_size: 32, prize_pool_usd: 0, tier: 'S100', host_country: 'XXX', name: ev.id, ...ev } as RawEvent);
+  list = list.filter((e) => !(r.remove ?? []).includes(e.id) && e.enabled && compareVersions(e.released_in, appVersion) <= 0);
   const gap = Math.max(1, Math.floor(50 / Math.max(1, list.length)));
-  return list.map((e, i) => ({ ...e, week: e.week ?? Math.min(52, 2 + i * gap) }));
+  const out = list.map((e, i) => ({ ...e, week: e.week ?? Math.min(52, 2 + i * gap) })).sort((a, b) => a.week - b.week || a.order - b.order);
+  calCache.set(key, out);
+  return out;
 }
 
 export const COUNTRIES = regionsData.countries as Record<string, { name: string; region: string }>;
@@ -78,7 +103,8 @@ export function drawField(ev: TourEvent, year: number, seed: number, pool: Chara
   const out: Character[] = [];
   const perCountry = new Map<string, number>(), perStyle = new Map<string, number>();
   const take = (c: Character) => { out.push(c); perCountry.set(c.country, (perCountry.get(c.country) ?? 0) + 1); perStyle.set(c.style, (perStyle.get(c.style) ?? 0) + 1); };
-  const ok = (c: Character) => !out.includes(c) && (perCountry.get(c.country) ?? 0) < CFG.maxPerCountry && (perStyle.get(c.style) ?? 0) < Math.ceil(size / 3);
+  const perCountryMax = ev.tier === 'OLYMPICS' ? 2 : CFG.maxPerCountry;
+  const ok = (c: Character) => !out.includes(c) && (perCountry.get(c.country) ?? 0) < perCountryMax && (perStyle.get(c.style) ?? 0) < Math.ceil(size / 3);
   // Players in better form enter more events (as on the real tour).
   const wt = (c: Character) => (weights[c.rarity] ?? 0) * Math.exp((simStrength(c) - c.career_strength) / CFG.formEntry);
   const pick = (list: Character[]) => {
@@ -203,12 +229,14 @@ export class World {
   results: Results = new Map();
   private plans = new Map<string, EventPlan>();
 
-  /** The calendar plus the unseen world events, in week order (for the ranking). */
-  private all: TourEvent[];
+  /** Unseen world events (off by default), added to every year's calendar for the ranking. */
+  private extra: TourEvent[];
+  /** A year's calendar plus the unseen world events, in week order. */
+  private allFor = (year: number) => [...calendar(this.input.appVersion, year), ...this.extra].sort((a, b) => a.week - b.week || a.id.localeCompare(b.id));
 
   constructor(private input: WorldInput) {
     this.pool = npcPool(input.appVersion);
-    this.cal = calendar(input.appVersion);
+    this.cal = calendar(input.appVersion, input.year);
     const countries = [...new Set(this.pool.map((c) => c.country))];
     const extra: TourEvent[] = [];
     for (const [tier, n] of Object.entries(CFG.worldEvents) as [Tier, number][]) {
@@ -218,7 +246,7 @@ export class World {
           week: 1 + Math.floor(((i + r()) / n) * 51), draw_size: 16, prize_pool_usd: 0, sponsor: null, released_in: '0', enabled: true });
       }
     }
-    this.all = [...this.cal, ...extra].sort((a, b) => a.week - b.week || a.id.localeCompare(b.id));
+    this.extra = extra;
     for (const c of this.pool) this.str.set(c.id, simStrength(c));
     this.str.set(YOU, 100);
     this.run();
@@ -268,7 +296,7 @@ export class World {
     const { history, startYear, year, week, seed } = this.input;
     const mine = new Map(history.map((h) => [`${h.year}:${h.tournamentId}`, h]));
     for (let y = startYear - 1; y <= year; y++) {
-      for (const ev of this.all) {
+      for (const ev of this.allFor(y)) {
         if (y === year && ev.week > week) break;
         const h = mine.get(`${y}:${ev.id}`);
         // An event the player is still playing (this week) isn't counted until it's finished.

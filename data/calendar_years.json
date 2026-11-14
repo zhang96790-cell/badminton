@@ -1,0 +1,161 @@
+{
+ "note": "Changes to the base calendar (tournaments.json) for each career year. set = change fields of an event, replace = swap an event for another (keeping its week and dates unless given), add = new events, remove = event ids dropped. No Thomas/Uber Cups. Years after 2032 repeat 2029–2031. Olympic dates are the real ones (LA 2028, Brisbane 2032); other hosts are made up for the game.",
+ "years": {
+  "2027": {
+   "set": {
+    "world_championships": {
+     "city": "Singapore",
+     "host_country": "SGP"
+    },
+    "bwf_world_tour_finals": {
+     "city": "Hangzhou",
+     "host_country": "CHN"
+    }
+   }
+  },
+  "2028": {
+   "replace": {
+    "world_championships": {
+     "id": "olympics",
+     "name": "Olympic Games Los Angeles",
+     "tier": "OLYMPICS",
+     "host_country": "USA",
+     "city": "Los Angeles",
+     "week": 29,
+     "dates": "15–30 Jul",
+     "draw_size": 32,
+     "prize_pool_usd": 1500000,
+     "notes": "Replaces the World Championships in Olympic years. Entry: world top 32, at most 2 per country."
+    }
+   },
+   "set": {
+    "syed_modi_international": {
+     "week": 31,
+     "dates": "1–6 Aug"
+    },
+    "bwf_world_tour_finals": {
+     "city": "Guangzhou",
+     "host_country": "CHN"
+    }
+   }
+  },
+  "2029": {
+   "set": {
+    "world_championships": {
+     "city": "Copenhagen",
+     "host_country": "DEN"
+    },
+    "bwf_world_tour_finals": {
+     "city": "Bangkok",
+     "host_country": "THA"
+    }
+   },
+   "replace": {
+    "swiss_open": {
+     "id": "spain_masters",
+     "name": "Spain Masters",
+     "tier": "S300",
+     "host_country": "ESP",
+     "city": "Madrid",
+     "draw_size": 32,
+     "prize_pool_usd": 290000
+    }
+   },
+   "add": [
+    {
+     "id": "korea_masters",
+     "name": "Korea Masters",
+     "tier": "S300",
+     "host_country": "KOR",
+     "city": "Gwangju",
+     "week": 45,
+     "dates": "6–11 Nov",
+     "draw_size": 32,
+     "prize_pool_usd": 290000
+    }
+   ]
+  },
+  "2030": {
+   "set": {
+    "world_championships": {
+     "city": "Tokyo",
+     "host_country": "JPN"
+    },
+    "bwf_world_tour_finals": {
+     "city": "Kuala Lumpur",
+     "host_country": "MAS"
+    },
+    "thailand_masters": {
+     "tier": "S500",
+     "prize_pool_usd": 500000
+    }
+   },
+   "add": [
+    {
+     "id": "odisha_masters",
+     "name": "Odisha Masters",
+     "tier": "S100",
+     "host_country": "IND",
+     "city": "Cuttack",
+     "week": 50,
+     "dates": "10–15 Dec",
+     "draw_size": 48,
+     "prize_pool_usd": 140000
+    }
+   ]
+  },
+  "2031": {
+   "set": {
+    "world_championships": {
+     "city": "Paris",
+     "host_country": "FRA"
+    },
+    "bwf_world_tour_finals": {
+     "city": "Hangzhou",
+     "host_country": "CHN"
+    },
+    "macau_open": {
+     "tier": "S500",
+     "prize_pool_usd": 500000
+    }
+   },
+   "replace": {
+    "canada_open": {
+     "id": "mexico_open",
+     "name": "Mexico Open",
+     "tier": "S300",
+     "host_country": "MEX",
+     "city": "Mexico City",
+     "draw_size": 32,
+     "prize_pool_usd": 290000
+    }
+   }
+  },
+  "2032": {
+   "replace": {
+    "world_championships": {
+     "id": "olympics",
+     "name": "Olympic Games Brisbane",
+     "tier": "OLYMPICS",
+     "host_country": "AUS",
+     "city": "Brisbane",
+     "week": 30,
+     "dates": "24 Jul–8 Aug",
+     "draw_size": 32,
+     "prize_pool_usd": 1500000,
+     "notes": "Replaces the World Championships in Olympic years. Entry: world top 32, at most 2 per country."
+    }
+   },
+   "set": {
+    "syed_modi_international": {
+     "week": 28,
+     "dates": "6–11 Jul"
+    },
+    "bwf_world_tour_finals": {
+     "city": "Jakarta",
+     "host_country": "INA"
+    }
+   }
+  }
+ }
+}

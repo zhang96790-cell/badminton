@@ -51,6 +51,8 @@ function buildCrowd(): Spectator[] {
 }
 
 export class Renderer {
+  /** The tournament's name for the court boards (career and daily matches), or null. */
+  eventTitle: string | null = null;
   private cam!: Camera;
   private crowd = buildCrowd();
   /** Performance mode: a third of the crowd (standing still), no lighting or glow, no shuttle trail. */
@@ -173,12 +175,15 @@ export class Renderer {
     }
     // Advertising boards behind the far baseline and along the sides.
     const texts = ARENA.boardTexts;
+    // Career and daily matches: the tournament's name runs across the outer boards (two either side).
+    const title = this.eventTitle;
     for (let i = 0; i < 6; i++) {
-      const x0 = -7.8 + i * 2.6, color = C.boards[i % C.boards.length];
+      const x0 = -7.8 + i * 2.6, color = title && i !== 2 && i !== 3 ? '#0b1f4f' : C.boards[i % C.boards.length];
       // Sponsors' boards: Solar Sparks and Ventra.
       const ad = i === 2 ? ads.solar : i === 3 ? ads.ventra : undefined;
       if (ad && this.cam.forward.y >= 0.5) { this.adBoard(ad, v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
       this.poly([v3(x0, 9.4, 0), v3(x0 + 2.6, 9.4, 0), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0.85)], color);
+      if (title) continue;
       this.poly([v3(x0, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.78), v3(x0, 9.4, 0.78)], 'rgba(255,255,255,0.25)');
       if (this.cam.forward.y < 0.5) continue; // seen edge-on: skip the text
       const q = this.cam.project(v3(x0 + 1.3, 9.4, 0.36));
@@ -186,6 +191,15 @@ export class Renderer {
       ctx.font = `800 ${Math.max(6, 0.26 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillText(texts[i % texts.length], q.x, q.y + 0.12 * q.s);
+    }
+    if (title && this.cam.forward.y >= 0.5) {
+      for (const cx of [-5.2, 5.2]) {
+        const q = this.cam.project(v3(cx, 9.4, 0.36));
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `800 ${Math.max(6, Math.min(0.26, 4.4 / Math.max(8, title.length)) * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(title.toUpperCase(), q.x, q.y + 0.1 * q.s);
+      }
     }
     for (const s of [-1, 1]) {
       for (let i = 0; i < 6; i++) {

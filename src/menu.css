@@ -1219,3 +1219,24 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .style-trait { margin-top: 8px; min-height: 2.6em; }
 .c-trait { margin: 0; font: 500 14px/1.4 var(--text); color: var(--ink-2); }
 .c-trait b { color: var(--ink); }
+
+/* 3.0.6: every level on the timeline, the tournament list, bigger draws */
+.c-mark.s500 i, .c-strip-key i.s500 { background: #2ec4b6; }
+.c-mark.s750 i, .c-strip-key i.s750 { background: #b18cff; }
+.c-mark.s1000 i, .c-strip-key i.s1000 { background: #ff6b9a; }
+.c-mark.worlds i, .c-strip-key i.worlds { background: #fff; }
+.c-mark.wtf i, .c-strip-key i.wtf { background: #ffd700; box-shadow: 0 0 0 3px var(--board-deep), 0 0 6px #ffd700; }
+.c-mark { width: 14px; margin-left: -7px; }
+.c-mark i { width: 10px; height: 10px; }
+.c-strip-key { flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.c-listbtn { margin-left: auto; padding: 6px 12px; border: 1px solid var(--amber); border-radius: 3px; background: transparent; color: var(--amber-hi); font: 700 12px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+.c-listbtn:hover { background: rgba(255, 196, 61, 0.12); }
+.c-also { margin: 0; font: 500 14px/1.5 var(--text); color: var(--ink-2); }
+.c-also .linkish { color: var(--amber-hi); margin-right: 10px; }
+.c-table.c-list tr[data-detail] { cursor: pointer; }
+.c-table.c-list tr[data-detail]:hover td { background: rgba(255, 255, 255, 0.05); }
+.c-table.c-list tr.past td { opacity: 0.5; }
+.c-tier { display: inline-block; padding: 1px 6px; border-radius: 3px; font: 800 10px/1.4 var(--text); letter-spacing: 0.06em; text-transform: uppercase; color: #0b1730; background: #8fb4ff; }
+.c-tier.s300 { background: var(--amber); } .c-tier.s500 { background: #2ec4b6; } .c-tier.s750 { background: #b18cff; }
+.c-tier.s1000 { background: #ff6b9a; } .c-tier.worlds { background: #fff; } .c-tier.wtf { background: #ffd700; }
+.d-draw { grid-template-columns: repeat(var(--rounds, 5), minmax(120px, 1fr)); overflow-x: auto; }

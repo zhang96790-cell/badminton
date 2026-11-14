@@ -5,6 +5,19 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0.6',
+    title: 'The real tour',
+    date: '14 Nov 2026',
+    changes: [
+      "Career now follows the real tour: 37 events from the Malaysia Open in January to the World Tour Finals in December, with Super 100 to Super 1000 events, the World Championships and the Finals, on their real dates and with their real draw sizes.",
+      "Bigger draws: 48-player events give the top 16 seeds a first-round bye, the World Championships have 64 players, and the World Tour Finals are the world’s top 8 that week.",
+      "Bigger events open as you climb: reach a final at the level below, or a high enough world ranking (top 150 for Super 300, 100 for Super 500, 60 for Super 750, 40 for Super 1000, 64 for the Worlds, 8 for the Finals).",
+      "Stars play the big events: any player can appear in any draw, so Super 750s and 1000s are full of the strongest players, even ones you can’t recruit yet. Who you can recruit depends on the level you win: Commons from Super 100s, up to Super Rares from Super 500s, Epics from Super 750s and 1000s, and so on.",
+      "A new “All tournaments” list (next to the season timeline): every event’s dates, level, draw size, host, prize and whether you can enter. When two events share a week, you choose which one to play.",
+      "The All-rounder CPU is a little quicker, reaches a little further and is a little more precise.",
+    ],
+  },
+  {
     version: '3.0.5',
     title: 'Styles with a signature',
     date: '14 Nov 2026',

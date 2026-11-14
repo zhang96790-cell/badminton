@@ -1,7 +1,7 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
 import { characterById, type Character, type Modifier } from '../../shared/characters';
-import { CAREER_CFG as CFG, type Difficulty, type Round } from './config';
+import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type Round } from './config';
 import { World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
 import { energyUseFactor } from './signatures';
@@ -44,7 +44,8 @@ export interface CareerState {
   pendingRecruitOffer: RecruitOffer | null;
   /** A win that's waiting for its offer to be made (e.g. it was offline). */
   offerDue: { tournamentId: string; tier: string; field: string[] } | null;
-  unlocks: { s300: boolean };
+  /** s300 from 3.0; tiers: every level opened by reaching a final at the level below. */
+  unlocks: { s300: boolean; tiers?: string[] };
   settings: { fasterEarlyRounds: boolean; business: boolean };
   current: Active | null;
   ledger: LedgerLine[];
@@ -115,18 +116,29 @@ export const roundEnergy = (s: CareerState, ev: TourEvent) => (ev.tier === 'CLUB
 export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean; why?: string } {
   if (s.current) return { ok: false, why: 'Finish your current tournament first.' };
   if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
-  if (ev.tier === 'S300' && !s.unlocks.s300) {
+  const gate = (CFG.gates as Record<string, { finalIn?: string; rankAtMost: number } | undefined>)[ev.tier];
+  if (gate && !unlocked(s, ev.tier)) {
     const r = myRank(s, w);
-    if (!(r !== null && r <= CFG.gate.S300.rankAtMost)) return { ok: false, why: `Super 300 events open after you reach a Super 100 final, or a world ranking of ${CFG.gate.S300.rankAtMost} or better.` };
+    if (!(r !== null && r <= gate.rankAtMost)) {
+      const name = TIER_LABEL[ev.tier];
+      return { ok: false, why: ev.tier === 'WTF' ? `Only the world’s top ${gate.rankAtMost} play the World Tour Finals.`
+        : gate.finalIn ? `${name} events open after you reach a ${TIER_LABEL[gate.finalIn]} final, or a world ranking of ${gate.rankAtMost} or better.`
+        : `The ${name} need a world ranking of ${gate.rankAtMost} or better.` };
+    }
   }
   const cost = travelCost(s, ev) + CFG.hotelPerRound;
   if (s.money < cost) return { ok: false, why: `You need ${money(cost)} for travel and your first hotel night.` };
   return { ok: true };
 }
 
-/** This week's event, if there is one. */
-export const eventThisWeek = (s: CareerState, appVersion: string) =>
-  calendar(appVersion).find((e) => e.week === s.week && !s.history.some((h) => h.year === s.year && h.tournamentId === e.id)) ?? null;
+/** Levels you've opened by reaching a final at the level below (Super 300 from 3.0 saves too). */
+export const unlocked = (s: CareerState, tier: string) => (tier === 'S300' && s.unlocks.s300) || !!s.unlocks.tiers?.includes(tier);
+
+/** This week's events you haven't played yet (usually one; some weeks have two to choose from). */
+export const eventsThisWeek = (s: CareerState, appVersion: string) =>
+  calendar(appVersion).filter((e) => e.week === s.week && !s.history.some((h) => h.year === s.year && h.tournamentId === e.id));
+/** This week's event, if there is one (the first enterable of them). */
+export const eventThisWeek = (s: CareerState, appVersion: string) => eventsThisWeek(s, appVersion)[0] ?? null;
 
 /** Nothing you can afford for the rest of the season: offer the free Local Club Open. */
 export function softLocked(s: CareerState, w: World): boolean {
@@ -150,12 +162,22 @@ export function enter(s: CareerState, ev: TourEvent) {
   s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: s.settings.business, club: ev.tier === 'CLUB' };
 }
 
+/** A bye: you go straight through to the next round (top seeds in 48-player draws). */
+export function skipByes(s: CareerState, w: World, ev: TourEvent) {
+  const a = s.current;
+  for (let k = 0; a && k < 3; k++) {
+    const m = nextMatch(s, w, ev);
+    if (!m || m.opponentId !== 'bye') return;
+    a.round = nextRound(a.round);
+  }
+}
+
 /** The bracket for the event you're in (Club Opens are drawn from Commons near you). */
 export function currentPlan(s: CareerState, w: World, ev: TourEvent) {
   return w.plan(ev.tier === 'CLUB' ? { ...ev, tier: 'S100' } : ev, s.year, s.current!.as);
 }
 
-export interface NextMatch { opponent: Character; round: Round; level: Level; games: 1 | 3; points: 15 | 21 }
+export interface NextMatch { opponent: Character; opponentId: string; round: Round; level: Level; games: 1 | 3; points: 15 | 21 }
 
 /** Who you play next: the bracket with you winning so far. */
 export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | null {
@@ -171,7 +193,7 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
   const opponent = characterById(oppId);
   const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, 'level'), ev.tier);
   const early = order.indexOf('QF') > ri;
-  return { opponent, round: a.round, level, ...(s.settings.fasterEarlyRounds && early ? { games: 1 as const, points: 15 as const } : { games: 3 as const, points: 21 as const }) };
+  return { opponent, opponentId: oppId, round: a.round, level, ...(s.settings.fasterEarlyRounds && early ? { games: 1 as const, points: 15 as const } : { games: 3 as const, points: 21 as const }) };
 }
 
 /** A match finished: pay the hotel, use energy, and move on (or finish the event). */
@@ -181,7 +203,7 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
   a.scores.push(games);
   if (ev.tier !== 'CLUB') { a.hotel += CFG.hotelPerRound; book(s, `Hotel (${ev.name})`, -CFG.hotelPerRound); }
   s.energy = Math.max(0, Math.round(s.energy - roundEnergy(s, ev) * energyUseFactor(characterById(a.as), a.energyAtMatch ?? s.energy)));
-  if (won && a.round !== 'F') { a.round = nextRound(a.round); return { finished: false }; }
+  if (won && a.round !== 'F') { a.round = nextRound(a.round); skipByes(s, w, ev); return { finished: false }; }
   const reached: Round = won ? 'W' : a.round;
   return { finished: true, result: finish(s, w, ev, reached) };
 }
@@ -195,7 +217,11 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
   s.history.push(res);
   if (ev.tier !== 'CLUB') s.currentLocation = ev.host_country;
   if (reached === 'W') s.titles++;
-  if (ev.tier === 'S100' && (reached === 'F' || reached === 'W')) s.unlocks.s300 = true;
+  // A final opens the next level up.
+  if (reached === 'F' || reached === 'W') {
+    if (ev.tier === 'S100') s.unlocks.s300 = true;
+    for (const [tier, g] of Object.entries(CFG.gates)) if (g?.finalIn === ev.tier && !unlocked(s, tier)) (s.unlocks.tiers ??= []).push(tier);
+  }
   if (reached === 'W' && ev.tier !== 'CLUB') {
     const p = currentPlan(s, w, ev);
     s.offerDue = { tournamentId: ev.id, tier: ev.tier, field: p.slots.filter((x) => x !== YOU && x !== 'bye') };

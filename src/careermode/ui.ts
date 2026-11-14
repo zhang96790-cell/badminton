@@ -8,7 +8,7 @@ import type { MatchSetup } from '../setup';
 import { CAREER_CFG as CFG, ROUND_LABEL, TIER_LABEL, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, currentPlan, energyModifier, energyPenalty, enter, eventThisWeek, findEvent, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, skipByes, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
 } from './state';
 import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
@@ -154,14 +154,21 @@ export function initCareer(d: CareerDeps) {
       return `<button class="c-mark ${v.tier.toLowerCase()}${now ? ' now' : ''}${past ? ' past' : ''}" style="left:${((v.week - 1) / 51) * 100}%" data-detail="${v.id}" title="${e(v.name)} · week ${v.week}${h ? ` · you: ${ROUND_LABEL[h.round]}` : ''}"><i></i>${res ? `<em>${res}</em>` : ''}</button>`;
     }).join('');
     return `<div class="c-strip" aria-label="${s!.year} season"><div class="c-line"><span class="c-you" style="left:${((s!.week - 1) / 51) * 100}%"></span>${marks}</div>
-      <div class="c-strip-key"><span><i class="s100"></i>Super 100</span><span><i class="s300"></i>Super 300</span><span>Click an event for details</span></div></div>`;
+      <div class="c-strip-key">${['S100', 'S300', 'S500', 'S750', 'S1000', 'WORLDS', 'WTF'].map((t) => `<span><i class="${t.toLowerCase()}"></i>${TIER_LABEL[t]}</span>`).join('')}
+        <button class="c-listbtn" data-list>All tournaments</button></div></div>`;
   }
 
+  /** An event you're allowed into (you may still need to save up for it). */
+  const reachable = (v: TourEvent) => { const c = canEnter(s!, v, W()); return c.ok || !!c.why?.startsWith('You need'); };
+  /** Two events in one week: which one the hub shows. */
+  let pickedEv: string | null = null;
   function renderHub() {
-    const x = eventThisWeek(s!, d.appVersion);
+    const week = eventsThisWeek(s!, d.appVersion);
+    const x = week.find((v) => v.id === pickedEv) ?? week.find((v) => canEnter(s!, v, W()).ok) ?? week[0] ?? null;
+    const also = week.filter((v) => v !== x);
     // The next event you're allowed into (a locked Super 300 is skipped; money can still be short).
     const upcoming = W().cal.filter((v) => v.week > s!.week);
-    const next = upcoming.find((v) => !canEnter(s!, v, W()).why?.startsWith('Super 300')) ?? upcoming[0] ?? null;
+    const next = upcoming.find((v) => reachable(v)) ?? upcoming[0] ?? null;
     let hero = '';
     if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
@@ -179,8 +186,9 @@ export function initCareer(d: CareerDeps) {
         <div class="c-cta"><button class="walk" data-club>Play the club open ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>${recover()}`;
     } else if (x) {
       const c = canEnter(s!, x, W());
-      hero = `<p class="c-kicker">This week · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
+      hero = `<p class="c-kicker">This week · ${TIER_LABEL[x.tier]}${x.dates ? ` · ${e(x.dates)}` : ''}</p><h3 class="c-title">${e(x.name)}</h3>
         <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players</p>
+        ${also.length ? `<p class="c-also">Also this week (you can play one): ${also.map((v) => `<button class="linkish" data-pickev="${v.id}">${e(v.name)} · ${TIER_LABEL[v.tier]}</button>`).join(' ')}</p>` : ''}
         <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy to go all the way', `about ${Math.round(travelEnergy(s!, x) + roundEnergy(s!, x) * roundsFor(x.draw_size).length)}`)}</div>
         ${c.ok ? `<label class="c-check"><input type="checkbox" id="cBusiness" ${s!.settings.business ? 'checked' : ''}/> Fly business class (${money(travelCost(s!, x, true))}, saves energy)</label>` : ''}
         <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">Enter · ${money(travelCost(s!, x) + CFG.hotelPerRound)} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
@@ -232,8 +240,25 @@ export function initCareer(d: CareerDeps) {
     });
     const champ = known >= order.length ? rounds[order.length][0] : null;
     cols.push(`<div class="d-col d-win"><h4>Winner</h4><div class="d-ms"><div class="d-m${champ === YOU ? ' mine' : ''}"><div class="d-p won${champ === YOU ? ' me' : ''}">${champ ? `🏆 ${nm(champ)}${seed(champ)}` : '<span class="tbd">To be decided</span>'}</div></div></div></div>`);
-    return `<div class="d-draw" role="table" aria-label="${e(x.name)} draw">${cols.join('')}</div>
+    return `<div class="d-draw" role="table" aria-label="${e(x.name)} draw" style="--rounds:${cols.length}">${cols.join('')}</div>
       <p class="c-lead small">${known === 0 ? 'The first-round pairings. Seeds (top 4 in the world ranking) are marked with their number.' : 'Winners in bold. Your matches show your scores; other results are the winner only.'}</p>`;
+  }
+
+  /** Every event this season: dates, level, draw, host, and whether you can play it. */
+  function renderList() {
+    const rows = W().cal.map((v) => {
+      const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
+      const c = canEnter(s!, v, W());
+      const status = h ? `You: ${ROUND_LABEL[h.round]}` : v.week < s!.week ? 'Done' : s!.current?.eventId === v.id ? 'Playing now'
+        : c.ok ? (v.week === s!.week ? 'Enter now' : 'Open') : c.why?.startsWith('You need') ? 'Open (save up)' : 'Locked';
+      return `<tr class="${v.week === s!.week ? 'me' : ''}${v.week < s!.week && !h ? ' past' : ''}" data-detail="${v.id}" title="${e(c.ok || h ? '' : c.why ?? '')}">
+        <td>${e(v.dates ?? `week ${v.week}`)}</td><td><b>${e(v.name)}</b></td><td><span class="c-tier ${v.tier.toLowerCase()}">${TIER_LABEL[v.tier]}</span></td>
+        <td>${v.draw_size}</td><td>${e(v.city ? `${v.city}, ` : '')}${e(countryName(v.host_country))}</td><td>${money(prizeFor(v, 'W'))}</td><td>${status}</td></tr>`;
+    }).join('');
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">${s!.year} season · ${W().cal.length} tournaments</p><h3 class="c-title">All tournaments</h3>
+      <p class="c-lead small">Click a tournament for its prizes and draw. Locked levels open when you reach a final at the level below, or climb the world ranking.</p>
+      <table class="c-table c-list"><tr><th>Dates</th><th>Tournament</th><th>Level</th><th>Players</th><th>Host</th><th>Winner gets</th><th>Status</th></tr>${rows}</table>
+      <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
 
   function renderDraw(id: string) {
@@ -251,7 +276,7 @@ export function initCareer(d: CareerDeps) {
     for (const p of plan.slots) { const c = characterById(p); byRarity.set(c.rarity, (byRarity.get(c.rarity) ?? 0) + 1); }
     const rounds = roundsFor(x.draw_size);
     const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === x.id);
-    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Week ${x.week} · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">${e(x.dates ?? `Week ${x.week}`)} · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
       <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players: ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}${h ? ` · you reached the ${ROUND_LABEL[h.round].toLowerCase()}` : ''}</p>
       <table class="c-table"><tr><th>If you go out in</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${r === 'W' ? 'Win it' : ROUND_LABEL[r]}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
       <div class="c-facts">${fact('Travel (economy / business)', `${money(travelCost(s!, x, false))} / ${money(travelCost(s!, x, true))}`)}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy per round', `about ${Math.round(roundEnergy(s!, x))}`)}</div>
@@ -502,13 +527,16 @@ export function initCareer(d: CareerDeps) {
       const x = findEvent(s, en, d.appVersion);
       if (!x || !canEnter(s, x, W()).ok) return;
       if (s.pendingRecruitOffer) { const m = await d.loadAccount(); await m.offerChoose(s.pendingRecruitOffer.id, null); s.pendingRecruitOffer = null; }
-      enter(s, x); await save(); render(); return;
+      enter(s, x); skipByes(s, W(), x); await save(); render(); return;
     }
     if (at('[data-club]')) { enter(s, clubEvent(s)); await save(); render(); return; }
+    const pe = at('[data-pickev]')?.dataset.pickev;
+    if (pe) { pickedEv = pe; renderHub(); return; }
+    if (at('[data-list]')) { renderList(); return; }
     const wk = at('[data-week]')?.dataset.week as 'next' | 'rest' | undefined;
     if (wk) { if (wk === 'rest' && s.money < CFG.rest.cost) { d.toast('Not enough money', 'A rest week costs living expenses.'); return; } advanceWeek(s, wk, d.appVersion); await save(); render(); return; }
     if (at('[data-skip]')) {
-      const target = W().cal.filter((v) => v.week > s!.week).find((v) => !canEnter(s!, v, W()).why?.startsWith('Super 300')) ?? W().cal.find((v) => v.week > s!.week);
+      const target = W().cal.filter((v) => v.week > s!.week).find((v) => reachable(v)) ?? W().cal.find((v) => v.week > s!.week);
       if (!target) { while (s.recap === null) advanceWeek(s, 'next', d.appVersion); }
       else while (s.week < target.week && s.recap === null) advanceWeek(s, 'next', d.appVersion);
       await save(); render(); return;

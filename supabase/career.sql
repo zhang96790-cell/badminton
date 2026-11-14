@@ -114,10 +114,19 @@ create index if not exists career_offers_user on public.career_offers (user_id, 
 alter table public.career_offers enable row level security;
 revoke all on public.career_offers from anon, authenticated;
 
+-- Who you can recruit after winning each level (the owner's "obtainable from" table). Anyone can appear in any
+-- draw; this only limits recruiting. Players not released yet are never offered (pick_candidates checks).
 create or replace function public.offer_rarities(p_tier text) returns text[] language sql immutable as $$
-  select case p_tier when 'S100' then array['common', 'rare'] when 'S300' then array['common', 'rare']
-    when 'S500' then array['common', 'rare', 'super_rare'] when 'S750' then array['rare', 'super_rare', 'epic']
-    else array['common', 'rare', 'super_rare', 'epic', 'elite', 'mythic', 'legendary', 'champion'] end;
+  select case p_tier
+    when 'S100' then array['common']
+    when 'S300' then array['common', 'rare']
+    when 'S500' then array['common', 'rare', 'super_rare']
+    when 'S750' then array['super_rare', 'epic']
+    when 'S1000' then array['epic', 'elite', 'mythic']
+    when 'WTF' then array['elite', 'mythic', 'legendary']
+    when 'WORLDS' then array['mythic', 'legendary', 'champion']
+    when 'OLYMPICS' then array['legendary', 'champion']
+    else array[]::text[] end;
 $$;
 
 create or replace function public.pick_candidates(p_user uuid, p_field text[], p_tier text) returns text[]

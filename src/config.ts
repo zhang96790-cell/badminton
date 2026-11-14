@@ -485,8 +485,8 @@ export const STYLES: Record<Style, {
   /** After losing this many points in a row, it changes its approach. */
   adaptAfter?: number;
 }> = {
-  allround: { label: 'All-rounder', smash: 1, drop: 1, clear: 1, net: 1, kill: 1, jump: 1, baseDepth: 3.5, margin: 0, speed: 1, serveShort: 1, steady: 0.8,
-    trait: 'No weak spots: plays every shot well and aims a little more precisely than anyone else' },
+  allround: { label: 'All-rounder', smash: 1.1, drop: 1.05, clear: 1, net: 1.05, kill: 1.1, jump: 1.1, baseDepth: 3.5, margin: -0.02, speed: 1.04, serveShort: 1, steady: 0.8, reach: 0.05,
+    trait: 'No weak spots: a little quicker around the court and a little more precise than most, with every shot in its bag' },
   attacker: { label: 'Attacker', smash: 1.9, drop: 0.9, clear: 0.6, net: 0.8, kill: 1.4, jump: 2.0, baseDepth: 3.3, margin: -0.04, speed: 1, serveShort: 0.9, followUp: 0.6,
     trait: 'Jump-smashes whenever it can and follows its smash to the net for the kill, but takes risks near the lines' },
   defender: { label: 'Defender', smash: 0.5, drop: 0.8, clear: 1.7, net: 0.9, kill: 0.8, jump: 0.5, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8, defReach: 0.06, defAim: 0.8,

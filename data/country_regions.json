@@ -339,6 +339,10 @@
    "name": "Singapore",
    "region": "SEA"
   },
+  "SUI": {
+   "name": "Switzerland",
+   "region": "EUROPE"
+  },
   "SWE": {
    "name": "Sweden",
    "region": "EUROPE"

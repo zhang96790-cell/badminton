@@ -2,7 +2,7 @@
 // out from the save's seed and the player's own results, so it comes out the same on every reload.
 import tournamentsData from '../../data/tournaments.json';
 import regionsData from '../../data/country_regions.json';
-import { RARITY, compareVersions, rosterFor, type Character, type Rarity } from '../../shared/characters';
+import { RARITY, ROSTER, compareVersions, type Character, type Rarity } from '../../shared/characters';
 import { CAREER_CFG as CFG, LEVELS, type Round, type Tier } from './config';
 import type { Level } from '../config';
 
@@ -18,7 +18,7 @@ export function rng(seed: number) {
 }
 
 // ── Data ──
-export interface TourEvent { id: string; name: string; tier: Tier | 'CLUB'; host_country: string; city: string | null; order: number; week: number; draw_size: number; prize_pool_usd: number; sponsor: string | null; released_in: string; enabled: boolean }
+export interface TourEvent { id: string; name: string; tier: Tier | 'CLUB'; host_country: string; city: string | null; order: number; week: number; dates?: string; draw_size: number; prize_pool_usd: number; sponsor: string | null; released_in: string; enabled: boolean }
 type RawEvent = Omit<TourEvent, 'week'> & { week: number | null };
 
 /** Enabled events out in this version, in calendar order. Blank weeks are spread evenly through the year by order. */
@@ -42,7 +42,11 @@ export function travelBand(from: string, to: string): Band {
 // ── People ──
 export const YOU = 'you';
 /** NPCs: everyone released and enabled except the Club Player. */
-export const npcPool = (appVersion: string) => rosterFor(appVersion).filter((c) => c.id !== 'default_player');
+/**
+ * NPCs: every enabled player except the Club Player, including ones not released yet (stars play the big
+ * events). Releases only decide who you can recruit and use. `appVersion` is kept for the call sites.
+ */
+export const npcPool = (_appVersion: string) => ROSTER.filter((c) => c.id !== 'default_player');
 
 /** A character's strength for the result simulator: career strength plus a fixed personal form. */
 const STRENGTH = new Map<string, number>();
@@ -56,8 +60,11 @@ export function simStrength(c: Character): number {
 export const absWeek = (year: number, week: number) => year * 52 + (week - 1);
 
 // ── Draws ──
-const ROUNDS_16: Round[] = ['R16', 'QF', 'SF', 'F'];
-export const roundsFor = (size: number): Round[] => (size >= 32 ? ['R32', ...ROUNDS_16] : ROUNDS_16);
+const ALL_ROUNDS: Round[] = ['R64', 'R32', 'R16', 'QF', 'SF', 'F'];
+/** Places in the bracket: the draw rounded up to a power of 2 (48 players = 64 places with 16 byes). */
+export const slotsFor = (players: number) => 2 ** Math.ceil(Math.log2(Math.max(2, players)));
+/** The rounds for a draw of this many players (or places). */
+export const roundsFor = (players: number): Round[] => ALL_ROUNDS.slice(ALL_ROUNDS.length - Math.log2(slotsFor(players)));
 export const nextRound = (r: Round): Round => (r === 'R32' ? 'R16' : r === 'R16' ? 'QF' : r === 'QF' ? 'SF' : r === 'SF' ? 'F' : 'W');
 
 /**
@@ -90,17 +97,31 @@ export function drawField(ev: TourEvent, year: number, seed: number, pool: Chara
   return out.map((c) => c.id);
 }
 
-/** Bracket positions for a 16 draw: seeds 1 and 2 in opposite halves, 3 and 4 in the other quarters. */
-export function placeSeeds(ids: string[], seeds: string[], seed: number): string[] {
+/** Standard seeding: which seed number each bracket place belongs to (1 and 2 in opposite halves, and so on). */
+function seedOrder(size: number): number[] {
+  let order = [1, 2];
+  while (order.length < size) order = order.flatMap((x) => [x, 2 * order.length + 1 - x]);
+  return order;
+}
+
+/**
+ * Bracket places: the seeds (best-ranked first) at the standard seeded places, a bye opposite each of the top
+ * seeds when the draw isn't full, and everyone else shuffled into the rest.
+ */
+export function placeSeeds(ids: string[], seeds: string[], seed: number, players = ids.length): string[] {
   const r = rng(seed);
-  const size = ids.length, slots: (string | null)[] = new Array(size).fill(null);
-  const pos = [0, size - 1, ...(r() < 0.5 ? [size / 4, (3 * size) / 4 - 1] : [(3 * size) / 4 - 1, size / 4])];
-  seeds.slice(0, 4).forEach((s, i) => { slots[pos[i]] = s; });
-  const rest = ids.filter((id) => !seeds.slice(0, 4).includes(id));
+  const size = slotsFor(players), byes = size - ids.length;
+  const order = seedOrder(size);
+  const slots: (string | null)[] = new Array(size).fill(null);
+  const placeOf = (n: number) => order.indexOf(n);
+  seeds.forEach((id, i) => { slots[placeOf(i + 1)] = id; });
+  // Byes face the top seeds (seed 1 first); with fewer seeds than byes, the next seeded places take them.
+  for (let k = 1; k <= byes; k++) slots[placeOf(k) ^ 1] = 'bye';
+  const rest = ids.filter((id) => !seeds.includes(id));
   for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
   let k = 0;
-  for (let i = 0; i < size; i++) if (!slots[i]) slots[i] = rest[k++] ?? null;
-  return slots.map((s) => s ?? 'bye');
+  for (let i = 0; i < size; i++) if (!slots[i]) slots[i] = rest[k++] ?? 'bye';
+  return slots as string[];
 }
 
 export interface Strengths { get(id: string): number }
@@ -225,11 +246,20 @@ export class World {
     const cached = this.plans.get(key);
     if (cached) return cached;
     const size = ev.draw_size;
-    let ids = drawField(ev, year, this.input.seed, this.pool, size + 1);
-    ids = playerAs ? [...ids.filter((id) => id !== playerAs).slice(0, size - 1), YOU] : ids.slice(0, size);
     const at = absWeek(year, ev.week) - 1;
-    const seeds = this.rankingAt(at, ids).filter((x) => x.pts > 0).slice(0, 4).map((x) => x.id);
-    const p = { ev, year, slots: placeSeeds(ids, seeds, hash(this.input.seed, year, ev.id, 'bracket')), seeds };
+    let ids: string[];
+    if (ev.tier === 'WTF') {
+      // The World Tour Finals: the world's best that week (you take your place if you're among them).
+      ids = this.rankingAt(at).map((x) => x.id).filter((id) => id !== YOU && id !== playerAs).slice(0, playerAs ? size - 1 : size);
+      if (playerAs) ids.push(YOU);
+    } else {
+      ids = drawField(ev, year, this.input.seed, this.pool, size + 1);
+      ids = playerAs ? [...ids.filter((id) => id !== playerAs).slice(0, size - 1), YOU] : ids.slice(0, size);
+    }
+    // Seeds: 4 in a 16 or 32 draw, 8 in 64, 16 when there are 16 byes (a 48 draw).
+    const nSeeds = Math.max(4, slotsFor(size) - size, size >= 64 ? 8 : 4);
+    const seeds = this.rankingAt(at, ids).filter((x) => x.pts > 0).slice(0, Math.min(nSeeds, ids.length)).map((x) => x.id);
+    const p = { ev, year, slots: placeSeeds(ids, seeds, hash(this.input.seed, year, ev.id, 'bracket'), size), seeds };
     this.plans.set(key, p);
     return p;
   }

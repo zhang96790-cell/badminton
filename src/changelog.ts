@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.11',
+    title: 'Stuck careers repaired',
+    date: '14 Nov 2026',
+    changes: [
+      "Fixed: careers that got stuck after a Round of 64 win (always facing the same opponent) are repaired when you open career mode: you carry on in the Round of 32.",
+    ],
+  },
+  {
     version: '3.3.10',
     title: 'Round of 64 fix',
     date: '14 Nov 2026',

@@ -194,6 +194,22 @@ export function enter(s: CareerState, ev: TourEvent) {
   s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB' };
 }
 
+/**
+ * Mend a tournament stuck on a round that doesn't exist in its draw (3.3.9 and earlier could save "winner" after
+ * a Round of 64 win): the round after the matches you've played. Returns true if it changed anything.
+ */
+export function repairCurrent(s: CareerState, w: World, appVersion: string): boolean {
+  const a = s.current;
+  if (!a) return false;
+  const ev = findEvent(s, a.eventId, appVersion);
+  if (!ev) { s.current = null; return true; }
+  const order = roundsFor(ev.draw_size);
+  if (order.includes(a.round)) return false;
+  a.round = order[Math.min(a.opponents.length, order.length - 1)];
+  skipByes(s, w, ev);
+  return true;
+}
+
 /** A bye: you go straight through to the next round (top seeds in 48-player draws). */
 export function skipByes(s: CareerState, w: World, ev: TourEvent) {
   const a = s.current;

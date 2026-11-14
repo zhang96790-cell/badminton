@@ -8,7 +8,7 @@ import type { MatchSetup } from '../setup';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, coachModifier, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, hotelCost, hotelOf, medalOf, milestones, newMilestones, refuelCost, retire, setStaff, skipByes, sponsorUpgrade, travelClassOf, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, hotelCost, hotelOf, medalOf, milestones, newMilestones, refuelCost, retire, setStaff, skipByes, sponsorUpgrade, travelClassOf, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
@@ -100,6 +100,7 @@ export function initCareer(d: CareerDeps) {
     }
     if (l.offline) d.toast('Offline', 'Showing the copy saved on this computer.');
     if (l.conflict) { await settleConflict(l.conflict); return; }
+    if (s && repairCurrent(s, W(), d.appVersion)) await save();
     render();
     maybeCareerTour();
   }

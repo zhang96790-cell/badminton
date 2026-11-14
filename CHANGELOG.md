@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.11: Stuck careers repaired (14 Nov 2026)
+
+- Fixed: careers that got stuck after a Round of 64 win (always facing the same opponent) are repaired when you open career mode: you carry on in the Round of 32.
+
 ## 3.3.10: Round of 64 fix (14 Nov 2026)
 
 - Fixed: in 48-player events (every Super 100 and Super 1000), winning your Round of 64 match left you facing the same opponent again, so you couldn’t get through. You now go on to the Round of 32.

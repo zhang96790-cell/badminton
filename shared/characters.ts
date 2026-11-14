@@ -131,7 +131,8 @@ export const CAREER = {
   /** mult = 1 + (career_strength − 100) / 100 × k */
   k: 0.4,
   perPoint: { power: 0.016, speed: 0.024, netAim: 0.032, netTiming: 0.024, defenceTiming: 0.032, defenceDepth: 0.016 },
-  clamp: 0.18,
+  /** ±24% (3.2: was ±18%, which Super Rares and Epics hit, so they were barely stronger than Rares). */
+  clamp: 0.24,
   smash: [0.95, 1.1] as [number, number],
 };
 

@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.2',
+    title: 'Super Rares and Epics',
+    date: '14 Nov 2026',
+    changes: [
+      "Super Rares and Epics are here: 96 more players (57 Super Rares and 39 Epics), many with signature abilities that have real numbers behind them. Find them in the Players tab, meet them in career draws, and recruit them by winning bigger events (Super Rares from Super 500s and 750s, Epics from Super 750s and 1000s).",
+      "Rank-up picks can now be Super Rares and Epics too.",
+      "In career, Super Rares and Epics are clearly stronger than Rares: the limit on how much stats can help is wider (smashes stay within their usual limit).",
+      "The daily challenge’s boss now plays at its rarity’s career level (a Rare at Expert, a Super Rare at Pro, an Epic at Elite) before handicaps.",
+    ],
+  },
+  {
     version: '3.0.6',
     title: 'The real tour',
     date: '14 Nov 2026',

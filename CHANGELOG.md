@@ -5,6 +5,15 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.2: Super Rares and Epics (14 Nov 2026)
+
+This release brings both the 3.1 (Super Rare) and 3.2 (Epic) players at once.
+
+- Super Rares and Epics are here: 96 more players (57 Super Rares and 39 Epics), many with signature abilities that have real numbers behind them. Find them in the Players tab, meet them in career draws, and recruit them by winning bigger events (Super Rares from Super 500s and 750s, Epics from Super 750s and 1000s).
+- Rank-up picks can now be Super Rares and Epics too.
+- In career, Super Rares and Epics are clearly stronger than Rares: the limit on how much stats can help is wider (smashes stay within their usual limit).
+- The daily challenge’s boss now plays at its rarity’s career level (a Rare at Expert, a Super Rare at Pro, an Epic at Elite) before handicaps.
+
 ## 3.0.6: The real tour (14 Nov 2026)
 
 - Career now follows the real tour: 37 events from the Malaysia Open in January to the World Tour Finals in December, with Super 100 to Super 1000 events, the World Championships and the Finals, on their real dates and with their real draw sizes.

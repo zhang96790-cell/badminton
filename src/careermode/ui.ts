@@ -5,7 +5,7 @@ import type { Game } from '../game';
 import type { Settings } from '../game';
 import { STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
-import { CAREER_CFG as CFG, ROUND_LABEL, TIER_LABEL, type Difficulty, type Round } from './config';
+import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, skipByes, money, myRank, newCareer,
@@ -441,7 +441,8 @@ export function initCareer(d: CareerDeps) {
     const boss = characterById(ch.opponent);
     const pick = ($('dPlayer') as HTMLSelectElement | null)?.value ?? DEFAULT_CHARACTER;
     const h = new Set(ch.handicaps);
-    const level = boss.rarity === 'common' ? 'medium' : 'hard';
+    // The boss plays at the easiest career level for its rarity (Rare: Expert, Super Rare: Pro, Epic: Elite); handicaps make it harder.
+    const level = LEVELS[(CFG.cpuLevel[boss.rarity]?.[0] ?? 1) - 1];
     close();
     d.play({
       setup: {

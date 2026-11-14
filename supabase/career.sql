@@ -6,7 +6,7 @@ create table if not exists public.game_config (key text primary key, value text 
 alter table public.game_config enable row level security;
 revoke all on public.game_config from anon, authenticated;
 -- The newest game version that's out: players with a later released_in stay hidden (and can't be offered).
-insert into public.game_config (key, value) values ('app_version', '3.0') on conflict (key) do update set value = excluded.value;
+insert into public.game_config (key, value) values ('app_version', '3.2') on conflict (key) do update set value = excluded.value;
 
 alter table public.characters add column if not exists country text, add column if not exists released_in text, add column if not exists career_strength int;
 

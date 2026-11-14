@@ -495,7 +495,7 @@ export const STYLES: Record<Style, {
     trait: 'Rushes the net after every net shot and kills anything loose above the tape' },
   deceptive: { label: 'Deceptive', smash: 1.1, drop: 1.7, clear: 0.9, net: 1.5, kill: 1.1, jump: 0.9, baseDepth: 3.4, margin: 0.05, speed: 1, serveShort: 1.1, deceive: 0.3,
     trait: 'Disguises about 1 in 3 drops, net shots and flicks: no landing marker at all, and you step the wrong way' },
-  retriever: { label: 'Fast retriever', smash: 0.5, drop: 0.9, clear: 1.5, net: 1.1, kill: 0.7, jump: 0.5, baseDepth: 3.6, margin: 0.12, speed: 1.1, serveShort: 0.9, reach: 0.08,
+  retriever: { label: 'Fast retriever', smash: 0.5, drop: 0.9, clear: 1.5, net: 1.1, kill: 0.7, jump: 0.5, baseDepth: 3.6, margin: 0.12, speed: 1.06, serveShort: 0.9, reach: 0.08,
     trait: 'Reaches shots no one else would, but plays safe and high, so it rarely attacks' },
   wall: { label: 'Defensive wall', smash: 0.3, drop: 0.6, clear: 2.3, net: 0.7, kill: 0.7, jump: 0.3, baseDepth: 4.0, margin: 0.25, speed: 1.06, serveShort: 0.7, reach: 0.07, steady: 0.45, deepClears: true,
     trait: 'Almost never misses and clears to the back line every time, waiting for your error' },

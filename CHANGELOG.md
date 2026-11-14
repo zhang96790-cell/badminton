@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.8: Retriever tweak (14 Nov 2026)
+
+- The Fast retriever CPU is a little slower around the court (it was still the strongest style).
+
 ## 3.3.7: Leaderboard fix and style balance (14 Nov 2026)
 
 - Fixed: the ranked leaderboard only showed players who had played a rated match this season, so it looked nearly empty. It now shows everyone who has played a rated match, by rating.

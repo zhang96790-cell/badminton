@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.8',
+    title: 'Retriever tweak',
+    date: '14 Nov 2026',
+    changes: [
+      "The Fast retriever CPU is a little slower around the court (it was still the strongest style).",
+    ],
+  },
+  {
     version: '3.3.7',
     title: 'Leaderboard fix and style balance',
     date: '14 Nov 2026',

@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.0.2: Typing fix for Brave (14 Nov 2026)
+
+- Fixed: typing your name when starting a career could crash Brave. Browsers and password managers no longer treat the career screen as an address form, and the list of player names is only added while you’re using the Compare box.
+- Typing in any text box (a name, a room code, a search) no longer reaches the game’s keys.
+- If something goes wrong, a Problem log link appears at the bottom of the start screen: it copies a short note of the error so you can send it to us.
+
 ## 3.0.1: A cleaner start screen (14 Nov 2026)
 
 - Star challenges are gone. The coaching tips now point to the practice drills instead, and the two star achievements and the stars leaderboard are removed.

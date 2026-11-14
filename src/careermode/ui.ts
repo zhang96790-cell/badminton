@@ -13,6 +13,7 @@ import {
 } from './state';
 import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
+import { setWhere } from '../errorlog';
 
 type Account = typeof import('../account');
 export interface CareerDeps {
@@ -100,10 +101,11 @@ export function initCareer(d: CareerDeps) {
     if (l.conflict) { await settleConflict(l.conflict); return; }
     render();
   }
-  const close = () => panel.classList.add('hidden');
+  const close = () => { panel.classList.add('hidden'); setWhere(''); };
 
   // ── Rendering ──
   function render() {
+    setWhere(`career: ${!s ? 'new career' : s.current ? 'tournament' : tab}`);
     if (!s) { renderNew(); return; }
     if (s.recap !== null) { renderRecap(); return; }
     const r = myRank(s, W());
@@ -230,9 +232,9 @@ export function initCareer(d: CareerDeps) {
     head.innerHTML = '<p class="hero-kicker">Career</p><h2>Start your career</h2>';
     $('careerTabs').innerHTML = '';
     const countries = [...new Set(released.map((c) => c.country))].filter((c) => COUNTRIES[c]).sort((a, b) => countryName(a).localeCompare(countryName(b)));
-    body.innerHTML = `<div class="c-card"><label class="c-field">Your name <input id="cName" maxlength="24" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
-      <label class="c-field">Home country <select id="cHome">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
-      <label class="c-field">Difficulty <select id="cDiff"><option value="relaxed">Relaxed: opponents play at their usual level</option><option value="normal">Normal: every opponent one level harder</option><option value="hard">Hard: two levels harder</option></select></label>
+    body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
+      <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
+      <label class="c-field">Difficulty <select id="cDiff" name="skyline-career-difficulty" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"><option value="relaxed">Relaxed: opponents play at their usual level</option><option value="normal">Normal: every opponent one level harder</option><option value="hard">Hard: two levels harder</option></select></label>
       <p class="sub">You can make it harder later, but not easier.</p>
       <h3>Choose your player</h3><p class="sub">A free Common player from your country (they join your account), or one you already own.</p>
       <div id="cStarters" class="c-squad"></div>
@@ -332,7 +334,7 @@ export function initCareer(d: CareerDeps) {
       <ul class="c-list">${ch.handicaps.map((h) => `<li>${e(HANDICAP_TEXT[h]?.replace('{n}', String(ch.behind)) ?? h)}</li>`).join('')}</ul>
       <p>Reward: <b>${ch.reward} rating points</b> (up to ${daily!.season_cap} a season from daily challenges; you have ${daily!.season_total}). Daily points can’t take you past Elite.</p>
       ${daily!.claimed ? `<p class="tag-on">Done today${daily!.reward_got !== null ? `: +${daily!.reward_got}` : ''}. Next challenge in ${Math.floor(next / 3600000)}h ${Math.floor((next % 3600000) / 60000)}m.</p>`
-        : `<label class="c-field">Play as <select id="dPlayer">${mine.map((c) => `<option value="${c.id}">${e(c.name)} (${RARITY[c.rarity].label})</option>`).join('')}</select></label>
+        : `<label class="c-field">Play as <select id="dPlayer" name="skyline-daily-player" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${mine.map((c) => `<option value="${c.id}">${e(c.name)} (${RARITY[c.rarity].label})</option>`).join('')}</select></label>
           <div class="c-actions"><button class="primary" data-dailygo>Play it</button></div><p class="sub">One game${ch.handicaps.includes('to_11') ? ' to 11' : ' to 21'}. You can try as often as you like today until you win.</p>`}</div>`;
   }
 

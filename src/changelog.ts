@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0.2',
+    title: 'Typing fix for Brave',
+    date: '14 Nov 2026',
+    changes: [
+      "Fixed: typing your name when starting a career could crash Brave. Browsers and password managers no longer treat the career screen as an address form, and the list of player names is only added while you’re using the Compare box.",
+      "Typing in any text box (a name, a room code, a search) no longer reaches the game’s keys.",
+      "If something goes wrong, a Problem log link appears at the bottom of the start screen: it copies a short note of the error so you can send it to us.",
+    ],
+  },
+  {
     version: '3.0.1',
     title: 'A cleaner start screen',
     date: '14 Nov 2026',

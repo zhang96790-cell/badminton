@@ -1,5 +1,12 @@
 export type Button = 'left' | 'right';
 
+/** A text box, list or editable area has the keyboard. */
+function typing(t: EventTarget | null): boolean {
+  if (t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return true;
+  if (t instanceof HTMLInputElement) return !['button', 'checkbox', 'radio', 'range', 'submit', 'reset', 'color', 'file'].includes(t.type);
+  return t instanceof HTMLElement && t.isContentEditable;
+}
+
 /** Raw keyboard + mouse state. `tapped`/`mouse.pressed`/`mouse.released` are edges since the last endFrame(). */
 export class Input {
   private down = new Set<string>();
@@ -16,8 +23,10 @@ export class Input {
   constructor(el: HTMLElement) {
     const block = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Slash']);
     addEventListener('keydown', (e) => {
-      // Never swallow keys meant for a button or a text box (Space in a passcode, say).
-      if (block.has(e.code) && !(e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement)) e.preventDefault();
+      // Typing in a text box (a name, a room code, a search): those keys are for the box, never the game.
+      if (typing(e.target)) return;
+      // Never swallow keys meant for a button (Space clicks it).
+      if (block.has(e.code) && !(e.target instanceof HTMLButtonElement)) e.preventDefault();
       if (!this.down.has(e.code)) this.pressed.add(e.code);
       this.down.add(e.code);
     });

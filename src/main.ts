@@ -26,6 +26,7 @@ import { tierIndex, tierOf, TIERS } from './rating';
 import { drawRatingGraph, rankBarHtml } from './rankbar';
 import { PresenceLink, type PresenceCounts } from './presence';
 import { initCareer } from './careermode/ui';
+import { clearLog, installErrorLog, logText, readLog } from './errorlog';
 import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
@@ -679,18 +680,24 @@ function renderPlayerDetail() {
     ${c.abilities.map((a) => `<p class="ability"><span class="ab-tier">${a.tier}</span><b>${hubEsc(a.name)}</b>${a.text ? ` ${hubEsc(a.text)}` : ''}</p>`).join('')}
     <p>${hubEsc(c.description)}</p>
     <p class="sub">With this player: ${wins} won, ${losses} lost</p>
-    <label class="cmp">Compare with <input id="playerCompare" list="playerNames" placeholder="Type a name" value="${cmp ? hubEsc(cmp.name) : ''}" autocomplete="off" /></label>
+    <label class="cmp">Compare with <input id="playerCompare" list="playerNames" placeholder="Type a name" value="${cmp ? hubEsc(cmp.name) : ''}" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" /></label>
     ${cmp ? '<button type="button" class="linkish" data-uncompare>Stop comparing</button>' : ''}
     ${use ? (c.id === myCharacter() ? '<p class="tag-on">This is your player</p>' : `<button type="button" class="primary" data-use="${c.id}">Play as ${hubEsc(c.name)}</button>`)
       : '<p class="sub">Locked. Earn players by reaching a new rank tier for the first time (from Regional up), or by recruiting them in career mode.</p>'}`;
   drawPentagon(document.getElementById('playerPentagon') as HTMLCanvasElement, c.stats, r.color, cmp ? { stats: cmp.stats, color: '#1f2937' } : undefined);
 }
 {
-  // Names for the compare box.
-  const dl = document.createElement('datalist');
-  dl.id = 'playerNames';
-  dl.innerHTML = VISIBLE.map((c) => `<option value="${hubEsc(c.name)}"></option>`).join('');
-  document.body.appendChild(dl);
+  // Names for the compare box: only on the page while you're typing in it (a 340-name list sitting on the
+  // page all the time makes browsers and password managers scan it on every key press elsewhere).
+  const detail = document.getElementById('playerDetail')!;
+  detail.addEventListener('focusin', (e) => {
+    if ((e.target as HTMLElement).id !== 'playerCompare' || document.getElementById('playerNames')) return;
+    const dl = document.createElement('datalist');
+    dl.id = 'playerNames';
+    dl.innerHTML = VISIBLE.map((c) => `<option value="${hubEsc(c.name)}"></option>`).join('');
+    detail.appendChild(dl);
+  });
+  detail.addEventListener('focusout', (e) => { if ((e.target as HTMLElement).id === 'playerCompare') setTimeout(() => { if (document.activeElement?.id !== 'playerCompare') document.getElementById('playerNames')?.remove(); }, 300); });
   let raf = 0;
   document.getElementById('playerScroll')!.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawPlayerGrid); }, { passive: true });
   window.addEventListener('resize', () => { if (!document.getElementById('playerScroll')!.closest('[hidden]')) drawPlayerGrid(); });
@@ -1976,3 +1983,15 @@ function endCareerMatch(retired: boolean) {
 if (import.meta.env.DEV) (window as unknown as { endCareerMatch: typeof endCareerMatch }).endCareerMatch = endCareerMatch;
 document.getElementById('careerOpen')!.addEventListener('click', () => void careerUi.open('hub'));
 document.getElementById('dailyOpen')!.addEventListener('click', () => void careerUi.open('daily'));
+
+// ── Problem log (3.0.2): errors and freezes, kept on this computer ───────────
+const errlogBtn = document.getElementById('errlogBtn')!;
+const syncErrlog = () => { const n = readLog().length; errlogBtn.hidden = n === 0; errlogBtn.textContent = `Problem log (${n})`; };
+installErrorLog(CHANGELOG[0].version, syncErrlog);
+syncErrlog();
+errlogBtn.addEventListener('click', async () => {
+  const text = logText();
+  let copied = false;
+  try { await navigator.clipboard.writeText(text); copied = true; } catch { /* clipboard blocked */ }
+  if (confirm(`${copied ? 'Copied to the clipboard: paste it into a message to us.' : 'Copy this and send it to us:'}\n\n${text.slice(0, 1500)}\n\nClear the log now?`)) { clearLog(); syncErrlog(); }
+});

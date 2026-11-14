@@ -114,6 +114,7 @@ export const roundEnergy = (s: CareerState, ev: TourEvent) => (ev.tier === 'CLUB
 
 export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean; why?: string } {
   if (s.current) return { ok: false, why: 'Finish your current tournament first.' };
+  if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
   if (ev.tier === 'S300' && !s.unlocks.s300) {
     const r = myRank(s, w);
     if (!(r !== null && r <= CFG.gate.S300.rankAtMost)) return { ok: false, why: `Super 300 events open after you reach a Super 100 final, or a world ranking of ${CFG.gate.S300.rankAtMost} or better.` };
@@ -124,7 +125,8 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
 }
 
 /** This week's event, if there is one. */
-export const eventThisWeek = (s: CareerState, appVersion: string) => calendar(appVersion).find((e) => e.week === s.week) ?? null;
+export const eventThisWeek = (s: CareerState, appVersion: string) =>
+  calendar(appVersion).find((e) => e.week === s.week && !s.history.some((h) => h.year === s.year && h.tournamentId === e.id)) ?? null;
 
 /** Nothing you can afford for the rest of the season: offer the free Local Club Open. */
 export function softLocked(s: CareerState, w: World): boolean {
@@ -167,7 +169,7 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
   const i = alive.indexOf(YOU);
   const oppId = alive[i % 2 === 0 ? i + 1 : i - 1];
   const opponent = characterById(oppId);
-  const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, 'level'), CFG.difficultyOffset[s.difficulty]);
+  const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, 'level'), ev.tier);
   const early = order.indexOf('QF') > ri;
   return { opponent, round: a.round, level, ...(s.settings.fasterEarlyRounds && early ? { games: 1 as const, points: 15 as const } : { games: 3 as const, points: 21 as const }) };
 }

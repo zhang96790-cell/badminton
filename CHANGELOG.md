@@ -5,6 +5,15 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.0.3: Real rivals and harder CPUs (14 Nov 2026)
+
+- Career matches are against real players: the scoreboard and the umpire use your opponent’s name, with the event and round, their country and style (no more “CPU Easy”).
+- Four new, harder CPU levels above Expert: Pro, Elite, World Class and Legend. Each one beats the level below it about two times in three. Pick them for a quick match on Court 3 too.
+- Career starts at Hard and climbs: Commons play like a Hard or Expert CPU, Rares from Expert to Elite, and Super 300 players a level higher. The difficulty choice is gone: there’s one ladder for everyone.
+- A new career screen: one “Next up” card with your next match or event, the key numbers and a big Play button, plus the whole season on a timeline. Ranking, Squad, Money, Daily challenge and Settings are one click away.
+- Fixed: after losing in a tournament you could enter the same event again that week.
+- New achievements for beating a Pro, World Class and Legend CPU.
+
 ## 3.0.2: Typing fix for Brave (14 Nov 2026)
 
 - Fixed: typing your name when starting a career could crash Brave. Browsers and password managers no longer treat the career screen as an address form, and the list of player names is only added while you’re using the Compare box.

@@ -260,11 +260,11 @@ export class World {
   }
 }
 
-/** CPU level for an opponent: their rarity's range, picked from the event seed, plus the difficulty. */
-export function cpuLevelFor(rarity: Rarity, seed: number, offset: number): Level {
+/** CPU level for an opponent: their rarity's range on the career ladder, picked from the event seed, plus the event's bonus. */
+export function cpuLevelFor(rarity: Rarity, seed: number, tier = 'S100'): Level {
   const [lo, hi] = CFG.cpuLevel[rarity] ?? [1, 2];
-  const lv = lo + Math.floor(rng(seed)() * (hi - lo + 1));
-  return LEVELS[Math.min(5, lv + offset) - 1];
+  const lv = lo + Math.floor(rng(seed)() * (hi - lo + 1)) + (CFG.tierLevelBonus[tier] ?? 0);
+  return LEVELS[Math.max(1, Math.min(LEVELS.length, lv)) - 1];
 }
 
 export const rarityOrder = (r: Rarity) => RARITY[r].order;

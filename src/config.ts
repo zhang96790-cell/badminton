@@ -369,7 +369,9 @@ export const REPLAY = {
   autoCooldown: 5,
 };
 
-export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert';
+export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert' | 'pro' | 'elite' | 'world' | 'legend';
+/** How each CPU level is shown. */
+export const LEVEL_LABEL: Record<Level, string> = { beginner: 'Beginner', easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', pro: 'Pro', elite: 'Elite', world: 'World Class', legend: 'Legend' };
 
 export interface AILevel {
   /** Seconds before reacting to a shot. */
@@ -402,6 +404,8 @@ export interface AILevel {
   serveDelay: number;
   /** How well it spots bad line calls (0–1). */
   challengeSkill: number;
+  /** Extra reach (m), for the levels above Expert (people get +0.1 m). */
+  reach?: number;
 }
 
 export const AI: Record<Level, AILevel> = {
@@ -430,6 +434,28 @@ export const AI: Record<Level, AILevel> = {
     reaction: 0.1, speed: 1.06, strength: 1.05, aimNoise: 0, timingError: 0.01, margin: 0.25, caution: 1.3,
     decisiveness: 3, anticipation: 0.35, adapt: 1, smash: 1.2, drop: 1.1, net: 1.1, kill: 1.5, jumpSmash: 0.6,
     judgesOut: true, outMargin: 0.04, serveShort: 0.8, serveDelay: 0.7, challengeSkill: 0.9,
+  },
+  // 3.0.3: four levels above Expert. Each reacts sooner, moves faster, times shots better, reads you more,
+  // attacks more and reaches a little further. Shot power stays within 8% of normal.
+  pro: {
+    reaction: 0.08, speed: 1.1, strength: 1.06, aimNoise: 0, timingError: 0.007, margin: 0.22, caution: 1.35,
+    decisiveness: 3.5, anticipation: 0.42, adapt: 1, smash: 1.3, drop: 1.15, net: 1.15, kill: 1.7, jumpSmash: 0.7,
+    judgesOut: true, outMargin: 0.03, serveShort: 0.85, serveDelay: 0.6, challengeSkill: 0.95, reach: 0.04,
+  },
+  elite: {
+    reaction: 0.065, speed: 1.14, strength: 1.07, aimNoise: 0, timingError: 0.005, margin: 0.2, caution: 1.4,
+    decisiveness: 4, anticipation: 0.48, adapt: 1, smash: 1.4, drop: 1.2, net: 1.2, kill: 1.9, jumpSmash: 0.8,
+    judgesOut: true, outMargin: 0.02, serveShort: 0.85, serveDelay: 0.55, challengeSkill: 1, reach: 0.08,
+  },
+  world: {
+    reaction: 0.05, speed: 1.18, strength: 1.08, aimNoise: 0, timingError: 0.004, margin: 0.18, caution: 1.45,
+    decisiveness: 4.5, anticipation: 0.54, adapt: 1, smash: 1.5, drop: 1.25, net: 1.25, kill: 2.1, jumpSmash: 0.9,
+    judgesOut: true, outMargin: 0.015, serveShort: 0.9, serveDelay: 0.5, challengeSkill: 1, reach: 0.12,
+  },
+  legend: {
+    reaction: 0.04, speed: 1.22, strength: 1.08, aimNoise: 0, timingError: 0.003, margin: 0.16, caution: 1.5,
+    decisiveness: 5, anticipation: 0.6, adapt: 1, smash: 1.6, drop: 1.3, net: 1.3, kill: 2.3, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.01, serveShort: 0.9, serveDelay: 0.5, challengeSkill: 1, reach: 0.16,
   },
 };
 

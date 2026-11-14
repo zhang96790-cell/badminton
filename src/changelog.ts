@@ -5,6 +5,19 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0.3',
+    title: 'Real rivals and harder CPUs',
+    date: '14 Nov 2026',
+    changes: [
+      "Career matches are against real players: the scoreboard and the umpire use your opponent’s name, with the event and round, their country and style (no more “CPU Easy”).",
+      "Four new, harder CPU levels above Expert: Pro, Elite, World Class and Legend. Each one beats the level below it about two times in three. Pick them for a quick match on Court 3 too.",
+      "Career starts at Hard and climbs: Commons play like a Hard or Expert CPU, Rares from Expert to Elite, and Super 300 players a level higher. The difficulty choice is gone: there’s one ladder for everyone.",
+      "A new career screen: one “Next up” card with your next match or event, the key numbers and a big Play button, plus the whole season on a timeline. Ranking, Squad, Money, Daily challenge and Settings are one click away.",
+      "Fixed: after losing in a tournament you could enter the same event again that week.",
+      "New achievements for beating a Pro, World Class and Legend CPU.",
+    ],
+  },
+  {
     version: '3.0.2',
     title: 'Typing fix for Brave',
     date: '14 Nov 2026',

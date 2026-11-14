@@ -27,6 +27,8 @@ export interface MatchSetup {
   opponent: { kind: 'cpu' | 'remote'; characterId?: string; cpuLevel?: Level; style?: Style; modifiers?: Modifier[]; abilities?: boolean };
   /** Restrictions from a mode itself (the daily challenge), applied even outside development. */
   forced?: boolean;
+  /** What to call the match on the scoreboard (e.g. the event and round). */
+  label?: string;
   restrictions: Restrictions;
 }
 

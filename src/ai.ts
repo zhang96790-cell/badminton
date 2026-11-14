@@ -69,7 +69,7 @@ export class AIController implements Controller {
     this.S = STYLES[style];
     this.style = style;
     me.speedMult = this.L.speed * this.S.speed;
-    me.extraReach = this.S.reach ?? 0;
+    me.extraReach = (this.S.reach ?? 0) + (this.L.reach ?? 0);
   }
 
   /**

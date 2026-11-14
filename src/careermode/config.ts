@@ -75,10 +75,13 @@ export const CAREER_CFG = {
   bestOf: 10,
 
   // ── CPU opponents ──
-  /** CPU level range by the opponent's rarity (1 Beginner … 5 Expert); picked per match from the tournament seed. */
-  cpuLevel: { common: [1, 2], rare: [2, 3], super_rare: [3, 4], epic: [4, 5], elite: [5, 5], mythic: [5, 5], legendary: [5, 5], champion: [5, 5] } as Record<Rarity, [number, number]>,
-  /** Career difficulty adds this many CPU levels (capped at Expert). */
-  difficultyOffset: { relaxed: 0, normal: 1, hard: 2 } as Record<Difficulty, number>,
+  /**
+   * CPU level range by the opponent's rarity, on the career ladder (1 Hard, 2 Expert, 3 Pro, 4 Elite, 5 World
+   * Class, 6 Legend); picked per match from the tournament seed.
+   */
+  cpuLevel: { common: [1, 2], rare: [2, 4], super_rare: [3, 5], epic: [4, 6], elite: [5, 6], mythic: [6, 6], legendary: [6, 6], champion: [6, 6] } as Record<Rarity, [number, number]>,
+  /** Bigger events: their players play this many levels higher (capped at Legend). */
+  tierLevelBonus: { CLUB: 0, S100: 0, S300: 1, S500: 1, S750: 2, S1000: 2 } as Record<string, number>,
 
   // ── Result simulator (NPC matches) ──
   /** Win chance = 1 / (1 + e^(−(strength gap) / simScale)); each character also has a fixed ±simSpread form. */
@@ -95,6 +98,7 @@ export const CAREER_CFG = {
   formEntry: 5,
 };
 
-export const LEVELS: Level[] = ['beginner', 'easy', 'medium', 'hard', 'expert'];
+/** The career ladder: level 1 is Hard (the easiest career opponent), level 6 Legend. */
+export const LEVELS: Level[] = ['hard', 'expert', 'pro', 'elite', 'world', 'legend'];
 export const ROUND_LABEL: Record<Round, string> = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-final', SF: 'Semi-final', F: 'Final', W: 'Winner' };
 export const TIER_LABEL: Record<string, string> = { S100: 'Super 100', S300: 'Super 300', S500: 'Super 500', S750: 'Super 750', S1000: 'Super 1000', WTF: 'World Tour Finals', WORLDS: 'World Championships', OLYMPICS: 'Olympics', CLUB: 'Local club open' };

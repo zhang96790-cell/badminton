@@ -15,7 +15,7 @@ import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type A
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
 import { Playback } from './replay';
 import { CHANGELOG } from './changelog';
-import { REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
+import { LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
@@ -1628,7 +1628,7 @@ function describeFormat() {
   const len = settings.games === 1 ? '1 game' : 'Best of 3 games';
   flip(tag, `${len} to ${f.pointsToWin}, win by 2, capped at ${f.pointCap}`);
   const twoP = settings.opponent === 'human';
-  const level = settings.opponent[0].toUpperCase() + settings.opponent.slice(1);
+  const level = settings.opponent === 'human' ? '' : LEVEL_LABEL[settings.opponent];
   const doubles = settings.event === 'doubles';
   flip(meName, twoP ? 'Player 1' : doubles ? 'You & Partner' : 'You');
   flip(oppName, twoP ? 'Player 2' : `CPU ${level}${doubles ? ' pair' : ''}`);

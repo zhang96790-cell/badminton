@@ -1,6 +1,6 @@
 import { AIController } from './ai';
 import type { Camera, View } from './camera';
-import { COURT, DOUBLES, KEYS, OFFICIALS, ONLINE, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type KeyMap, type Level, type Style } from './config';
+import { COURT, DOUBLES, LEVEL_LABEL, KEYS, OFFICIALS, ONLINE, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type KeyMap, type Level, type Style } from './config';
 import { KeyboardController, MouseController, type Command, type Controller, type Observation } from './controllers';
 import { applyBinds, type KeyBinds } from './keys';
 import { halfRect, isIn, netHeightAt, rightCourtSign, serviceBox, signedInside, singlesRect, type Rect } from './court';
@@ -263,6 +263,12 @@ export class Game {
     this.players = [p1, p2];
     if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
     this.players.forEach((p, i) => { p.id = i; });
+    // Career and the daily challenge: the opponent is a real player from the roster, by name.
+    if (!online && !doubles && setup?.opponent.characterId && usesCareerStats(setup.mode)) {
+      const rival = characterById(setup.opponent.characterId);
+      p2.name = rival.name;
+      p2.voiceName = rival.name;
+    }
     // Online doubles: everyone's name from the lineup (CPUs keep theirs).
     if (online?.lineup) {
       for (let i = 1; i < 4; i++) {
@@ -342,7 +348,7 @@ export class Game {
     } else this.say('umpire', gameStartCall(1, this.match.gamesToWin));
     if (this.limits.startScore && !online) this.match.scores = [...this.limits.startScore];
     // Singles against the CPU: it remembers your habits from earlier matches on this computer.
-    if (mode === 'match' && !online && !doubles && this.controllers[1] instanceof AIController && vsAI) {
+    if (mode === 'match' && !online && !doubles && this.controllers[1] instanceof AIController && vsAI && !usesCareerStats(this.setup.mode)) {
       const weak = this.controllers[1].useMemory();
       if (weak) this.banner = { title: 'The CPU remembers you', sub: `Last time you struggled with shots to your ${weak}. Expect more of them.`, color: VISUAL.colors.accent, t: 0, ttl: 4.5 };
     }
@@ -425,9 +431,12 @@ export class Game {
   get opponentLabel(): string {
     if (this.online?.ranked) return `Ranked · ${this.online.opponentName} ${this.online.ranked.theirs}`;
     if (this.online) return `Online${this.doubles ? ' doubles' : ''} · room ${this.online.conn.code}`;
+    // Career and the daily challenge: a real player, not "CPU <level>".
+    const rival = this.setup.opponent.characterId && usesCareerStats(this.setup.mode) ? characterById(this.setup.opponent.characterId) : null;
+    if (rival) return `${this.setup.label ?? (this.setup.mode === 'daily' ? 'Daily challenge' : 'Career')} · ${rival.country} · ${rival.style}`;
     const o = this.settings.opponent;
     if (o === 'human') return '2 Player';
-    return `CPU ${o[0].toUpperCase()}${o.slice(1)}${this.doubles ? ' pair' : ''} · ${STYLES[this.settings.style].label}`;
+    return `CPU ${LEVEL_LABEL[o]}${this.doubles ? ' pair' : ''} · ${STYLES[this.settings.style].label}`;
   }
   /** Side 0 (near) or 1 (far) of player i. */
   teamOf(i: number): 0 | 1 { return (i % 2) as 0 | 1; }

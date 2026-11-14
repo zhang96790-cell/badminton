@@ -9,9 +9,9 @@ import { CAREER_CFG as CFG, ROUND_LABEL, TIER_LABEL, type Difficulty, type Round
 import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, currentPlan, energyModifier, energyPenalty, enter, eventThisWeek, findEvent, money, myRank, newCareer,
-  nextMatch, payFor, prizeFor, purseOf, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
+  nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
 } from './state';
-import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
+import { COUNTRIES, YOU, absWeek, pointsFor, countryName, hash, rng, roundsFor, travelBand, type World } from './world';
 import { SIGNATURES } from './signatures';
 import { setWhere } from '../errorlog';
 
@@ -104,51 +104,96 @@ export function initCareer(d: CareerDeps) {
   const close = () => { panel.classList.add('hidden'); setWhere(''); };
 
   // ── Rendering ──
+  const NAV: [string, string, string][] = [
+    ['hub', 'Next up', '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'],
+    ['ranking', 'Ranking', '<path d="M5 20V10M12 20V4M19 20v-7"/>'],
+    ['squad', 'Squad', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M14.5 15c.8-.4 1.6-.5 2.5-.5 2.3 0 4 1.5 4.5 4.5"/>'],
+    ['ledger', 'Money', '<path d="M12 3v18M16.5 7.5c-.8-1.2-2.4-2-4.5-2-2.6 0-4.5 1.3-4.5 3.2 0 4.6 9 2.4 9 6.8 0 1.9-1.9 3.3-4.5 3.3-2.2 0-4-.9-4.8-2.3"/>'],
+    ['daily', 'Daily challenge', '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>'],
+    ['settings', 'Settings', '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'],
+  ];
+  const icon = (paths: string) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+
   function render() {
     setWhere(`career: ${!s ? 'new career' : s.current ? 'tournament' : tab}`);
+    panel.classList.toggle('c-board', true);
     if (!s) { renderNew(); return; }
     if (s.recap !== null) { renderRecap(); return; }
     const r = myRank(s, W());
     const pen = energyPenalty(s.energy);
-    head.innerHTML = `<p class="hero-kicker">Career · ${s.year}, week ${s.week} · ${e(countryName(s.currentLocation))}</p><h2>${e(s.name)}</h2>
-      <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div><div><b class="${pen ? 'low' : ''}">${s.energy}</b><span>Energy</span></div>
-      <div><b>${r ?? '–'}</b><span>World ranking</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
-    const tabs = [['hub', 'This week'], ['events', 'Events'], ['ranking', 'Ranking'], ['squad', 'Squad'], ['ledger', 'Money'], ['daily', 'Daily challenge'], ['settings', 'Settings']];
-    $('careerTabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}">${l}</button>`).join('');
+    head.innerHTML = `<p class="hero-kicker">${s.year} · Week ${s.week} · in ${e(countryName(s.currentLocation))}</p><h2>${e(s.name)}</h2>
+      <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div>
+      <div class="c-energy${pen ? ' low' : ''}"><b>${s.energy}</b><span>Energy</span><i style="--e:${s.energy}%"></i></div>
+      <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
+    $('careerTabs').innerHTML = NAV.map(([k, l, p]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span></button>`).join('');
     if (s.pendingRecruitOffer || s.offerDue) { void renderOffer(); return; }
-    if (s.current) { renderTournament(); return; }
-    ({ hub: renderHub, events: renderEvents, ranking: renderRanking, squad: renderSquad, ledger: renderLedger, daily: renderDaily, settings: renderSettings } as Record<string, () => void>)[tab]?.();
+    ({ hub: renderHub, ranking: renderRanking, squad: renderSquad, ledger: renderLedger, daily: renderDaily, settings: renderSettings } as Record<string, () => void>)[tab]?.();
   }
 
-  function eventLine(x: TourEvent, showEnter: boolean) {
-    const c = canEnter(s!, x, W());
-    const band = travelBand(s!.currentLocation, x.host_country);
-    return `<div class="c-event"><div><b>${e(x.name)}</b> <span class="tier">${TIER_LABEL[x.tier]}</span><p class="sub">Week ${x.week} · ${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · purse ${money(purseOf(x))} · ${band} travel ${money(travelCost(s!, x))}</p>
-      ${c.ok ? '' : `<p class="sub why">${e(c.why ?? '')}</p>`}</div>${showEnter ? `<button class="${c.ok ? 'primary' : ''}" data-detail="${x.id}" ${c.ok ? '' : 'disabled'}>Details</button>` : ''}</div>`;
+  /** You v them, for the next match. */
+  const versus = (opp: Character) => {
+    const me = characterById(s!.current?.as ?? s!.characterId);
+    const side = (name: string, c: Character, who: string) => `<div class="c-side"><span class="c-who">${who}</span><b>${e(name)}</b>
+      <span class="ccard" style="--rar:${RARITY[c.rarity].color}"><span class="rar">${RARITY[c.rarity].label}</span> ${e(c.country)} · ${e(c.style)}</span>
+      ${c.abilities.map((ab) => `<span class="c-ab">★ ${e(ab.name)}</span>`).join('')}</div>`;
+    return `<div class="c-vs">${side(s!.name, me, `You, as ${me.name}`)}<span class="c-v">v</span>${side(opp.name, opp, 'Opponent')}</div>`;
+  };
+  const fact = (label: string, value: string, warn = false) => `<div class="c-fact${warn ? ' warn' : ''}"><span>${label}</span><b>${value}</b></div>`;
+  const recover = () => `<div class="c-recover"><span>Recover</span>
+    <button data-refuel="food">Good food <small>+${CFG.food.energy} · ${money(CFG.food.cost)}</small></button>
+    <button data-refuel="physio">Physio <small>+${CFG.physio.energy} · ${money(CFG.physio.cost)}</small></button>
+    ${s!.current ? '' : `<button data-week="rest">Rest a week <small>+${CFG.rest.energy} · ${money(CFG.rest.cost)}</small></button>`}</div>`;
+
+  /** The season at a glance: every event on a 52-week line, your results on the ones you played. */
+  function seasonStrip() {
+    const marks = W().cal.map((v) => {
+      const h = s!.history.find((x) => x.year === s!.year && x.tournamentId === v.id);
+      const res = h ? (h.round === 'W' ? '🏆' : h.round === 'F' ? 'F' : h.round === 'SF' ? 'SF' : h.round === 'QF' ? 'QF' : '·') : '';
+      const now = v.week === s!.week, past = v.week < s!.week;
+      return `<button class="c-mark ${v.tier.toLowerCase()}${now ? ' now' : ''}${past ? ' past' : ''}" style="left:${((v.week - 1) / 51) * 100}%" data-detail="${v.id}" title="${e(v.name)} · week ${v.week}${h ? ` · you: ${ROUND_LABEL[h.round]}` : ''}"><i></i>${res ? `<em>${res}</em>` : ''}</button>`;
+    }).join('');
+    return `<div class="c-strip" aria-label="${s!.year} season"><div class="c-line"><span class="c-you" style="left:${((s!.week - 1) / 51) * 100}%"></span>${marks}</div>
+      <div class="c-strip-key"><span><i class="s100"></i>Super 100</span><span><i class="s300"></i>Super 300</span><span>Click an event for details</span></div></div>`;
   }
 
   function renderHub() {
     const x = eventThisWeek(s!, d.appVersion);
-    const upcoming = W().cal.filter((v) => v.week > s!.week).slice(0, 3);
-    const locked = softLocked(s!, W());
-    const me = characterById(s!.characterId);
-    body.innerHTML = `
-      <div class="c-card"><h3>This week</h3>${x ? eventLine(x, true) : '<p>No tournament this week.</p>'}
-        ${locked ? `<div class="c-event club"><div><b>Local Club Open</b> <span class="tier">Free</span><p class="sub">You can’t afford any events right now. This one’s free, close by, with a small prize and little energy use.</p></div><button class="primary" data-club>Play it</button></div>` : ''}
-        <div class="c-actions"><button data-week="next">Next week (+${CFG.idleWeekEnergy} energy)</button><button data-week="rest">Rest week (+${CFG.rest.energy} energy, ${money(CFG.rest.cost)})</button>
-        <button data-skip>Skip to the next event</button></div>
-        <div class="c-actions"><button data-refuel="food">Good food: +${CFG.food.energy} energy, ${money(CFG.food.cost)}</button><button data-refuel="physio">Physio: +${CFG.physio.energy} energy, ${money(CFG.physio.cost)}</button></div>
-        ${energyPenalty(s!.energy) ? `<p class="sub why">Below ${CFG.energyPenaltyFrom} energy you’re a little slower and your timing is a little harder (${Math.round(energyPenalty(s!.energy) * 100)}% right now). Rest or refuel before a big event.</p>` : ''}
-      </div>
-      <div class="c-card"><h3>Playing as</h3>${card(me)} <button class="linkish" data-ctab="squad">Change</button></div>
-      <div class="c-card"><h3>Coming up</h3>${upcoming.length ? upcoming.map((v) => eventLine(v, false)).join('') : '<p>That’s the last event of the season.</p>'}</div>`;
-  }
-
-  function renderEvents() {
-    body.innerHTML = `<div class="c-card"><h3>${s!.year} season</h3>${W().cal.map((v) => {
-      const h = s!.history.find((x) => x.year === s!.year && x.tournamentId === v.id);
-      return `<div class="c-event${v.week < s!.week ? ' past' : ''}"><div><b>${e(v.name)}</b> <span class="tier">${TIER_LABEL[v.tier]}</span><p class="sub">Week ${v.week} · ${e(countryName(v.host_country))} · purse ${money(purseOf(v))}${h ? ` · you: ${ROUND_LABEL[h.round]}` : ''}</p></div></div>`;
-    }).join('')}</div>`;
+    // The next event you're allowed into (a locked Super 300 is skipped; money can still be short).
+    const upcoming = W().cal.filter((v) => v.week > s!.week);
+    const next = upcoming.find((v) => !canEnter(s!, v, W()).why?.startsWith('Super 300')) ?? upcoming[0] ?? null;
+    let hero = '';
+    if (s!.current) {
+      const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
+      const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
+      hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${ROUND_LABEL[a.round]}</h3>
+        ${versus(nm.opponent)}
+        <div class="c-facts">${fact('Format', nm.games === 1 ? '1 game to 15' : 'Best of 3 to 21')}${fact('Your energy', `${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}%)` : ''}`, !!energyPenalty(s!.energy))}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
+        <div class="c-cta"><button class="walk" data-playnext>Play ${ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-withdraw>Withdraw</button></div>
+        ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: beat ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
+        ${recover()}
+        <details class="c-bracket"><summary>The draw</summary><ol>${currentPlan(s!, W(), ev2).slots.map((id) => `<li${id === YOU ? ' class="me"' : ''}>${id === YOU ? e(s!.name) : id === 'bye' ? 'bye' : e(characterById(id).name)}</li>`).join('')}</ol></details>`;
+    } else if (softLocked(s!, W())) {
+      hero = `<p class="c-kicker">Next up</p><h3 class="c-title">Local Club Open</h3>
+        <p class="c-lead">You can’t afford any tour events right now. The club open is free and close by: win a little money and some ranking points to get going again.</p>
+        <div class="c-cta"><button class="walk" data-club>Play the club open ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>${recover()}`;
+    } else if (x) {
+      const c = canEnter(s!, x, W());
+      hero = `<p class="c-kicker">This week · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
+        <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players</p>
+        <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy to go all the way', `about ${Math.round(travelEnergy(s!, x) + roundEnergy(s!, x) * roundsFor(x.draw_size).length)}`)}</div>
+        ${c.ok ? `<label class="c-check"><input type="checkbox" id="cBusiness" ${s!.settings.business ? 'checked' : ''}/> Fly business class (${money(travelCost(s!, x, true))}, saves energy)</label>` : ''}
+        <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">Enter · ${money(travelCost(s!, x) + CFG.hotelPerRound)} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
+          <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>${recover()}`;
+    } else if (next) {
+      const weeks = next.week - s!.week;
+      hero = `<p class="c-kicker">Next event in ${weeks} week${weeks === 1 ? '' : 's'} · ${TIER_LABEL[next.tier]}</p><h3 class="c-title">${e(next.name)}</h3>
+        <p class="c-lead">${e(countryName(next.host_country))} · week ${next.week}${canEnter(s!, next, W()).ok ? '' : ` · ${e(canEnter(s!, next, W()).why ?? '')}`}</p>
+        <div class="c-cta"><button class="walk" data-skip>Go to week ${next.week} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="next">Just one week (+${CFG.idleWeekEnergy} energy)</button></div>${recover()}`;
+    } else {
+      hero = `<p class="c-kicker">Season over</p><h3 class="c-title">That’s the ${s!.year} season</h3>
+        <div class="c-cta"><button class="walk" data-skip>See your season ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
+    }
+    body.innerHTML = `<section class="c-hero">${hero}</section>${seasonStrip()}`;
   }
 
   function renderDetail(id: string) {
@@ -158,33 +203,12 @@ export function initCareer(d: CareerDeps) {
     const byRarity = new Map<string, number>();
     for (const p of plan.slots) { const c = characterById(p); byRarity.set(c.rarity, (byRarity.get(c.rarity) ?? 0) + 1); }
     const rounds = roundsFor(x.draw_size);
-    const energyAll = Math.round(travelEnergy(s!, x) + roundEnergy(s!, x) * rounds.length);
-    const c = canEnter(s!, x, W());
-    body.innerHTML = `<div class="c-card"><h3>${e(x.name)} <span class="tier">${TIER_LABEL[x.tier]}</span></h3>
-      <p>${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · week ${x.week} · ${x.draw_size} players</p>
-      <table class="c-table"><tr><th>Round you reach</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${ROUND_LABEL[r === 'R16' ? 'R16' : r]}${r === 'W' ? '' : ' (lose there)'}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
-      <p><b>Costs:</b> travel ${money(travelCost(s!, x, false))} economy or ${money(travelCost(s!, x, true))} business (paid now), hotel ${money(CFG.hotelPerRound)} per round you play.</p>
-      <p><b>Energy:</b> about ${Math.round(travelEnergy(s!, x, false))} for travel (${Math.round(travelEnergy(s!, x, true))} in business) and ${Math.round(roundEnergy(s!, x))} per round: about ${energyAll} if you win it. You have ${s!.energy}.</p>
-      <p><b>The field:</b> ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}.</p>
-      <label class="c-check"><input type="checkbox" id="cBusiness" ${s!.settings.business ? 'checked' : ''}/> Fly business class (costs more, saves energy)</label>
-      <div class="c-actions"><button class="primary" data-enter="${x.id}" ${c.ok ? '' : 'disabled'}>Enter (${money(travelCost(s!, x) + CFG.hotelPerRound)} to start)</button><button data-ctab="hub">Back</button></div>
-      ${c.ok ? '' : `<p class="sub why">${e(c.why ?? '')}</p>`}</div>`;
-  }
-
-  function renderTournament() {
-    const x = ev()!;
-    const a = s!.current!;
-    const plan = currentPlan(s!, W(), x);
-    const nm = nextMatch(s!, W(), x);
-    const name = (id: string) => (id === YOU ? `<b>${e(s!.name)}</b>` : id === 'bye' ? 'bye' : e(characterById(id).name));
-    const results = a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(x.draw_size)[i]]}: beat ${e(characterById(a.opponents[i]).name)} ${g.map(([m, t]) => `${m}–${t}`).join(', ')}</li>`).join('');
-    const opp = nm?.opponent;
-    body.innerHTML = `<div class="c-card"><h3>${e(x.name)} · ${ROUND_LABEL[a.round]}</h3>
-      ${results ? `<ul class="c-list">${results}</ul>` : ''}
-      ${opp ? `<p>Next: ${card(opp, opp.abilities.length ? ` <span class="sub">${opp.abilities.map((ab) => `★ ${e(ab.name)}`).join(' ')}</span>` : '')}</p>
-        <p class="sub">${nm!.games === 1 ? 'A single game to 15 (faster early rounds)' : 'Best of 3 games to 21'} · your energy ${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}% speed and timing this match)` : ''}</p>
-        <div class="c-actions"><button class="primary" data-playnext>Play the ${ROUND_LABEL[a.round].toLowerCase()}</button><button data-refuel="food">Food +${CFG.food.energy} (${money(CFG.food.cost)})</button><button data-refuel="physio">Physio +${CFG.physio.energy} (${money(CFG.physio.cost)})</button><button data-withdraw>Withdraw</button></div>` : ''}
-      <details class="c-bracket"><summary>Draw</summary><ol>${plan.slots.map((id, i) => `<li${plan.seeds.includes(id) ? ' class="seed"' : ''}>${i % 2 ? '' : ''}${name(id)}${plan.seeds.includes(id) ? ` <span class="sub">[${plan.seeds.indexOf(id) + 1}]</span>` : ''}</li>`).join('')}</ol></details></div>`;
+    const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === x.id);
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Week ${x.week} · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
+      <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players: ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}${h ? ` · you reached the ${ROUND_LABEL[h.round].toLowerCase()}` : ''}</p>
+      <table class="c-table"><tr><th>If you go out in</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${r === 'W' ? 'Win it' : ROUND_LABEL[r]}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
+      <div class="c-facts">${fact('Travel (economy / business)', `${money(travelCost(s!, x, false))} / ${money(travelCost(s!, x, true))}`)}${fact('Hotel', `${money(CFG.hotelPerRound)} a round`)}${fact('Energy per round', `about ${Math.round(roundEnergy(s!, x))}`)}</div>
+      <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
 
   function renderRanking() {
@@ -218,12 +242,11 @@ export function initCareer(d: CareerDeps) {
   }
 
   function renderSettings() {
-    const order: Difficulty[] = ['relaxed', 'normal', 'hard'];
-    body.innerHTML = `<div class="c-card"><h3>Settings</h3>
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Settings</p>
       <label class="c-check"><input type="checkbox" id="cFaster" ${s!.settings.fasterEarlyRounds ? 'checked' : ''}/> Faster early rounds: rounds before the quarter-finals are a single game to 15</label>
-      <p><b>Difficulty:</b> ${s!.difficulty[0].toUpperCase() + s!.difficulty.slice(1)}. You can make it harder, but not easier.</p>
-      <div class="c-actions">${order.filter((x) => order.indexOf(x) > order.indexOf(s!.difficulty)).map((x) => `<button data-diff="${x}">Switch to ${x}</button>`).join('')}</div>
-      <h3>Start again</h3><p class="sub">Restarting replaces this career. Players you recruited stay on your account.</p><div class="c-actions"><button data-restart>Restart career</button></div></div>`;
+      <p class="c-lead">Opponents get harder as you meet stronger players and enter bigger events: Commons play like a Hard or Expert CPU, Rares up to Elite, and Super 300 players a level higher.</p>
+      <h3 class="c-title small">Start again</h3><p class="c-lead">Restarting replaces this career. Players you recruited stay on your account.</p>
+      <div class="c-cta"><button class="edit" data-restart>Restart career</button></div></section>`;
   }
 
   // ── New career ──
@@ -234,8 +257,6 @@ export function initCareer(d: CareerDeps) {
     const countries = [...new Set(released.map((c) => c.country))].filter((c) => COUNTRIES[c]).sort((a, b) => countryName(a).localeCompare(countryName(b)));
     body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
       <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
-      <label class="c-field">Difficulty <select id="cDiff" name="skyline-career-difficulty" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"><option value="relaxed">Relaxed: opponents play at their usual level</option><option value="normal">Normal: every opponent one level harder</option><option value="hard">Hard: two levels harder</option></select></label>
-      <p class="sub">You can make it harder later, but not easier.</p>
       <h3>Choose your player</h3><p class="sub">A free Common player from your country (they join your account), or one you already own.</p>
       <div id="cStarters" class="c-squad"></div>
       <div class="c-actions"><button class="primary" id="cBegin" disabled>Start career</button></div></div>`;
@@ -269,7 +290,7 @@ export function initCareer(d: CareerDeps) {
         const owned = await d.owned();
         if (!got && !owned.has(starter.id)) { d.toast('Free player already used', 'Each account gets one free career player. Pick one you own.'); return; }
       }
-      s = newCareer({ name: ($('cName') as HTMLInputElement).value.trim() || 'Player', homeCountry: ($('cHome') as HTMLSelectElement).value, characterId: starter.id, difficulty: ($('cDiff') as HTMLSelectElement).value as Difficulty });
+      s = newCareer({ name: ($('cName') as HTMLInputElement).value.trim() || 'Player', homeCountry: ($('cHome') as HTMLSelectElement).value, characterId: starter.id, difficulty: 'relaxed' });
       const prevRev = saves!.rev;
       saves!.rev = prevRev; // a restart replaces the old save from the same revision
       await save();
@@ -350,7 +371,7 @@ export function initCareer(d: CareerDeps) {
     close();
     d.play({
       setup: {
-        mode: 'daily', format: { games: 1, points: h.has('to_11') ? 11 : 21 }, forced: true,
+        mode: 'daily', format: { games: 1, points: h.has('to_11') ? 11 : 21 }, forced: true, label: 'Daily challenge',
         player: { characterId: pick, abilities: true, modifiers: h.has('half_energy') ? [energyModifier(50)] : [] },
         opponent: { kind: 'cpu', characterId: boss.id, cpuLevel: level, style: STYLE_AI[boss.style], abilities: true },
         restrictions: { noSmash: h.has('no_smash'), noDropShot: h.has('no_drop'), opponentSpeedMult: h.has('fast_opponent') ? 1.1 : undefined, startScore: h.has('start_behind') ? [0, ch.behind] : undefined },
@@ -379,7 +400,7 @@ export function initCareer(d: CareerDeps) {
     close();
     d.play({
       setup: {
-        mode: 'career', format: { games: nm.games, points: nm.points },
+        mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${ROUND_LABEL[nm.round]}`,
         player: { characterId: a.as, modifiers: [energyModifier(s!.energy)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
         restrictions: {},
@@ -436,7 +457,7 @@ export function initCareer(d: CareerDeps) {
     const wk = at('[data-week]')?.dataset.week as 'next' | 'rest' | undefined;
     if (wk) { if (wk === 'rest' && s.money < CFG.rest.cost) { d.toast('Not enough money', 'A rest week costs living expenses.'); return; } advanceWeek(s, wk, d.appVersion); await save(); render(); return; }
     if (at('[data-skip]')) {
-      const target = W().cal.find((v) => v.week > s!.week);
+      const target = W().cal.filter((v) => v.week > s!.week).find((v) => !canEnter(s!, v, W()).why?.startsWith('Super 300')) ?? W().cal.find((v) => v.week > s!.week);
       if (!target) { while (s.recap === null) advanceWeek(s, 'next', d.appVersion); }
       else while (s.week < target.week && s.recap === null) advanceWeek(s, 'next', d.appVersion);
       await save(); render(); return;
@@ -490,7 +511,7 @@ export function initCareer(d: CareerDeps) {
   panel.addEventListener('change', async (ev2) => {
     const t = ev2.target as HTMLInputElement;
     if (!s) { if (t.id === 'cHome') void fillStarters(); return; }
-    if (t.id === 'cBusiness') { s.settings.business = t.checked; const det = body.querySelector<HTMLElement>('[data-enter]')?.dataset.enter; await save(); if (det) renderDetail(det); }
+    if (t.id === 'cBusiness') { s.settings.business = t.checked; await save(); render(); }
     if (t.id === 'cFaster') { s.settings.fasterEarlyRounds = t.checked; await save(); }
   });
 

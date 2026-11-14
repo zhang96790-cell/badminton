@@ -1111,3 +1111,87 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .act-pair .go { white-space: nowrap; padding-left: 10px; padding-right: 10px; }
 .go.go-arrow { background: transparent; border-color: var(--amber); color: var(--amber-hi); }
 .go.go-arrow:hover { background: rgba(255, 196, 61, 0.12); }
+
+/* ── 3.0.3: career as a "next up" hub, in the Order of Play board's look ───────────────── */
+.career.c-board .social-panel { background: var(--board); color: var(--ink); background-image: radial-gradient(rgba(214, 228, 255, 0.05) 1px, transparent 1.3px); background-size: 6px 6px; }
+.career.c-board .social-hero { padding: clamp(14px, 2.4vh, 24px) 32px clamp(12px, 2vh, 18px); border-bottom: 2px solid var(--rule); align-items: center; }
+.career.c-board .hero-id h2 { margin: 2px 0 0; font-size: clamp(30px, 4.4vh, 40px); }
+.career.c-board .hero-id { display: grid; grid-template-columns: auto 1fr; column-gap: 32px; align-items: end; width: 100%; }
+.career.c-board .hero-id .hero-kicker { grid-column: 1 / -1; }
+.career.c-board .c-stats { justify-self: end; gap: 30px; }
+.career.c-board .c-stats b { font-size: clamp(26px, 3.6vh, 34px); }
+.c-energy { position: relative; }
+.c-energy i { display: block; width: 72px; height: 5px; margin-top: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--live) var(--e), rgba(255, 255, 255, 0.12) var(--e)); }
+.c-energy.low i { background: linear-gradient(90deg, #ff8a65 var(--e), rgba(255, 255, 255, 0.12) var(--e)); }
+.career.c-board .social-tabs { gap: 6px; padding: 0 24px; border-bottom: 1px solid var(--rule); }
+.career.c-board .social-tabs button { display: inline-flex; align-items: center; gap: 7px; padding: 12px 12px 10px; color: var(--ink-3); }
+.career.c-board .social-tabs button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.career.c-board .social-tabs button[aria-selected='true'] { color: var(--ink); }
+.career.c-board .social-tabs button:hover { color: var(--ink); }
+.career.c-board .social-body { padding: clamp(14px, 2.2vh, 22px) 32px; }
+
+.c-hero { display: grid; gap: clamp(8px, 1.4vh, 14px); padding: clamp(16px, 2.6vh, 26px) 28px; border-radius: 6px; background: var(--board-lit); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset; }
+.c-kicker { margin: 0; font: 700 13px/1 var(--text); letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
+.c-title { margin: 0; font: 800 clamp(30px, 4.8vh, 44px)/0.95 var(--display); text-transform: uppercase; letter-spacing: 0.01em; }
+.c-title.small { margin-top: 8px; font-size: 22px; }
+.c-lead { margin: 0; font: 500 16px/1.4 var(--text); color: var(--ink-2); max-width: 70ch; }
+.c-why { margin: 0; font: 600 15px/1.4 var(--text); color: #ffd38a; }
+.c-vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; padding: 12px 0; }
+.c-side { display: grid; gap: 5px; }
+.c-side:last-child { text-align: right; justify-items: end; }
+.c-side b { font: 800 clamp(24px, 3.6vh, 32px)/1 var(--display); text-transform: uppercase; }
+.c-side:last-child b { color: var(--amber-hi); }
+.c-who { font: 600 12px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.c-v { font: 700 28px/1 var(--display); color: var(--ink-3); }
+.c-ab { font: 600 13px/1.2 var(--text); color: #ffd38a; }
+.c-board .ccard { color: var(--ink-2); font: 600 13px/1.2 var(--text); }
+.c-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; border-radius: 4px; overflow: hidden; background: var(--rule); }
+.c-fact { display: grid; gap: 4px; padding: 10px 14px; background: var(--board); }
+.c-fact span { font: 600 11px/1.2 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.c-fact b { font: 700 18px/1.1 var(--text); font-variant-numeric: tabular-nums; }
+.c-fact.warn b { color: #ff8a65; }
+.c-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.c-cta .walk { min-width: 260px; }
+.c-board .c-check { color: var(--ink-2); }
+.c-recover { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--rule); }
+.c-recover > span { font: 700 12px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-right: 4px; }
+.c-recover button { padding: 6px 12px; border: 1px solid rgba(214, 228, 255, 0.3); border-radius: 3px; background: transparent; font: 700 13px/1.2 var(--text); color: var(--ink); cursor: pointer; }
+.c-recover button small { font-weight: 500; color: var(--ink-3); margin-left: 4px; }
+.c-recover button:hover { background: rgba(214, 228, 255, 0.1); }
+.c-results { margin: 0; padding-left: 18px; font: 500 14px/1.5 var(--text); color: var(--ink-2); }
+.c-board .c-bracket { font: 500 14px/1.5 var(--text); color: var(--ink-2); }
+.c-board .c-bracket summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.c-board .c-bracket li.me { color: var(--amber-hi); font-weight: 800; }
+
+.c-strip { margin-top: clamp(12px, 2vh, 20px); padding: 18px 28px 12px; border-radius: 6px; background: var(--board-deep); }
+.c-line { position: relative; height: 34px; margin: 0 8px; }
+.c-line::before { content: ''; position: absolute; left: 0; right: 0; top: 16px; height: 2px; background: var(--rule); }
+.c-you { position: absolute; top: 4px; width: 2px; height: 26px; margin-left: -1px; background: var(--live); box-shadow: 0 0 8px var(--live); }
+.c-mark { position: absolute; top: 8px; width: 18px; height: 18px; margin-left: -9px; padding: 0; border: 0; background: none; cursor: pointer; }
+.c-mark i { display: block; width: 14px; height: 14px; margin: 2px; border-radius: 50%; background: var(--ink-3); box-shadow: 0 0 0 3px var(--board-deep); }
+.c-mark.s300 i { background: var(--amber); }
+.c-mark.s100 i { background: #8fb4ff; }
+.c-mark.past i { opacity: 0.4; }
+.c-mark.now i { transform: scale(1.35); box-shadow: 0 0 0 3px var(--board-deep), 0 0 0 5px var(--live); }
+.c-mark em { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font: 800 11px/1 var(--text); font-style: normal; color: var(--ink); white-space: nowrap; }
+.c-strip-key { display: flex; gap: 18px; margin-top: 8px; font: 600 12px/1 var(--text); color: var(--ink-3); }
+.c-strip-key i { display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 50%; vertical-align: 0; }
+.c-strip-key i.s100 { background: #8fb4ff; } .c-strip-key i.s300 { background: var(--amber); }
+
+/* The other career screens on the dark board. */
+.c-board .c-card { background: var(--board-lit); border-color: transparent; color: var(--ink); }
+.c-board .c-card .sub, .c-board .c-card p.sub { color: var(--ink-2); }
+.c-board .c-table th { color: var(--ink-3); border-color: var(--rule); }
+.c-board .c-table td { border-color: var(--rule); }
+.c-board .c-table tr.me td { background: rgba(255, 181, 31, 0.16); }
+.c-board .c-table .up { color: var(--live); } .c-board .c-table .down { color: #ff8a65; }
+.c-board .c-actions button, .c-board .c-squad button, .c-board .c-recruit button { background: transparent; border-color: rgba(214, 228, 255, 0.38); color: var(--ink); }
+.c-board .c-actions button.primary, .c-board .c-recruit button.primary { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
+.c-board .c-recruit { border-color: var(--rule); }
+.c-board .c-field { color: var(--ink); }
+.c-board .c-field input, .c-board .c-field select { background: var(--board-deep); border-color: var(--rule); color: var(--ink); }
+.c-board .tier { background: rgba(255, 255, 255, 0.14); }
+.c-board .ability { color: var(--ink); }
+.c-board .tag-on { color: var(--live); }
+.career.c-board .social-hero { padding-right: 84px; }
+.career.c-board .social-panel { height: auto; max-height: calc(100vh - 32px); }

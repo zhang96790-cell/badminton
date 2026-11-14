@@ -1214,3 +1214,8 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .d-sc { font: 700 11px/1.3 var(--text); color: var(--amber); font-variant-numeric: tabular-nums; }
 .d-win .d-p { font-size: 15px; }
 .c-lead.small { font-size: 13px; }
+
+/* 3.0.5: style traits */
+.style-trait { margin-top: 8px; min-height: 2.6em; }
+.c-trait { margin: 0; font: 500 14px/1.4 var(--text); color: var(--ink-2); }
+.c-trait b { color: var(--ink); }

@@ -45,6 +45,9 @@ export function loadMemory(): Memory | null {
  * Shot choice is tactical: attack short lifts, use open space, go short when you're deep and deep
  * when you're at the net. Over a match it learns where you struggle and where you like to hit.
  */
+/** The approaches an All-rounder cycles through when it's losing. */
+const ADAPT: Style[] = ['allround', 'net', 'defender'];
+
 export class AIController implements Controller {
   private L: AILevel;
   private S: (typeof STYLES)[Style];
@@ -64,12 +67,33 @@ export class AIController implements Controller {
   private memory: Memory | null = null;
   private style: Style;
 
+  /** Its own last shot (for the attacker's follow-up and the net player's rush). */
+  private lastKind: 'smash' | 'net' | 'push' | 'other' = 'other';
+  /** All-rounder: points lost in a row, and which approach it's trying now. */
+  private lostRun = 0;
+  private approach = 0;
+  private baseReach = 0;
+
   constructor(private game: Game, private me: Player, level: Level, style: Style) {
     this.L = AI[level];
     this.S = STYLES[style];
     this.style = style;
     me.speedMult = this.L.speed * this.S.speed;
-    me.extraReach = (this.S.reach ?? 0) + (this.L.reach ?? 0);
+    me.extraReach = this.baseReach = (this.S.reach ?? 0) + (this.L.reach ?? 0);
+  }
+
+  /** Defender: extra reach while it's defending a smash. */
+  private defendReach() {
+    if (!this.S.defReach) return;
+    const sh = this.game.shuttle;
+    const vsSmash = sh.inFlight && sh.lastHitter === -this.me.side && /smash/i.test(this.game.lastShotLabel);
+    this.me.extraReach = this.baseReach + (vsSmash ? this.S.defReach : 0);
+  }
+
+  /** Defender: its lifts and blocks are more accurate (a multiplier on the shot's aim error). */
+  aimScaleFor(req: ShotRequest, contactZ: number): number {
+    if (!this.S.defAim || req.kind !== 'intent' || contactZ >= SHOTS.overheadHeight) return 1;
+    return req.intent === 'high' || req.intent === 'soft' ? this.S.defAim : 1;
   }
 
   /**
@@ -113,6 +137,7 @@ export class AIController implements Controller {
   }
 
   poll(dt: number): Command {
+    this.defendReach();
     const g = this.game, sh = g.shuttle;
     const cmd: Command = { move: { x: 0, y: 0 }, jump: false, shot: null };
 
@@ -180,6 +205,16 @@ export class AIController implements Controller {
     } else if (o.type === 'hit' && o.by === this.me.side) {
       this.lastTargetZone = o.landing ? zoneOf(o.landing) : null;
     } else if (o.type === 'rally') {
+      // All-rounder: losing points in a row? Try a different approach (attack, net, then defence).
+      if (this.S.adaptAfter) {
+        this.lostRun = o.winner === this.me.side ? 0 : this.lostRun + 1;
+        if (this.lostRun >= this.S.adaptAfter) {
+          this.lostRun = 0;
+          this.approach = (this.approach + 1) % ADAPT.length;
+          const t = STYLES[ADAPT[this.approach]];
+          this.S = { ...STYLES.allround, smash: t.smash, drop: t.drop, clear: t.clear, net: t.net, kill: t.kill, jump: t.jump, baseDepth: t.baseDepth };
+        }
+      }
       if (this.lastTargetZone !== null) {
         this.zoneTries[this.lastTargetZone] += 1;
         if (o.winner === this.me.side) this.zoneWeak[this.lastTargetZone] += 1;
@@ -216,6 +251,9 @@ export class AIController implements Controller {
     let depth = this.S.baseDepth;
     if (this.lastIntent === 'soft') depth -= 0.5;
     else if (this.lastIntent === 'high') depth += 0.2;
+    // Attacker: follow the smash in to kill the reply. Net player: stay on top of the net after a net shot or push.
+    if (this.lastKind === 'smash' && this.S.followUp) depth -= this.S.followUp;
+    if ((this.lastKind === 'net' || this.lastKind === 'push') && this.S.rush) depth -= this.S.rush;
     let x = 0;
     const n = this.oppLandings.length;
     if (this.L.anticipation > 0 && n >= 3) {
@@ -225,7 +263,7 @@ export class AIController implements Controller {
       x = mx * this.L.anticipation;
       depth += (my - 3.5) * this.L.anticipation;
     }
-    return { x: clamp(x, -1, 1), y: this.me.side * clamp(depth, 2.6, 4.4) };
+    return { x: clamp(x, -1, 1), y: this.me.side * clamp(depth, this.S.followUp || this.S.rush ? 1.9 : 2.6, 4.4) };
   }
 
   /** Is our pair attacking (front and back) or defending (side by side)? */
@@ -386,6 +424,8 @@ export class AIController implements Controller {
     const L = this.L, intent = p.intent, doubles = this.game.doubles;
     const opps = this.opps, opp = this.oppNear({ x: p.contact.x, y: -p.contact.y });
     this.lastIntent = intent;
+    const nearNet = Math.abs(p.contact.y) < SHOTS.nearNet;
+    this.lastKind = intent === 'fast' && p.contact.z >= SHOTS.overheadHeight ? 'smash' : intent === 'soft' && nearNet ? 'net' : intent === 'fast' && nearNet ? 'push' : 'other';
     // Leave room for the shot's own inaccuracy: a smash needs far more margin than a net shot.
     const A = SHOTS.aim;
     const dist = Math.hypot(this.me.pos.x, Math.abs(this.me.pos.y) + 4);
@@ -400,7 +440,8 @@ export class AIController implements Controller {
     const halfW = doubles ? COURT.doublesHalfWidth : COURT.singlesHalfWidth;
     // Two defenders side by side: the middle between them causes hesitation.
     const sideBySide = doubles && opps.length === 2 && Math.abs(Math.abs(opps[0].pos.y) - Math.abs(opps[1].pos.y)) < 1.2;
-    const depthMods = intent === 'soft' ? [0, -1] : intent === 'high' ? [0, 1] : [0, 1, -1];
+    // Defensive wall: every clear goes to the back line.
+    const depthMods = intent === 'soft' ? [0, -1] : intent === 'high' ? (this.S.deepClears ? [1] : [0, 1]) : [0, 1, -1];
     const options: { target: V2; score: number }[] = [];
     for (const lat of doubles ? [-1, -0.45, 0, 0.45, 1] : [-1, -0.4, 0.4, 1]) {
       for (const ad of depthMods) {

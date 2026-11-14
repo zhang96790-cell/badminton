@@ -182,8 +182,8 @@ export const SHOTS = {
   /** Hard shots from within netDriveWithin (m) of the net and below the tape lose this much pace (pushes from further back don't). */
   netDrivePower: 0.85,
   netDriveWithin: 1.0,
-  /** Disguised shots (Deceptive CPU): landing marker hidden for markerDelay, opponents slowed for wrongFoot (s). */
-  disguise: { markerDelay: 0.32, wrongFoot: 0.16 },
+  /** A disguised shot hides the landing marker for its whole flight (3.0.5) and wrong-foots the other side. */
+  disguise: { wrongFoot: 0.22 },
   /** An overhead more than this far behind the body (m) is hit weaker (behindPower) and less accurately (behindNoise), whatever the shot. */
   behindLimit: 0.3,
   behindPower: 0.8,
@@ -470,14 +470,35 @@ export type Style = 'allround' | 'attacker' | 'defender' | 'net' | 'deceptive' |
 export const STYLES: Record<Style, {
   label: string; smash: number; drop: number; clear: number; net: number; kill: number; jump: number;
   baseDepth: number; margin: number; speed: number; serveShort: number; reach?: number; deceive?: number; steady?: number;
+  /** 3.0.5 signature traits. trait: shown on the match card and opponent cards. */
+  trait: string;
+  /** Moves this much closer to the net after its own smash (to kill the reply). */
+  followUp?: number;
+  /** Stands this much closer to the net after its own net shot or push. */
+  rush?: number;
+  /** Extra reach (m) while defending a smash. */
+  defReach?: number;
+  /** Aim error on its lifts and blocks (lower is more accurate). */
+  defAim?: number;
+  /** Its clears always go to the back line. */
+  deepClears?: boolean;
+  /** After losing this many points in a row, it changes its approach. */
+  adaptAfter?: number;
 }> = {
-  allround: { label: 'All-rounder', smash: 1, drop: 1, clear: 1, net: 1, kill: 1, jump: 1, baseDepth: 3.5, margin: 0, speed: 1, serveShort: 1 },
-  attacker: { label: 'Attacker', smash: 1.8, drop: 0.9, clear: 0.6, net: 0.8, kill: 1.3, jump: 1.6, baseDepth: 3.3, margin: -0.05, speed: 1, serveShort: 0.9 },
-  defender: { label: 'Defender', smash: 0.5, drop: 0.8, clear: 1.7, net: 0.9, kill: 0.8, jump: 0.5, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8 },
-  net: { label: 'Net player', smash: 0.9, drop: 1.5, clear: 0.8, net: 1.8, kill: 1.5, jump: 0.8, baseDepth: 3.0, margin: 0.05, speed: 1, serveShort: 1.2 },
-  deceptive: { label: 'Deceptive', smash: 1.1, drop: 1.7, clear: 0.9, net: 1.5, kill: 1.1, jump: 0.9, baseDepth: 3.4, margin: 0.05, speed: 1, serveShort: 1.1, deceive: 0.45 },
-  retriever: { label: 'Fast retriever', smash: 0.7, drop: 0.9, clear: 1.3, net: 1.1, kill: 0.9, jump: 0.6, baseDepth: 3.6, margin: 0.12, speed: 1.14, serveShort: 0.9, reach: 0.14 },
-  wall: { label: 'Defensive wall', smash: 0.3, drop: 0.6, clear: 2.3, net: 0.7, kill: 0.7, jump: 0.3, baseDepth: 4.0, margin: 0.25, speed: 1.06, serveShort: 0.7, reach: 0.07, steady: 0.6 },
+  allround: { label: 'All-rounder', smash: 1, drop: 1, clear: 1, net: 1, kill: 1, jump: 1, baseDepth: 3.5, margin: 0, speed: 1, serveShort: 1, steady: 0.8,
+    trait: 'No weak spots: plays every shot well and aims a little more precisely than anyone else' },
+  attacker: { label: 'Attacker', smash: 1.9, drop: 0.9, clear: 0.6, net: 0.8, kill: 1.4, jump: 2.0, baseDepth: 3.3, margin: -0.04, speed: 1, serveShort: 0.9, followUp: 0.6,
+    trait: 'Jump-smashes whenever it can and follows its smash to the net for the kill, but takes risks near the lines' },
+  defender: { label: 'Defender', smash: 0.5, drop: 0.8, clear: 1.7, net: 0.9, kill: 0.8, jump: 0.5, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8, defReach: 0.06, defAim: 0.8,
+    trait: 'Gets more smashes back than anyone, and its lifts and blocks land deep and accurate' },
+  net: { label: 'Net player', smash: 0.9, drop: 1.5, clear: 0.8, net: 1.8, kill: 1.5, jump: 0.8, baseDepth: 3.0, margin: 0.05, speed: 1, serveShort: 1.2, rush: 0.2,
+    trait: 'Rushes the net after every net shot and kills anything loose above the tape' },
+  deceptive: { label: 'Deceptive', smash: 1.1, drop: 1.7, clear: 0.9, net: 1.5, kill: 1.1, jump: 0.9, baseDepth: 3.4, margin: 0.05, speed: 1, serveShort: 1.1, deceive: 0.3,
+    trait: 'Disguises about 1 in 3 drops, net shots and flicks: no landing marker at all, and you step the wrong way' },
+  retriever: { label: 'Fast retriever', smash: 0.5, drop: 0.9, clear: 1.5, net: 1.1, kill: 0.7, jump: 0.5, baseDepth: 3.6, margin: 0.12, speed: 1.1, serveShort: 0.9, reach: 0.1,
+    trait: 'Reaches shots no one else would, but plays safe and high, so it rarely attacks' },
+  wall: { label: 'Defensive wall', smash: 0.3, drop: 0.6, clear: 2.3, net: 0.7, kill: 0.7, jump: 0.3, baseDepth: 4.0, margin: 0.25, speed: 1.06, serveShort: 0.7, reach: 0.07, steady: 0.45, deepClears: true,
+    trait: 'Almost never misses and clears to the back line every time, waiting for your error' },
 };
 
 export interface KeyMap {

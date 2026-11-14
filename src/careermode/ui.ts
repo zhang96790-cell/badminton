@@ -3,7 +3,7 @@
 import { DEFAULT_CHARACTER, RARITY, characterById, rosterFor, type Character } from '../../shared/characters';
 import type { Game } from '../game';
 import type { Settings } from '../game';
-import type { Style } from '../config';
+import { STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
 import { CAREER_CFG as CFG, ROUND_LABEL, TIER_LABEL, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
@@ -136,7 +136,8 @@ export function initCareer(d: CareerDeps) {
     const side = (name: string, c: Character, who: string) => `<div class="c-side"><span class="c-who">${who}</span><b>${e(name)}</b>
       <span class="ccard" style="--rar:${RARITY[c.rarity].color}"><span class="rar">${RARITY[c.rarity].label}</span> ${e(c.country)} · ${e(c.style)}</span>
       ${c.abilities.map((ab) => `<span class="c-ab">★ ${e(ab.name)}</span>`).join('')}</div>`;
-    return `<div class="c-vs">${side(s!.name, me, `You, as ${me.name}`)}<span class="c-v">v</span>${side(opp.name, opp, 'Opponent')}</div>`;
+    return `<div class="c-vs">${side(s!.name, me, `You, as ${me.name}`)}<span class="c-v">v</span>${side(opp.name, opp, 'Opponent')}</div>
+      <p class="c-trait"><b>${e(STYLES[STYLE_AI[opp.style]].label)}:</b> ${e(STYLES[STYLE_AI[opp.style]].trait)}</p>`;
   };
   const fact = (label: string, value: string, warn = false) => `<div class="c-fact${warn ? ' warn' : ''}"><span>${label}</span><b>${value}</b></div>`;
   const recover = () => `<div class="c-recover"><span>Recover</span>
@@ -399,6 +400,7 @@ export function initCareer(d: CareerDeps) {
     const next = new Date(ch.next_at).getTime() - Date.now();
     body.innerHTML = `<div class="c-card daily"><h3>Today’s challenge ${'★'.repeat(ch.difficulty)}${'☆'.repeat(5 - ch.difficulty)}</h3>
       <p>Beat ${card(boss)}${boss.abilities.length ? ` <span class="sub">${boss.abilities.map((ab) => `★ ${e(ab.name)}`).join(' ')}</span>` : ''}</p>
+      <p class="c-trait"><b>${e(STYLES[STYLE_AI[boss.style]].label)}:</b> ${e(STYLES[STYLE_AI[boss.style]].trait)}</p>
       <ul class="c-list">${ch.handicaps.map((h) => `<li>${e(HANDICAP_TEXT[h]?.replace('{n}', String(ch.behind)) ?? h)}</li>`).join('')}</ul>
       <p>Reward: <b>${ch.reward} rating points</b> (up to ${daily!.season_cap} a season from daily challenges; you have ${daily!.season_total}). Daily points can’t take you past Elite.</p>
       ${daily!.claimed ? `<p class="tag-on">Done today${daily!.reward_got !== null ? `: +${daily!.reward_got}` : ''}. Next challenge in ${Math.floor(next / 3600000)}h ${Math.floor((next % 3600000) / 60000)}m.</p>`

@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.0.5: Styles with a signature (14 Nov 2026)
+
+- Disguised shots now hide the landing marker for their whole flight, not just a moment, and you step the wrong way a little longer. A “Disguised shot” badge shows when one comes. The Deceptive CPU disguises fewer shots (about 1 in 3 drops, net shots and flicks) to make up for it.
+- Every CPU style has its own signature: Attackers jump-smash much more and follow their smash to the net; Defenders get more smashes back and lift deeper and more accurately; Net players stay on top of the net after their net shots; Fast retrievers reach everything but rarely attack; Defensive walls clear to the back line every time and almost never miss; All-rounders have no weak spots.
+- The match card says what makes the chosen CPU style different, and career and daily challenge opponents show their style’s signature too.
+
 ## 3.0.4: Tournament draws (14 Nov 2026)
 
 - Every career tournament now has a proper draw: a column for each round (Round of 16 to the Final and the winner), showing who plays whom, winners in bold and the top 4 seeds numbered.

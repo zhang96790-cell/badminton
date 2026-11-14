@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0.5',
+    title: 'Styles with a signature',
+    date: '14 Nov 2026',
+    changes: [
+      "Disguised shots now hide the landing marker for their whole flight, not just a moment, and you step the wrong way a little longer. A “Disguised shot” badge shows when one comes. The Deceptive CPU disguises fewer shots (about 1 in 3 drops, net shots and flicks) to make up for it.",
+      "Every CPU style has its own signature: Attackers jump-smash much more and follow their smash to the net; Defenders get more smashes back and lift deeper and more accurately; Net players stay on top of the net after their net shots; Fast retrievers reach everything but rarely attack; Defensive walls clear to the back line every time and almost never miss; All-rounders have no weak spots.",
+      "The match card says what makes the chosen CPU style different, and career and daily challenge opponents show their style’s signature too.",
+    ],
+  },
+  {
     version: '3.0.4',
     title: 'Tournament draws',
     date: '14 Nov 2026',

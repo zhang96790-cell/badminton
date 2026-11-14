@@ -774,7 +774,7 @@ export class Game {
           this.events.push({ type: 'net' });
           break;
         }
-        const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1;
+        const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : ctrl instanceof AIController ? ctrl.aimScaleFor(req, c.point.z) : 1;
         let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
         // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.
         let sigCtx: ShotCtx | null = null, sigFired: SigDef[] = [], deceived = false;
@@ -791,14 +791,14 @@ export class Game {
         this.predict();
         if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
         if (/Lift/.test(shot.label)) this.liftGuard = SHOTS.liftGuard;
-        if (req.kind === 'intent' && req.disguise) {
-          // Disguised: the landing marker shows up late and the other side is caught going the wrong way.
-          shot.label = `${shot.label} (disguised)`;
-          this.disguiseT = SHOTS.disguise.markerDelay;
+        // Each new shot shows its landing marker again, unless it's disguised.
+        this.disguiseT = 0;
+        if ((req.kind === 'intent' && req.disguise) || deceived) {
+          // Disguised: no landing marker for the whole flight, and the other side steps the wrong way.
+          if (req.kind === 'intent' && req.disguise) shot.label = `${shot.label} (disguised)`;
+          this.disguiseT = Infinity;
           for (const q of this.players) if (q.side !== p.side) q.wrongFoot(SHOTS.disguise.wrongFoot);
-        } else if (deceived) {
-          this.disguiseT = SHOTS.disguise.markerDelay;
-          for (const q of this.players) if (q.side !== p.side) q.wrongFoot(SHOTS.disguise.wrongFoot);
+          if (!deceived) this.abilityPop = { text: 'Disguised shot', mine: this.teamOf(i) === 0, t: 0 };
         }
         if (this.sigs && sigCtx) {
           this.sigs.afterShot(i, sigCtx, sigFired, deceived);
@@ -840,6 +840,7 @@ export class Game {
     if (sh.pos.z <= 0) {
       sh.pos.z = 0;
       sh.inFlight = false;
+      this.disguiseT = 0;
       this.events.push({ type: 'land' });
       if (this.online) this.onlineLanding({ x: sh.pos.x, y: sh.pos.y });
       else this.endRally({ x: sh.pos.x, y: sh.pos.y });

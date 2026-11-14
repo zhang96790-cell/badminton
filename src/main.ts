@@ -1685,6 +1685,8 @@ function syncMenu() {
     const group = seg.dataset.group as keyof Settings;
     seg.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', parse(b.dataset.value!) === settings[group]));
   });
+  // What makes the chosen CPU style different.
+  document.getElementById('styleTrait')!.textContent = STYLES[settings.style].trait;
   // Swing assist only works against a Beginner or Easy CPU.
   const assistOk = settings.opponent === 'beginner' || settings.opponent === 'easy';
   document.querySelectorAll<HTMLButtonElement>('.seg[data-group="swingAssist"] button').forEach((b) => b.classList.toggle('disabled', !assistOk));

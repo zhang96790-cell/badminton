@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.9: Career tour (14 Nov 2026)
+
+- A career mode tour: the first time you open a career, a quick guided tour shows you around: your numbers, Next up, the season timeline and tournament list, energy and travel, ranking, squad and recruiting, money and sponsors, the daily challenge, trophies and how to start again (including why everyone’s career was reset in 3.3.1).
+- A Tour button in the career header replays it any time.
+
 ## 3.3.8: Retriever tweak (14 Nov 2026)
 
 - The Fast retriever CPU is a little slower around the court (it was still the strongest style).

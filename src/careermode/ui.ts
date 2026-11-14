@@ -14,6 +14,7 @@ import {
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
 import { setWhere } from '../errorlog';
+import { Tour } from '../tour';
 
 type Account = typeof import('../account');
 export interface CareerDeps {
@@ -100,6 +101,7 @@ export function initCareer(d: CareerDeps) {
     if (l.offline) d.toast('Offline', 'Showing the copy saved on this computer.');
     if (l.conflict) { await settleConflict(l.conflict); return; }
     render();
+    maybeCareerTour();
   }
   const close = () => { panel.classList.add('hidden'); setWhere(''); };
 
@@ -469,6 +471,7 @@ export function initCareer(d: CareerDeps) {
       await save();
       tab = 'hub';
       render();
+      maybeCareerTour();
     } finally { busy = false; }
   }
 
@@ -606,11 +609,42 @@ export function initCareer(d: CareerDeps) {
     });
   }
 
+  // ── Career tour (first visit, and the Tour button) ──
+  const TOUR_KEY = 'badminton.careerTourDone';
+  const go = (t: string) => () => { tab = t; render(); };
+  const careerTour = new Tour([
+    { target: '#careerHead .c-stats', title: 'Your numbers', text: 'Money, energy, world rank and titles. Money pays for flights, hotels and recovery; energy drops with every match and flight, and below 70 you start to slow down.', before: go('hub') },
+    { target: '.c-hero', title: 'Next up', text: 'Always your next step: your next match (with a big Play button), this week’s tournament to enter, or the next event to travel to. Before each match you get a scouting report on your opponent.' },
+    { target: '.c-strip', title: 'The season', text: 'Every tournament of the year on one line, coloured by level, with your results. Click one for its prizes and draw. Bigger events open as you reach finals or climb the world ranking.' },
+    { target: '.c-listbtn', title: 'All tournaments', text: 'The full calendar as a list: dates, level, players, host, prize and whether you can enter.' },
+    { target: '[data-ctab="energy"]', title: 'Energy & travel', text: 'Choose how you fly and where you stay. Better seats and hotels cost more but keep you fresh. Recover here too, but it isn’t cheap, and playing below 25 energy can injure you.' },
+    { target: '[data-ctab="ranking"]', title: 'World ranking', text: 'Your best 10 results in the last 52 weeks count. It decides your seeding and which events you can enter.' },
+    { target: '[data-ctab="squad"]', title: 'Your squad', text: 'Everyone starts as a Common player with no signature ability. Win a tournament to recruit a player from its draw; the bigger the event, the rarer the players you can recruit.' },
+    { target: '[data-ctab="ledger"]', title: 'Money, sponsors and staff', text: 'Every cost and prize. Sponsors pay you weekly once you’re in the top 200, and you can hire a coach or physio for weekly wages.' },
+    { target: '[data-ctab="daily"]', title: 'Daily challenge', text: 'One challenge a day for everyone, against a strong player with a handicap or two. Win it for rating points.' },
+    { target: '[data-ctab="trophies"]', title: 'Trophies', text: 'Your titles, medals and milestones. After your first season you can retire into the Hall of Fame and start again.' },
+    { target: '[data-ctab="settings"]', title: 'Starting again', text: 'Settings has Restart career. Note: in 3.3.1 everyone’s career was reset, so if an old career is gone, that’s why. Players you recruited are still on your account.' },
+    { target: '[data-ctour]', title: 'That’s it', text: 'Press Tour any time to see this again. Good luck on the tour!' },
+  ], () => { tab = 'hub'; if (s) render(); });
+  function startCareerTour() {
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch { /* storage blocked */ }
+    tab = 'hub';
+    render();
+    careerTour.start();
+  }
+  /** First time with a career: show the tour once. */
+  function maybeCareerTour() {
+    let seen = false;
+    try { seen = localStorage.getItem(TOUR_KEY) === '1'; } catch { seen = true; }
+    if (!seen && s && !s.recap && !s.pendingRecruitOffer && !s.offerDue) setTimeout(startCareerTour, 300);
+  }
+
   // ── Events ──
   panel.addEventListener('click', async (ev2) => {
     const t = ev2.target as HTMLElement;
     const at = (sel: string) => t.closest<HTMLElement>(sel);
     if (at('[data-cclose]')) { close(); return; }
+    if (at('[data-ctour]')) { if (s) startCareerTour(); else d.toast('Start a career first', 'The tour shows you around once your career has begun.'); return; }
     if (at('[data-retry]')) { void open(tab); return; }
     if (at('[data-login]')) { close(); d.openAccount('Log in or sign up to start a career.'); return; }
     const ct = at('[data-ctab]')?.dataset.ctab;

@@ -1266,3 +1266,8 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .c-pre .key { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; border-radius: 2px; vertical-align: -1px; }
 .c-pre .key.them { background: var(--ink-2); } .c-pre .key.you { background: #ffc54d; }
 .c-pre .c-table td.up { color: var(--live); } .c-pre .c-table td.down { color: #ff8a65; }
+
+/* 3.3.9: career tour button */
+.career .c-tourbtn { position: absolute; top: 18px; right: 70px; padding: 7px 12px; border: 1px solid var(--amber); border-radius: 3px; background: transparent; color: var(--amber-hi); font: 700 12px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+.career .c-tourbtn:hover { background: rgba(255, 196, 61, 0.12); }
+.career.c-board .social-hero { padding-right: 150px; }

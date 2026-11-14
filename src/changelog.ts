@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.9',
+    title: 'Career tour',
+    date: '14 Nov 2026',
+    changes: [
+      "A career mode tour: the first time you open a career, a quick guided tour shows you around: your numbers, Next up, the season timeline and tournament list, energy and travel, ranking, squad and recruiting, money and sponsors, the daily challenge, trophies and how to start again (including why everyone’s career was reset in 3.3.1).",
+      "A Tour button in the career header replays it any time.",
+    ],
+  },
+  {
     version: '3.3.8',
     title: 'Retriever tweak',
     date: '14 Nov 2026',

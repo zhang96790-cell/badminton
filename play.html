@@ -60,48 +60,28 @@
             <span>Court</span><span>Event</span><span>Match</span><span></span>
           </div>
 
-          <section class="oop-row live" aria-label="Court 1, your match">
+          <section class="oop-row live" aria-label="Court 1, career">
             <span class="ct" aria-hidden="true">1</span>
-            <p class="event"><span class="status"><i></i>Next on court</span><span id="eventLabel">Singles</span></p>
+            <p class="event"><span class="status"><i></i>New in 3.0</span><span>Career</span></p>
             <div class="match">
-              <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
-              <p class="sub" id="tag">Best of 3 games to 15</p>
+              <p class="vs">Career mode</p>
+              <p class="sub" id="careerSub">Travel the tour, win prize money, climb the world ranking and recruit players</p>
             </div>
             <div class="act">
-              <button id="start" class="walk">
-                Walk on
+              <button id="careerOpen" class="walk">
+                Play career
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
               </button>
-              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Edit match card</button>
+              <button id="dailyOpen" class="edit">Daily challenge</button>
             </div>
           </section>
 
-          <section class="oop-row" aria-label="Court 2, tutorial">
+          <section class="oop-row" aria-label="Court 2, online">
             <span class="ct" aria-hidden="true">2</span>
-            <p class="event"><span>Warm-up</span></p>
-            <div class="match">
-              <p class="vs">Tutorial with the coach</p>
-              <p class="sub">16 short lessons, about 6 minutes</p>
-              <p id="newHint" class="tip">Start here if you’re new</p>
-            </div>
-            <div class="act"><button id="tutorial" class="go">Start</button></div>
-          </section>
-
-          <section class="oop-row" aria-label="Court 3, practice">
-            <span class="ct" aria-hidden="true">3</span>
-            <p class="event"><span>Practice</span></p>
-            <div class="match">
-              <p class="vs">Drills with the feeder</p>
-              <p class="sub">Smash, clear and drop, net play, drives, defence, plus doubles drills</p>
-            </div>
-            <div class="act"><button id="practice" class="go">Start</button></div>
-          </section>
-          <section class="oop-row" aria-label="Court 4, online">
-            <span class="ct" aria-hidden="true">4</span>
-            <p class="event"><span>Online</span></p>
+            <p class="event"><span>Ranked &amp; online</span></p>
             <div class="match">
               <p class="vs">Play online</p>
-              <p class="sub">Ranked quick match against someone your level, or a private room with a friend</p>
+              <p class="sub">Ranked quick match against someone your level, or a room with a friend</p>
             </div>
             <div class="act act-online">
               <button id="quickMatch" class="go go-primary">Quick match</button>
@@ -109,24 +89,37 @@
             </div>
           </section>
 
-          <section class="oop-row" aria-label="Court 5, challenges">
-            <span class="ct" aria-hidden="true">5</span>
-            <p class="event"><span>Challenges</span></p>
+          <section class="oop-row cpu" aria-label="Court 3, a match against the CPU">
+            <span class="ct" aria-hidden="true">3</span>
+            <p class="event"><span id="eventLabel">Singles</span></p>
             <div class="match">
-              <p class="vs">Star challenges</p>
-              <p class="sub" id="challengeSub">7 challenges, up to 3 stars each: drops, smash defence, clears, net shots and more</p>
+              <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
+              <p class="sub" id="tag">Best of 3 games to 15</p>
             </div>
-            <div class="act"><button id="challenges" class="go">Start</button></div>
+            <div class="act">
+              <button id="start" class="go go-primary go-arrow">Walk on <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
+              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Edit match card</button>
+            </div>
           </section>
 
-          <section class="oop-row" aria-label="Court 6, career">
-            <span class="ct" aria-hidden="true">6</span>
-            <p class="event"><span>Career</span></p>
+          <section class="oop-row" aria-label="Court 4, tutorial">
+            <span class="ct" aria-hidden="true">4</span>
+            <p class="event"><span>Warm-up</span></p>
             <div class="match">
-              <p class="vs">Career mode</p>
-              <p class="sub" id="careerSub">Travel the Super 100 and Super 300 tour, earn prize money, climb the world ranking and recruit players. Plus a daily challenge.</p>
+              <p class="vs">Tutorial <span id="newHint" class="tip">Start here if you’re new</span></p>
+              <p class="sub">16 short lessons with the coach, about 6 minutes</p>
             </div>
-            <div class="act act-pair"><button id="careerOpen" class="go">Career</button><button id="dailyOpen" class="go">Daily</button></div>
+            <div class="act"><button id="tutorial" class="go">Start</button></div>
+          </section>
+
+          <section class="oop-row" aria-label="Court 5, practice">
+            <span class="ct" aria-hidden="true">5</span>
+            <p class="event"><span>Practice</span></p>
+            <div class="match">
+              <p class="vs">Drills</p>
+              <p class="sub">Smash, clear and drop, net play, drives, defence and doubles drills</p>
+            </div>
+            <div class="act"><button id="practice" class="go">Start</button></div>
           </section>
         </div>
 
@@ -478,7 +471,7 @@
             <div class="seg board-seg" id="boardSeg">
               <button data-value="rating">Ranked rating</button><button data-value="wins">Wins</button><button data-value="max_smash">Fastest smash</button>
               <button data-value="max_rally">Longest rally</button><button data-value="perfect_hits">Perfect hits</button><button data-value="max_streak">Win streak</button>
-              <button data-value="stars">Challenge stars</button><button data-value="achievements">Achievements</button><button data-value="career_titles">Career titles</button><button data-value="career_best_rank">Best career ranking</button>
+              <button data-value="achievements">Achievements</button><button data-value="career_titles">Career titles</button><button data-value="career_best_rank">Best career ranking</button>
             </div>
             <p class="pane-note" id="boardNote">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
             <ol id="leaderList" class="hub-list leaders"></ol>
@@ -511,7 +504,6 @@
           <section data-hubpane="awards" hidden>
             <div class="scope" id="awardsScope"></div>
             <div class="stat-group"><h3>Achievements</h3><div class="tiles" id="achList"></div></div>
-            <div class="stat-group"><h3>Challenges</h3><ol id="starList" class="hub-list"></ol></div>
           </section>
           <section data-hubpane="highlights" hidden>
             <p class="pane-note">Rallies you saved by pressing P after a point. Kept on this computer (up to 10).</p>

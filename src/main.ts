@@ -12,7 +12,6 @@ import { DEFAULT_CHARACTER, RARITY, ROSTER_HASH, characterById, rosterFor, statT
 import { drawPentagon } from './pentagon';
 import { defaultSetup } from './setup';
 import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
-import { CHALLENGES, Challenges, loadStars, totalStars, type ChallengeDef } from './challenges';
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
 import { Playback } from './replay';
 import { CHANGELOG } from './changelog';
@@ -411,7 +410,7 @@ function recordCareer(g: Game) {
   if (g.mode !== 'match' && g.mode !== 'online') return;
   recordHeat(g);
   const delta = careerDelta(g, career);
-  const fresh = checkAchievements(addCareer(career, delta), g.matchFacts(), loadStars());
+  const fresh = checkAchievements(addCareer(career, delta), g.matchFacts());
   saveCareer({ ...delta, ...achievementDelta(fresh) });
   announceAchievements(fresh);
 }
@@ -422,13 +421,6 @@ function saveCareer(delta: Career) {
   career = addCareer(career, delta);
   if (!account) { saveLocalCareer(career); return; }
   void loadAccount().then(async (m) => { const saved = await m.addCareer(delta); if (saved) career = saved; });
-}
-
-/** A challenge attempt ended: keep your best stars in your career (for the leaderboard) and check achievements. */
-function challengeResult(c: ChallengeDef, stars: number) {
-  const fresh = checkAchievements(career, null, loadStars());
-  saveCareer({ ...(stars ? { [`max_star_${c.id}`]: stars } : {}), ...achievementDelta(fresh) });
-  announceAchievements(fresh);
 }
 
 /** Pop-up notes in the corner ("Achievement unlocked"), one after another. */
@@ -733,18 +725,14 @@ document.getElementById('pickOffer')!.addEventListener('click', async (e) => {
   void renderPlayers();
 });
 
-/** Awards tab: achievements, and your stars from the challenges. */
+/** Awards tab: achievements. */
 function renderAwards() {
-  const got = loadUnlocked(), stars = loadStars();
+  const got = loadUnlocked();
   const n = ACHIEVEMENTS.filter((a) => got[a.id] || career[`max_ach_${a.id}`]).length;
-  document.getElementById('awardsScope')!.innerHTML = `<b>${n}</b> of ${ACHIEVEMENTS.length} achievements · <b>${totalStars(stars)}</b> of ${CHALLENGES.length * 3} challenge stars`;
+  document.getElementById('awardsScope')!.innerHTML = `<b>${n}</b> of ${ACHIEVEMENTS.length} achievements`;
   document.getElementById('achList')!.innerHTML = ACHIEVEMENTS.map((a) => {
     const on = !!(got[a.id] || career[`max_ach_${a.id}`]);
     return `<div class="tile ach${on ? ' on' : ''}"><b>${on ? '★' : '☆'} ${hubEsc(a.name)}</b><span>${hubEsc(a.desc)}</span></div>`;
-  }).join('');
-  document.getElementById('starList')!.innerHTML = CHALLENGES.map((c, i) => {
-    const r = stars[c.id], s = r?.stars ?? 0;
-    return `<li><span class="rank">${i + 1}</span><span class="grow">${hubEsc(c.name)}<span class="sub">${hubEsc(c.goal)}</span></span><span class="sub">${r ? `Best ${r.best}` : 'Not tried'}</span><b class="stars">${'★'.repeat(s)}${'☆'.repeat(3 - s)}</b></li>`;
   }).join('');
 }
 
@@ -802,7 +790,7 @@ async function renderMatches() {
   list.innerHTML = rows.length ? rows.map((r) => {
     const when = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     return `<li><span class="${r.won ? 'won' : 'lost'}">${r.won ? 'W' : 'L'}</span><span class="grow">v ${hubEsc(r.opponent)}<span class="sub">${hubEsc(r.score)} · ${when}</span></span><b class="${r.change >= 0 ? 'won' : 'lost'}">${r.change >= 0 ? '+' : ''}${r.change}</b></li>`;
-  }).join('') : '<li class="empty">No ranked matches yet. Try Quick match on Court 4.</li>';
+  }).join('') : '<li class="empty">No ranked matches yet. Try Quick match on Court 2.</li>';
 }
 
 /** Fill a leaderboard list (the hub's tab or the footer pop-up). Anyone can see it, logged in or not. */
@@ -814,7 +802,6 @@ const BOARDS: Record<string, { note: string; unit: (v: number) => string }> = {
   max_rally: { note: 'Longest rally in a match.', unit: (v) => `${v} shots` },
   perfect_hits: { note: 'Most perfectly timed hits, all time.', unit: (v) => `${v}` },
   max_streak: { note: 'Longest run of matches won in a row.', unit: (v) => `${v} in a row` },
-  stars: { note: 'Most stars from the Court 5 challenges (best stars on each).', unit: (v) => `${v} ★` },
   achievements: { note: 'Most achievements unlocked.', unit: (v) => `${v}` },
   career_titles: { note: 'Most tournaments won in career mode.', unit: (v) => `${v} title${v === 1 ? '' : 's'}` },
   career_best_rank: { note: 'Best world ranking reached in career mode.', unit: (v) => `#${v}` },
@@ -951,12 +938,13 @@ try {
 
 // ── Tour of the start screen ─────────────────────────────────────────────────
 const tour = new Tour([
-  { target: '.oop-row.live', title: 'Your match', text: 'Court 1 is your next match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play.', before: () => { closeDrawers(); closeSocial(); } },
+  { target: '.oop-row:has(#careerOpen)', title: 'Career', text: 'Court 1 is career mode: travel the tour, earn prize money, climb the world ranking and recruit players. The daily challenge is here too (log in first).', before: () => { closeDrawers(); closeSocial(); } },
+  { target: '.oop-row:has(#quickMatch)', title: 'Ranked and online', text: 'Court 2. Quick match finds someone near your rating for a ranked game (log in first). Create room gives you a code to send a friend, and Join takes you into theirs.' },
+  { target: '.oop-row:has(#start)', title: 'A match against the CPU', text: 'Court 3 is a quick match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play.' },
   { target: '#controlsBtn', title: 'Your controls', text: 'How you play: keyboard and mouse, keys with a trackpad, or keyboard only. Click it any time to switch.' },
   { target: '#matchcard', title: 'Match card', text: 'Edit match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
-  { target: '.oop-row:has(#tutorial)', title: 'Tutorial', text: 'New to the game? Court 2 is the tutorial: short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
-  { target: '.oop-row:has(#practice)', title: 'Practice', text: 'Court 3 is practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
-  { target: '.oop-row:has(#quickMatch)', title: 'Play online', text: 'Court 4. Quick match finds someone near your rating for a ranked game (log in first). Create room gives you a code to send a friend, and Join takes you into theirs.' },
+  { target: '.oop-row:has(#tutorial)', title: 'Tutorial', text: 'New to the game? Court 4 is the tutorial: short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
+  { target: '.oop-row:has(#practice)', title: 'Practice', text: 'Court 5 is practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
   { target: '#kitBtn', title: 'Assists & controls', text: 'This tab on the left edge slides out your assists and controls. Click it again to put it away.' },
   { target: '#kitcard', title: 'Assists', text: 'Turn help on or off: the landing marker (on by default), the timing light, swing assist, doubles auto-switch and the umpire’s voice.', before: () => openDrawer('kit', 'assists') },
   { target: '#kitcard', title: 'Controls and keys', text: 'Switch control mode, change any key under Your keys, and see how to play every shot.', before: () => openDrawer('kit', 'controls') },
@@ -965,7 +953,7 @@ const tour = new Tour([
   { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to keep your stats and settings on any computer, play ranked and add friends. Once you’re in, it shows your rating.', before: closeSocial },
   { target: '.board-foot', title: 'Help and updates', text: 'How to play lists every shot and key, Take the tour brings you back here, and What’s new shows every update (with a NEW badge when there’s one you haven’t seen).' },
   { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
-  { target: '#start', title: 'Ready?', text: 'That’s everything. Press Walk on to play the CPU, or try Court 4 to play someone online.' },
+  { target: '#start', title: 'Ready?', text: 'That’s everything. Start a career on Court 1, play someone online on Court 2, or press Walk on to play the CPU.' },
 ], () => { closeSocial(); closeDrawers(); document.getElementById('tourBtn')?.focus(); });
 /** Taking the tour (from the footer or the welcome card) counts as having seen it. */
 function startTour() {
@@ -1157,7 +1145,7 @@ syncTourBadge();
 if (!settings.controlsChosen) openControlsPick();
 else maybeWelcome();
 
-// ── Online rooms (Court 4) ───────────────────────────────────────────────────
+// ── Online rooms (Court 2) ───────────────────────────────────────────────────
 const roomModal = document.getElementById('roomModal')!;
 const roomJoin = document.getElementById('roomJoin')!, roomLobby = document.getElementById('roomLobby')!;
 const roomCodeIn = document.getElementById('roomCodeIn') as HTMLInputElement, roomJoinMsg = document.getElementById('roomJoinMsg')!;
@@ -1616,7 +1604,7 @@ document.getElementById('wnClose')!.addEventListener('click', closeChangelog);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeChangelog(); });
 addEventListener('keydown', (e) => { if (e.code === 'Escape' && !modal.classList.contains('hidden')) closeChangelog(); });
 
-// Court 1 on the Order of Play: who you're playing and the format, re-flipped like a board when it changes.
+// Court 3 on the Order of Play: who you're playing and the format, re-flipped like a board when it changes.
 const tag = document.getElementById('tag')!;
 const oppName = document.getElementById('oppName')!;
 const meName = document.getElementById('meName')!;
@@ -1738,7 +1726,6 @@ function startMatch(mode: Mode = 'match') {
   const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, myCharacter());
   game = new Game({ ...settings }, input, broadcast, mode, null, setup);
   game.onMatchOver = recordCareer;
-  if (game.session instanceof Challenges) game.session.onResult = challengeResult;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
   menu.classList.add('hidden');
@@ -1746,8 +1733,8 @@ function startMatch(mode: Mode = 'match') {
 }
 
 function showMenu() {
-  // Practice and challenges add to your heatmap too (matches add theirs when they finish).
-  if (game?.mode === 'practice' || game?.mode === 'challenge') recordHeat(game);
+  // Practice adds to your heatmap too (matches add theirs when they finish).
+  if (game?.mode === 'practice') recordHeat(game);
   if (game?.mode === 'tutorial' && game.session?.done) {
     try { localStorage.setItem(TUTORIAL_DONE, '1'); } catch { /* storage unavailable */ }
   }
@@ -1760,7 +1747,6 @@ function showMenu() {
 document.getElementById('start')!.addEventListener('click', () => startMatch('match'));
 document.getElementById('tutorial')!.addEventListener('click', () => startMatch('tutorial'));
 document.getElementById('practice')!.addEventListener('click', () => startMatch('practice'));
-document.getElementById('challenges')!.addEventListener('click', () => startMatch('challenge'));
 
 /** Keys during an online match: quick chat, pause (between points), forfeit, rematch, leave. */
 function onlineKeys(g: Game, over: boolean) {
@@ -1935,7 +1921,7 @@ function showCounts(c: PresenceCounts | null) {
     <li><span>Looking for a quick match</span><span>${c.inQueue}</span></li>
     <li><span>In a friend’s room</span><span>${c.inRoom}</span></li>
     <li><span>On the menu</span><span>${Math.max(0, c.online - c.inMatch - c.inQueue - c.inRoom)}</span></li></ul>
-    <p>${c.online <= 1 ? 'You’re the only one online right now. Make a room on Court 4 and send a friend the code.' : 'Quick match pairs you with someone near your rating.'}</p>`;
+    <p>${c.online <= 1 ? 'You’re the only one online right now. Make a room on Court 2 and send a friend the code.' : 'Quick match pairs you with someone near your rating.'}</p>`;
 }
 presence.onCounts(showCounts);
 onlineBtn.addEventListener('click', (e) => {

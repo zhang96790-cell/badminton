@@ -1080,3 +1080,34 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .c-bracket ol { columns: 2; margin: 6px 0 0; padding-left: 22px; }
 .c-bracket li.seed { font-weight: 800; }
 .career .social-body { display: grid; gap: 14px; align-content: start; }
+
+/* 3.0.1: five courts that fit a laptop screen without scrolling. Sizes follow the window height. */
+#menu { padding: clamp(8px, 2.2vh, 24px); }
+.board-head { padding: clamp(12px, 2.2vh, 24px) 32px clamp(10px, 1.8vh, 20px); }
+.shuttle { width: clamp(36px, 5vh, 48px); height: clamp(36px, 5vh, 48px); }
+#wordmark { font-size: clamp(32px, 4.8vh, 44px); }
+.oop { font-size: clamp(20px, 3vh, 28px); }
+.today { margin-top: 4px; font-size: 14px; }
+@media (min-width: 761px) { .oop-cols, .oop-row { grid-template-columns: 64px 170px minmax(0, 1fr) 236px; column-gap: 20px; padding-left: 32px; padding-right: 32px; } }
+.oop-cols { padding-top: clamp(6px, 1.2vh, 12px); padding-bottom: clamp(4px, 0.8vh, 8px); }
+.oop-row { min-height: clamp(70px, 11vh, 100px); padding-top: clamp(6px, 1.2vh, 14px); padding-bottom: clamp(6px, 1.2vh, 14px); }
+.oop-row:nth-of-type(5) { animation-delay: 0.32s; }
+.oop-row:nth-of-type(6) { animation-delay: 0.4s; }
+.ct { font-size: clamp(44px, 7vh, 68px); }
+.event { gap: 6px; font-size: 14px; }
+.vs { font-size: clamp(22px, 3.4vh, 30px); }
+.sub { margin-top: 4px; font-size: clamp(13px, 1.75vh, 15px); line-height: 1.3; }
+.vs .tip { margin: 0 0 0 10px; vertical-align: 0.35em; font-size: 11px; }
+.act { min-width: 0; gap: 6px; }
+.walk { padding: clamp(9px, 1.5vh, 14px) 20px; font-size: clamp(19px, 2.8vh, 24px); }
+.edit, .go { padding: clamp(6px, 1vh, 9px) 14px; font-size: 13px; }
+.go-arrow { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.go-arrow svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s var(--ease-out); }
+.go-arrow:hover svg { transform: translateX(3px); }
+.act-pair .go { flex: 1; }
+.oop-row.cpu .opp { color: var(--amber-hi); }
+.board-foot { padding: clamp(8px, 1.2vh, 14px) 32px; }
+.notice { margin: 0 32px; padding: 8px 0; }
+.act-pair .go { white-space: nowrap; padding-left: 10px; padding-right: 10px; }
+.go.go-arrow { background: transparent; border-color: var(--amber); color: var(--amber-hi); }
+.go.go-arrow:hover { background: rgba(255, 196, 61, 0.12); }

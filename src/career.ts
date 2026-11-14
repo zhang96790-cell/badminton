@@ -168,11 +168,11 @@ export function evaluate(c: Career, weakZone: string | null): Evaluation {
   const rate = (a: number, b: number) => (b ? a / b : 0);
   const timing = rate(g('perfect_hits'), hits);
   if (timing >= 0.4) S.push({ score: timing, text: `Clean timing: ${Math.round(100 * timing)}% of your hits are perfect` });
-  else if (timing < 0.2) W.push({ score: 0.4 - timing, text: `Timing: only ${Math.round(100 * timing)}% of hits are perfect. Try swinging a fraction later`, tip: 'the Perfect timing challenge (Court 5) with the timing light on' });
+  else if (timing < 0.2) W.push({ score: 0.4 - timing, text: `Timing: only ${Math.round(100 * timing)}% of hits are perfect. Try swinging a fraction later`, tip: 'a practice drill (Court 5) with the timing light on' });
   if (g('max_smash') >= 280) S.push({ score: 0.6, text: `A big smash (${g('max_smash')} km/h at best)` });
   const finish = rate(g('smash_winners'), g('smashes'));
   if (g('smashes') >= 15 && finish >= 0.25) S.push({ score: finish + 0.2, text: `Your smashes finish points (${Math.round(100 * finish)}% are winners)` });
-  else if (g('smashes') >= 15 && finish < 0.1) W.push({ score: 0.3, text: 'Smashes rarely win the point: aim for the body or the sidelines, not the middle', tip: 'the Smash attack challenge (Court 5)' });
+  else if (g('smashes') >= 15 && finish < 0.1) W.push({ score: 0.3, text: 'Smashes rarely win the point: aim for the body or the sidelines, not the middle', tip: 'the Smash drill in Practice (Court 5)' });
   const unforced = rate(g('unforced_errors'), g('points_lost'));
   if (g('points_lost') >= 20 && unforced > 0.5) W.push({ score: unforced, text: `Unforced errors: ${Math.round(100 * unforced)}% of the points you lose are your own mistakes`, tip: 'aiming half a metre inside the lines, and the Deep clears challenge to groove a safe shot' });
   const ratio = rate(g('winners'), g('unforced_errors'));
@@ -183,10 +183,10 @@ export function evaluate(c: Career, weakZone: string | null): Evaluation {
   if (g('net_kills') >= 10) S.push({ score: 0.5, text: `Sharp at the net (${g('net_kills')} net kills)` });
   if (g('backhand_winners') >= 5) S.push({ score: 0.4, text: 'A backhand that wins points' });
   const attack = g('smashes') + g('drops') + g('clears');
-  if (attack >= 40 && rate(g('drops'), attack) < 0.1) W.push({ score: 0.35, text: 'You hardly use the drop: mix it in so smashes and clears are harder to read', tip: 'the Drop zone challenge (Court 5)' });
-  if (attack >= 40 && rate(g('smashes'), attack) > 0.6) W.push({ score: 0.3, text: 'Mostly smashes: easy to read. Vary with drops and clears', tip: 'the Clear & drop drill in Practice (Court 3)' });
-  if (g('net_shots') < g('matches') * 3) W.push({ score: 0.2, text: 'You rarely play net shots: a tight net shot forces a lift you can attack', tip: 'the Tight at the net challenge (Court 5)' });
-  if (weakZone) W.push({ score: 0.5, text: `The CPU has noticed you struggle with shots to your ${weakZone}`, tip: `moving back to your base after every shot, and the Mixed drill in Practice (Court 3)` });
+  if (attack >= 40 && rate(g('drops'), attack) < 0.1) W.push({ score: 0.35, text: 'You hardly use the drop: mix it in so smashes and clears are harder to read', tip: 'the Clear & drop drill in Practice (Court 5)' });
+  if (attack >= 40 && rate(g('smashes'), attack) > 0.6) W.push({ score: 0.3, text: 'Mostly smashes: easy to read. Vary with drops and clears', tip: 'the Clear & drop drill in Practice (Court 5)' });
+  if (g('net_shots') < g('matches') * 3) W.push({ score: 0.2, text: 'You rarely play net shots: a tight net shot forces a lift you can attack', tip: 'the Net play drill in Practice (Court 5)' });
+  if (weakZone) W.push({ score: 0.5, text: `The CPU has noticed you struggle with shots to your ${weakZone}`, tip: `moving back to your base after every shot, and the Mixed drill in Practice (Court 5)` });
   const challenges = g('challenges');
   if (challenges >= 5 && rate(g('challenges_won'), challenges) >= 0.5) S.push({ score: 0.3, text: 'A good eye for line calls' });
   S.sort((a, b) => b.score - a.score);

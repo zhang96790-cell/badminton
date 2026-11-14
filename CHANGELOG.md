@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.0.1: A cleaner start screen (14 Nov 2026)
+
+- Star challenges are gone. The coaching tips now point to the practice drills instead, and the two star achievements and the stars leaderboard are removed.
+- The courts are in a new order: 1 Career, 2 Ranked and online, 3 a match against the CPU, 4 Tutorial, 5 Practice.
+- A tidier start screen that fits on a laptop screen without scrolling: everything scales with your window height, and each court has a one-line description.
+
 ## 3.0: Career mode (14 Nov 2026)
 
 - Career mode (Court 6): pick your home country, a free Common player and a difficulty, then travel the tour: 6 Super 100s and 5 Super 300s a season, starting in 2027.

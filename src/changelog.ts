@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0.1',
+    title: 'A cleaner start screen',
+    date: '14 Nov 2026',
+    changes: [
+      "Star challenges are gone. The coaching tips now point to the practice drills instead, and the two star achievements and the stars leaderboard are removed.",
+      "The courts are in a new order: 1 Career, 2 Ranked and online, 3 a match against the CPU, 4 Tutorial, 5 Practice.",
+      "A tidier start screen that fits on a laptop screen without scrolling: everything scales with your window height, and each court has a one-line description.",
+    ],
+  },
+  {
     version: '3.0',
     title: 'Career mode',
     date: '14 Nov 2026',

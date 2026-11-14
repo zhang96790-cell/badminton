@@ -11,7 +11,6 @@ import { chance, clamp, gauss, type Side, type V2, type V3 } from './math';
 import { createOfficials, gameStartCall, gameWonCall, judgeFor, matchWonCall, scoreCall, type LineCall, type Official } from './officials';
 import { Player } from './player';
 import { Practice, feedShot, type FeedType, type Session } from './practice';
-import { Challenges } from './challenges';
 import { Tutorial } from './tutorial';
 import { Playback, Recorder, type ShuttleView } from './replay';
 import { Match, partnerIdx, type PointOutcome } from './rules';
@@ -72,7 +71,7 @@ export interface Settings {
 /** 'feed' = practice/tutorial: you move freely while the coach gets the next shuttle ready. */
 /** 'wait' = online: the shuttle reached the floor here, waiting to hear whether the other player hit it first. */
 export type GameState = 'serve' | 'rally' | 'point' | 'challenge' | 'interval' | 'gameBreak' | 'replay' | 'matchOver' | 'feed' | 'wait';
-export type Mode = 'match' | 'practice' | 'tutorial' | 'challenge' | 'online';
+export type Mode = 'match' | 'practice' | 'tutorial' | 'online';
 
 export type GameEvent =
   | { type: 'hit'; strength: number }
@@ -238,9 +237,9 @@ export class Game {
   readonly setup: MatchSetup;
 
   constructor(public settings: Settings, input: Input, camera: Camera, public mode: Mode = 'match', online: OnlineLink | null = null, setup?: MatchSetup) {
-    this.setup = setup ?? defaultSetup(online ? (online.ranked ? 'ranked' : 'friendly') : mode === 'practice' || mode === 'tutorial' || mode === 'challenge' ? 'practice' : 'cpu', settings.games, settings.points);
+    this.setup = setup ?? defaultSetup(online ? (online.ranked ? 'ranked' : 'friendly') : mode === 'practice' || mode === 'tutorial' ? 'practice' : 'cpu', settings.games, settings.points);
     this.online = online;
-    const drill = mode === 'practice' || mode === 'tutorial' || mode === 'challenge';
+    const drill = mode === 'practice' || mode === 'tutorial';
     // Online: doubles when the room has a lineup of four, otherwise singles. Nobody switches players online.
     if (online) settings = { ...settings, event: online.lineup ? 'doubles' : 'singles', autoSwitch: false };
     if (drill) settings = { ...settings, opponent: 'medium', event: 'singles' };
@@ -316,7 +315,7 @@ export class Game {
       this.sigs = Signatures.forCharacters([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null], (i) => this.teamOf(i));
     }
     if (drill) {
-      this.session = mode === 'practice' ? new Practice() : mode === 'challenge' ? new Challenges() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
+      this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
       p1.place(0, -PLAYER.baseDepth);
       p2.place(0, 2.2);
       this.shuttle.hold({ x: 0, y: 1.6, z: 0.8 });

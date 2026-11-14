@@ -1,7 +1,6 @@
-// Achievements: one-off milestones, checked after every match and challenge. Unlocked ones are kept on
+// Achievements: one-off milestones, checked after every match. Unlocked ones are kept on
 // this computer and, when logged in, added to your career (max_ach_<id> = 1) for the leaderboard.
 import type { Career } from './career';
-import { CHALLENGES, type StarRecord } from './challenges';
 
 /** What a finished match showed (only the parts achievements care about). */
 export interface MatchFacts {
@@ -16,7 +15,7 @@ export interface MatchFacts {
   loveGame: boolean;
 }
 
-export interface Achievement { id: string; name: string; desc: string; done: (c: Career, m: MatchFacts | null, s: StarRecord) => boolean }
+export interface Achievement { id: string; name: string; desc: string; done: (c: Career, m: MatchFacts | null) => boolean }
 
 const beat = (level: string) => (_: Career, m: MatchFacts | null) => !!m?.won && !m.online && m.level === level;
 
@@ -36,8 +35,6 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'on_fire', name: 'On fire', desc: 'Win 5 matches in a row', done: (c) => (c.max_streak ?? 0) >= 5 },
   { id: 'online_win', name: 'Going global', desc: 'Win a match online', done: (_, m) => !!m?.won && m.online },
   { id: 'regular', name: 'Regular', desc: 'Play 50 matches', done: (c) => (c.matches ?? 0) >= 50 },
-  { id: 'three_stars', name: 'Star pupil', desc: 'Get 3 stars on any challenge', done: (_, __, s) => Object.values(s).some((x) => x.stars >= 3) },
-  { id: 'all_stars', name: 'Perfect record', desc: 'Get 3 stars on every challenge', done: (_, __, s) => CHALLENGES.every((c) => (s[c.id]?.stars ?? 0) >= 3) },
 ];
 
 const KEY = 'badminton.achievements';
@@ -50,13 +47,13 @@ export function loadUnlocked(): Unlocked {
  * Check everything against your career (and this match, if there was one). Saves and returns the
  * achievements that are new. Ones already in your account's career count as unlocked too.
  */
-export function checkAchievements(c: Career, m: MatchFacts | null, stars: StarRecord): Achievement[] {
+export function checkAchievements(c: Career, m: MatchFacts | null): Achievement[] {
   const got = loadUnlocked();
   const fresh: Achievement[] = [];
   for (const a of ACHIEVEMENTS) {
     if (got[a.id]) continue;
     if (c[`max_ach_${a.id}`]) { got[a.id] = Date.now(); continue; }
-    if (a.done(c, m, stars)) { got[a.id] = Date.now(); fresh.push(a); }
+    if (a.done(c, m)) { got[a.id] = Date.now(); fresh.push(a); }
   }
   try { localStorage.setItem(KEY, JSON.stringify(got)); } catch { /* storage unavailable */ }
   return fresh;

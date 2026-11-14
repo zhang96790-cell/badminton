@@ -3,7 +3,7 @@
 import { DEFAULT_CHARACTER, RARITY, characterById, rosterFor, type Character } from '../../shared/characters';
 import type { Game } from '../game';
 import type { Settings } from '../game';
-import { STYLES, type Style } from '../config';
+import { LEVEL_LABEL, STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
@@ -272,6 +272,39 @@ export function initCareer(d: CareerDeps) {
       ${drawTable(x)}<div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
 
+  /** Before every career match: who you're about to play. */
+  function renderPreMatch() {
+    const x = ev(), nm = x && nextMatch(s!, W(), x);
+    if (!x || !nm) return;
+    const o = nm.opponent, me = characterById(s!.current!.as);
+    const rankList = W().rankingAt(absWeek(s!.year, s!.week));
+    const ri = rankList.findIndex((r) => r.id === o.id);
+    const rank = ri >= 0 && rankList[ri].pts > 0 ? `#${ri + 1}` : 'Unranked';
+    const style = STYLES[STYLE_AI[o.style]];
+    const rows = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'].map((l, i) => {
+      const a = (o.base_stats ?? o.stats)[i], b = (me.base_stats ?? me.stats)[i];
+      return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
+    }).join('');
+    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)} · ${ROUND_LABEL[nm.round]} · best of 3 to 15</p>
+      <div class="c-pre-grid">
+        <div class="c-pre-who">
+          <h3 class="c-title">${e(o.name)}</h3>
+          <span class="ccard" style="--rar:${RARITY[o.rarity].color}"><span class="rar">${RARITY[o.rarity].label}</span> ${e(countryName(o.country))} · ${o.handedness === 'left' ? 'left-handed' : 'right-handed'}</span>
+          <div class="c-facts">${fact('World rank', rank)}${fact('Style', style.label)}${fact('Career strength', String(o.career_strength))}${fact('Plays like', `${LEVEL_LABEL[nm.level]} CPU`)}</div>
+          <p class="c-trait"><b>${e(style.label)}:</b> ${e(style.trait)}</p>
+          ${o.abilities.length ? o.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('') : '<p class="c-lead small">No signature ability.</p>'}
+          <p class="c-lead">${e(o.description)}</p>
+        </div>
+        <div class="c-pre-stats">
+          <canvas class="pentagon" id="prePent" aria-label="${e(o.name)}'s stats against yours"></canvas>
+          <p class="c-lead small"><span class="key them"></span>${e(o.name.split(' ')[0])} <span class="key you"></span>You (${e(me.name)})</p>
+          <table class="c-table"><tr><th></th><th>${e(o.name.split(' ')[0])}</th><th>You</th><th></th></tr>${rows}</table>
+        </div>
+      </div>
+      <div class="c-cta"><button class="walk" data-startmatch>Start match ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-ctab="hub">← Back</button></div></section>`;
+    void import('../pentagon').then(({ drawPentagon }) => drawPentagon($('prePent') as HTMLCanvasElement, o.base_stats ?? o.stats, RARITY[o.rarity].color, { stats: me.base_stats ?? me.stats, color: '#ffc54d' }));
+  }
+
   function renderDetail(id: string) {
     const x = findEvent(s!, id, d.appVersion);
     if (!x) return;
@@ -306,8 +339,10 @@ export function initCareer(d: CareerDeps) {
 
   async function renderSquad() {
     const owned = await d.owned();
-    const mine = released.filter((c) => (owned.has(c.id) || s!.squad.includes(c.id)) && c.id !== DEFAULT_CHARACTER);
-    body.innerHTML = `<div class="c-card"><h3>Your squad</h3><p class="sub">Players you own. Choose who plays your next tournament. Recruits from career also play in ranked and friend matches (with their ranked stats).</p>
+    // Your career squad: the player you started with and the ones you've recruited in this career.
+    const mine = s!.squad.map((id) => characterById(id)).filter((c) => c.id !== DEFAULT_CHARACTER);
+    void owned;
+    body.innerHTML = `<div class="c-card"><h3>Your squad</h3><p class="sub">The player you started with and the ones you’ve recruited this career. Choose who plays your next tournament. Recruits also join your account for ranked and friend matches.</p>
       <div class="c-squad">${mine.map((c) => `<button class="${c.id === s!.characterId ? 'on' : ''}" data-pick="${c.id}" ${s!.current ? 'disabled' : ''}>${card(c, `<span class="sub">career strength ${c.career_strength}${c.abilities.length ? ` · ${c.abilities.map((ab) => `★ ${e(ab.name)}`).join(', ')}` : ''}</span>`)}</button>`).join('') || '<p>No players yet.</p>'}</div></div>`;
   }
 
@@ -395,7 +430,7 @@ export function initCareer(d: CareerDeps) {
     const countries = [...new Set(released.map((c) => c.country))].filter((c) => COUNTRIES[c]).sort((a, b) => countryName(a).localeCompare(countryName(b)));
     body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
       <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
-      <h3>Choose your player</h3><p class="sub">A free Common player from your country (they join your account), or one you already own.</p>
+      <h3>Choose your player</h3><p class="sub">Everyone starts as a Common player with no signature ability. Win tournaments to recruit stronger ones.</p>
       <div id="cStarters" class="c-squad"></div>
       <div class="c-actions"><button class="primary" id="cBegin" disabled>Start career</button></div></div>`;
     void fillStarters();
@@ -405,19 +440,17 @@ export function initCareer(d: CareerDeps) {
   let retiredHall: import('./state').HallEntry[] | null = null;
   async function fillStarters() {
     const home = ($('cHome') as HTMLSelectElement).value;
-    const owned = await d.owned();
-    const commons = released.filter((c) => c.rarity === 'common' && c.id !== DEFAULT_CHARACTER);
+    // Everyone starts as a Common with no signature ability (recruits come from winning).
+    const commons = released.filter((c) => c.rarity === 'common' && c.id !== DEFAULT_CHARACTER && !c.abilities.length);
     const region = COUNTRIES[home]?.region;
     let pool = commons.filter((c) => c.country === home);
     if (pool.length < 3) pool = pool.concat(commons.filter((c) => c.country !== home && COUNTRIES[c.country]?.region === region));
     if (pool.length < 3) pool = commons;
     const r = rng(hash(d.account()!.id, home));
     const picks = [...pool].sort(() => r() - 0.5).slice(0, 3);
-    const mine = released.filter((c) => owned.has(c.id) && c.id !== DEFAULT_CHARACTER);
     starter = null;
     ($('cBegin') as HTMLButtonElement).disabled = true;
-    $('cStarters').innerHTML = picks.map((c) => `<button data-starter="${c.id}" data-free="1">${card(c, '<span class="sub">free</span>')}</button>`).join('')
-      + mine.map((c) => `<button data-starter="${c.id}">${card(c, '<span class="sub">owned</span>')}</button>`).join('');
+    $('cStarters').innerHTML = picks.map((c) => `<button data-starter="${c.id}" data-free="1">${card(c, '<span class="sub">free</span>')}</button>`).join('');
   }
 
   async function begin() {
@@ -425,11 +458,8 @@ export function initCareer(d: CareerDeps) {
     busy = true;
     try {
       const m = await d.loadAccount();
-      if (starter.free) {
-        const got = await m.careerStarter(starter.id);
-        const owned = await d.owned();
-        if (!got && !owned.has(starter.id)) { d.toast('Free player already used', 'Each account gets one free career player. Pick one you own.'); return; }
-      }
+      // The first career also adds the free player to your account (for ranked); later careers just play as them.
+      if (starter.free) await m.careerStarter(starter.id).catch(() => null);
       const hall = retiredHall ?? [];
       retiredHall = null;
       s = newCareer({ name: ($('cName') as HTMLInputElement).value.trim() || 'Player', homeCountry: ($('cHome') as HTMLSelectElement).value, characterId: starter.id, difficulty: 'relaxed' });
@@ -629,7 +659,8 @@ export function initCareer(d: CareerDeps) {
     }
     const rf = at('[data-refuel]')?.dataset.refuel as 'food' | 'physio' | undefined;
     if (rf) { if (!refuel(s, rf)) d.toast('Not enough money', ''); else { await save(); render(); } return; }
-    if (at('[data-playnext]')) { void playNext(); return; }
+    if (at('[data-playnext]')) { renderPreMatch(); return; }
+    if (at('[data-startmatch]')) { void playNext(); return; }
     if (at('[data-withdraw]')) { if (!confirm('Withdraw from this tournament? You keep any prize and points from rounds you’ve already won.')) return; withdraw(s, W(), ev()!); await save(); render(); return; }
     const pk = at('[data-pick]')?.dataset.pick;
     if (pk && !s.current) { s.characterId = pk; if (!s.squad.includes(pk)) s.squad.push(pk); await save(); render(); return; }

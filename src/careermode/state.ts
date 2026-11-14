@@ -66,7 +66,12 @@ export interface CareerState {
   /** The season recap to show (the year just finished). */
   recap: number | null;
   startedAt: string;
+  /** Which reset this career belongs to (older careers start over). */
+  epoch?: string;
 }
+
+/** Bump to restart everyone's career the next time they open it. */
+export const CAREER_EPOCH = '3.3.1';
 
 export interface Sponsor { name: string; weekly: number; bonus: number; band: number; year: number }
 export interface HallEntry { name: string; from: number; to: number; titles: number; bestRank: number | null; golds: number; silvers: number; bronzes: number; prize: number; as: string }
@@ -81,7 +86,7 @@ export function newCareer(o: { name: string; homeCountry: string; characterId: s
     money: CFG.startMoney, energy: CFG.startEnergy, year: CFG.startYear, week: 1, season: CFG.startYear,
     rngSeed: o.seed ?? Math.floor(Math.random() * 2 ** 31), difficulty: o.difficulty, history: [], pendingRecruitOffer: null, offerDue: null,
     unlocks: { s300: false }, settings: { fasterEarlyRounds: false, business: false, travelClass: 'economy', hotel: 'three' }, current: null, ledger: [], titles: 0, bestRank: null,
-    recap: null, startedAt: new Date().toISOString(), injury: null, staff: {}, sponsor: null, sponsorOffers: null, milestones: [], hallOfFame: [],
+    recap: null, startedAt: new Date().toISOString(), epoch: CAREER_EPOCH, injury: null, staff: {}, sponsor: null, sponsorOffers: null, milestones: [], hallOfFame: [],
   };
 }
 
@@ -90,6 +95,8 @@ export function migrate(raw: unknown): CareerState | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as Partial<CareerState>;
   if (s.v !== 1 || !s.characterId) return null;
+  // Careers from before this reset start over (3.3.1: everyone restarted).
+  if (s.epoch !== CAREER_EPOCH) return null;
   return { ...newCareer({ name: s.name ?? 'Player', homeCountry: s.homeCountry ?? 'GBR', characterId: s.characterId, difficulty: s.difficulty ?? 'relaxed', seed: s.rngSeed }), ...s } as CareerState;
 }
 

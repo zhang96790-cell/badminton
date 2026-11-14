@@ -1257,3 +1257,12 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .c-energybar b { position: absolute; right: 10px; top: 4px; font: 800 16px/1 var(--text); color: var(--ink); }
 .c-miles { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 600 13px/1.4 var(--text); color: var(--ink-3); }
 .c-miles .done { color: var(--amber-hi); }
+
+/* 3.3.1: pre-match opponent screen */
+.c-pre-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.c-pre-who { display: grid; gap: 10px; }
+.c-pre-stats { display: grid; gap: 8px; justify-items: center; }
+.c-pre .pentagon { width: 320px; height: 240px; }
+.c-pre .key { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; border-radius: 2px; vertical-align: -1px; }
+.c-pre .key.them { background: var(--ink-2); } .c-pre .key.you { background: #ffc54d; }
+.c-pre .c-table td.up { color: var(--live); } .c-pre .c-table td.down { color: #ff8a65; }

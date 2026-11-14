@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.1',
+    title: 'Fresh starts and scouting',
+    date: '14 Nov 2026',
+    changes: [
+      "Everyone’s career starts again: open career mode and you’ll begin a new one (players you recruited stay on your account).",
+      "A new career starts with a Common player who has no signature ability. You can no longer start with a player you own from elsewhere, and your career squad is your starting player plus the players you recruit in that career.",
+      "Before every career match, a screen for your opponent: their world rank, country, rarity, style and what it means, the CPU level they play like, their signature abilities, a short summary, and a stat chart against yours.",
+    ],
+  },
+  {
     version: '3.3',
     title: 'The tough tour',
     date: '14 Nov 2026',

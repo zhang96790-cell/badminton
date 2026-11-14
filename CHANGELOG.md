@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.5: Read it yourself (14 Nov 2026)
+
+- Ranked matches are harder to read: the landing marker no longer shows for shots coming to your side, only for where your own shots will land (if the marker is on in Settings). Every other mode is unchanged.
+
 ## 3.3.1: Fresh starts and scouting (14 Nov 2026)
 
 - Everyone’s career starts again: open career mode and you’ll begin a new one (players you recruited stay on your account).

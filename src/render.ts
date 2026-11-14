@@ -336,6 +336,8 @@ export class Renderer {
   private guides(game: Game) {
     const s = game.shuttle;
     if (!s.inFlight || game.state !== 'rally' || game.disguiseT > 0) return;
+    // Ranked: no marker for shots coming to your side (you read those yourself); you still see where yours land.
+    if (game.online?.ranked && s.lastHitter !== game.players[0].side) return;
     const ctx = this.ctx;
     const a = this.cam.project(s.pos), b = this.cam.project(v3(s.pos.x, s.pos.y, 0));
     ctx.setLineDash([3, 4]);

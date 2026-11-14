@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.5',
+    title: 'Read it yourself',
+    date: '14 Nov 2026',
+    changes: [
+      "Ranked matches are harder to read: the landing marker no longer shows for shots coming to your side, only for where your own shots will land (if the marker is on in Settings). Every other mode is unchanged.",
+    ],
+  },
+  {
     version: '3.3.1',
     title: 'Fresh starts and scouting',
     date: '14 Nov 2026',

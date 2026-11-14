@@ -42,6 +42,20 @@ export class Hud {
       this.rally(game, w);
     }
 
+    // A signature ability just fired: a small badge (yours bottom-left, the opponent's bottom-right).
+    const ap = game.abilityPop;
+    if (ap) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, (1.8 - ap.t) / 0.5));
+      ctx.font = font(15, 800);
+      const label = `★ ${ap.text}`, tw = ctx.measureText(label).width + 28;
+      const bx = ap.mine ? 24 : w - 24 - tw, by = h - 92;
+      panel(ctx, bx, by, tw, 32, 16, 'rgba(10,15,24,0.82)');
+      ctx.fillStyle = ap.mine ? '#f2c14e' : '#9ec5ff';
+      ctx.textAlign = 'left';
+      ctx.fillText(label, bx + 14, by + 22);
+      ctx.globalAlpha = 1;
+    }
+
     // Shot callout
     const c = game.state === 'serve' ? null : game.callout;
     if (c) {

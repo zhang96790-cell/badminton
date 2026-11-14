@@ -118,6 +118,16 @@
             </div>
             <div class="act"><button id="challenges" class="go">Start</button></div>
           </section>
+
+          <section class="oop-row" aria-label="Court 6, career">
+            <span class="ct" aria-hidden="true">6</span>
+            <p class="event"><span>Career</span></p>
+            <div class="match">
+              <p class="vs">Career mode</p>
+              <p class="sub" id="careerSub">Travel the Super 100 and Super 300 tour, earn prize money, climb the world ranking and recruit players. Plus a daily challenge.</p>
+            </div>
+            <div class="act act-pair"><button id="careerOpen" class="go">Career</button><button id="dailyOpen" class="go">Daily</button></div>
+          </section>
         </div>
 
         <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>
@@ -404,6 +414,14 @@
         </div>
       </div>
     </div>
+    <div id="career" class="social career hidden" role="dialog" aria-modal="true" aria-label="Career mode">
+      <div class="social-panel">
+        <header class="social-hero"><div class="hero-id" id="careerHead"></div>
+          <button class="mc-close social-close" data-cclose aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button></header>
+        <nav class="social-tabs" role="tablist" id="careerTabs"></nav>
+        <div class="social-body" id="careerBody"></div>
+      </div>
+    </div>
     <div id="social" class="social hidden" role="dialog" aria-modal="true" aria-labelledby="socialName">
       <div class="social-panel">
         <header class="social-hero">
@@ -460,7 +478,7 @@
             <div class="seg board-seg" id="boardSeg">
               <button data-value="rating">Ranked rating</button><button data-value="wins">Wins</button><button data-value="max_smash">Fastest smash</button>
               <button data-value="max_rally">Longest rally</button><button data-value="perfect_hits">Perfect hits</button><button data-value="max_streak">Win streak</button>
-              <button data-value="stars">Challenge stars</button><button data-value="achievements">Achievements</button>
+              <button data-value="stars">Challenge stars</button><button data-value="achievements">Achievements</button><button data-value="career_titles">Career titles</button><button data-value="career_best_rank">Best career ranking</button>
             </div>
             <p class="pane-note" id="boardNote">Top 50 by rating from ranked quick matches (Court 4). Everyone starts at 1000.</p>
             <ol id="leaderList" class="hub-list leaders"></ol>
@@ -475,8 +493,18 @@
           </section>
           <section data-hubpane="players" hidden>
             <div id="pickOffer" class="pick-offer" hidden></div>
+            <div class="players-tools" id="playerTools">
+              <input id="pSearch" type="search" placeholder="Search players" aria-label="Search players by name" autocomplete="off" spellcheck="false" />
+              <select id="pRarity" aria-label="Rarity"><option value="">All rarities</option></select>
+              <select id="pStyle" aria-label="Style"><option value="">All styles</option></select>
+              <select id="pCountry" aria-label="Country"><option value="">All countries</option></select>
+              <select id="pHand" aria-label="Hand"><option value="">Either hand</option><option value="right">Right-handed</option><option value="left">Left-handed</option></select>
+              <select id="pOwned" aria-label="Owned"><option value="">Owned and locked</option><option value="owned">Owned</option><option value="locked">Locked</option></select>
+              <select id="pSort" aria-label="Sort"><option value="rarity">Sort: rarity</option><option value="name">Sort: name</option><option value="total">Sort: stat total</option><option value="0">Sort: Power</option><option value="1">Sort: Speed</option><option value="2">Sort: Net</option><option value="3">Sort: Defence</option><option value="4">Sort: Stamina</option></select>
+              <span id="pCount" class="sub"></span>
+            </div>
             <div class="players-wrap">
-              <div id="playerGrid" class="player-grid"></div>
+              <div id="playerScroll" class="player-scroll"><div id="playerGrid" class="player-grid"></div></div>
               <aside id="playerDetail" class="player-detail"></aside>
             </div>
           </section>

@@ -18,8 +18,9 @@ import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
 import type { Seat } from './net';
-import { characterById, getEffectiveStats } from '../shared/characters';
-import { defaultSetup, restrictionsAllowed, type MatchSetup, type Restrictions } from './setup';
+import { characterById, getEffectiveStats, type Character, type Modifier } from '../shared/characters';
+import { defaultSetup, restrictionsAllowed, usesCareerStats, type MatchSetup, type Restrictions } from './setup';
+import { Signatures, shotKind, type ShotCtx, type SigDef } from './careermode/signatures';
 import { REPLAY_CAMS, type ReplayCam } from './camera';
 import type { Highlight } from './highlights';
 import type { MatchFacts } from './achievements';
@@ -41,7 +42,7 @@ export interface Settings {
   p1Control: 'mouse' | 'keyboard' | 'hybrid';
   /** 1 = single game, 3 = best of three. */
   games: 1 | 3;
-  points: 15 | 21;
+  points: 11 | 15 | 21;
   /** Show the predicted landing spot and a height line under the shuttle. */
   guides: boolean;
   /** Light next to your player: yellow = too early to swing, green = swing now, red = too late. */
@@ -211,6 +212,22 @@ export class Game {
   private hoverHit = -1;
   /** A disguised shot was just played: the landing marker stays hidden this long (game seconds). */
   disguiseT = 0;
+  /** Signature abilities in this match (null when off). */
+  sigs: Signatures | null = null;
+  /** The last ability that fired, for the screen. */
+  abilityPop: { text: string; mine: boolean; t: number } | null = null;
+  private statMode: 'ranked' | 'career' = 'ranked';
+  private statChars: (Character | null)[] = [null, null];
+  private baseMods: Modifier[][] = [[], []];
+  private baseSpeed: number[] = [];
+  /** Recompute a player's stats with any timed ability effects. */
+  private refreshEff(i: number) {
+    const c = this.statChars[i];
+    if (!c) return;
+    const p = this.players[i];
+    p.eff = getEffectiveStats(c, [...this.baseMods[i], ...(this.sigs?.modsFor(i) ?? [])], this.statMode);
+    p.speedMult = this.baseSpeed[i] * p.eff.move;
+  }
   /** Online: how far (game seconds) the other player's latest shot still lags behind its true position. */
   private catchUp = 0;
   /** Online: gap between where the shuttle was drawn and where their hit put it, shrinking to nothing. */
@@ -285,11 +302,19 @@ export class Game {
     }
     this.players.forEach((p, i) => { if (this.isHuman(i)) p.extraReach = PLAYER.humanExtraReach; });
     // Characters: you, and a CPU opponent if one was picked. Neutral stats leave everything as it was.
-    this.players[0].eff = getEffectiveStats(characterById(this.setup.player.characterId));
-    if (this.setup.opponent.characterId && !online) this.players[1].eff = getEffectiveStats(characterById(this.setup.opponent.characterId));
+    const statMode = this.statMode = usesCareerStats(this.setup.mode) ? 'career' : 'ranked';
+    this.statChars = [characterById(this.setup.player.characterId), this.setup.opponent.characterId && !online ? characterById(this.setup.opponent.characterId) : null];
+    this.baseMods = [this.setup.player.modifiers ?? [], this.setup.opponent.modifiers ?? []];
+    this.players[0].eff = getEffectiveStats(this.statChars[0]!, this.baseMods[0], statMode);
+    if (this.statChars[1]) this.players[1].eff = getEffectiveStats(this.statChars[1], this.baseMods[1], statMode);
     for (const p of this.players) p.speedMult *= p.eff.move;
-    this.limits = restrictionsAllowed() ? this.setup.restrictions : {};
+    this.limits = restrictionsAllowed() || this.setup.forced ? this.setup.restrictions : {};
     if (this.limits.opponentSpeedMult) this.players[1].speedMult *= this.limits.opponentSpeedMult;
+    this.baseSpeed = this.players.map((p) => p.speedMult / p.eff.move);
+    // Signature abilities (career and the daily challenge; never online until they're balanced for it).
+    if (!online && !doubles && (this.setup.player.abilities || this.setup.opponent.abilities)) {
+      this.sigs = Signatures.forCharacters([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null], (i) => this.teamOf(i));
+    }
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : mode === 'challenge' ? new Challenges() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
       p1.place(0, -PLAYER.baseDepth);
@@ -459,6 +484,8 @@ export class Game {
     if (this.commentary && (this.commentary.t += real) > 4.5) this.commentary = null;
     this.cheer = Math.max(0, this.cheer - real * 0.3);
     this.stats.tick(real);
+    if (this.sigs?.tick(dt)) { this.refreshEff(0); this.refreshEff(1); }
+    if (this.abilityPop && (this.abilityPop.t += real) > 1.8) this.abilityPop = null;
     if (!this.session) this.scoreWatch();
     for (const o of this.officials) o.signalT += real;
 
@@ -739,7 +766,19 @@ export class Game {
           this.events.push({ type: 'net' });
           break;
         }
-        const shot = resolveShot(req, c, this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1, this.isHuman(i), p.eff);
+        const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : 1;
+        let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
+        // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.
+        let sigCtx: ShotCtx | null = null, sigFired: SigDef[] = [], deceived = false;
+        const sigBefore = this.sigs?.last ?? null;
+        if (this.sigs && i < 2) {
+          sigCtx = { kind: shotKind(shot.label), perfect: c.timing >= 1, incomingKmh, lunged: c.stretch > SHOTS.stretchStart, early: this.flightT < 0.6,
+            crosscourt: Math.abs(c.point.x) > 0.5 && c.point.x * shot.velocity.x < 0, prev: null };
+          const boost = this.sigs.forShot(i, sigCtx);
+          if (boost.mods.length && this.statChars[i]) shot = resolveShot(req, c, aimScale, this.isHuman(i), getEffectiveStats(this.statChars[i]!, [...this.baseMods[i], ...this.sigs.modsFor(i), ...boost.mods], this.statMode));
+          deceived = boost.deceive > 0 && Math.random() < boost.deceive;
+          sigFired = boost.fired;
+        }
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
         if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
@@ -749,6 +788,15 @@ export class Game {
           shot.label = `${shot.label} (disguised)`;
           this.disguiseT = SHOTS.disguise.markerDelay;
           for (const q of this.players) if (q.side !== p.side) q.wrongFoot(SHOTS.disguise.wrongFoot);
+        } else if (deceived) {
+          this.disguiseT = SHOTS.disguise.markerDelay;
+          for (const q of this.players) if (q.side !== p.side) q.wrongFoot(SHOTS.disguise.wrongFoot);
+        }
+        if (this.sigs && sigCtx) {
+          this.sigs.afterShot(i, sigCtx, sigFired, deceived);
+          this.refreshEff(0); this.refreshEff(1);
+          const f = this.sigs.last;
+          if (f && f !== sigBefore) this.abilityPop = { text: f.def.name, mine: this.teamOf(f.player) === 0, t: 0 };
         }
         p.onHit(c.point);
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
@@ -880,6 +928,7 @@ export class Game {
     const winner = (hitterWins ? hIdx : 1 - hIdx) as 0 | 1;
     const lc = this.lastContact;
     const forced = !hitterWins && !!lc && (lc.stretch > SHOTS.stretchStart || lc.timing < 0.7 || lc.incomingKmh > 180);
+    this.sigs?.onPoint(winner, this.lastHitterId, this.lastShot ? shotKind(this.lastShot.label) : null);
     this.stats.rallies.push({
       shots: this.rallyHits, winner, hitter: hIdx, hitterPid: this.lastHitterId, kind: hitterWins ? 'winner' : 'error', forced,
       lastLabel: this.lastShot?.label ?? '', lastHand: this.lastShot?.hand ?? 'serve',

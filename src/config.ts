@@ -308,9 +308,11 @@ export interface ScoringFormat { pointsToWin: number; winBy: number; pointCap: n
 export const RULES = {
   /** Picked on the menu. Interval when the leading score first reaches intervalAt. */
   formats: {
+    /** Only for the daily challenge's "single game to 11" (not offered anywhere else). */
+    11: { pointsToWin: 11, winBy: 2, pointCap: 15, intervalAt: 6 },
     15: { pointsToWin: 15, winBy: 2, pointCap: 21, intervalAt: 8 },
     21: { pointsToWin: 21, winBy: 2, pointCap: 30, intervalAt: 11 },
-  } as Record<15 | 21, ScoringFormat>,
+  } as Record<11 | 15 | 21, ScoringFormat>,
   pointPause: 1.8,
   /**
    * Touching the net is a fault: a hard shot (kill, smash, drive, push) hit while standing within `within`

@@ -108,9 +108,9 @@ export class Player implements PlayerView {
     const netArea = Math.abs(s.y) < SHOTS.nearNet, overhead = s.z >= SHOTS.overheadHeight;
     const soft = req.kind === 'intent' ? req.intent === 'soft' : req.arc === 'high' && req.power < SHOTS.mouse.dropMaxPower;
     const high = req.kind === 'intent' ? req.intent === 'high' : req.arc === 'high' && req.power >= SHOTS.mouse.dropMaxPower;
-    if (soft && netArea && !overhead) return this.eff.netTiming;
-    if (!overhead && (high || soft)) return this.eff.defenceTiming;
-    return 1;
+    if (soft && netArea && !overhead) return this.eff.netTiming * this.eff.timing;
+    if (!overhead && (high || soft)) return this.eff.defenceTiming * this.eff.timing;
+    return this.eff.timing;
   }
 
   /** Racket frame colour, if not the standard one. */

@@ -170,13 +170,15 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (netKill ? (lowKill ? SHOTS.netKill.lowPower : SHOTS.netKill.power) : 1)
     * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
     * (shotZone === 'overhead' && kindOf === 'fast' ? eff.smash : 1)
+    // Drives, pushes and flicks (never net kills, which keep their own thresholds).
+    * (shotZone !== 'overhead' && kindOf === 'fast' && !netKill && !netArea ? eff.shotSpeed : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);
   // Character stats: net shots (Net) and lifts and blocks (Defence) are a little more or less accurate.
   const netPlay = kindOf === 'soft' && netArea, defence = !netPlay && zone !== 'overhead' && kindOf !== 'fast';
   const noiseMult = (scrambled ? SHOTS.behindNoise : 1) * (deep ? B.deepNoise : 1)
     * (tumbleSoft ? T.softNoise : tumbleFast ? T.fastNoise : 1)
     * (perfect && zone === 'overhead' && kindOf === 'high' ? B.clearAim : 1)
-    * (netPlay ? eff.netAim : 1)
+    * (netPlay ? eff.netAim : 1) * eff.aim
     * (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;
   const softClearance = netArea ? SHOTS.netShotClearance : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;

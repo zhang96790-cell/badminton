@@ -5,6 +5,25 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.0',
+    title: 'Career mode',
+    date: '14 Nov 2026',
+    changes: [
+      "Career mode (Court 6): pick your home country, a free Common player and a difficulty, then travel the tour: 6 Super 100s and 5 Super 300s a season, starting in 2027.",
+      "Prize money, travel and hotels: you pay to fly to each event (business class costs more but saves energy) and for a hotel each round you play. Going deep pays; losing early costs you.",
+      "Energy: travelling and playing tire you out. Below 60 energy you’re a little slower and your timing is a little harder (up to 6% at empty). Rest, eat well or see the physio to recover.",
+      "A world ranking of every player: your best 10 results in the last 52 weeks count, and the top seeds go into opposite halves of each draw. Super 300s open once you reach a Super 100 final or the top 150.",
+      "Win a tournament and recruit one of three players from that draw. Recruits join your account, so you can also use them in ranked and friend matches.",
+      "Rarer players are clearly stronger in career mode (a Rare beats a Common about two times in three), and rarer opponents play a harder CPU. Out of money? A free Local Club Open is always there, so you can’t get stuck.",
+      "Signature abilities: many players have one or two (shown on their card), such as faster drives, more precise net shots or a chance to wrong-foot the opponent. They work in career and the daily challenge, not in ranked or friend matches.",
+      "Daily challenge: the same challenge for everyone each day, against a strong opponent with one or two handicaps. Win it for 5 to 15 rating points (up to 75 a season, and it can’t take you past Elite).",
+      "Your career is saved to your account, so you can carry on from any computer. If it was changed on another device, you choose which copy to keep.",
+      "339 players in the game (Commons and Rares), with Super Rares coming in 3.1 and Epics in 3.2. The Players tab now has search, filters, sorting and a side-by-side comparison.",
+      "In ranked and friend matches, players now use their own stats. The differences are small, so skill still decides matches.",
+      "New leaderboards: career titles and best career ranking.",
+    ],
+  },
+  {
     version: '2.7',
     title: 'Ranks, players and seasons',
     date: '13 Nov 2026',

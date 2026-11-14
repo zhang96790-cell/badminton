@@ -1,0 +1,367 @@
+{
+ "note": "Every roster and tournament country → its name and travel region. For the owner to review. Regions: SEA, EAST ASIA, SOUTH ASIA, EUROPE, OCEANIA, AMERICAS, AFRICA, MIDDLE EAST. Travel inside one country is domestic, inside a region (or to a neighbouring region in `neighbours`) regional, otherwise intercontinental.",
+ "neighbours": [
+  [
+   "SEA",
+   "EAST ASIA"
+  ],
+  [
+   "SEA",
+   "SOUTH ASIA"
+  ],
+  [
+   "SEA",
+   "OCEANIA"
+  ],
+  [
+   "EAST ASIA",
+   "SOUTH ASIA"
+  ],
+  [
+   "SOUTH ASIA",
+   "MIDDLE EAST"
+  ],
+  [
+   "MIDDLE EAST",
+   "EUROPE"
+  ],
+  [
+   "MIDDLE EAST",
+   "AFRICA"
+  ],
+  [
+   "EUROPE",
+   "AFRICA"
+  ]
+ ],
+ "countries": {
+  "AFG": {
+   "name": "Afghanistan",
+   "region": "SOUTH ASIA"
+  },
+  "ALB": {
+   "name": "Albania",
+   "region": "EUROPE"
+  },
+  "ARG": {
+   "name": "Argentina",
+   "region": "AMERICAS"
+  },
+  "AUS": {
+   "name": "Australia",
+   "region": "OCEANIA"
+  },
+  "AUT": {
+   "name": "Austria",
+   "region": "EUROPE"
+  },
+  "AZE": {
+   "name": "Azerbaijan",
+   "region": "EUROPE"
+  },
+  "BEL": {
+   "name": "Belgium",
+   "region": "EUROPE"
+  },
+  "BGD": {
+   "name": "Bangladesh",
+   "region": "SOUTH ASIA"
+  },
+  "BGR": {
+   "name": "Bulgaria",
+   "region": "EUROPE"
+  },
+  "BHR": {
+   "name": "Bahrain",
+   "region": "MIDDLE EAST"
+  },
+  "BOL": {
+   "name": "Bolivia",
+   "region": "AMERICAS"
+  },
+  "BRA": {
+   "name": "Brazil",
+   "region": "AMERICAS"
+  },
+  "BRN": {
+   "name": "Brunei",
+   "region": "SEA"
+  },
+  "BTN": {
+   "name": "Bhutan",
+   "region": "SOUTH ASIA"
+  },
+  "BWA": {
+   "name": "Botswana",
+   "region": "AFRICA"
+  },
+  "CAN": {
+   "name": "Canada",
+   "region": "AMERICAS"
+  },
+  "CHL": {
+   "name": "Chile",
+   "region": "AMERICAS"
+  },
+  "CHN": {
+   "name": "China",
+   "region": "EAST ASIA"
+  },
+  "COL": {
+   "name": "Colombia",
+   "region": "AMERICAS"
+  },
+  "CYP": {
+   "name": "Cyprus",
+   "region": "EUROPE"
+  },
+  "CZE": {
+   "name": "Czechia",
+   "region": "EUROPE"
+  },
+  "DEN": {
+   "name": "Denmark",
+   "region": "EUROPE"
+  },
+  "DZA": {
+   "name": "Algeria",
+   "region": "AFRICA"
+  },
+  "EGY": {
+   "name": "Egypt",
+   "region": "AFRICA"
+  },
+  "ENG": {
+   "name": "England",
+   "region": "EUROPE"
+  },
+  "ESP": {
+   "name": "Spain",
+   "region": "EUROPE"
+  },
+  "EST": {
+   "name": "Estonia",
+   "region": "EUROPE"
+  },
+  "ETH": {
+   "name": "Ethiopia",
+   "region": "AFRICA"
+  },
+  "FIN": {
+   "name": "Finland",
+   "region": "EUROPE"
+  },
+  "FRA": {
+   "name": "France",
+   "region": "EUROPE"
+  },
+  "GEO": {
+   "name": "Georgia",
+   "region": "EUROPE"
+  },
+  "GER": {
+   "name": "Germany",
+   "region": "EUROPE"
+  },
+  "GHA": {
+   "name": "Ghana",
+   "region": "AFRICA"
+  },
+  "GRC": {
+   "name": "Greece",
+   "region": "EUROPE"
+  },
+  "GTM": {
+   "name": "Guatemala",
+   "region": "AMERICAS"
+  },
+  "HKG": {
+   "name": "Hong Kong",
+   "region": "EAST ASIA"
+  },
+  "HRV": {
+   "name": "Croatia",
+   "region": "EUROPE"
+  },
+  "HUN": {
+   "name": "Hungary",
+   "region": "EUROPE"
+  },
+  "INA": {
+   "name": "Indonesia",
+   "region": "SEA"
+  },
+  "IND": {
+   "name": "India",
+   "region": "SOUTH ASIA"
+  },
+  "IRL": {
+   "name": "Ireland",
+   "region": "EUROPE"
+  },
+  "IRN": {
+   "name": "Iran",
+   "region": "MIDDLE EAST"
+  },
+  "IRQ": {
+   "name": "Iraq",
+   "region": "MIDDLE EAST"
+  },
+  "ISL": {
+   "name": "Iceland",
+   "region": "EUROPE"
+  },
+  "ISR": {
+   "name": "Israel",
+   "region": "MIDDLE EAST"
+  },
+  "ITA": {
+   "name": "Italy",
+   "region": "EUROPE"
+  },
+  "JAM": {
+   "name": "Jamaica",
+   "region": "AMERICAS"
+  },
+  "JPN": {
+   "name": "Japan",
+   "region": "EAST ASIA"
+  },
+  "KAZ": {
+   "name": "Kazakhstan",
+   "region": "SOUTH ASIA"
+  },
+  "KEN": {
+   "name": "Kenya",
+   "region": "AFRICA"
+  },
+  "KHM": {
+   "name": "Cambodia",
+   "region": "SEA"
+  },
+  "KOR": {
+   "name": "South Korea",
+   "region": "EAST ASIA"
+  },
+  "KWT": {
+   "name": "Kuwait",
+   "region": "MIDDLE EAST"
+  },
+  "LBN": {
+   "name": "Lebanon",
+   "region": "MIDDLE EAST"
+  },
+  "LTU": {
+   "name": "Lithuania",
+   "region": "EUROPE"
+  },
+  "LUX": {
+   "name": "Luxembourg",
+   "region": "EUROPE"
+  },
+  "LVA": {
+   "name": "Latvia",
+   "region": "EUROPE"
+  },
+  "MAC": {
+   "name": "Macau",
+   "region": "EAST ASIA"
+  },
+  "MAR": {
+   "name": "Morocco",
+   "region": "AFRICA"
+  },
+  "MAS": {
+   "name": "Malaysia",
+   "region": "SEA"
+  },
+  "MDG": {
+   "name": "Madagascar",
+   "region": "AFRICA"
+  },
+  "MEX": {
+   "name": "Mexico",
+   "region": "AMERICAS"
+  },
+  "MMR": {
+   "name": "Myanmar",
+   "region": "SEA"
+  },
+  "MNE": {
+   "name": "Montenegro",
+   "region": "EUROPE"
+  },
+  "MNG": {
+   "name": "Mongolia",
+   "region": "EAST ASIA"
+  },
+  "MUS": {
+   "name": "Mauritius",
+   "region": "AFRICA"
+  },
+  "MWI": {
+   "name": "Malawi",
+   "region": "AFRICA"
+  },
+  "NED": {
+   "name": "Netherlands",
+   "region": "EUROPE"
+  },
+  "NGA": {
+   "name": "Nigeria",
+   "region": "AFRICA"
+  },
+  "NPL": {
+   "name": "Nepal",
+   "region": "SOUTH ASIA"
+  },
+  "NZL": {
+   "name": "New Zealand",
+   "region": "OCEANIA"
+  },
+  "PHI": {
+   "name": "Philippines",
+   "region": "SEA"
+  },
+  "POL": {
+   "name": "Poland",
+   "region": "EUROPE"
+  },
+  "RSA": {
+   "name": "South Africa",
+   "region": "AFRICA"
+  },
+  "SCO": {
+   "name": "Scotland",
+   "region": "EUROPE"
+  },
+  "SGP": {
+   "name": "Singapore",
+   "region": "SEA"
+  },
+  "SWE": {
+   "name": "Sweden",
+   "region": "EUROPE"
+  },
+  "THA": {
+   "name": "Thailand",
+   "region": "SEA"
+  },
+  "TPE": {
+   "name": "Chinese Taipei",
+   "region": "EAST ASIA"
+  },
+  "UAE": {
+   "name": "United Arab Emirates",
+   "region": "MIDDLE EAST"
+  },
+  "USA": {
+   "name": "United States",
+   "region": "AMERICAS"
+  },
+  "VIE": {
+   "name": "Vietnam",
+   "region": "SEA"
+  }
+ }
+}

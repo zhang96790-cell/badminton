@@ -1,0 +1,9 @@
+{
+  "note": "Ranked stat totals per rarity. rankedBudgetMode 'sheet' uses each player's stats as the sheet gives them (they must add up to ranked_stat_total); 'cap10' squeezes them to the cap10 totals. Owner chose 'sheet' (14 Nov 2026).",
+  "rankedBudgetMode": "sheet",
+  "budgets": {
+    "sheet": { "common": 100, "rare": 104, "super_rare": 108, "epic": 113, "elite": 118, "mythic": 123, "legendary": 130, "champion": 140 },
+    "cap10": { "common": 100, "rare": 102, "super_rare": 104, "epic": 106, "elite": 107, "mythic": 108, "legendary": 109, "champion": 110 }
+  },
+  "careerStrength": { "common": 100, "rare": 130, "super_rare": 160, "epic": 190, "elite": 225, "mythic": 260, "legendary": 300, "champion": 380 }
+}

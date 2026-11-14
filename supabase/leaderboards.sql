@@ -17,7 +17,13 @@ begin
       select p.username, s.total from public.profiles p
       cross join lateral (select count(*)::numeric as total from jsonb_each_text(p.career) e where e.key like 'max\_ach\_%') s
       where s.total > 0 order by s.total desc, p.username limit 50;
-  elsif stat in ('wins', 'max_smash', 'max_rally', 'perfect_hits', 'max_streak', 'matches', 'smash_winners', 'aces') then
+  elsif stat = 'career_best_rank' then
+    -- Saved as 1000 − rank (stats keep the highest value), so the best ranking sorts first.
+    return query
+      select p.username, 1000 - (p.career ->> 'max_career_best_rank')::numeric from public.profiles p
+      where coalesce((p.career ->> 'max_career_best_rank')::numeric, 0) > 0
+      order by (p.career ->> 'max_career_best_rank')::numeric desc, p.username limit 50;
+  elsif stat in ('wins', 'max_smash', 'max_rally', 'perfect_hits', 'max_streak', 'matches', 'smash_winners', 'aces', 'career_titles') then
     return query
       select p.username, (p.career ->> stat)::numeric from public.profiles p
       where coalesce((p.career ->> stat)::numeric, 0) > 0

@@ -1,5 +1,6 @@
-// npm run roster:check — validates src/roster/roster.json, prints counts, writes supabase/roster.sql.
-import { problems, readRoster, summary, writeSql } from './roster-lib.mjs';
+// npm run roster:check — validates src/roster/roster.json (errors fail the build), writes the warnings
+// list and supabase/roster.sql.
+import { problems, readRoster, summary, warnings, writeSql, writeWarnings } from './roster-lib.mjs';
 
 let roster;
 try { roster = readRoster(); } catch (e) { console.error(`Roster: can't read src/roster/roster.json (${e.message})`); process.exit(1); }
@@ -9,8 +10,7 @@ if (bad.length) {
   process.exit(1);
 }
 writeSql(roster);
+const w = warnings(roster, roster.characters.filter((c) => c.empty_slot).map((c) => c.name));
+writeWarnings(w);
 const s = summary(roster);
-console.log(`Roster OK: ${s.total} player${s.total === 1 ? '' : 's'}`);
-console.log('  by rarity:', s.byRarity);
-console.log('  by style:', s.byStyle);
-console.log('  by country:', s.byCountry);
+console.log(`Roster OK: ${s.total} players`, s.byRarity, `· warnings: ${w.clash.length} clashes, ${w.emptySlots.length} empty slots, ${w.extremes.length} extremes`);

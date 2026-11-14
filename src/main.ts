@@ -8,7 +8,7 @@ import { Sound } from './audio';
 import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
 import { ZONE_NAMES, loadMemory } from './ai';
 import { drawHeat, loadSessions, recordHeat, type ShotKind } from './heatmap';
-import { DEFAULT_CHARACTER, RARITY, ROSTER, ROSTER_HASH, characterById, statTotal } from '../shared/characters';
+import { DEFAULT_CHARACTER, RARITY, ROSTER_HASH, characterById, rosterFor, statTotal } from '../shared/characters';
 import { drawPentagon } from './pentagon';
 import { defaultSetup } from './setup';
 import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
@@ -26,6 +26,7 @@ import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type
 import { tierIndex, tierOf, TIERS } from './rating';
 import { drawRatingGraph, rankBarHtml } from './rankbar';
 import { PresenceLink, type PresenceCounts } from './presence';
+import { initCareer } from './careermode/ui';
 import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
@@ -592,17 +593,68 @@ const countryName = (code: string) => {
   try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code.slice(0, 2)) ?? code; } catch { return code; }
 };
 
-async function renderPlayers() {
-  await refreshOwned();
-  const grid = document.getElementById('playerGrid')!;
-  grid.innerHTML = ROSTER.map((c) => {
+/** Players out in this version of the game (later ones stay hidden). */
+const VISIBLE = rosterFor(CHANGELOG[0].version);
+const STAT_LABELS = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'];
+const pf = { q: '', rarity: '', style: '', country: '', hand: '', owned: '', sort: 'rarity' };
+let pList: typeof VISIBLE = VISIBLE;
+/** Card size for the grid (it only draws the rows on screen, so 400+ players stay smooth). */
+const P_CARD = { minW: 168, h: 96, gap: 10 };
+
+function filterPlayers() {
+  const q = pf.q.trim().toLowerCase();
+  pList = VISIBLE.filter((c) => (!q || c.name.toLowerCase().includes(q))
+    && (!pf.rarity || c.rarity === pf.rarity) && (!pf.style || c.style === pf.style) && (!pf.country || c.country === pf.country)
+    && (!pf.hand || c.handedness === pf.hand) && (!pf.owned || (pf.owned === 'owned') === canUse(c.id)));
+  const by = pf.sort;
+  pList.sort((a, b) => by === 'name' ? a.name.localeCompare(b.name)
+    : by === 'rarity' ? RARITY[b.rarity].order - RARITY[a.rarity].order || a.name.localeCompare(b.name)
+    : by === 'total' ? statTotal(b) - statTotal(a) || a.name.localeCompare(b.name)
+    : b.stats[Number(by)] - a.stats[Number(by)] || a.name.localeCompare(b.name));
+  document.getElementById('pCount')!.textContent = `${pList.length} of ${VISIBLE.length} players`;
+  const scroll = document.getElementById('playerScroll')!;
+  scroll.scrollTop = 0;
+  drawPlayerGrid();
+}
+
+function fillPlayerFilters() {
+  const opts = (id: string, items: [string, string][]) => {
+    const el = document.getElementById(id) as HTMLSelectElement;
+    if (el.options.length > 1) return;
+    el.insertAdjacentHTML('beforeend', items.map(([v, l]) => `<option value="${v}">${hubEsc(l)}</option>`).join(''));
+  };
+  const rar = [...new Set(VISIBLE.map((c) => c.rarity))].sort((a, b) => RARITY[a].order - RARITY[b].order);
+  opts('pRarity', rar.map((r) => [r, RARITY[r].label]));
+  opts('pStyle', [...new Set(VISIBLE.map((c) => c.style))].sort().map((s) => [s, s[0].toUpperCase() + s.slice(1)]));
+  opts('pCountry', [...new Set(VISIBLE.map((c) => c.country).filter((c) => c !== 'XXX'))].map((c) => [c, countryName(c)] as [string, string]).sort((a, b) => a[1].localeCompare(b[1])));
+}
+
+/** Draw just the rows in view (plus a few either side). */
+function drawPlayerGrid() {
+  const scroll = document.getElementById('playerScroll')!, grid = document.getElementById('playerGrid')!;
+  const width = grid.clientWidth || scroll.clientWidth || 600;
+  const cols = Math.max(1, Math.floor((width + P_CARD.gap) / (P_CARD.minW + P_CARD.gap)));
+  const rowH = P_CARD.h + P_CARD.gap, rows = Math.ceil(pList.length / cols);
+  const first = Math.max(0, Math.floor(scroll.scrollTop / rowH) - 2);
+  const last = Math.min(rows, Math.ceil((scroll.scrollTop + (scroll.clientHeight || 600)) / rowH) + 2);
+  grid.style.setProperty('--cols', String(cols));
+  grid.style.height = `${Math.max(0, rows * rowH - P_CARD.gap)}px`;
+  grid.style.paddingTop = `${first * rowH}px`;
+  const mine = myCharacter();
+  grid.innerHTML = pList.slice(first * cols, last * cols).map((c) => {
     const r = RARITY[c.rarity], use = canUse(c.id);
     return `<button type="button" class="pcard${use ? '' : ' locked'}${c.id === selectedPlayer ? ' on' : ''}" data-player="${c.id}" style="--rar:${r.color}">
       <span class="rar">${r.label}</span><b>${hubEsc(c.name)}</b>
-      <span class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'}</span>
-      <span class="tag">${c.id === myCharacter() ? 'Your player' : featuredIds.has(c.id) ? 'Free this season' : use ? 'Owned' : 'Locked'}</span>
+      <span class="sub">${c.country !== 'XXX' ? `${c.country} · ` : ''}${hubEsc(c.style)}${c.handedness === 'left' ? ' · left' : ''}</span>
+      <span class="tag">${c.id === mine ? 'Your player' : featuredIds.has(c.id) ? 'Free this season' : use ? 'Owned' : 'Locked'}${c.abilities.length ? ` · ${c.abilities.map((a) => a.tier).join('+')}` : ''}</span>
     </button>`;
-  }).join('') + (ROSTER.length <= 1 ? '<p class="coming">More players coming soon.</p>' : '');
+  }).join('') || '<p class="coming">No players match.</p>';
+}
+
+async function renderPlayers() {
+  await refreshOwned();
+  fillPlayerFilters();
+  filterPlayers();
   renderPlayerDetail();
   // An unlock pick waiting: offer three locked players, or say they're coming.
   const offer = document.getElementById('pickOffer')!;
@@ -619,31 +671,59 @@ async function renderPlayers() {
 function renderPlayerDetail() {
   const c = characterById(selectedPlayer), r = RARITY[c.rarity], use = canUse(c.id);
   const wins = career[`char_wins_${c.id}`] ?? 0, losses = career[`char_losses_${c.id}`] ?? 0;
-  const others = ROSTER.filter((o) => o.id !== c.id);
+  const cmp = comparePlayer && comparePlayer !== c.id ? characterById(comparePlayer) : null;
+  const rowsHtml = STAT_LABELS.map((l, i) => {
+    const d = cmp ? c.stats[i] - cmp.stats[i] : 0;
+    return `<tr><td>${l}</td><td><b>${c.stats[i]}</b></td>${cmp ? `<td>${cmp.stats[i]}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : ''}${d || '='}</td>` : ''}</tr>`;
+  }).join('');
+  const careerLine = c.base_stats && c.base_stats.join() !== c.stats.join() ? `<p class="sub">Career stats: ${c.base_stats.join(' / ')}</p>` : '';
   document.getElementById('playerDetail')!.innerHTML = `
     <p class="rar-line" style="--rar:${r.color}"><span class="rar">${r.label}</span> ${hubEsc(countryName(c.country))}</p>
     <h3>${hubEsc(c.name)}</h3>
     <canvas id="playerPentagon" class="pentagon"></canvas>
-    <p class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'} · stats total ${statTotal(c)}</p>
+    <p class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'} · stats total ${statTotal(c)}${c.id !== DEFAULT_CHARACTER ? ` · career strength ${c.career_strength}` : ''}</p>
+    <table class="pstats"><tr><th></th><th>${hubEsc(c.name.split(' ')[0])}</th>${cmp ? `<th>${hubEsc(cmp.name.split(' ')[0])}</th><th></th>` : ''}</tr>${rowsHtml}</table>
+    ${careerLine}
+    ${c.abilities.map((a) => `<p class="ability"><span class="ab-tier">${a.tier}</span><b>${hubEsc(a.name)}</b>${a.text ? ` ${hubEsc(a.text)}` : ''}</p>`).join('')}
     <p>${hubEsc(c.description)}</p>
     <p class="sub">With this player: ${wins} won, ${losses} lost</p>
-    ${others.length ? `<label class="cmp">Compare with <select id="playerCompare"><option value="">Nobody</option>${others.map((o) => `<option value="${o.id}"${o.id === comparePlayer ? ' selected' : ''}>${hubEsc(o.name)}</option>`).join('')}</select></label>` : ''}
+    <label class="cmp">Compare with <input id="playerCompare" list="playerNames" placeholder="Type a name" value="${cmp ? hubEsc(cmp.name) : ''}" autocomplete="off" /></label>
+    ${cmp ? '<button type="button" class="linkish" data-uncompare>Stop comparing</button>' : ''}
     ${use ? (c.id === myCharacter() ? '<p class="tag-on">This is your player</p>' : `<button type="button" class="primary" data-use="${c.id}">Play as ${hubEsc(c.name)}</button>`)
-      : '<p class="sub">Locked. Earn new players by reaching a new rank tier for the first time (from Regional up).</p>'}`;
-  const cmp = comparePlayer && comparePlayer !== c.id ? characterById(comparePlayer) : null;
+      : '<p class="sub">Locked. Earn players by reaching a new rank tier for the first time (from Regional up), or by recruiting them in career mode.</p>'}`;
   drawPentagon(document.getElementById('playerPentagon') as HTMLCanvasElement, c.stats, r.color, cmp ? { stats: cmp.stats, color: '#1f2937' } : undefined);
+}
+{
+  // Names for the compare box.
+  const dl = document.createElement('datalist');
+  dl.id = 'playerNames';
+  dl.innerHTML = VISIBLE.map((c) => `<option value="${hubEsc(c.name)}"></option>`).join('');
+  document.body.appendChild(dl);
+  let raf = 0;
+  document.getElementById('playerScroll')!.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawPlayerGrid); }, { passive: true });
+  window.addEventListener('resize', () => { if (!document.getElementById('playerScroll')!.closest('[hidden]')) drawPlayerGrid(); });
+  let typing = 0;
+  document.getElementById('pSearch')!.addEventListener('input', (e) => { pf.q = (e.target as HTMLInputElement).value; clearTimeout(typing); typing = window.setTimeout(filterPlayers, 120); });
+  for (const [id, key] of [['pRarity', 'rarity'], ['pStyle', 'style'], ['pCountry', 'country'], ['pHand', 'hand'], ['pOwned', 'owned'], ['pSort', 'sort']] as const) {
+    document.getElementById(id)!.addEventListener('change', (e) => { pf[key] = (e.target as HTMLSelectElement).value; filterPlayers(); });
+  }
 }
 
 document.getElementById('playerGrid')!.addEventListener('click', (e) => {
   const id = (e.target as HTMLElement).closest<HTMLElement>('[data-player]')?.dataset.player;
-  if (id) { selectedPlayer = id; void renderPlayers(); }
+  if (id) { selectedPlayer = id; drawPlayerGrid(); renderPlayerDetail(); }
 });
 document.getElementById('playerDetail')!.addEventListener('click', (e) => {
-  const id = (e.target as HTMLElement).closest<HTMLElement>('[data-use]')?.dataset.use;
-  if (id && canUse(id)) { settings.character = id; saveSettings(); void renderPlayers(); }
+  const t = e.target as HTMLElement;
+  if (t.closest('[data-uncompare]')) { comparePlayer = null; renderPlayerDetail(); return; }
+  const id = t.closest<HTMLElement>('[data-use]')?.dataset.use;
+  if (id && canUse(id)) { settings.character = id; saveSettings(); drawPlayerGrid(); renderPlayerDetail(); }
 });
 document.getElementById('playerDetail')!.addEventListener('change', (e) => {
-  if ((e.target as HTMLElement).id === 'playerCompare') { comparePlayer = (e.target as HTMLSelectElement).value || null; renderPlayerDetail(); }
+  if ((e.target as HTMLElement).id !== 'playerCompare') return;
+  const name = (e.target as HTMLInputElement).value.trim().toLowerCase();
+  comparePlayer = VISIBLE.find((c) => c.name.toLowerCase() === name)?.id ?? null;
+  renderPlayerDetail();
 });
 document.getElementById('pickOffer')!.addEventListener('click', async (e) => {
   const id = (e.target as HTMLElement).closest<HTMLElement>('[data-pick]')?.dataset.pick;
@@ -736,6 +816,8 @@ const BOARDS: Record<string, { note: string; unit: (v: number) => string }> = {
   max_streak: { note: 'Longest run of matches won in a row.', unit: (v) => `${v} in a row` },
   stars: { note: 'Most stars from the Court 5 challenges (best stars on each).', unit: (v) => `${v} ★` },
   achievements: { note: 'Most achievements unlocked.', unit: (v) => `${v}` },
+  career_titles: { note: 'Most tournaments won in career mode.', unit: (v) => `${v} title${v === 1 ? '' : 's'}` },
+  career_best_rank: { note: 'Best world ranking reached in career mode.', unit: (v) => `#${v}` },
 };
 document.querySelectorAll<HTMLButtonElement>('#boardSeg button').forEach((b) => b.addEventListener('click', () => { board = b.dataset.value!; void renderLeaders(); }));
 
@@ -1739,7 +1821,7 @@ function frame(now: number) {
   if (game) {
     const over = game.state === 'matchOver';
     if (game.online) onlineKeys(game, over);
-    else if (input.tapped(['Escape'])) { if (over || game.session) showMenu(); else game.paused = !game.paused; }
+    else if (input.tapped(['Escape'])) { if (over && careerDone) endCareerMatch(false); else if (over || game.session) showMenu(); else game.paused = !game.paused; }
     if (game?.session) {
       for (const d of ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9']) if (input.tapped([d])) game.session.key(game, d);
     }
@@ -1762,13 +1844,17 @@ function frame(now: number) {
       if (input.tapped(UI_KEYS.saveHighlight)) keepHighlight(game);
     }
     if (game?.online) { /* handled in onlineKeys */ }
-    else if (game?.paused && input.tapped(['KeyQ'])) showMenu();
+    else if (game?.paused && input.tapped(['KeyQ'])) {
+      if (!careerDone) showMenu();
+      else if (confirm('Retire from this match? It counts as a loss.')) endCareerMatch(true);
+    }
     else if (game && input.tapped(['Enter'])) {
-      if (game.state === 'matchOver') startMatch('match');
+      if (game.state === 'matchOver' && careerDone) endCareerMatch(false);
+      else if (game.state === 'matchOver') startMatch('match');
       else game.skip();
     }
     if (game?.session?.done) showMenu();
-  } else if (!watching && input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && welcome.classList.contains('hidden') && !tour.isOpen) {
+  } else if (!watching && input.tapped(['Enter']) && accountModal.classList.contains('hidden') && roomModal.classList.contains('hidden') && social.classList.contains('hidden') && controlsPick.classList.contains('hidden') && welcome.classList.contains('hidden') && !tour.isOpen && !careerUi.isOpen()) {
     startMatch('match');
   }
 
@@ -1866,3 +1952,41 @@ document.addEventListener('click', (e) => {
 function presenceNow(ask = false) { try { presence.beat(); if (ask) presence.ask(); } catch { /* not ready yet */ } }
 // One count on load, so the button isn't blank.
 window.setTimeout(() => presence.ask(), 1500);
+
+// ── Career mode and the daily challenge (3.0) ────────────────────────────────
+/** A career or daily-challenge match is on: what to do with the result. */
+let careerDone: ((g: Game, retired: boolean) => void) | null = null;
+/** Development only: a pretend account for trying career screens (see careermode/devfake.ts). */
+let devFake: typeof import('./careermode/devfake') | null = null;
+if (import.meta.env.DEV) void import('./careermode/devfake').then((m) => { devFake = m; });
+const careerUi = initCareer({
+  appVersion: CHANGELOG[0].version,
+  account: () => account ?? (import.meta.env.DEV && devFake?.fakeOn() ? devFake.fakeAccount : null),
+  loadAccount: async () => (import.meta.env.DEV && !account && devFake?.fakeOn() ? ({ ...(await loadAccount()), ...devFake.fakeModule() } as Awaited<ReturnType<typeof loadAccount>>) : loadAccount()),
+  owned: async () => { if (import.meta.env.DEV && !account && devFake?.fakeOn()) return devFake.fakeOwned(); await refreshOwned(); return ownedIds; },
+  play: (o) => {
+    sound.init();
+    voice.enabled = settings.voice;
+    voice.unlock();
+    careerDone = o.onDone;
+    game = new Game({ ...settings, ...o.settings }, input, broadcast, 'match', null, o.setup);
+    game.onMatchOver = recordCareer;
+    if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
+    closeDrawers();
+    menu.classList.add('hidden');
+    (document.activeElement as HTMLElement | null)?.blur();
+  },
+  toast,
+  openAccount,
+  saveStats: (delta) => saveCareer(delta),
+  esc: hubEsc,
+});
+function endCareerMatch(retired: boolean) {
+  const g = game!, done = careerDone;
+  careerDone = null;
+  showMenu();
+  done?.(g, retired);
+}
+if (import.meta.env.DEV) (window as unknown as { endCareerMatch: typeof endCareerMatch }).endCareerMatch = endCareerMatch;
+document.getElementById('careerOpen')!.addEventListener('click', () => void careerUi.open('hub'));
+document.getElementById('dailyOpen')!.addEventListener('click', () => void careerUi.open('daily'));

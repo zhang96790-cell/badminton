@@ -164,3 +164,25 @@ export const myRatingHistory = async () => (await rpc<RatingPoint[]>('my_rating_
 // ── 2.2: career stats ─────────────────────────────────────────────────────────
 export const myCareer = async () => (await rpc<Record<string, number>>('my_career')) ?? null;
 export const addCareer = (delta: Record<string, number>) => rpc<Record<string, number>>('add_career', { delta });
+
+// ── 3.0: career mode and the daily challenge ─────────────────────────────────
+export interface CareerSave { rev: number; data_version: number; state: unknown; updated_at: string }
+export type CareerPut = { ok: true; rev: number } | { ok: false; conflict: true; rev: number; state: unknown; updated_at: string };
+/** Throws if the server can't be reached (so a connection problem never looks like "no career"). */
+export async function careerGet(): Promise<CareerSave | null> {
+  const { data, error } = await supabase.rpc('career_get');
+  if (error) throw new Error(error.message);
+  return (data as CareerSave | null) ?? null;
+}
+/** expectedRev: the rev the save was loaded from (0 for a new career, −1 to overwrite on purpose). Null = couldn't reach the server. */
+export const careerPut = (expectedRev: number, dataVersion: number, state: unknown) => rpc<CareerPut>('career_put', { p_expected_rev: expectedRev, p_data_version: dataVersion, p_state: state });
+export const careerStarter = (character: string) => rpc<string | null>('career_starter', { p_character: character });
+export interface OfferRow { id?: number; candidates: string[]; rerolled?: boolean; limited?: boolean }
+export const offerCreate = (tournament: string, tier: string, field: string[]) => rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field });
+export const offerReroll = (offer: number) => rpc<{ ok: boolean; candidates?: string[] }>('offer_reroll', { p_offer: offer });
+export const offerChoose = (offer: number, character: string | null) => rpc<string | null>('offer_choose', { p_offer: offer, p_character: character });
+export interface DailyChallenge { day: string; opponent: string; handicaps: string[]; behind: number; difficulty: number; reward: number; next_at: string }
+export interface DailyInfo { challenge: DailyChallenge | null; claimed: boolean; reward_got: number | null; season_total: number; season_cap: number }
+export const dailyGet = () => rpc<DailyInfo>('daily_get');
+export const dailyStart = () => rpc<{ ok: boolean; token?: string; challenge?: DailyChallenge; claimed?: boolean; limited?: boolean }>('daily_start');
+export const dailyClaim = (token: string, games: [number, number][]) => rpc<{ ok: boolean; reason?: string; reward?: number; rating?: number; full_reward?: number; season_total?: number }>('daily_claim', { p_token: token, p_games: games });

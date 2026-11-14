@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.10',
+    title: 'Round of 64 fix',
+    date: '14 Nov 2026',
+    changes: [
+      "Fixed: in 48-player events (every Super 100 and Super 1000), winning your Round of 64 match left you facing the same opponent again, so you couldn’t get through. You now go on to the Round of 32.",
+    ],
+  },
+  {
     version: '3.3.9',
     title: 'Career tour',
     date: '14 Nov 2026',

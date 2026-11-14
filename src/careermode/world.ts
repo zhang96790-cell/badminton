@@ -90,7 +90,7 @@ const ALL_ROUNDS: Round[] = ['R64', 'R32', 'R16', 'QF', 'SF', 'F'];
 export const slotsFor = (players: number) => 2 ** Math.ceil(Math.log2(Math.max(2, players)));
 /** The rounds for a draw of this many players (or places). */
 export const roundsFor = (players: number): Round[] => ALL_ROUNDS.slice(ALL_ROUNDS.length - Math.log2(slotsFor(players)));
-export const nextRound = (r: Round): Round => (r === 'R32' ? 'R16' : r === 'R16' ? 'QF' : r === 'QF' ? 'SF' : r === 'SF' ? 'F' : 'W');
+export const nextRound = (r: Round): Round => (r === 'R64' ? 'R32' : r === 'R32' ? 'R16' : r === 'R16' ? 'QF' : r === 'QF' ? 'SF' : r === 'SF' ? 'F' : 'W');
 
 /**
  * The NPC field for an event: weighted by rarity for the tier, at least 2 from the host country (when there are

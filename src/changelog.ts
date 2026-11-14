@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.7',
+    title: 'Leaderboard fix and style balance',
+    date: '14 Nov 2026',
+    changes: [
+      "Fixed: the ranked leaderboard only showed players who had played a rated match this season, so it looked nearly empty. It now shows everyone who has played a rated match, by rating.",
+      "CPU styles are more even: Net players rush the net less and play net shots a little less often, Defenders and Fast retrievers reach slightly less, and Deceptive’s disguised shots wrong-foot you a little longer (so they still bite with your landing marker off).",
+    ],
+  },
+  {
     version: '3.3.6',
     title: 'Soft means soft',
     date: '14 Nov 2026',

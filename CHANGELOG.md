@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.7: Leaderboard fix and style balance (14 Nov 2026)
+
+- Fixed: the ranked leaderboard only showed players who had played a rated match this season, so it looked nearly empty. It now shows everyone who has played a rated match, by rating.
+- CPU styles are more even: Net players rush the net less and play net shots a little less often, Defenders and Fast retrievers reach slightly less, and Deceptive’s disguised shots wrong-foot you a little longer (so they still bite with your landing marker off).
+
 ## 3.3.6: Soft means soft (14 Nov 2026)
 
 - Fixed: pressing L (soft) could play a lob. In the daily challenge’s “no drop shots” handicap, an overhead soft shot now goes flat instead of becoming a clear, with a note the first time; mouse players get the same rule.

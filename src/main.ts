@@ -833,7 +833,7 @@ async function renderLeaders(listId = 'leaderList') {
         : '<li class="empty">Nobody on this board yet. Be the first.</li>';
       return;
     }
-    document.getElementById('boardNote')!.textContent = 'This season’s top 50 by rating (quick matches and rated friend matches). Everyone starts at 1000; ranks are shown beside each name.';
+    document.getElementById('boardNote')!.textContent = 'Top 50 by rating from quick matches and rated friend matches. Everyone starts at 1000; ranks are shown beside each name.';
   }
   const rows = await m.leaderboard();
   if (req !== boardReq) return;

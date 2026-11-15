@@ -32,8 +32,8 @@ export interface MatchSetup {
   restrictions: Restrictions;
   /** Career: carry on from a saved score (Match.snapshot()), after a reload or Save and leave. */
   resume?: string;
-  /** Career: the tournament's court colours (a key of COURT_THEMES). */
-  court?: string;
+  /** Career: the tournament's look (court, sponsors, scoreboard, officials). */
+  look?: import('./brands').EventLook;
   /** Career: called with the score at every serve (rally false) and when each rally starts (rally true). */
   checkpoint?: (snap: string, rally: boolean) => void;
 }

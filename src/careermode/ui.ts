@@ -6,6 +6,7 @@ import type { Settings } from '../game';
 import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
 import { Match } from '../rules';
+import { eventLook, kitBrandOf } from '../brands';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
@@ -290,12 +291,13 @@ export function initCareer(d: CareerDeps) {
       const a = (o.base_stats ?? o.stats)[i], b = (me.base_stats ?? me.stats)[i];
       return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
     }).join('');
-    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)} · ${ROUND_LABEL[nm.round]} · best of 3 to 15</p>
+    const lk = eventLook(x.id, x.tier);
+    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.presenter ? ` presented by ${e(lk.presenter.name)}` : ''} · ${ROUND_LABEL[nm.round]} · best of 3 to 15 · ${e(lk.shuttle.name)} shuttles</p>
       <div class="c-pre-grid">
         <div class="c-pre-who">
           <h3 class="c-title">${e(o.name)}</h3>
           <span class="ccard" style="--rar:${RARITY[o.rarity].color}"><span class="rar">${RARITY[o.rarity].label}</span> ${e(countryName(o.country))} · ${o.handedness === 'left' ? 'left-handed' : 'right-handed'}</span>
-          <div class="c-facts">${fact('World rank', rank)}${fact('Style', style.label)}${fact('Career strength', String(o.career_strength))}${fact('Plays like', `${LEVEL_LABEL[nm.level]} CPU`)}</div>
+          <div class="c-facts">${fact('World rank', rank)}${fact('Style', style.label)}${fact('Career strength', String(o.career_strength))}${fact('Plays like', `${LEVEL_LABEL[nm.level]} CPU`)}${fact('Kit', kitBrandOf(o.id).name)}</div>
           <p class="c-trait"><b>${e(style.label)}:</b> ${e(style.trait)}</p>
           ${o.abilities.length ? o.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('') : '<p class="c-lead small">No signature ability.</p>'}
           <p class="c-lead">${e(o.description)}</p>
@@ -610,16 +612,6 @@ export function initCareer(d: CareerDeps) {
     return true;
   }
 
-  /** Each tournament keeps its own court colours; the big events have their own look. */
-  function courtFor(x: TourEvent): string {
-    if (x.tier === 'OLYMPICS') return 'purple';
-    if (x.tier === 'WORLDS') return 'worlds';
-    if (x.tier === 'WTF') return 'finals';
-    if (x.tier === 'CLUB') return 'club';
-    const looks = ['green', 'green', 'blue', 'teal', 'crimson', 'blue'];
-    return looks[hash(x.id) % looks.length];
-  }
-
   async function playNext(resume?: string) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
     if (!x || !nm || busy) return;
@@ -635,7 +627,7 @@ export function initCareer(d: CareerDeps) {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${ROUND_LABEL[nm.round]}`,
         player: { characterId: a.as, modifiers: [energyModifier(energy), coachModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
-        restrictions: {}, resume, court: courtFor(x),
+        restrictions: {}, resume, look: eventLook(x.id, x.tier),
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
       settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },

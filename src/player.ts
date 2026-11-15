@@ -9,6 +9,8 @@ export interface PlayerView {
   color: string;
   /** Racket frame colour (yours can be customised). */
   racket?: string;
+  /** Who this is, for their look (skin, hair, kit): a character id or name. */
+  lookId?: string;
   /** x sign of the racket hand. */
   racketSide: number;
   pos: V2;
@@ -67,6 +69,7 @@ export const quickScale = (flight: number) => hurry(flight, SWING.quickTolerance
 export class Player implements PlayerView {
   /** Stable identity (0–3) for stats; array positions can swap when auto-switch changes who you control. */
   id = 0;
+  lookId?: string;
   pos: V2;
   vel: V2 = { x: 0, y: 0 };
   z = 0;
@@ -343,7 +346,7 @@ export class Player implements PlayerView {
 
   snapshot(): PlayerView {
     return {
-      side: this.side, color: this.color, racket: this.racket, racketSide: this.racketSide,
+      side: this.side, color: this.color, racket: this.racket, racketSide: this.racketSide, lookId: this.lookId,
       pos: { ...this.pos }, vel: { ...this.vel }, z: this.z, vz: this.vz,
       hand: { ...this.hand }, rdir: { ...this.rdir }, stride: this.stride,
       split: this.split, lunge: this.lunge, lungeDir: { ...this.lungeDir }, charge: this.charge, serving: this.serving,

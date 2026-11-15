@@ -5,6 +5,18 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.4',
+    title: 'Sponsors, scoreboards and new looks',
+    date: '15 Nov 2026',
+    changes: [
+      "Made-up sponsors fill the arena: kit and racket makers (Kestrel, Arcwing, Featherline, Novalite, SwiftCourt), shuttle makers (Plumecraft, Corkcrest) and brands like Harborline Bank, Zephyr Air, Lumo, Pacifica Mobile and Monsoon Tea. Solar Sparks and Ventra keep their boards.",
+      "Every career tournament has its own look: its own sponsors on the boards, a presenting sponsor at the bigger events, an official shuttle, court colours, scoreboard style and officials’ blazers. The pre-match screen shows the sponsor, the shuttle and your opponent’s kit maker.",
+      "Four scoreboard styles: Broadcast, Classic (big yellow scores, like an arena board), Minimal (a slim bar at the top for smaller events) and a light one for the Olympics.",
+      "Players look different from each other: skin tone, hair colour and style (ponytail, bun, buzz cut, curls), headbands, shorts and shoes, with trim in their kit maker’s colours. Each player looks the same every match.",
+      "Officials look different too, wear the tournament’s blazer colour, and the umpire has a scoring tablet on the chair.",
+    ],
+  },
+  {
     version: '3.3.14',
     title: 'Cleaner match screen',
     date: '15 Nov 2026',

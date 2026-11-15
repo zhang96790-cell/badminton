@@ -33,11 +33,11 @@ export class Hud {
 
   draw(game: Game, w: number, h: number, time: number) {
     if (game.state === 'replay') { this.replay(game, w, h, time); return; }
-    if (game.state === 'matchOver') { this.scoreboard(game); this.endScreen(game, w, h); return; }
+    if (game.state === 'matchOver') { this.scoreboard(game, w); this.endScreen(game, w, h); return; }
     const ctx = this.ctx;
     if (game.session) this.sessionPanel(game, w);
     else {
-      this.scoreboard(game);
+      this.scoreboard(game, w);
       this.clock(game);
       this.rally(game, w);
     }
@@ -112,7 +112,7 @@ export class Hud {
     if (cm) {
       ctx.globalAlpha = Math.min(1, cm.t / 0.25, (4.5 - cm.t) / 0.6);
       ctx.font = font(15, 600);
-      const tw = ctx.measureText(cm.text).width, bw = tw + 150, x = w / 2 - bw / 2, y = bw > w - 2 * 370 ? 124 : 18;
+      const tw = ctx.measureText(cm.text).width, bw = tw + 150, x = w / 2 - bw / 2, y = game.setup.look?.scoreboard === 'minimal' ? 80 : bw > w - 2 * 370 ? 124 : 18;
       panel(ctx, x, y, bw, 34, 17);
       ctx.textAlign = 'left';
       ctx.fillStyle = C.accent;
@@ -288,9 +288,104 @@ export class Hud {
    * Broadcast-style scoreboard: the event (or opponent) on top, the format under it, then one row per side.
    * Every column is placed from the right and the names are cut to fit, so nothing overlaps.
    */
-  private scoreboard(game: Game) {
+  private scoreboard(game: Game, w: number) {
+    const style = game.setup.look?.scoreboard ?? 'broadcast';
+    if (style === 'classic') return this.sbClassic(game);
+    if (style === 'minimal') return this.sbMinimal(game, w);
+    this.sbBroadcast(game, style === 'light');
+  }
+
+  /** The header text every style uses: the event (or opponent), then round and format. */
+  private sbText(game: Game) {
+    const m = game.match, parts = game.setup.label ? game.setup.label.split(' · ') : [];
+    const title = (parts[0] ?? game.opponentLabel).toUpperCase();
+    const games = m.gamesToWin > 1 ? `Game ${m.gameNumber} of 3` : 'One game';
+    const pres = game.setup.look?.presenter;
+    return { title, round: parts[1] ?? '', format: `${games}  ·  to ${m.format.pointsToWin}`, presenter: pres ? `presented by ${pres.name}` : '' };
+  }
+
+  private sideName(game: Game, i: 0 | 1) {
+    return game.doubles ? (i === 0 ? 'You / Partner' : 'CPU 1 / CPU 2') : game.players[i].name;
+  }
+
+  /**
+   * Classic arena board: a coloured title bar, upper-case names and big yellow scores in black tiles,
+   * with each finished game in its own box.
+   */
+  private sbClassic(game: Game) {
+    const ctx = this.ctx, m = game.match, t = this.sbText(game), accent = game.setup.look?.accent ?? C.accent;
+    const x = 16, y = 16, bw = 400, headH = 26, rowH = 40, h = headH + rowH * 2 + 6;
+    panel(ctx, x, y, bw, h, 6, 'rgba(6,10,22,0.94)');
+    ctx.fillStyle = accent;
+    ctx.beginPath(); ctx.roundRect(x, y, bw, headH, [6, 6, 0, 0]); ctx.fill();
+    ctx.fillStyle = '#0b0f1a'; ctx.textAlign = 'left'; ctx.font = font(12, 900);
+    const right = [t.round, t.format].filter(Boolean).join('  ·  ').toUpperCase();
+    ctx.font = font(10, 800);
+    const rw = ctx.measureText(right).width;
+    ctx.textAlign = 'right'; ctx.fillText(right, x + bw - 10, y + 17);
+    ctx.textAlign = 'left'; ctx.font = font(12, 900);
+    ctx.fillText(this.fit(t.title, bw - rw - 34), x + 10, y + 17);
+    const tileW = 52, tileX = x + bw - 8 - tileW, boxW = 26;
+    const gamesX = tileX - 8 - m.history.length * (boxW + 4);
+    ([0, 1] as const).forEach((i) => {
+      const ry = y + headH + 3 + rowH * i, mid = ry + rowH / 2;
+      ctx.fillStyle = game.teamColor(i); ctx.fillRect(x + 8, ry + 6, 6, rowH - 12);
+      const room = gamesX - 34 - (x + 22);
+      ctx.fillStyle = '#f4f6fb'; ctx.font = font(15, 800); ctx.textAlign = 'left';
+      ctx.fillText(this.fit(this.sideName(game, i).toUpperCase(), room), x + 22, mid + 5);
+      if (m.server === i && (game.state === 'serve' || game.state === 'rally')) {
+        ctx.fillStyle = accent; ctx.beginPath();
+        ctx.moveTo(gamesX - 22, mid - 6); ctx.lineTo(gamesX - 14, mid); ctx.lineTo(gamesX - 22, mid + 6); ctx.fill();
+      }
+      for (let k = 0; k < (game.online ? 0 : game.challenges[i]); k++) { ctx.fillStyle = 'rgba(255,209,102,0.85)'; ctx.fillRect(gamesX - 34 + k * 7 - 14, ry + rowH - 9, 5, 3); }
+      ctx.textAlign = 'center'; ctx.font = font(14, 800);
+      m.history.forEach((g, gi) => {
+        const bx = gamesX + gi * (boxW + 4);
+        panel(ctx, bx, ry + 8, boxW, rowH - 16, 3, 'rgba(255,255,255,0.08)');
+        ctx.fillStyle = g[i] > g[1 - i] ? '#f4f6fb' : '#7d8597';
+        ctx.fillText(String(g[i]), bx + boxW / 2, mid + 5);
+      });
+      panel(ctx, tileX, ry + 4, tileW, rowH - 8, 4, '#000000');
+      ctx.fillStyle = '#ffd23f'; ctx.font = font(26, 900);
+      ctx.fillText(String(m.scores[i]), tileX + tileW / 2, mid + 9);
+      ctx.textAlign = 'left';
+    });
+    this.sbBottom = y + h + 10;
+  }
+
+  /** Small events: one slim bar across the top middle, the event in small type under it. */
+  private sbMinimal(game: Game, W: number) {
+    const ctx = this.ctx, m = game.match, t = this.sbText(game);
+    const bw = 460, x = Math.round(W / 2 - bw / 2), y = 14, h = 40, half = bw / 2;
+    panel(ctx, x, y, bw, h, 20, 'rgba(9,13,21,0.9)');
+    ([0, 1] as const).forEach((i) => {
+      const left = i === 0, mid = y + h / 2;
+      const scoreX = left ? x + half - 30 : x + half + 30;
+      ctx.fillStyle = C.hud; ctx.font = font(22, 800); ctx.textAlign = 'center';
+      ctx.fillText(String(m.scores[i]), scoreX, mid + 8);
+      ctx.fillStyle = game.teamColor(i);
+      ctx.beginPath(); ctx.arc(left ? x + 18 : x + bw - 18, mid, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.hud; ctx.font = font(14, 700); ctx.textAlign = left ? 'left' : 'right';
+      const nx = left ? x + 32 : x + bw - 32, room = half - 32 - 60;
+      ctx.fillText(this.fit(this.sideName(game, i), room), nx, mid + 5);
+      // Games won as dots by the score; the server's score is underlined.
+      for (let k = 0; k < m.games[i]; k++) { ctx.fillStyle = C.accent; ctx.beginPath(); ctx.arc(scoreX + (left ? -20 - k * 8 : 20 + k * 8), mid - 9, 2.5, 0, Math.PI * 2); ctx.fill(); }
+      if (m.server === i && (game.state === 'serve' || game.state === 'rally')) { ctx.fillStyle = C.accent; ctx.fillRect(scoreX - 9, mid + 12, 18, 2); }
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(x + half, y + 9, 1, h - 18);
+    ctx.textAlign = 'center'; ctx.font = font(10, 700);
+    const line = this.fit([t.title, t.round, t.format].filter(Boolean).join('  ·  ').toUpperCase(), bw - 20), lw = ctx.measureText(line).width + 24;
+    panel(ctx, W / 2 - lw / 2, y + h + 3, lw, 18, 9, 'rgba(9,13,21,0.82)');
+    ctx.fillStyle = C.hudDim;
+    ctx.fillText(line, W / 2, y + h + 16);
+    this.sbBottom = 16;
+  }
+
+  private sbBroadcast(game: Game, light: boolean) {
     const ctx = this.ctx, m = game.match;
     const x = 16, y = 16, rowH = 34, bw = 372, pad = 14;
+    const ink = light ? '#141a26' : C.hud, dim = light ? '#5b6477' : C.hudDim;
+    const accent = game.setup.look?.accent ?? C.accent;
     // Header: career and daily matches show the event and round; other matches the opponent.
     const label = game.setup.label;
     const parts = label ? label.split(' · ') : [];
@@ -298,17 +393,28 @@ export class Hud {
     const games = m.gamesToWin > 1 ? `Game ${m.gameNumber} of 3` : 'One game';
     const sub = [parts[1], games, `to ${m.format.pointsToWin}`].filter(Boolean).join('  ·  ');
     const headH = 44, h = headH + rowH * 2 + 8;
-    panel(ctx, x, y, bw, h, 12, 'rgba(9,13,21,0.9)');
-    // Header band in the court's accent colour.
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    panel(ctx, x, y, bw, h, 12, light ? 'rgba(246,247,251,0.95)' : 'rgba(9,13,21,0.9)');
+    // Header band, with a strip of the event's accent colour along the top.
+    ctx.fillStyle = light ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
     ctx.beginPath();
     ctx.roundRect(x, y, bw, headH - 4, [12, 12, 0, 0]);
     ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.roundRect(x + 12, y, bw - 24, 3, [0, 0, 3, 3]);
+    ctx.fill();
     ctx.textAlign = 'left';
-    ctx.fillStyle = C.hud;
+    ctx.fillStyle = ink;
     ctx.font = font(12, 800);
+    const pres = this.sbText(game).presenter;
     ctx.fillText(this.fit(title, bw - pad * 2), x + pad, y + 18);
-    ctx.fillStyle = C.hudDim;
+    if (pres) {
+      const tw = Math.min(ctx.measureText(title).width, bw - pad * 2);
+      ctx.font = font(10, 600);
+      ctx.fillStyle = dim;
+      if (bw - pad * 2 - tw > 90) ctx.fillText(this.fit(pres, bw - pad * 2 - tw - 10), x + pad + tw + 10, y + 18);
+    }
+    ctx.fillStyle = dim;
     ctx.font = font(11, 600);
     ctx.fillText(this.fit(sub, bw - pad * 2), x + pad, y + 33);
 
@@ -320,7 +426,7 @@ export class Hud {
     const dotX = pipsX - 12;
     ([0, 1] as const).forEach((i) => {
       const ry = y + headH + rowH * i, mid = ry + rowH / 2;
-      if (i === 1) { ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(x + 10, ry, bw - 20, 1); }
+      if (i === 1) { ctx.fillStyle = light ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(x + 10, ry, bw - 20, 1); }
       ctx.fillStyle = game.teamColor(i);
       ctx.fillRect(x + 10, ry + 7, 4, rowH - 14);
       if (game.doubles) { ctx.fillStyle = game.players[i + 2].color; ctx.fillRect(x + 10, ry + 7 + (rowH - 14) / 2, 4, (rowH - 14) / 2); }
@@ -328,7 +434,7 @@ export class Hud {
       const nameX = x + 24, room = dotX - 8 - nameX;
       const name = game.doubles ? (i === 0 ? 'You / Partner' : 'CPU 1 / CPU 2') : game.players[i].name;
       ctx.textAlign = 'left';
-      ctx.fillStyle = C.hud;
+      ctx.fillStyle = ink;
       ctx.font = font(game.doubles ? 13 : 15, 700);
       const shown = this.fit(name, room);
       ctx.fillText(shown, nameX, mid + 5);
@@ -336,29 +442,29 @@ export class Hud {
       if (tag) {
         const used = ctx.measureText(shown).width + 8;
         ctx.font = font(10, 700);
-        ctx.fillStyle = C.hudDim;
+        ctx.fillStyle = dim;
         if (room - used > 40) ctx.fillText(this.fit(tag.toUpperCase(), room - used), nameX + used, mid + 4);
       }
       // Serving
       if (m.server === i && (game.state === 'serve' || game.state === 'rally')) {
-        ctx.fillStyle = C.accent;
+        ctx.fillStyle = accent;
         ctx.beginPath();
         ctx.arc(dotX, mid, 4, 0, Math.PI * 2);
         ctx.fill();
       }
       // Challenges left this game (none online yet)
       for (let k = 0; k < (game.online ? 0 : game.challenges[i]); k++) {
-        ctx.fillStyle = 'rgba(255,209,102,0.85)';
+        ctx.fillStyle = light ? '#c58f12' : 'rgba(255,209,102,0.85)';
         ctx.fillRect(pipsX + k * 9, mid - 3, 6, 6);
       }
       ctx.font = font(13, 700);
       ctx.textAlign = 'center';
       m.history.forEach((g, gi) => {
-        ctx.fillStyle = g[i] > g[1 - i] ? C.hud : C.hudDim;
+        ctx.fillStyle = g[i] > g[1 - i] ? ink : dim;
         ctx.fillText(String(g[i]), gamesX + gameW * gi + gameW / 2, mid + 5);
       });
-      panel(ctx, scoreX, ry + 4, scoreW, rowH - 8, 6, m.scores[i] > m.scores[1 - i] ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)');
-      ctx.fillStyle = C.hud;
+      panel(ctx, scoreX, ry + 4, scoreW, rowH - 8, 6, light ? (m.scores[i] > m.scores[1 - i] ? 'rgba(20,26,38,0.14)' : 'rgba(20,26,38,0.07)') : m.scores[i] > m.scores[1 - i] ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)');
+      ctx.fillStyle = ink;
       ctx.font = font(21, 800);
       ctx.fillText(String(m.scores[i]), scoreX + scoreW / 2, mid + 8);
       ctx.textAlign = 'left';

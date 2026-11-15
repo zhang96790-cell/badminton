@@ -17,7 +17,7 @@ import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
 import type { Seat } from './net';
-import { characterById, getEffectiveStats, type Character, type Modifier } from '../shared/characters';
+import { DEFAULT_CHARACTER, characterById, getEffectiveStats, type Character, type Modifier } from '../shared/characters';
 import { defaultSetup, restrictionsAllowed, usesCareerStats, type MatchSetup, type Restrictions } from './setup';
 import { Signatures, shotKind, type ShotCtx, type SigDef } from './careermode/signatures';
 import { REPLAY_CAMS, type ReplayCam } from './camera';
@@ -265,6 +265,9 @@ export class Game {
     this.players = [p1, p2];
     if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
     this.players.forEach((p, i) => { p.id = i; });
+    // Everyone's look (skin, hair, kit) follows who they are, so it's the same every match.
+    p1.lookId = setup?.player.characterId && setup.player.characterId !== DEFAULT_CHARACTER ? setup.player.characterId : `you:${myName ?? ''}`;
+    this.players.forEach((p, i) => { if (i > 0) p.lookId = setup?.opponent.characterId && i === 1 ? setup.opponent.characterId : `p:${p.name}:${i}`; });
     // Career and the daily challenge: the opponent is a real player from the roster, by name.
     if (!online && !doubles && setup?.opponent.characterId && usesCareerStats(setup.mode)) {
       const rival = characterById(setup.opponent.characterId);

@@ -1,6 +1,7 @@
 import type { Camera } from './camera';
 import { ARENA, COURT, SHOTS, VISUAL } from './config';
 import { ads, type Ad } from './ads';
+import { DEFAULT_LOOK, brandBanner, kitBrandOf, type EventLook } from './brands';
 import { KeyboardController, MouseController } from './controllers';
 import { courtLineRects, inHalf, isIn, netHeightAt, serviceBox, type Rect } from './court';
 import type { Game } from './game';
@@ -13,6 +14,29 @@ import { mouseShotKind, mouseShotName, mouseTarget } from './shots';
 export interface Scene { players: PlayerView[]; shuttle: ShuttleView; live: boolean }
 
 const C = VISUAL.colors;
+
+/** How a player looks (3.4): skin, hair and kit details, the same for a given player every match. */
+export interface Look { skin: string; hair: string; hairStyle: 'short' | 'pony' | 'bun' | 'buzz' | 'curly'; band: string | null; shorts: string; shoe: string; trim: string }
+const SKINS = ['#f3d3b8', '#e6c3a2', '#d7a982', '#c08a63', '#9a6646', '#6e4630'];
+const HAIRS = ['#16100c', '#2a1d15', '#3d2a1c', '#5c3a22', '#8a5a2e', '#c9a46a', '#3b3b3b'];
+const STYLES_HAIR: Look['hairStyle'][] = ['short', 'short', 'pony', 'bun', 'buzz', 'curly'];
+const SHORTS = ['#1c2431', '#111111', '#f1f3f5', '#26344d', '#3a2a5c'];
+const SHOES = ['#e9ecef', '#f2f2f2', '#1b1b1b', '#ff6a2b', '#7fe0ff'];
+const looks = new Map<string, Look>();
+const hs = (s: string) => { let x = 2166136261; for (const c of s) x = Math.imul(x ^ c.charCodeAt(0), 16777619); return x >>> 0; };
+export function lookOf(id: string | undefined): Look | null {
+  if (!id) return null;
+  const hit = looks.get(id);
+  if (hit) return hit;
+  const k = hs(id), kit = kitBrandOf(id);
+  const l: Look = {
+    skin: SKINS[k % SKINS.length], hair: HAIRS[(k >>> 4) % HAIRS.length], hairStyle: STYLES_HAIR[(k >>> 8) % STYLES_HAIR.length],
+    band: (k >>> 12) % 3 === 0 ? kit.fg : null, shorts: SHORTS[(k >>> 14) % SHORTS.length], shoe: SHOES[(k >>> 17) % SHOES.length],
+    trim: kit.bg === '#e8edf2' ? kit.fg : kit.bg,
+  };
+  looks.set(id, l);
+  return l;
+}
 const v3 = (x: number, y: number, z = 0): V3 => ({ x, y, z });
 const dot = (a: V3, b: V3) => a.x * b.x + a.y * b.y + a.z * b.z;
 const LINES = courtLineRects();
@@ -55,6 +79,8 @@ export class Renderer {
   eventTitle: string | null = null;
   /** The tournament's court colours (career), or null for the usual green. */
   courtTheme: import('./config').CourtTheme | null = null;
+  /** The tournament's sponsors, officials' blazers and so on (career); the exhibition look otherwise. */
+  look: EventLook = DEFAULT_LOOK;
   private cam!: Camera;
   private crowd = buildCrowd();
   /** Performance mode: a third of the crowd (standing still), no lighting or glow, no shuttle trail. */
@@ -185,6 +211,9 @@ export class Renderer {
       // Sponsors' boards: Solar Sparks and Ventra.
       const ad = i === 2 ? ads.solar : i === 3 ? ads.ventra : undefined;
       if (ad && this.cam.forward.y >= 0.5) { this.adBoard(ad, v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
+      // No event name: the event's (or exhibition's) sponsors fill the outer boards.
+      const brand = !title && !ad && this.cam.forward.y >= 0.5 ? this.look.boards[[0, 1, -1, -1, 2, 3][i]] : undefined;
+      if (brand) { this.adBoard(brandBanner(brand), v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
       this.poly([v3(x0, 9.4, 0), v3(x0 + 2.6, 9.4, 0), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0.85)], color);
       if (title) continue;
       this.poly([v3(x0, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.78), v3(x0, 9.4, 0.78)], 'rgba(255,255,255,0.25)');
@@ -201,7 +230,13 @@ export class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = `800 ${Math.max(6, Math.min(0.26, 4.4 / Math.max(8, title.length)) * q.s)}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(title.toUpperCase(), q.x, q.y + 0.1 * q.s);
+        ctx.fillText(title.toUpperCase(), q.x, q.y + 0.06 * q.s);
+        const pr = this.look.presenter;
+        if (pr) {
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = `700 ${Math.max(5, 0.1 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillText(`PRESENTED BY ${pr.name.toUpperCase()}`, q.x, q.y + 0.24 * q.s);
+        }
       }
     }
     for (const s of [-1, 1]) {
@@ -214,8 +249,10 @@ export class Renderer {
           this.adBoard(ad, v3(s * 6.6, ya, 0.85), v3(s * 6.6, yb, 0.85), v3(s * 6.6, ya, 0));
           continue;
         }
-        this.poly([v3(s * 6.6, y0, 0), v3(s * 6.6, y0 + 3.05, 0), v3(s * 6.6, y0 + 3.05, 0.85), v3(s * 6.6, y0, 0.85)], C.boards[(i + (s > 0 ? 1 : 3)) % C.boards.length]);
-        this.poly([v3(s * 6.6, y0, 0.72), v3(s * 6.6, y0 + 3.05, 0.72), v3(s * 6.6, y0 + 3.05, 0.78), v3(s * 6.6, y0, 0.78)], 'rgba(255,255,255,0.22)');
+        // The rest carry the event's sponsors.
+        const b = this.look.boards[(i + (s > 0 ? 2 : 0)) % this.look.boards.length];
+        const [ya, yb] = s < 0 ? [y0, y0 + 3.05] : [y0 + 3.05, y0];
+        this.adBoard(brandBanner(b), v3(s * 6.6, ya, 0.85), v3(s * 6.6, yb, 0.85), v3(s * 6.6, ya, 0));
       }
     }
   }
@@ -543,17 +580,27 @@ export class Renderer {
     parts.map((p) => ({ p, d: this.cam.depth(p.at) })).sort((a, b) => b.d - a.d).forEach(({ p }) => p.draw());
   }
 
-  private head(center: V3, face: V3, radius: number) {
+  private head(center: V3, face: V3, radius: number, lk?: Pick<Look, 'skin' | 'hair' | 'hairStyle' | 'band'> | null) {
+    const skin = lk?.skin ?? C.skin, hair = lk?.hair ?? C.hair, style = lk?.hairStyle ?? 'short';
     // Hair on the back of the head; the face shows only when it's turned toward the camera.
     const back = sub3(center, mul3(face, 0.035));
     const front = add3(center, mul3(face, 0.025));
+    const cap = style === 'buzz' ? 0.86 : style === 'curly' ? 1.08 : 1;
+    // Ponytail or bun: behind and below / on top of the back of the head.
+    const extra = style === 'pony' ? add3(sub3(center, mul3(face, radius * 1.1)), v3(0, 0, -radius * 0.2)) : style === 'bun' ? add3(sub3(center, mul3(face, radius * 0.7)), v3(0, 0, radius * 0.75)) : null;
+    const extraDraw = () => { if (extra) this.dotAt(extra, radius * (style === 'pony' ? 0.42 : 0.45), hair, 1); };
+    const bandDraw = () => { if (lk?.band) this.seg(add3(center, v3(0, 0, radius * 0.38)), add3(center, v3(0, 0, radius * 0.52)), radius * 1.9, lk.band, 1); };
     if (this.cam.depth(front) < this.cam.depth(back)) {
-      this.dotAt(add3(back, v3(0, 0, 0.02)), radius, C.hair, 2);
-      this.dotAt(center, radius * 0.92, C.skin, 2);
-      this.dotAt(add3(center, v3(0, 0, radius * 0.55)), radius * 0.8, C.hair, 1);
+      extraDraw();
+      this.dotAt(add3(back, v3(0, 0, 0.02)), radius * cap, hair, 2);
+      this.dotAt(center, radius * 0.92, skin, 2);
+      this.dotAt(add3(center, v3(0, 0, radius * 0.55)), radius * 0.8 * cap, hair, 1);
+      bandDraw();
     } else {
-      this.dotAt(center, radius, C.skin, 2);
-      this.dotAt(add3(back, v3(0, 0, 0.015)), radius * 0.98, C.hair, 2);
+      this.dotAt(center, radius, skin, 2);
+      this.dotAt(add3(back, v3(0, 0, 0.015)), radius * 0.98 * cap, hair, 2);
+      bandDraw();
+      extraDraw();
     }
   }
 
@@ -608,12 +655,13 @@ export class Renderer {
     const headC = add3(neck, v3(0, 0, 0.2));
     const throat = add3(hand, mul3(v.rdir, 0.33)), rHead = add3(hand, mul3(v.rdir, RACKET_LENGTH));
     const shirt = v.color, shirtDark = shade(v.color, 0.75);
+    const lk = lookOf(v.lookId), skinC = lk?.skin ?? C.skin;
     const mid = (a: V3, b: V3) => mul3(add3(a, b), 0.5);
 
     const leg = (hip: V3, knee: V3, foot: V3) => [
-      { at: mid(hip, knee), draw: () => { this.seg(hip, knee, 0.13, C.skin, 2); this.seg(hip, add3(hip, mul3(sub3(knee, hip), 0.5)), 0.175, C.shorts, 3); } },
-      { at: mid(knee, foot), draw: () => { this.seg(knee, foot, 0.1, C.skin, 1.6); this.seg(add3(foot, mul3(sub3(knee, foot), 0.28)), foot, 0.105, C.sock, 1.6); } },
-      { at: foot, draw: () => this.seg(foot, add3(foot, mul3(fwd, 0.12)), 0.085, C.shoe, 2) },
+      { at: mid(hip, knee), draw: () => { this.seg(hip, knee, 0.13, skinC, 2); this.seg(hip, add3(hip, mul3(sub3(knee, hip), 0.5)), 0.175, (lk?.shorts ?? C.shorts), 3); } },
+      { at: mid(knee, foot), draw: () => { this.seg(knee, foot, 0.1, skinC, 1.6); this.seg(add3(foot, mul3(sub3(knee, foot), 0.28)), foot, 0.105, C.sock, 1.6); } },
+      { at: foot, draw: () => this.seg(foot, add3(foot, mul3(fwd, 0.12)), 0.085, (lk?.shoe ?? C.shoe), 2) },
     ];
     this.drawParts([
       ...leg(hipR, kneeR, footR),
@@ -623,14 +671,15 @@ export class Renderer {
         draw: () => {
           this.seg(pelvis, neck, 0.3, shirt, 4);
           this.poly([add3(hipL, v3(0, 0, -0.04)), add3(hipR, v3(0, 0, -0.04)), add3(neck, mul3(right, 0.2)), add3(neck, mul3(right, -0.2))], shirt);
-          this.seg(add3(neck, mul3(right, -0.2)), add3(hipL, v3(0, 0, -0.02)), 0.04, shirtDark, 1);
+          this.seg(add3(neck, mul3(right, -0.2)), add3(hipL, v3(0, 0, -0.02)), 0.04, lk ? lk.trim : shirtDark, 1);
+          if (lk) this.seg(add3(neck, mul3(right, 0.2)), add3(hipR, v3(0, 0, -0.02)), 0.04, lk.trim, 1);
         },
       },
-      { at: mid(sh, elbow), draw: () => { this.seg(sh, elbow, 0.085, C.skin, 1.6); this.seg(sh, add3(sh, mul3(sub3(elbow, sh), 0.45)), 0.11, shirt, 2); } },
-      { at: mid(elbow, hand), draw: () => this.seg(elbow, hand, 0.075, C.skin, 1.5) },
-      { at: mid(offSh, offElbow), draw: () => { this.seg(offSh, offElbow, 0.085, C.skin, 1.6); this.seg(offSh, add3(offSh, mul3(sub3(offElbow, offSh), 0.45)), 0.11, shirt, 2); } },
-      { at: mid(offElbow, offHand), draw: () => this.seg(offElbow, offHand, 0.075, C.skin, 1.5) },
-      { at: headC, draw: () => this.head(headC, fwd, 0.115) },
+      { at: mid(sh, elbow), draw: () => { this.seg(sh, elbow, 0.085, skinC, 1.6); this.seg(sh, add3(sh, mul3(sub3(elbow, sh), 0.45)), 0.11, shirt, 2); } },
+      { at: mid(elbow, hand), draw: () => this.seg(elbow, hand, 0.075, skinC, 1.5) },
+      { at: mid(offSh, offElbow), draw: () => { this.seg(offSh, offElbow, 0.085, skinC, 1.6); this.seg(offSh, add3(offSh, mul3(sub3(offElbow, offSh), 0.45)), 0.11, shirt, 2); } },
+      { at: mid(offElbow, offHand), draw: () => this.seg(offElbow, offHand, 0.075, skinC, 1.5) },
+      { at: headC, draw: () => this.head(headC, fwd, 0.115, lk) },
       {
         at: throat,
         draw: () => {
@@ -661,6 +710,9 @@ export class Renderer {
   private official(o: Official, look: V3 | null) {
     const f = v3(o.facing.x, o.facing.y, 0), side = v3(-o.facing.y, o.facing.x, 0);
     const base = v3(o.pos.x, o.pos.y, 0);
+    // Each official looks different (by where they sit); short or tied-back hair, no headbands.
+    const ol = { ...lookOf(`official:${o.kind}:${Math.round(o.pos.x * 10)}:${Math.round(o.pos.y * 10)}`)!, band: null };
+    if (ol.hairStyle === 'curly') ol.hairStyle = 'short';
     const seat = o.seat;
     const at = (fw: number, sd: number, z: number) => add3(base, add3(add3(mul3(f, fw), mul3(side, sd)), v3(0, 0, z)));
 
@@ -671,6 +723,10 @@ export class Renderer {
       this.poly([at(-0.32, -0.32, seat - 0.05), at(0.32, -0.32, seat - 0.05), at(0.32, 0.32, seat - 0.05), at(-0.32, 0.32, seat - 0.05)], '#c3cad3');
       this.poly([at(-0.3, -0.25, seat), at(-0.3, 0.25, seat), at(-0.3, 0.25, seat + 0.55), at(-0.3, -0.25, seat + 0.55)], '#8d96a1');
       this.poly([at(0.3, -0.3, seat + 0.25), at(0.3, 0.3, seat + 0.25), at(0.55, 0.3, seat + 0.27), at(0.55, -0.3, seat + 0.27)], '#d7dce2');
+      // The scoring tablet, and the official shuttle maker's name on the chair.
+      this.poly([at(0.34, -0.13, seat + 0.275), at(0.34, 0.13, seat + 0.275), at(0.5, 0.13, seat + 0.285), at(0.5, -0.13, seat + 0.285)], '#11161d');
+      this.poly([at(0.36, -0.11, seat + 0.28), at(0.36, 0.11, seat + 0.28), at(0.48, 0.11, seat + 0.29), at(0.48, -0.11, seat + 0.29)], this.look.accent);
+      this.poly([at(0.31, -0.3, 0.5), at(0.31, 0.3, 0.5), at(0.31, 0.3, 0.85), at(0.31, -0.3, 0.85)], this.look.shuttle.bg);
     } else {
       for (const [a, b] of [[-0.18, -0.18], [-0.18, 0.18], [0.18, -0.18], [0.18, 0.18]]) this.seg(at(a, b, 0), at(a, b, seat), 0.025, C.chair, 1);
       this.poly([at(-0.2, -0.2, seat), at(0.2, -0.2, seat), at(0.2, 0.2, seat), at(-0.2, 0.2, seat)], '#7d8792');
@@ -708,16 +764,16 @@ export class Renderer {
     }
     const arm = (s: V3, hnd: V3) => () => {
       const e = ik(s, hnd, 0.29, 0.28, v3(0, 0, -1));
-      this.seg(s, e, 0.085, C.blazer, 1.6);
-      this.seg(e, hnd, 0.075, C.blazer, 1.5);
-      this.dotAt(hnd, 0.04, C.skin, 1);
+      this.seg(s, e, 0.085, this.look.blazer, 1.6);
+      this.seg(e, hnd, 0.075, this.look.blazer, 1.5);
+      this.dotAt(hnd, 0.04, ol.skin, 1);
     };
     this.drawParts([
       ...[0, 1].map((i) => ({ at: knees[i], draw: () => { this.seg(hip, knees[i], 0.14, C.trousers, 2); this.seg(knees[i], feet[i], 0.12, C.trousers, 2); this.seg(feet[i], add3(feet[i], mul3(f, 0.1)), 0.07, '#111', 1.5); } })),
-      { at: mul3(add3(hip, neck), 0.5), draw: () => { this.seg(hip, neck, 0.34, C.blazer, 4); this.seg(add3(neck, v3(0, 0, -0.02)), add3(neck, add3(mul3(f, 0.04), v3(0, 0, -0.14))), 0.07, '#e8ecf0', 1.5); } },
+      { at: mul3(add3(hip, neck), 0.5), draw: () => { this.seg(hip, neck, 0.34, this.look.blazer, 4); this.seg(add3(neck, v3(0, 0, -0.02)), add3(neck, add3(mul3(f, 0.04), v3(0, 0, -0.14))), 0.07, '#e8ecf0', 1.5); } },
       { at: mul3(add3(shL, handL), 0.5), draw: arm(shL, handL) },
       { at: mul3(add3(shR, handR), 0.5), draw: arm(shR, handR) },
-      { at: head, draw: () => this.head(head, face, 0.1) },
+      { at: head, draw: () => this.head(head, face, 0.1, ol) },
     ]);
   }
 

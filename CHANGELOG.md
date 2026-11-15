@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.14: Cleaner match screen (15 Nov 2026)
+
+- New scoreboard: the tournament and round on top, the format under it, and names that are shortened to fit, so nothing overlaps any more. Your opponent’s country and style sit beside their name.
+- Each career tournament has its own court colours: green, blue, teal or crimson, purple at the Olympics, royal blue at the World Championships and a blue court with gold boards at the World Tour Finals.
+- The rally counter has its own panel, and the controls line at the bottom fits between the buttons (on two lines if it has to).
+
 ## 3.3.13: Saved career matches (15 Nov 2026)
 
 - Career matches now always show a landing marker, whatever your settings: a plain ring with no centre dot or drop line, so you still have to read the exact spot yourself.

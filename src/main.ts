@@ -15,7 +15,7 @@ import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type A
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
 import { Playback } from './replay';
 import { CHANGELOG } from './changelog';
-import { LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
+import { COURT_THEMES, LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
@@ -1971,6 +1971,7 @@ const careerUi = initCareer({
     careerDone = o.onDone;
     careerLeave = o.onLeave ?? null;
     renderer.eventTitle = o.setup.label?.split(' · ')[0] ?? null;
+    renderer.courtTheme = (o.setup.court && COURT_THEMES[o.setup.court]) || null;
     game = new Game({ ...settings, ...o.settings }, input, broadcast, 'match', null, o.setup);
     game.onMatchOver = recordCareer;
     if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
@@ -1987,6 +1988,7 @@ function leaveCareerMatch() {
   const leave = careerLeave;
   careerDone = careerLeave = null;
   renderer.eventTitle = null;
+  renderer.courtTheme = null;
   showMenu();
   leave?.();
 }
@@ -1994,6 +1996,7 @@ function endCareerMatch(retired: boolean) {
   const g = game!, done = careerDone;
   careerDone = careerLeave = null;
   renderer.eventTitle = null;
+  renderer.courtTheme = null;
   showMenu();
   done?.(g, retired);
 }

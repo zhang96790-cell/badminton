@@ -147,11 +147,19 @@ export class Hud {
     const prompt = this.servePrompt(game);
     if (prompt) {
       ctx.fillStyle = C.hud;
-      ctx.fillText(prompt, w / 2, h - 44);
+      ctx.fillText(prompt, w / 2, h - 52);
     }
+    // Controls line: kept clear of the View / Fullscreen buttons; splits onto two lines if it won't fit.
     ctx.fillStyle = C.hudDim;
     ctx.font = font(12, 500);
-    ctx.fillText(this.controlsHint(game), w / 2, h - 18);
+    const hint = this.controlsHint(game), maxW = w - 2 * 250;
+    if (ctx.measureText(hint).width <= maxW) ctx.fillText(hint, w / 2, h - 18);
+    else {
+      ctx.font = font(11, 500);
+      const [a, ...rest] = hint.split('   ·   ');
+      ctx.fillText(this.fit(a, Math.max(200, maxW)), w / 2, h - 30);
+      ctx.fillText(this.fit(rest.join('  ·  '), Math.max(200, maxW)), w / 2, h - 14);
+    }
 
     if (game.paused || game.peerAway) {
       ctx.fillStyle = 'rgba(5,8,12,0.6)';
@@ -264,55 +272,104 @@ export class Hud {
   }
 
   /** Broadcast-style score bug. */
+  /** Bottom of the scoreboard, so the shot clock sits under it whatever its height. */
+  private sbBottom = 116;
+
+  /** Cut text to fit a width, with an ellipsis. */
+  private fit(text: string, maxW: number): string {
+    const ctx = this.ctx;
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(`${t}…`).width > maxW) t = t.slice(0, -1);
+    return `${t.trimEnd()}…`;
+  }
+
+  /**
+   * Broadcast-style scoreboard: the event (or opponent) on top, the format under it, then one row per side.
+   * Every column is placed from the right and the names are cut to fit, so nothing overlaps.
+   */
   private scoreboard(game: Game) {
     const ctx = this.ctx, m = game.match;
-    const x = 16, y = 16, rowH = 32, bw = 340;
-    panel(ctx, x, y, bw, 28 + rowH * 2 + 8);
+    const x = 16, y = 16, rowH = 34, bw = 372, pad = 14;
+    // Header: career and daily matches show the event and round; other matches the opponent.
+    const label = game.setup.label;
+    const parts = label ? label.split(' · ') : [];
+    const title = (parts[0] ?? game.opponentLabel).toUpperCase();
+    const games = m.gamesToWin > 1 ? `Game ${m.gameNumber} of 3` : 'One game';
+    const sub = [parts[1], games, `to ${m.format.pointsToWin}`].filter(Boolean).join('  ·  ');
+    const headH = 44, h = headH + rowH * 2 + 8;
+    panel(ctx, x, y, bw, h, 12, 'rgba(9,13,21,0.9)');
+    // Header band in the court's accent colour.
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, bw, headH - 4, [12, 12, 0, 0]);
+    ctx.fill();
     ctx.textAlign = 'left';
+    ctx.fillStyle = C.hud;
+    ctx.font = font(12, 800);
+    ctx.fillText(this.fit(title, bw - pad * 2), x + pad, y + 18);
     ctx.fillStyle = C.hudDim;
-    ctx.font = font(11, 700);
-    const games = m.gamesToWin > 1 ? `GAME ${m.gameNumber} OF 3` : 'ONE GAME';
-    ctx.fillText(`${games}  ·  TO ${m.format.pointsToWin}  ·  ${game.opponentLabel.toUpperCase()}`, x + 14, y + 19);
+    ctx.font = font(11, 600);
+    ctx.fillText(this.fit(sub, bw - pad * 2), x + pad, y + 33);
+
+    // Columns from the right: score box, finished games, then the serve dot and challenges.
+    const scoreW = 46, scoreX = x + bw - 12 - scoreW, gameW = 28;
+    const gamesX = scoreX - 8 - m.history.length * gameW;
+    const pipsN = game.online ? 0 : Math.max(game.challenges[0], game.challenges[1]);
+    const pipsX = gamesX - 6 - pipsN * 9;
+    const dotX = pipsX - 12;
     ([0, 1] as const).forEach((i) => {
-      const ry = y + 28 + rowH * i;
+      const ry = y + headH + rowH * i, mid = ry + rowH / 2;
+      if (i === 1) { ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(x + 10, ry, bw - 20, 1); }
       ctx.fillStyle = game.teamColor(i);
-      ctx.fillRect(x + 10, ry + 6, 4, rowH - 10);
-      if (game.doubles) { ctx.fillStyle = game.players[i + 2].color; ctx.fillRect(x + 10, ry + 6 + (rowH - 10) / 2, 4, (rowH - 10) / 2); }
+      ctx.fillRect(x + 10, ry + 7, 4, rowH - 14);
+      if (game.doubles) { ctx.fillStyle = game.players[i + 2].color; ctx.fillRect(x + 10, ry + 7 + (rowH - 14) / 2, 4, (rowH - 14) / 2); }
+      // Name, then (career) country and style in small grey type if there's room.
+      const nameX = x + 24, room = dotX - 8 - nameX;
+      const name = game.doubles ? (i === 0 ? 'You / Partner' : 'CPU 1 / CPU 2') : game.players[i].name;
+      ctx.textAlign = 'left';
       ctx.fillStyle = C.hud;
-      ctx.font = font(game.doubles ? 13 : 16, 700);
-      ctx.fillText(game.doubles ? (i === 0 ? 'You / Partner' : 'CPU 1 / CPU 2') : game.players[i].name, x + 24, ry + 23);
-      // Challenges left this game
-      const cx = game.doubles ? 116 : 88;
-      // No Hawk-Eye challenges online (yet), so no challenge markers.
-      for (let k = 0; k < (game.online ? 0 : game.challenges[i]); k++) {
-        ctx.fillStyle = 'rgba(255,209,102,0.85)';
-        ctx.fillRect(x + cx + k * 9, ry + 14, 6, 6);
+      ctx.font = font(game.doubles ? 13 : 15, 700);
+      const shown = this.fit(name, room);
+      ctx.fillText(shown, nameX, mid + 5);
+      const tag = i === 1 ? game.opponentTag : '';
+      if (tag) {
+        const used = ctx.measureText(shown).width + 8;
+        ctx.font = font(10, 700);
+        ctx.fillStyle = C.hudDim;
+        if (room - used > 40) ctx.fillText(this.fit(tag.toUpperCase(), room - used), nameX + used, mid + 4);
       }
+      // Serving
       if (m.server === i && (game.state === 'serve' || game.state === 'rally')) {
         ctx.fillStyle = C.accent;
         ctx.beginPath();
-        ctx.arc(x + (game.doubles ? 142 : 124), ry + 17, 4, 0, Math.PI * 2);
+        ctx.arc(dotX, mid, 4, 0, Math.PI * 2);
         ctx.fill();
       }
+      // Challenges left this game (none online yet)
+      for (let k = 0; k < (game.online ? 0 : game.challenges[i]); k++) {
+        ctx.fillStyle = 'rgba(255,209,102,0.85)';
+        ctx.fillRect(pipsX + k * 9, mid - 3, 6, 6);
+      }
       ctx.font = font(13, 700);
+      ctx.textAlign = 'center';
       m.history.forEach((g, gi) => {
         ctx.fillStyle = g[i] > g[1 - i] ? C.hud : C.hudDim;
-        ctx.textAlign = 'center';
-        ctx.fillText(String(g[i]), x + 160 + gi * 34, ry + 22);
+        ctx.fillText(String(g[i]), gamesX + gameW * gi + gameW / 2, mid + 5);
       });
-      ctx.textAlign = 'center';
-      panel(ctx, x + bw - 58, ry + 3, 46, rowH - 6, 6, 'rgba(255,255,255,0.08)');
+      panel(ctx, scoreX, ry + 4, scoreW, rowH - 8, 6, m.scores[i] > m.scores[1 - i] ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)');
       ctx.fillStyle = C.hud;
-      ctx.font = font(22, 800);
-      ctx.fillText(String(m.scores[i]), x + bw - 35, ry + 25);
+      ctx.font = font(21, 800);
+      ctx.fillText(String(m.scores[i]), scoreX + scoreW / 2, mid + 8);
       ctx.textAlign = 'left';
     });
+    this.sbBottom = y + h + 10;
   }
 
   private clock(game: Game) {
     if (!(game.state === 'serve' || game.state === 'point') || !game.clockRunning) return;
     const ctx = this.ctx, s = Math.max(0, game.clock);
-    const x = 16, y = 116, urgent = s <= 10;
+    const x = 16, y = this.sbBottom, urgent = s <= 10;
     panel(ctx, x, y, 132, 40, 10);
     ctx.beginPath();
     ctx.arc(x + 22, y + 20, 11, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (s / 25));
@@ -330,16 +387,17 @@ export class Hud {
 
   private rally(game: Game, w: number) {
     const ctx = this.ctx;
+    panel(ctx, w - 112, 16, 96, 78, 12, 'rgba(9,13,21,0.9)');
     ctx.textAlign = 'right';
     ctx.fillStyle = C.hudDim;
-    ctx.font = font(12, 700);
-    ctx.fillText('RALLY', w - 20, 30);
+    ctx.font = font(11, 800);
+    ctx.fillText('RALLY', w - 30, 34);
     ctx.fillStyle = C.hud;
-    ctx.font = font(30, 800);
-    ctx.fillText(String(game.rallyHits), w - 20, 62);
+    ctx.font = font(28, 800);
+    ctx.fillText(String(game.rallyHits), w - 30, 64);
     ctx.fillStyle = C.hudDim;
-    ctx.font = font(12, 600);
-    ctx.fillText(`Longest ${game.longestRally}`, w - 20, 82);
+    ctx.font = font(11, 600);
+    ctx.fillText(`Longest ${game.longestRally}`, w - 30, 84);
   }
 
   private replay(game: Game, w: number, h: number, time: number) {

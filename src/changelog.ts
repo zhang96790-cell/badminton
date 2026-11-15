@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.14',
+    title: 'Cleaner match screen',
+    date: '15 Nov 2026',
+    changes: [
+      "New scoreboard: the tournament and round on top, the format under it, and names that are shortened to fit, so nothing overlaps any more. Your opponent’s country and style sit beside their name.",
+      "Each career tournament has its own court colours: green, blue, teal or crimson, purple at the Olympics, royal blue at the World Championships and a blue court with gold boards at the World Tour Finals.",
+      "The rally counter has its own panel, and the controls line at the bottom fits between the buttons (on two lines if it has to).",
+    ],
+  },
+  {
     version: '3.3.13',
     title: 'Saved career matches',
     date: '15 Nov 2026',

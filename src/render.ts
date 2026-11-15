@@ -53,6 +53,8 @@ function buildCrowd(): Spectator[] {
 export class Renderer {
   /** The tournament's name for the court boards (career and daily matches), or null. */
   eventTitle: string | null = null;
+  /** The tournament's court colours (career), or null for the usual green. */
+  courtTheme: import('./config').CourtTheme | null = null;
   private cam!: Camera;
   private crowd = buildCrowd();
   /** Performance mode: a third of the crowd (standing still), no lighting or glow, no shuttle trail. */
@@ -179,7 +181,7 @@ export class Renderer {
     // Career and daily matches: the tournament's name runs across the outer boards (two either side).
     const title = this.eventTitle;
     for (let i = 0; i < 6; i++) {
-      const x0 = -7.8 + i * 2.6, color = title && i !== 2 && i !== 3 ? '#0b1f4f' : C.boards[i % C.boards.length];
+      const x0 = -7.8 + i * 2.6, color = title && i !== 2 && i !== 3 ? (this.courtTheme?.boards ?? '#0b1f4f') : C.boards[i % C.boards.length];
       // Sponsors' boards: Solar Sparks and Ventra.
       const ad = i === 2 ? ads.solar : i === 3 ? ads.ventra : undefined;
       if (ad && this.cam.forward.y >= 0.5) { this.adBoard(ad, v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
@@ -248,16 +250,16 @@ export class Renderer {
 
   private court(doubles: boolean) {
     const W = COURT.doublesHalfWidth, S = COURT.singlesHalfWidth, L = COURT.halfLength;
-    this.poly([v3(-W - 1.6, -L - 2.2), v3(W + 1.6, -L - 2.2), v3(W + 1.6, L + 2.2), v3(-W - 1.6, L + 2.2)], C.surround);
-    this.poly([v3(-W, -L), v3(W, -L), v3(W, L), v3(-W, L)], C.court);
+    this.poly([v3(-W - 1.6, -L - 2.2), v3(W + 1.6, -L - 2.2), v3(W + 1.6, L + 2.2), v3(-W - 1.6, L + 2.2)], this.courtTheme?.surround ?? C.surround);
+    this.poly([v3(-W, -L), v3(W, -L), v3(W, L), v3(-W, L)], this.courtTheme?.court ?? C.court);
     // Faint mat seams.
     for (let x = -W; x < W - 0.01; x += 1.22) {
       this.poly([v3(x, -L), v3(x + 0.61, -L), v3(x + 0.61, L), v3(x, L)], 'rgba(255,255,255,0.025)');
     }
     // Doubles side alleys are out in singles: shade them so the singles court reads clearly.
     if (!doubles) {
-      this.poly([v3(-W, -L), v3(-S, -L), v3(-S, L), v3(-W, L)], C.alley);
-      this.poly([v3(S, -L), v3(W, -L), v3(W, L), v3(S, L)], C.alley);
+      this.poly([v3(-W, -L), v3(-S, -L), v3(-S, L), v3(-W, L)], this.courtTheme?.alley ?? C.alley);
+      this.poly([v3(S, -L), v3(W, -L), v3(W, L), v3(S, L)], this.courtTheme?.alley ?? C.alley);
     }
     for (const l of LINES) this.poly(rect3(l), C.line);
   }

@@ -305,6 +305,20 @@ export const DOUBLES = {
 
 export interface ScoringFormat { pointsToWin: number; winBy: number; pointCap: number; intervalAt: number }
 
+/** Court looks for tournaments (career): the mat, the singles alleys, the floor round it, and the event's boards. */
+export interface CourtTheme { court: string; alley: string; surround: string; boards: string }
+export const COURT_THEMES: Record<string, CourtTheme> = {
+  green: { court: '#2f7a5c', alley: '#286a4f', surround: '#1d3b52', boards: '#0b1f4f' },
+  blue: { court: '#2b6aa0', alley: '#245b8a', surround: '#173049', boards: '#0d2a52' },
+  teal: { court: '#1f7f86', alley: '#1a6c72', surround: '#14313f', boards: '#0b2e3a' },
+  crimson: { court: '#93393f', alley: '#7e3136', surround: '#2a1d2b', boards: '#3d0f1c' },
+  purple: { court: '#5b3f93', alley: '#4e367e', surround: '#1f1a3a', boards: '#2a1450' },
+  // World Tour Finals: blue mat on black with gold boards. Worlds: deep royal blue.
+  finals: { court: '#24578c', alley: '#1f4a78', surround: '#121417', boards: '#5a4512' },
+  worlds: { court: '#1f4f9c', alley: '#1a4486', surround: '#0f1d3a', boards: '#0a1a44' },
+  club: { court: '#6b7a3a', alley: '#5d6a32', surround: '#2a2a26', boards: '#2b2f1d' },
+};
+
 export const RULES = {
   /** Picked on the menu. Interval when the leading score first reaches intervalAt. */
   formats: {

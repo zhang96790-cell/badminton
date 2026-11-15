@@ -610,6 +610,16 @@ export function initCareer(d: CareerDeps) {
     return true;
   }
 
+  /** Each tournament keeps its own court colours; the big events have their own look. */
+  function courtFor(x: TourEvent): string {
+    if (x.tier === 'OLYMPICS') return 'purple';
+    if (x.tier === 'WORLDS') return 'worlds';
+    if (x.tier === 'WTF') return 'finals';
+    if (x.tier === 'CLUB') return 'club';
+    const looks = ['green', 'green', 'blue', 'teal', 'crimson', 'blue'];
+    return looks[hash(x.id) % looks.length];
+  }
+
   async function playNext(resume?: string) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
     if (!x || !nm || busy) return;
@@ -625,7 +635,7 @@ export function initCareer(d: CareerDeps) {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${ROUND_LABEL[nm.round]}`,
         player: { characterId: a.as, modifiers: [energyModifier(energy), coachModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
-        restrictions: {}, resume,
+        restrictions: {}, resume, court: courtFor(x),
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
       settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },

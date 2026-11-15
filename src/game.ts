@@ -443,6 +443,11 @@ export class Game {
     if (o === 'human') return '2 Player';
     return `CPU ${LEVEL_LABEL[o]}${this.doubles ? ' pair' : ''} · ${STYLES[this.settings.style].label}`;
   }
+  /** Career and daily: the opponent's country and style, shown small beside their name. */
+  get opponentTag(): string {
+    const rival = this.setup.opponent.characterId && usesCareerStats(this.setup.mode) ? characterById(this.setup.opponent.characterId) : null;
+    return rival ? `${rival.country} · ${STYLES[this.settings.style]?.label ?? rival.style}` : '';
+  }
   /** Side 0 (near) or 1 (far) of player i. */
   teamOf(i: number): 0 | 1 { return (i % 2) as 0 | 1; }
   teamName(t: 0 | 1): string {

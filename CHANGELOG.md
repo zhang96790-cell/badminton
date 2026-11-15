@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.5.1: Easier energy (16 Nov 2026)
+
+- Career: energy now comes back over time. Every week you don't play gives +10 energy, and a rest week gives +30 (was +10) for the same $200.
+
 ## 3.5: Bronze matches and more recruits (15 Nov 2026)
 
 - Every career tournament now has a bronze medal match: lose your semi-final and you play the other losing semi-finalist for 3rd place. 3rd place pays a little more than 4th, and at the Olympics and World Championships only 3rd place wins the bronze medal.

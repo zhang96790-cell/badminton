@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.5.1',
+    title: 'Easier energy',
+    date: '16 Nov 2026',
+    changes: [
+      "Career: energy now comes back over time. Every week you don't play gives +10 energy, and a rest week gives +30 (was +10) for the same $200.",
+    ],
+  },
+  {
     version: '3.5',
     title: 'Bronze matches and more recruits',
     date: '15 Nov 2026',

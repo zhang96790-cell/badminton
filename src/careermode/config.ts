@@ -40,9 +40,9 @@ export const CAREER_CFG = {
   cityCost: { SEA: 0.8, 'SOUTH ASIA': 0.7, 'EAST ASIA': 1.2, EUROPE: 1.3, AMERICAS: 1.3, OCEANIA: 1.25, 'MIDDLE EAST': 1.1, AFRICA: 0.8 } as Record<string, number>,
   food: { cost: 90, energy: 5 },
   physio: { cost: 450, energy: 15 },
-  rest: { cost: 200, energy: 10 },
-  /** A week where you don't play or rest gives nothing back (3.3). */
-  idleWeekEnergy: 0,
+  rest: { cost: 200, energy: 30 },
+  /** A week where you don't play still gives some energy back (3.5.1). */
+  idleWeekEnergy: 10,
 
   // ── Energy ──
   /** Energy used per round played, and for travelling. */

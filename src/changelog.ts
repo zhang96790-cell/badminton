@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.5',
+    title: 'Bronze matches and more recruits',
+    date: '15 Nov 2026',
+    changes: [
+      "Every career tournament now has a bronze medal match: lose your semi-final and you play the other losing semi-finalist for 3rd place. 3rd place pays a little more than 4th, and at the Olympics and World Championships only 3rd place wins the bronze medal.",
+      "Recruiting is easier at the lower levels: finish 1st, 2nd or 3rd at a Super 100, 300 or 500 and you get a recruit offer. Better places give better odds of the rarer players. Bigger events still need a win.",
+      "You can now get up to 6 recruit offers a day (was 3).",
+    ],
+  },
+  {
     version: '3.4.2',
     title: 'Current tournaments unchanged',
     date: '15 Nov 2026',

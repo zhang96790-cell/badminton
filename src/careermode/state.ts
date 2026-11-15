@@ -7,7 +7,7 @@ import type { Level } from '../config';
 import { energyUseFactor } from './signatures';
 
 export interface LedgerLine { year: number; week: number; label: string; amount: number }
-export interface RecruitOffer { id: number; tournamentId: string; candidates: string[]; rerolled: boolean }
+export interface RecruitOffer { id: number; tournamentId: string; candidates: string[]; rerolled: boolean; place?: 1 | 2 | 3 }
 
 /** A tournament being played. */
 export interface Active {
@@ -27,6 +27,8 @@ export interface Active {
   club?: boolean;
   /** 3.4.1: entered after early rounds became one game. Events entered before keep best of 3 throughout. */
   shortEarly?: boolean;
+  /** Lost the semi-final: next is the match for 3rd place (against the other losing semi-finalist). */
+  bronze?: boolean;
   /** A match left part-way (Save and leave): its score, so it carries on from any computer. */
   live?: LiveMatch;
 }
@@ -52,7 +54,8 @@ export interface CareerState {
   history: PlayerResult[];
   pendingRecruitOffer: RecruitOffer | null;
   /** A win that's waiting for its offer to be made (e.g. it was offline). */
-  offerDue: { tournamentId: string; tier: string; field: string[] } | null;
+  /** place: 1st, 2nd or 3rd (lower-level events offer recruits for any of them; better places get better odds). */
+  offerDue: { tournamentId: string; tier: string; field: string[]; place?: 1 | 2 | 3 } | null;
   /** s300 from 3.0; tiers: every level opened by reaching a final at the level below. */
   unlocks: { s300: boolean; tiers?: string[] };
   /** business: 3.0 saves (now travelClass). fasterEarlyRounds: no longer used (early rounds are one game, quarter-finals on best of 3). */
@@ -232,7 +235,7 @@ export function currentPlan(s: CareerState, w: World, ev: TourEvent) {
   return w.plan(ev.tier === 'CLUB' ? { ...ev, tier: 'S100' } : ev, s.year, s.current!.as);
 }
 
-export interface NextMatch { opponent: Character; opponentId: string; round: Round; level: Level; games: 1 | 3; points: 15 | 21 }
+export interface NextMatch { opponent: Character; opponentId: string; round: Round; level: Level; games: 1 | 3; points: 15 | 21; bronze?: boolean }
 
 /** Who you play next: the bracket with you winning so far. */
 export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | null {
@@ -244,13 +247,18 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
   const { rounds } = playOut(p.slots, w.strength, hash(s.rngSeed, s.year, ev.id, 'play'), (x, y) => (x === YOU ? YOU : y === YOU ? YOU : null));
   const alive = rounds[ri];
   const i = alive.indexOf(YOU);
-  const oppId = alive[i % 2 === 0 ? i + 1 : i - 1];
+  let oppId = alive[i % 2 === 0 ? i + 1 : i - 1];
+  // The bronze match: the other semi-final's loser (the one of that pair who isn't in the final).
+  if (a.bronze) {
+    const other = i < 2 ? [alive[2], alive[3]] : [alive[0], alive[1]], final = rounds[ri + 1] ?? [];
+    oppId = other.find((x) => !final.includes(x)) ?? other[1];
+  }
   const opponent = characterById(oppId);
-  const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, 'level'), ev.tier);
+  const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, a.bronze ? 'bronze' : '', 'level'), ev.tier);
   // Career matches are best of 3 games to 15 (the new scoring).
   // Early rounds are one game to 15; from the quarter-finals on, best of 3 to 15.
   const early = !!a.shortEarly && (a.round === 'R64' || a.round === 'R32' || a.round === 'R16');
-  return { opponent, opponentId: oppId, round: a.round, level, games: early ? 1 : 3, points: 15 };
+  return { opponent, opponentId: oppId, round: a.round, level, games: early ? 1 : 3, points: 15, bronze: !!a.bronze };
 }
 
 /** A match finished: pay the hotel, use energy, and move on (or finish the event). */
@@ -271,20 +279,26 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
     const weeks = I.weeks[0] + Math.floor(rngFor(s, ev, `${a.round}w`)() * (I.weeks[1] - I.weeks[0] + 1));
     s.injury = { weeks };
     book(s, 'Injury treatment', -Math.round(I.treatment * (s.staff?.physio ? 0.5 : 1)));
+    if (a.bronze) return { finished: true, result: finish(s, w, ev, 'SF', false, won ? 3 : 4), injured: weeks };
+    if (!won && a.round === 'SF') return { finished: true, result: finish(s, w, ev, 'SF', false, 4), injured: weeks };
     if (won && a.round !== 'F') { a.round = nextRound(a.round); return { finished: true, result: finish(s, w, ev, a.round), injured: weeks }; }
     return { finished: true, result: finish(s, w, ev, won ? 'W' : a.round), injured: weeks };
   }
+  // Lose a semi-final and you play for 3rd place.
+  if (a.bronze) return { finished: true, result: finish(s, w, ev, 'SF', false, won ? 3 : 4) };
+  if (!won && a.round === 'SF') { a.bronze = true; return { finished: false }; }
   if (won && a.round !== 'F') { a.round = nextRound(a.round); skipByes(s, w, ev); return { finished: false }; }
   const reached: Round = won ? 'W' : a.round;
   return { finished: true, result: finish(s, w, ev, reached) };
 }
 
-function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noReward = false): PlayerResult {
+function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noReward = false, place?: 3 | 4): PlayerResult {
   const a = s.current!;
   const pts = noReward ? 0 : pointsFor(ev.tier, reached, ev.draw_size);
-  const prize = noReward ? 0 : prizeFor(ev, reached);
+  // 3rd place pays a little more than 4th (the semi-final prize plus CFG.bronzeBonus).
+  const prize = noReward ? 0 : Math.round(prizeFor(ev, reached) * (place === 3 ? 1 + CFG.bronzeBonus : 1));
   if (prize) book(s, `Prize money: ${ev.name}`, prize);
-  const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, scores: a.scores, as: a.as };
+  const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, scores: a.scores, as: a.as, ...(place ? { place } : {}) };
   s.history.push(res);
   if (ev.tier !== 'CLUB') s.currentLocation = ev.host_country;
   if (reached === 'W') {
@@ -296,9 +310,11 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
     if (ev.tier === 'S100') s.unlocks.s300 = true;
     for (const [tier, g] of Object.entries(CFG.gates)) if (g?.finalIn === ev.tier && !unlocked(s, tier)) (s.unlocks.tiers ??= []).push(tier);
   }
-  if (reached === 'W' && ev.tier !== 'CLUB') {
+  // Recruits: win anything; at the lower levels a final or 3rd place also earns an offer (with worse odds of the rarer players).
+  const top: 1 | 2 | 3 | 0 = reached === 'W' ? 1 : reached === 'F' ? 2 : place === 3 ? 3 : 0;
+  if (ev.tier !== 'CLUB' && !noReward && (top === 1 || (top > 0 && CFG.recruitTop3.includes(ev.tier)))) {
     const p = currentPlan(s, w, ev);
-    s.offerDue = { tournamentId: ev.id, tier: ev.tier, field: p.slots.filter((x) => x !== YOU && x !== 'bye') };
+    s.offerDue = { tournamentId: ev.id, tier: ev.tier, field: p.slots.filter((x) => x !== YOU && x !== 'bye'), place: top as 1 | 2 | 3 };
   }
   s.current = null;
   return res;
@@ -307,7 +323,7 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
 /** Retire from the event you're in (counts as losing your next round, with no prize for it). */
 export function withdraw(s: CareerState, w: World, ev: TourEvent): PlayerResult {
   // Withdrawing before playing anyone earns nothing; later, you keep what the round you leave in pays.
-  return finish(s, w, ev, s.current!.round, !s.current!.opponents.length);
+  return finish(s, w, ev, s.current!.round, !s.current!.opponents.length, s.current!.bronze ? 4 : undefined);
 }
 
 // ── The week ──
@@ -354,7 +370,8 @@ export function setStaff(s: CareerState, role: StaffRole, on: boolean) { (s.staf
 // ── Trophies, milestones and retirement ──
 export interface Milestone { id: string; label: string; done: boolean }
 const MEDAL: Partial<Record<Round, 'gold' | 'silver' | 'bronze'>> = { W: 'gold', F: 'silver', SF: 'bronze' };
-export const medalOf = (h: PlayerResult) => (h.tier === 'OLYMPICS' || h.tier === 'WORLDS' ? MEDAL[h.round] ?? null : null);
+// Since 3.5 the semi-final losers play for bronze: only 3rd place gets it (older results kept theirs).
+export const medalOf = (h: PlayerResult) => (h.tier === 'OLYMPICS' || h.tier === 'WORLDS' ? (h.place === 4 ? null : MEDAL[h.round] ?? null) : null);
 
 export function milestones(s: CareerState): Milestone[] {
   const h = s.history, won = (tier?: string) => h.some((x) => x.round === 'W' && (!tier || x.tier === tier));

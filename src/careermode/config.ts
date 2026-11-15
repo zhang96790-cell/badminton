@@ -69,6 +69,10 @@ export const CAREER_CFG = {
   sponsorNames: ['Northwind Sports', 'Apex Strings', 'Kestrel Air', 'Lumen Water', 'Halcyon Energy', 'Orbit Shoes', 'Tidal Telecom', 'Granite Insurance', 'Summit Grip', 'Blue Heron Bank'],
 
   // ── Recruiting ──
+  /** Lower-level events: 1st, 2nd and 3rd all get a recruit offer (better places, better odds). Elsewhere only the winner. */
+  recruitTop3: ['S100', 'S300', 'S500'] as string[],
+  /** 3rd place: the semi-final prize plus this share. */
+  bronzeBonus: 0.15,
   recruitCost: { common: 600, rare: 1800, super_rare: 4000, epic: 8000, elite: 15000, mythic: 25000, legendary: 40000, champion: 60000 } as Record<Rarity, number>,
   rerollCost: 150,
 

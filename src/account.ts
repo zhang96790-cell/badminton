@@ -178,7 +178,10 @@ export async function careerGet(): Promise<CareerSave | null> {
 export const careerPut = (expectedRev: number, dataVersion: number, state: unknown) => rpc<CareerPut>('career_put', { p_expected_rev: expectedRev, p_data_version: dataVersion, p_state: state });
 export const careerStarter = (character: string) => rpc<string | null>('career_starter', { p_character: character });
 export interface OfferRow { id?: number; candidates: string[]; rerolled?: boolean; limited?: boolean }
-export const offerCreate = (tournament: string, tier: string, field: string[]) => rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field });
+/** place: 1, 2 or 3 (3.5). Falls back to the older call (winners only) if the database hasn't had supabase/3.5-offers.sql. */
+export const offerCreate = async (tournament: string, tier: string, field: string[], place = 1) =>
+  (await rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field, p_place: place }))
+  ?? (place === 1 ? rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field }) : null);
 export const offerReroll = (offer: number) => rpc<{ ok: boolean; candidates?: string[] }>('offer_reroll', { p_offer: offer });
 export const offerChoose = (offer: number, character: string | null) => rpc<string | null>('offer_choose', { p_offer: offer, p_character: character });
 export interface DailyChallenge { day: string; opponent: string; handicaps: string[]; behind: number; difficulty: number; reward: number; next_at: string }

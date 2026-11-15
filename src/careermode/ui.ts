@@ -158,7 +158,7 @@ export function initCareer(d: CareerDeps) {
       const h = s!.history.find((x) => x.year === s!.year && x.tournamentId === v.id);
       const res = h ? (h.round === 'W' ? '🏆' : h.round === 'F' ? 'F' : h.round === 'SF' ? 'SF' : h.round === 'QF' ? 'QF' : '·') : '';
       const now = v.week === s!.week, past = v.week < s!.week;
-      return `<button class="c-mark ${v.tier.toLowerCase()}${now ? ' now' : ''}${past ? ' past' : ''}" style="left:${((v.week - 1) / 51) * 100}%" data-detail="${v.id}" title="${e(v.name)} · week ${v.week}${h ? ` · you: ${ROUND_LABEL[h.round]}` : ''}"><i></i>${res ? `<em>${res}</em>` : ''}</button>`;
+      return `<button class="c-mark ${v.tier.toLowerCase()}${now ? ' now' : ''}${past ? ' past' : ''}" style="left:${((v.week - 1) / 51) * 100}%" data-detail="${v.id}" title="${e(v.name)} · week ${v.week}${h ? ` · you: ${resultName(h)}` : ''}"><i></i>${res ? `<em>${res}</em>` : ''}</button>`;
     }).join('');
     return `<div class="c-strip" aria-label="${s!.year} season"><div class="c-line"><span class="c-you" style="left:${((s!.week - 1) / 51) * 100}%"></span>${marks}</div>
       <div class="c-strip-key">${['S100', 'S300', 'S500', 'S750', 'S1000', 'WORLDS', 'OLYMPICS', 'WTF'].filter((t) => W().cal.some((v) => v.tier === t)).map((t) => `<span><i class="${t.toLowerCase()}"></i>${TIER_LABEL[t]}</span>`).join('')}
@@ -184,11 +184,11 @@ export function initCareer(d: CareerDeps) {
     } else if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
       const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
-      hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${ROUND_LABEL[a.round]}</h3>
+      hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${a.bronze ? 'Bronze medal match' : ROUND_LABEL[a.round]}</h3>
         ${versus(nm.opponent)}
         <div class="c-facts">${fact('Format', 'Best of 3 to 15')}${fact('Your energy', `${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}%)` : ''}`, !!energyPenalty(s!.energy))}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
-        <div class="c-cta"><button class="walk" data-playnext>Play ${ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
-        ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: beat ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
+        <div class="c-cta"><button class="walk" data-playnext>Play ${a.bronze ? 'for 3rd place' : ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
+        ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: ${a.bronze && i === a.scores.length - 1 ? 'lost to' : 'beat'} ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
         ${recover()}
 `;
     } else if (softLocked(s!, W())) {
@@ -259,7 +259,7 @@ export function initCareer(d: CareerDeps) {
     const rows = W().cal.map((v) => {
       const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
       const c = canEnter(s!, v, W());
-      const status = h ? `You: ${ROUND_LABEL[h.round]}` : v.week < s!.week ? 'Done' : s!.current?.eventId === v.id ? 'Playing now'
+      const status = h ? `You: ${resultName(h)}` : v.week < s!.week ? 'Done' : s!.current?.eventId === v.id ? 'Playing now'
         : c.ok ? (v.week === s!.week ? 'Enter now' : 'Open') : c.why?.startsWith('You need') ? 'Open (save up)' : 'Locked';
       return `<tr class="${v.week === s!.week ? 'me' : ''}${v.week < s!.week && !h ? ' past' : ''}" data-detail="${v.id}" title="${e(c.ok || h ? '' : c.why ?? '')}">
         <td>${e(v.dates ?? `week ${v.week}`)}</td><td><b>${e(v.name)}</b></td><td><span class="c-tier ${v.tier.toLowerCase()}">${TIER_LABEL[v.tier]}</span></td>
@@ -292,7 +292,7 @@ export function initCareer(d: CareerDeps) {
       return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
     }).join('');
     const lk = eventLook(x.id, x.tier);
-    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.presenter ? ` presented by ${e(lk.presenter.name)}` : ''} · ${ROUND_LABEL[nm.round]} · ${nm.games === 1 ? 'one game' : 'best of 3'} to 15 · ${e(lk.shuttle.name)} shuttles</p>
+    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.presenter ? ` presented by ${e(lk.presenter.name)}` : ''} · ${roundName(nm)} · ${nm.games === 1 ? 'one game' : 'best of 3'} to 15 · ${e(lk.shuttle.name)} shuttles</p>
       <div class="c-pre-grid">
         <div class="c-pre-who">
           <h3 class="c-title">${e(o.name)}</h3>
@@ -437,7 +437,7 @@ export function initCareer(d: CareerDeps) {
     const countries = [...new Set(released.map((c) => c.country))].filter((c) => COUNTRIES[c]).sort((a, b) => countryName(a).localeCompare(countryName(b)));
     body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
       <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
-      <h3>Choose your player</h3><p class="sub">Everyone starts as a Common player with no signature ability. Win tournaments to recruit stronger ones.</p>
+      <h3>Choose your player</h3><p class="sub">Everyone starts as a Common player with no signature ability. Finish in the top 3 (or win the bigger events) to recruit stronger ones.</p>
       <div id="cStarters" class="c-squad"></div>
       <div class="c-actions"><button class="primary" id="cBegin" disabled>Start career</button></div></div>`;
     void fillStarters();
@@ -491,7 +491,7 @@ export function initCareer(d: CareerDeps) {
     body.innerHTML = `<div class="c-card"><h3>Your season</h3>
       <p>${hs.length} event${hs.length === 1 ? '' : 's'} · ${hs.filter((h) => h.round === 'W').length} title${hs.filter((h) => h.round === 'W').length === 1 ? '' : 's'} · finished ${endRank ? `ranked ${endRank}` : 'unranked'}</p>
       <p>Income ${money(inc)} · costs ${money(-out)} · net ${money(inc + out)}</p>
-      <ul class="c-list">${hs.map((h) => `<li>${e(findEvent(s!, h.tournamentId, d.appVersion)?.name ?? 'Local Club Open')}: ${ROUND_LABEL[h.round]} (${h.points} points, ${money(h.prize)})</li>`).join('') || '<li>No events this season.</li>'}</ul>
+      <ul class="c-list">${hs.map((h) => `<li>${e(findEvent(s!, h.tournamentId, d.appVersion)?.name ?? 'Local Club Open')}: ${resultName(h)} (${h.points} points, ${money(h.prize)})</li>`).join('') || '<li>No events this season.</li>'}</ul>
       <div class="c-actions"><button class="primary" data-recapdone>On to ${y + 1}</button></div></div>`;
   }
 
@@ -500,16 +500,16 @@ export function initCareer(d: CareerDeps) {
     const m = await d.loadAccount();
     if (s!.offerDue && !s!.pendingRecruitOffer) {
       const due = s!.offerDue;
-      const o = await m.offerCreate(due.tournamentId, due.tier, due.field);
+      const o = await m.offerCreate(due.tournamentId, due.tier, due.field, due.place ?? 1);
       if (!o) { body.innerHTML = '<div class="c-card"><p>Couldn’t reach the server to make your recruit offer. It’ll be waiting next time.</p><div class="c-actions"><button data-offerlater>Later</button></div></div>'; return; }
       s!.offerDue = null;
-      if (o.limited) d.toast('No recruit offer this time', 'You can get up to 3 recruit offers a day.');
-      if (o.id && o.candidates.length) s!.pendingRecruitOffer = { id: o.id, tournamentId: due.tournamentId, candidates: o.candidates, rerolled: !!o.rerolled };
+      if (o.limited) d.toast('No recruit offer this time', 'You can get up to 6 recruit offers a day.');
+      if (o.id && o.candidates.length) s!.pendingRecruitOffer = { id: o.id, tournamentId: due.tournamentId, candidates: o.candidates, rerolled: !!o.rerolled, place: due.place };
       await save();
       if (!s!.pendingRecruitOffer) { render(); return; }
     }
     const o = s!.pendingRecruitOffer!;
-    body.innerHTML = `<div class="c-card"><h3>Recruit a player</h3><p class="sub">You won! Three players from that draw want to join you. Recruiting one adds them to your account for every mode. The offer lasts until you enter your next tournament.</p>
+    body.innerHTML = `<div class="c-card"><h3>Recruit a player</h3><p class="sub">${o.place === 3 ? 'Third place!' : o.place === 2 ? 'Runner-up!' : 'You won!'} Three players from that draw want to join you${o.place && o.place > 1 ? ' (win the event for better odds of rarer players)' : ''}. Recruiting one adds them to your account for every mode. The offer lasts until you enter your next tournament.</p>
       <div class="c-offer">${o.candidates.map((id) => { const c = characterById(id); const price = CFG.recruitCost[c.rarity]; return `<div class="c-recruit">${card(c)}<canvas class="pentagon" data-pent="${id}"></canvas>
         ${c.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('')}
         <button class="primary" data-recruit="${id}" ${s!.money < price ? 'disabled' : ''}>Recruit for ${money(price)}</button></div>`; }).join('')}</div>
@@ -607,10 +607,13 @@ export function initCareer(d: CareerDeps) {
       await finishMatch(x!, nm!.opponent.id, mm.games[0] > mm.games[1], mm.history.map((h) => [h[0], h[1]] as [number, number]));
       return true;
     }
-    d.toast('Match resumed', `${x!.name}, ${ROUND_LABEL[nm!.round].toLowerCase()}: carrying on from where you left.`);
+    d.toast('Match resumed', `${x!.name}, ${roundName(nm!).toLowerCase()}: carrying on from where you left.`);
     await playNext(mm.snapshot());
     return true;
   }
+
+  const roundName = (nm: { round: Round; bronze?: boolean }) => (nm.bronze ? 'Bronze medal match' : ROUND_LABEL[nm.round]);
+  const resultName = (h: { round: Round; place?: 3 | 4 }) => (h.place === 3 ? '3rd place' : h.place === 4 ? '4th place' : ROUND_LABEL[h.round]);
 
   async function playNext(resume?: string) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
@@ -624,7 +627,7 @@ export function initCareer(d: CareerDeps) {
     close();
     d.play({
       setup: {
-        mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${ROUND_LABEL[nm.round]}`,
+        mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
         player: { characterId: a.as, modifiers: [energyModifier(energy), coachModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
         restrictions: {}, resume, look: eventLook(x.id, x.tier),
@@ -662,7 +665,7 @@ export function initCareer(d: CareerDeps) {
     for (const m of newMilestones(s!)) d.toast(`Milestone: ${m.label}`, 'See it in Trophies.');
     await save();
     if (r.finished && r.result) {
-      d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
+      d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : r.result.place ? `${r.result.place === 3 ? '3rd' : '4th'} place at the ${x.name}` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
     }
     render();
   }
@@ -677,7 +680,7 @@ export function initCareer(d: CareerDeps) {
     { target: '.c-listbtn', title: 'All tournaments', text: 'The full calendar as a list: dates, level, players, host, prize and whether you can enter.' },
     { target: '[data-ctab="energy"]', title: 'Energy & travel', text: 'Choose how you fly and where you stay. Better seats and hotels cost more but keep you fresh. Recover here too, but it isn’t cheap, and playing below 25 energy can injure you.' },
     { target: '[data-ctab="ranking"]', title: 'World ranking', text: 'Your best 10 results in the last 52 weeks count. It decides your seeding and which events you can enter.' },
-    { target: '[data-ctab="squad"]', title: 'Your squad', text: 'Everyone starts as a Common player with no signature ability. Win a tournament to recruit a player from its draw; the bigger the event, the rarer the players you can recruit.' },
+    { target: '[data-ctab="squad"]', title: 'Your squad', text: 'Everyone starts as a Common player with no signature ability. Finish in the top 3 of a Super 100, 300 or 500 (or win any bigger event) to recruit a player from its draw. Better places and bigger events give better odds of rarer players.' },
     { target: '[data-ctab="ledger"]', title: 'Money, sponsors and staff', text: 'Every cost and prize. Sponsors pay you weekly once you’re in the top 200, and you can hire a coach or physio for weekly wages.' },
     { target: '[data-ctab="daily"]', title: 'Daily challenge', text: 'One challenge a day for everyone, against a strong player with a handicap or two. Win it for rating points.' },
     { target: '[data-ctab="trophies"]', title: 'Trophies', text: 'Your titles, medals and milestones. After your first season you can retire into the Hall of Fame and start again.' },

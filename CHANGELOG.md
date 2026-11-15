@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.5: Bronze matches and more recruits (15 Nov 2026)
+
+- Every career tournament now has a bronze medal match: lose your semi-final and you play the other losing semi-finalist for 3rd place. 3rd place pays a little more than 4th, and at the Olympics and World Championships only 3rd place wins the bronze medal.
+- Recruiting is easier at the lower levels: finish 1st, 2nd or 3rd at a Super 100, 300 or 500 and you get a recruit offer. Better places give better odds of the rarer players. Bigger events still need a win.
+- You can now get up to 6 recruit offers a day (was 3).
+
 ## 3.4.2: Current tournaments unchanged (15 Nov 2026)
 
 - Fixed: the shorter early rounds from 3.4.1 only apply to tournaments you enter from now on. A tournament you were already in (and any match you’d saved part-way) stays best of 3 to 15 throughout.

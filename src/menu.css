@@ -908,6 +908,17 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 /* Admin tab */
 .admin-h { margin: 18px 0 8px; font: 800 12px/1 var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--card-ink-2); }
 .admin-list { max-height: 320px; }
+.admin-search { width: 100%; margin: 0 0 8px; padding: 8px 10px; border: 1px solid var(--card-rule); border-radius: 6px; font: 500 14px/1.2 var(--text); background: transparent; color: inherit; }
+.admin-list li[data-user] { cursor: pointer; }
+.admin-list li[data-user]:hover, .admin-list li.sel { border-color: var(--card-ink-2); }
+.admin-detail { margin-top: 14px; padding: 14px; border: 1px solid var(--card-rule); border-radius: 8px; }
+.admin-detail h4 { margin: 14px 0 8px; font: 800 12px/1 var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--card-ink-2); }
+.admin-detail .ad-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font: 700 18px/1.2 var(--text); }
+.admin-detail .ad-head button { font: 600 13px/1 var(--text); }
+.admin-detail .tiles { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.ad-owned { display: flex; flex-wrap: wrap; gap: 6px; }
+.ad-owned span { padding: 4px 8px; border-radius: 999px; border: 1px solid var(--card-rule); font: 600 12px/1.2 var(--text); }
+.ad-owned span i { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; }
 
 /* Doubles rooms: two team columns, CPUs filling empty places */
 .room-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

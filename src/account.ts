@@ -146,6 +146,15 @@ export interface AdminOverview {
 }
 export const amIAdmin = async () => (await rpc<boolean>('am_i_admin')) === true;
 export const adminOverview = () => rpc<AdminOverview>('admin_overview');
+/** 3.5.2: every account, with its career player and how many players it owns. */
+export interface AdminListPlayer extends AdminPlayer { owned: number; career_player: string | null }
+export const adminPlayers = () => rpc<AdminListPlayer[]>('admin_players');
+export interface AdminDetail {
+  username: string; created_at: string; last_seen: string | null; rating: number; peak_rating: number | null; wins: number; losses: number;
+  stats: Record<string, number>; owned: { id: string; source: string; at: string }[];
+  career: import('./careermode/state').CareerState | null; career_updated: string | null;
+}
+export const adminPlayer = (username: string) => rpc<AdminDetail | null>('admin_player', { p_username: username });
 
 // ── 2.7: characters, seasons, ranks ───────────────────────────────────────────
 /** Which characters you can use: ones you've earned, plus this season's free ones, plus unlock picks waiting. */

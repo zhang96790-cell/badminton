@@ -777,15 +777,64 @@ async function renderAdmin() {
     <div class="stat-group"><h3>${g.title}</h3>
       <div class="tiles">${g.tiles.map(([label, v]) => `<div class="tile"><b>${n(v as number)}</b><span>${label}</span></div>`).join('')}</div>
     </div>`).join('');
-  const ago = (iso: string | null) => {
-    if (!iso) return 'never played logged in';
-    const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-    return mins < 2 ? 'online now' : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} d ago`;
-  };
-  document.getElementById('adminList')!.innerHTML = o.recent.length ? o.recent.map((p) => {
-    const joined = new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    return `<li><span class="dot${p.online ? ' on' : ''}"></span><span class="grow">${hubEsc(p.username)}<span class="sub">Joined ${joined} · seen ${ago(p.last_seen)}</span></span><span class="sub">${n(p.matches)} matches · ${p.wins}–${p.losses}</span><b>${p.rating}</b></li>`;
-  }).join('') : '<li class="empty">No accounts yet.</li>';
+  // 3.5.2: every account (falls back to the 30 most recent if admin_players isn't set up yet).
+  adminRows = (await m.adminPlayers()) ?? o.recent.map((p) => ({ ...p, owned: 0, career_player: null }));
+  drawAdminList();
+}
+
+let adminRows: import('./account').AdminListPlayer[] = [];
+const adminNum = (v: number) => Number(v ?? 0).toLocaleString('en-GB');
+const adminAgo = (iso: string | null) => {
+  if (!iso) return 'never played logged in';
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  return mins < 2 ? 'online now' : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} d ago`;
+};
+const adminDay = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const charName = (id: string | null) => (id ? characterById(id)?.name ?? id : '–');
+
+function drawAdminList() {
+  const q = (document.getElementById('adminSearch') as HTMLInputElement).value.trim().toLowerCase();
+  const rows = q ? adminRows.filter((p) => p.username.includes(q)) : adminRows;
+  document.getElementById('adminList')!.innerHTML = rows.length ? rows.map((p) => {
+    const extra = p.career_player ? ` · career as ${hubEsc(charName(p.career_player))}` : '';
+    return `<li data-user="${hubEsc(p.username)}"><span class="dot${p.online ? ' on' : ''}"></span><span class="grow">${hubEsc(p.username)}<span class="sub">Joined ${adminDay(p.created_at)} · seen ${adminAgo(p.last_seen)}${extra}</span></span><span class="sub">${adminNum(p.owned)} players · ${adminNum(p.matches)} matches · ${p.wins}–${p.losses}</span><b>${p.rating}</b></li>`;
+  }).join('') : `<li class="empty">${q ? 'No usernames match.' : 'No accounts yet.'}</li>`;
+}
+document.getElementById('adminSearch')!.addEventListener('input', drawAdminList);
+document.getElementById('adminList')!.addEventListener('click', (e) => {
+  const li = (e.target as HTMLElement).closest<HTMLElement>('li[data-user]');
+  if (li) void showAdminPlayer(li.dataset.user!);
+});
+
+async function showAdminPlayer(username: string) {
+  const box = document.getElementById('adminDetail')!;
+  document.querySelectorAll('#adminList li.sel').forEach((l) => l.classList.remove('sel'));
+  document.querySelector(`#adminList li[data-user="${CSS.escape(username)}"]`)?.classList.add('sel');
+  box.hidden = false; box.innerHTML = `Loading ${hubEsc(username)}…`;
+  const m = await loadAccount();
+  const d = await m.adminPlayer(username);
+  if (!d) { box.textContent = 'Couldn’t load this player (is supabase/3.5.2-admin-players.sql set up?).'; return; }
+  const tiles = (t: [string, string | number][]) => `<div class="tiles">${t.map(([l, v]) => `<div class="tile"><b>${typeof v === 'number' ? adminNum(v) : hubEsc(v)}</b><span>${l}</span></div>`).join('')}</div>`;
+  const order = (id: string) => RARITY[characterById(id)?.rarity]?.order ?? 0;
+  const owned = d.owned.length ? `<div class="ad-owned">${[...d.owned].sort((a, b) => order(b.id) - order(a.id)).map((o) => {
+    const c = characterById(o.id), r = c ? RARITY[c.rarity] : null;
+    return `<span title="${hubEsc(r?.label ?? '')} · got from ${hubEsc(o.source)} on ${adminDay(o.at)}"><i style="background:${r?.color ?? '#888'}"></i>${hubEsc(c?.name ?? o.id)}</span>`;
+  }).join('')}</div>` : '<p class="sub">Only the default player.</p>';
+  const c = d.career;
+  const career = c ? tiles([
+    ['Playing as', charName(c.characterId)], ['Name', c.name], ['Season', `${c.year} · week ${c.week}`],
+    ['Money', `$${adminNum(Math.round(c.money))}`], ['Energy', Math.round(c.energy)], ['Titles', c.titles],
+    ['Best ranking', c.bestRank ? `#${c.bestRank}` : '–'], ['Tournaments', c.history?.length ?? 0], ['Squad', (c.squad ?? []).map(charName).join(', ') || '–'],
+  ]) + `<p class="sub">Saved ${adminAgo(d.career_updated)}${c.current ? ' · in a tournament now' : ''}${c.injury?.weeks ? ` · injured ${c.injury.weeks} wk` : ''}</p>` : '<p class="sub">No career save.</p>';
+  const stats = statGroups(d.stats ?? {}).map((g) => `<h4>${g.title}</h4>${tiles(g.tiles.map((t) => [t.label, t.value] as [string, string]))}`).join('');
+  box.innerHTML = `
+    <div class="ad-head"><span>${hubEsc(d.username)} <span class="sub">rating ${d.rating}${d.peak_rating ? ` (peak ${d.peak_rating})` : ''} · ranked ${d.wins}–${d.losses}</span></span><button type="button" class="edit" data-adclose>Close</button></div>
+    <p class="sub">Joined ${adminDay(d.created_at)} · seen ${adminAgo(d.last_seen)}</p>
+    <h4>Players owned (${d.owned.length})</h4>${owned}
+    <h4>Career</h4>${career}
+    ${stats}`;
+  box.querySelector('[data-adclose]')!.addEventListener('click', () => { box.hidden = true; document.querySelectorAll('#adminList li.sel').forEach((l) => l.classList.remove('sel')); });
+  box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 document.querySelectorAll<HTMLButtonElement>('[data-hub]').forEach((t) => t.addEventListener('click', () => showHubTab(t.dataset.hub!)));
 

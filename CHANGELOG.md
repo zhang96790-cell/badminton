@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.4.1: Shorter early rounds (15 Nov 2026)
+
+- Career: the Round of 64, Round of 32 and Round of 16 are now one game to 15 points. From the quarter-finals on, matches are best of 3 games to 15.
+
 ## 3.4: Sponsors, scoreboards and new looks (15 Nov 2026)
 
 - Made-up sponsors fill the arena: kit and racket makers (Kestrel, Arcwing, Featherline, Novalite, SwiftCourt), shuttle makers (Plumecraft, Corkcrest) and brands like Harborline Bank, Zephyr Air, Lumo, Pacifica Mobile and Monsoon Tea. Solar Sparks and Ventra keep their boards.

@@ -292,7 +292,7 @@ export function initCareer(d: CareerDeps) {
       return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
     }).join('');
     const lk = eventLook(x.id, x.tier);
-    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.presenter ? ` presented by ${e(lk.presenter.name)}` : ''} · ${ROUND_LABEL[nm.round]} · best of 3 to 15 · ${e(lk.shuttle.name)} shuttles</p>
+    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.presenter ? ` presented by ${e(lk.presenter.name)}` : ''} · ${ROUND_LABEL[nm.round]} · ${nm.games === 1 ? 'one game' : 'best of 3'} to 15 · ${e(lk.shuttle.name)} shuttles</p>
       <div class="c-pre-grid">
         <div class="c-pre-who">
           <h3 class="c-title">${e(o.name)}</h3>
@@ -423,7 +423,7 @@ export function initCareer(d: CareerDeps) {
 
   function renderSettings() {
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">Settings</p>
-      <p class="c-lead">Career matches are best of 3 games to 15 points.</p>
+      <p class="c-lead">Early rounds are one game to 15 points; from the quarter-finals on, matches are best of 3 games to 15.</p>
       <p class="c-lead">Opponents get harder as you meet stronger players and enter bigger events: Commons play like a Hard or Expert CPU, Rares up to Elite, and Super 300 players a level higher.</p>
       <h3 class="c-title small">Start again</h3><p class="c-lead">Restarting replaces this career. Players you recruited stay on your account.</p>
       <div class="c-cta"><button class="edit" data-restart>Restart career</button></div></section>`;

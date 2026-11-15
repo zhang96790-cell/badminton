@@ -53,7 +53,7 @@ export interface CareerState {
   offerDue: { tournamentId: string; tier: string; field: string[] } | null;
   /** s300 from 3.0; tiers: every level opened by reaching a final at the level below. */
   unlocks: { s300: boolean; tiers?: string[] };
-  /** business: 3.0 saves (now travelClass). fasterEarlyRounds: no longer used (career is best of 3 to 15). */
+  /** business: 3.0 saves (now travelClass). fasterEarlyRounds: no longer used (early rounds are one game, quarter-finals on best of 3). */
   settings: { fasterEarlyRounds: boolean; business: boolean; travelClass?: TravelClass; hotel?: HotelTier };
   /** Out injured: weeks to go. */
   injury?: { weeks: number } | null;
@@ -246,7 +246,9 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
   const opponent = characterById(oppId);
   const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, 'level'), ev.tier);
   // Career matches are best of 3 games to 15 (the new scoring).
-  return { opponent, opponentId: oppId, round: a.round, level, games: 3, points: 15 };
+  // Early rounds are one game to 15; from the quarter-finals on, best of 3 to 15.
+  const early = a.round === 'R64' || a.round === 'R32' || a.round === 'R16';
+  return { opponent, opponentId: oppId, round: a.round, level, games: early ? 1 : 3, points: 15 };
 }
 
 /** A match finished: pay the hotel, use energy, and move on (or finish the event). */

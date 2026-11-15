@@ -1843,6 +1843,7 @@ function frame(now: number) {
     if (game?.online) { /* handled in onlineKeys */ }
     else if (game?.paused && input.tapped(['KeyQ'])) {
       if (!careerDone) showMenu();
+      else if (careerLeave) leaveCareerMatch();
       else if (confirm('Retire from this match? It counts as a loss.')) endCareerMatch(true);
     }
     else if (game && input.tapped(['Enter'])) {
@@ -1953,6 +1954,8 @@ window.setTimeout(() => presence.ask(), 1500);
 // ── Career mode and the daily challenge (3.0) ────────────────────────────────
 /** A career or daily-challenge match is on: what to do with the result. */
 let careerDone: ((g: Game, retired: boolean) => void) | null = null;
+/** A career match (not the daily challenge): Q while paused saves the score and leaves. */
+let careerLeave: (() => void) | null = null;
 /** Development only: a pretend account for trying career screens (see careermode/devfake.ts). */
 let devFake: typeof import('./careermode/devfake') | null = null;
 if (import.meta.env.DEV) void import('./careermode/devfake').then((m) => { devFake = m; });
@@ -1966,6 +1969,7 @@ const careerUi = initCareer({
     voice.enabled = settings.voice;
     voice.unlock();
     careerDone = o.onDone;
+    careerLeave = o.onLeave ?? null;
     renderer.eventTitle = o.setup.label?.split(' · ')[0] ?? null;
     game = new Game({ ...settings, ...o.settings }, input, broadcast, 'match', null, o.setup);
     game.onMatchOver = recordCareer;
@@ -1979,9 +1983,16 @@ const careerUi = initCareer({
   saveStats: (delta) => saveCareer(delta),
   esc: hubEsc,
 });
+function leaveCareerMatch() {
+  const leave = careerLeave;
+  careerDone = careerLeave = null;
+  renderer.eventTitle = null;
+  showMenu();
+  leave?.();
+}
 function endCareerMatch(retired: boolean) {
   const g = game!, done = careerDone;
-  careerDone = null;
+  careerDone = careerLeave = null;
   renderer.eventTitle = null;
   showMenu();
   done?.(g, retired);

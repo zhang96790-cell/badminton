@@ -83,7 +83,8 @@ export class Renderer {
       this.shadows(scene, officials);
       if (scene.live && game) {
         for (const r of game.rings) this.targetRing(r, time);
-        if (game.settings.guides) this.guides(game);
+        if (game.setup.mode === 'career') this.careerMarker(game);
+        else if (game.settings.guides) this.guides(game);
         if (game.landing) this.landingMark(game.landing);
         this.reticle(game);
         if (game.doubles) this.youRing(game, time);
@@ -361,6 +362,19 @@ export class Renderer {
     ctx.lineWidth = 1.8;
     ctx.stroke();
     this.dotAt(v3(p.x, p.y), 0.02, 'rgba(255,209,102,0.95)', 2);
+  }
+
+  /** Career: always a landing marker, whatever the setting, but only a plain ring (no centre dot, no drop line). */
+  private careerMarker(game: Game) {
+    const s = game.shuttle, p = game.marker;
+    if (!s.inFlight || game.state !== 'rally' || game.disguiseT > 0 || !p || !game.predicted) return;
+    const ring = this.cam.projectPoly(this.floorCircle(p, VISUAL.markerRadius)), ctx = this.ctx;
+    ctx.beginPath();
+    ring.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,209,102,0.7)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
   }
 
   /** Doubles: a white ring under the player you control, so you never lose yourself among four. */

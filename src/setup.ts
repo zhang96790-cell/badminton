@@ -30,6 +30,10 @@ export interface MatchSetup {
   /** What to call the match on the scoreboard (e.g. the event and round). */
   label?: string;
   restrictions: Restrictions;
+  /** Career: carry on from a saved score (Match.snapshot()), after a reload or Save and leave. */
+  resume?: string;
+  /** Career: called with the score at every serve (rally false) and when each rally starts (rally true). */
+  checkpoint?: (snap: string, rally: boolean) => void;
 }
 
 /** Restrictions are a developer tool for now: they only apply on the dev server or with this flag set. */

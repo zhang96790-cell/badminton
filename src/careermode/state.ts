@@ -25,7 +25,12 @@ export interface Active {
   energyAtMatch?: number;
   /** A Local Club Open (offered when money runs out). */
   club?: boolean;
+  /** A match left part-way (Save and leave): its score, so it carries on from any computer. */
+  live?: LiveMatch;
 }
+
+/** A career match in progress: which match, and the score at the last serve (Match.snapshot()). */
+export interface LiveMatch { eventId: string; round: Round; opp: string; snap: string; rally: boolean }
 
 export interface CareerState {
   v: 1;

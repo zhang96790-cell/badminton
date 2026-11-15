@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.3.13: Saved career matches (15 Nov 2026)
+
+- Career matches now always show a landing marker, whatever your settings: a plain ring with no centre dot or drop line, so you still have to read the exact spot yourself.
+- Career matches are saved as you play. Reload the page, or pause and press Q to save and leave, and you carry on from the same score next time you open career mode. Saved matches also carry on from another computer.
+- You can’t dodge a lost rally by reloading: leaving in the middle of a rally gives that point to your opponent.
+
 ## 3.3.12: Leaderboard loading fix (14 Nov 2026)
 
 - Fixed: the stat leaderboards sometimes said they needed a database update when the real problem was a dropped connection. They now try again, and say so plainly if they still can’t load.

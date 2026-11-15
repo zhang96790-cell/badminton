@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.3.13',
+    title: 'Saved career matches',
+    date: '15 Nov 2026',
+    changes: [
+      "Career matches now always show a landing marker, whatever your settings: a plain ring with no centre dot or drop line, so you still have to read the exact spot yourself.",
+      "Career matches are saved as you play. Reload the page, or pause and press Q to save and leave, and you carry on from the same score next time you open career mode. Saved matches also carry on from another computer.",
+      "You can’t dodge a lost rally by reloading: leaving in the middle of a rally gives that point to your opponent.",
+    ],
+  },
+  {
     version: '3.3.12',
     title: 'Leaderboard loading fix',
     date: '14 Nov 2026',

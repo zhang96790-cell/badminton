@@ -347,6 +347,9 @@ export class Game {
       const flip = <T,>(a: [T, T]): [T, T] => (this.myTeam === 0 ? [a[0], a[1]] : [a[1], a[0]]);
       this.match.resumeFrom(flip(r.scores), flip(r.games), r.history.map((h) => flip(h)), this.teamHere(r.server));
       this.say('umpire', `Play resumes. ${scoreCall(this.match, false)}`);
+    } else if (this.setup.resume) {
+      this.match.restore(this.setup.resume);
+      this.say('umpire', `Play resumes. ${scoreCall(this.match, false)}`);
     } else this.say('umpire', gameStartCall(1, this.match.gamesToWin));
     if (this.limits.startScore && !online) this.match.scores = [...this.limits.startScore];
     // Singles against the CPU: it remembers your habits from earlier matches on this computer.
@@ -559,6 +562,7 @@ export class Game {
 
   private startServe() {
     this.state = 'serve';
+    this.setup.checkpoint?.(this.match.snapshot(), false);
     // Online, the server waits a moment after each point so the receiver is ready.
     this.timer = this.online ? RULES.onlineServeWait : 0.35;
     this.rallyHits = 0;
@@ -617,6 +621,7 @@ export class Game {
     for (const p of this.players) p.frozen = false;
     this.receiver.splitStep();
     this.state = 'rally';
+    this.setup.checkpoint?.(this.match.snapshot(), true);
     this.clockRunning = false;
     this.acc = 0;
     this.rallyHits = 1;
@@ -1132,6 +1137,7 @@ export class Game {
       this.match.restore(this.snap!);
       const winner = (c.truthIn ? c.hitter : 1 - c.hitter) as 0 | 1;
       this.outcome = this.match.award(winner);
+      this.setup.checkpoint?.(this.match.snapshot(), false);
       c.callIn = c.truthIn;
       this.stats.reviseLast(winner, c.truthIn ? 'winner' : 'error');
       this.stats.challenges[r.by].won++;
@@ -1314,6 +1320,7 @@ export class Game {
     const last = this.stats.shots[this.stats.shots.length - 1];
     this.bigSmash = last && /smash/i.test(last.label) ? last.speedKmh : 0;
     const out = m.award(winner);
+    this.setup.checkpoint?.(m.snapshot(), false);
     if (!this.session) this.commentate(winner, out, savedFrom);
     return out;
   }

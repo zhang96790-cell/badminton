@@ -163,7 +163,7 @@ export class Hud {
           ? ['Connection lost', 'Reconnecting… your place is kept for 40 seconds  ·  Q to leave']
           : [`${gone} disconnected`, 'Waiting up to 40 seconds for them to come back. If they don’t, their side retires  ·  Q to leave']
         : !game.online
-          ? ['Paused', 'Esc to resume  ·  Q to quit to menu']
+          ? ['Paused', game.setup.mode === 'career' ? 'Esc to resume  ·  Q to save and leave (you carry on from this score next time)' : 'Esc to resume  ·  Q to quit to menu']
           : game.pauseMine && game.pauseTheirs
             ? [`You and ${them} paused`, 'Esc when you’re ready  ·  play starts once everyone has resumed  ·  Q to forfeit']
             : game.pauseMine

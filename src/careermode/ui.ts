@@ -3,13 +3,14 @@
 import { DEFAULT_CHARACTER, RARITY, characterById, rosterFor, type Character } from '../../shared/characters';
 import type { Game } from '../game';
 import type { Settings } from '../game';
-import { LEVEL_LABEL, STYLES, type Style } from '../config';
+import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
+import { Match } from '../rules';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, hotelCost, hotelOf, medalOf, milestones, newMilestones, refuelCost, retire, setStaff, skipByes, sponsorUpgrade, travelClassOf, money, myRank, newCareer,
-  nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState,
+  nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState, type LiveMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
@@ -24,7 +25,7 @@ export interface CareerDeps {
   /** Owned players (refreshed from the account). */
   owned: () => Promise<Set<string>>;
   /** Play a match, then call onDone with the finished (or retired) game. */
-  play: (o: { setup: MatchSetup; settings: Partial<Settings>; onDone: (g: Game, retired: boolean) => void }) => void;
+  play: (o: { setup: MatchSetup; settings: Partial<Settings>; onDone: (g: Game, retired: boolean) => void; onLeave?: () => void }) => void;
   toast: (title: string, sub: string) => void;
   openAccount: (why: string) => void;
   saveStats: (delta: Record<string, number>) => void;
@@ -101,6 +102,7 @@ export function initCareer(d: CareerDeps) {
     if (l.offline) d.toast('Offline', 'Showing the copy saved on this computer.');
     if (l.conflict) { await settleConflict(l.conflict); return; }
     if (s && repairCurrent(s, W(), d.appVersion)) await save();
+    if (s && await resumeLive()) return;
     render();
     maybeCareerTour();
   }
@@ -569,45 +571,98 @@ export function initCareer(d: CareerDeps) {
   }
 
   // ── Playing a career match ──
-  async function playNext() {
+  // A match in progress is saved at every serve (on this computer) and on Save and leave (to your account),
+  // so a reload or leaving carries on from the same score. Opening career mode goes straight back to it.
+  const liveKey = () => `badminton.careerLive.${d.account()?.id ?? 'x'}`;
+  function readLive(): LiveMatch | null {
+    try { const t = localStorage.getItem(liveKey()); return t ? JSON.parse(t) as LiveMatch : null; } catch { return null; }
+  }
+  function writeLive(l: LiveMatch | null) {
+    try { if (l) localStorage.setItem(liveKey(), JSON.stringify(l)); else localStorage.removeItem(liveKey()); } catch { /* storage blocked */ }
+  }
+  /** On opening career: carry on with a match left part-way. True if it took over. */
+  async function resumeLive(): Promise<boolean> {
+    const a = s?.current, x = ev(), nm = a && x && nextMatch(s!, W(), x);
+    const same = (l: LiveMatch | null | undefined) => !!l && !!a && !!nm && l.eventId === a.eventId && l.round === nm.round && l.opp === nm.opponent.id;
+    const local = readLive(), l = same(local) ? local : same(a?.live) ? a!.live! : null;
+    if (!l) {
+      if (local) writeLive(null);
+      if (a?.live) { delete a.live; await save(); }
+      return false;
+    }
+    const mm = new Match(RULES.formats[nm!.points], nm!.games === 1 ? 1 : 2);
+    mm.restore(l.snap);
+    // Leaving in the middle of a rally gives the point away (otherwise a reload would undo a lost rally).
+    if (l.rally) {
+      const o = mm.award(1);
+      if (o.gameOver && !o.matchOver) mm.newGame();
+      d.toast('Point to your opponent', 'You left in the middle of a rally.');
+    }
+    const over = mm.games[0] >= mm.gamesToWin || mm.games[1] >= mm.gamesToWin;
+    if (over) {
+      writeLive(null);
+      delete a!.live;
+      await finishMatch(x!, nm!.opponent.id, mm.games[0] > mm.games[1], mm.history.map((h) => [h[0], h[1]] as [number, number]));
+      return true;
+    }
+    d.toast('Match resumed', `${x!.name}, ${ROUND_LABEL[nm!.round].toLowerCase()}: carrying on from where you left.`);
+    await playNext(mm.snapshot());
+    return true;
+  }
+
+  async function playNext(resume?: string) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
     if (!x || !nm || busy) return;
     const a = s!.current!;
-    a.energyAtMatch = s!.energy;
+    if (!resume) a.energyAtMatch = s!.energy;
+    delete a.live;
     await save();
-    const opp = nm.opponent;
+    const opp = nm.opponent, energy = resume ? a.energyAtMatch ?? s!.energy : s!.energy;
+    const live: LiveMatch = { eventId: a.eventId, round: nm.round, opp: opp.id, snap: '', rally: false };
     close();
     d.play({
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${ROUND_LABEL[nm.round]}`,
-        player: { characterId: a.as, modifiers: [energyModifier(s!.energy), coachModifier(s!)], abilities: true },
+        player: { characterId: a.as, modifiers: [energyModifier(energy), coachModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
-        restrictions: {},
+        restrictions: {}, resume,
+        checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
       settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },
+      onLeave: async () => {
+        // Saved to your account too, so it carries on from another computer. Career stays shut until you resume.
+        if (live.snap) { s!.current!.live = { ...live }; await save(); }
+        d.toast('Match saved', 'Open career mode to carry on from this score.');
+      },
       onDone: async (g, retired) => {
+        writeLive(null);
         const won = !retired && (g.forfeitWinner ?? (g.match.games[0] > g.match.games[1] ? 0 : 1)) === 0;
-        const games = g.match.history.map((h) => [h[0], h[1]] as [number, number]);
-        const before = myRank(s!, W());
-        const r = recordMatch(s!, W(), x, won, games, opp.id);
-        d.saveStats({ career_matches: 1, career_wins: won ? 1 : 0 });
-        if (r.finished && r.result) {
-          if (r.result.round === 'W') d.saveStats({ career_titles: 1 });
-          d.saveStats({ career_prize: r.result.prize });
-        }
-        await save();
-        const after = myRank(s!, W());
-        if (after && (!s!.bestRank || after < s!.bestRank)) { s!.bestRank = after; d.saveStats({ max_career_best_rank: 1000 - after }); await save(); }
-        panel.classList.remove('hidden');
-        if (r.injured) d.toast(`Injured: out for ${r.injured} weeks`, 'You played too tired. Rest up: you can’t enter events until it heals.');
-        for (const m of newMilestones(s!)) d.toast(`Milestone: ${m.label}`, 'See it in Trophies.');
-        await save();
-        if (r.finished && r.result) {
-          d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
-        }
-        render();
+        await finishMatch(x, opp.id, won, g.match.history.map((h) => [h[0], h[1]] as [number, number]));
       },
     });
+  }
+
+  /** Record a finished career match and show what it did (ranking, prizes, injuries). */
+  async function finishMatch(x: TourEvent, oppId: string, won: boolean, games: [number, number][]) {
+    if (s!.current) delete s!.current.live;
+    const before = myRank(s!, W());
+    const r = recordMatch(s!, W(), x, won, games, oppId);
+    d.saveStats({ career_matches: 1, career_wins: won ? 1 : 0 });
+    if (r.finished && r.result) {
+      if (r.result.round === 'W') d.saveStats({ career_titles: 1 });
+      d.saveStats({ career_prize: r.result.prize });
+    }
+    await save();
+    const after = myRank(s!, W());
+    if (after && (!s!.bestRank || after < s!.bestRank)) { s!.bestRank = after; d.saveStats({ max_career_best_rank: 1000 - after }); await save(); }
+    panel.classList.remove('hidden');
+    if (r.injured) d.toast(`Injured: out for ${r.injured} weeks`, 'You played too tired. Rest up: you can’t enter events until it heals.');
+    for (const m of newMilestones(s!)) d.toast(`Milestone: ${m.label}`, 'See it in Trophies.');
+    await save();
+    if (r.finished && r.result) {
+      d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
+    }
+    render();
   }
 
   // ── Career tour (first visit, and the Tour button) ──

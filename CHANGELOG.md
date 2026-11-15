@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.4.2: Current tournaments unchanged (15 Nov 2026)
+
+- Fixed: the shorter early rounds from 3.4.1 only apply to tournaments you enter from now on. A tournament you were already in (and any match you’d saved part-way) stays best of 3 to 15 throughout.
+
 ## 3.4.1: Shorter early rounds (15 Nov 2026)
 
 - Career: the Round of 64, Round of 32 and Round of 16 are now one game to 15 points. From the quarter-finals on, matches are best of 3 games to 15.

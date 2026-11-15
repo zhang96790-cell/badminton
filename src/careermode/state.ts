@@ -25,6 +25,8 @@ export interface Active {
   energyAtMatch?: number;
   /** A Local Club Open (offered when money runs out). */
   club?: boolean;
+  /** 3.4.1: entered after early rounds became one game. Events entered before keep best of 3 throughout. */
+  shortEarly?: boolean;
   /** A match left part-way (Save and leave): its score, so it carries on from any computer. */
   live?: LiveMatch;
 }
@@ -196,7 +198,7 @@ export function enter(s: CareerState, ev: TourEvent) {
   const cls = travelClassOf(s);
   if (travel) book(s, `Travel to ${ev.name} (${CFG.travelClass[cls].label.toLowerCase()})`, -travel);
   s.energy = Math.max(0, s.energy - travelEnergy(s, ev));
-  s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB' };
+  s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true };
 }
 
 /**
@@ -247,7 +249,7 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
   const level = cpuLevelFor(opponent.rarity, hash(s.rngSeed, s.year, ev.id, a.round, 'level'), ev.tier);
   // Career matches are best of 3 games to 15 (the new scoring).
   // Early rounds are one game to 15; from the quarter-finals on, best of 3 to 15.
-  const early = a.round === 'R64' || a.round === 'R32' || a.round === 'R16';
+  const early = !!a.shortEarly && (a.round === 'R64' || a.round === 'R32' || a.round === 'R16');
   return { opponent, opponentId: oppId, round: a.round, level, games: early ? 1 : 3, points: 15 };
 }
 

@@ -5,11 +5,19 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.4.2',
+    title: 'Current tournaments unchanged',
+    date: '15 Nov 2026',
+    changes: [
+      "Fixed: the shorter early rounds from 3.4.1 only apply to tournaments you enter from now on. A tournament you were already in (and any match you’d saved part-way) stays best of 3 to 15 throughout.",
+    ],
+  },
+  {
     version: '3.4.1',
     title: 'Shorter early rounds',
     date: '15 Nov 2026',
     changes: [
-      "Career: the Round of 64, Round of 32 and Round of 16 are now one game to 15 points. From the quarter-finals on, matches are best of 3 games to 15.",
+      "Career: the Round of 64, Round of 32 and Round of 16 are now one game to 15 points. From the quarter-finals on, matches are best of 3 games to 15 (for tournaments you enter from now on).",
     ],
   },
   {

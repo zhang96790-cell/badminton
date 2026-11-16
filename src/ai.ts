@@ -420,9 +420,10 @@ export class AIController implements Controller {
       high = S.clear * (oppForward || !oppRetreating ? 1.3 : 0.8);
       fast = 0.2;
     } else {
-      high = 1.2 * S.clear;
-      soft = 0.8 * S.net;
-      fast = 0.3;
+      // 3.9.3: a low ball in mid or back court: drive or push it more, lift it less.
+      high = 1.0 * S.clear;
+      soft = 0.9 * S.net;
+      fast = 0.6;
     }
     if (vsSmash && c.z < SHOTS.overheadHeight) { soft *= counter; high /= Math.sqrt(counter); }
     // Doubles is about keeping the shuttle down: lift less, attack and push more.

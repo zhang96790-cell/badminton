@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.9.3',
+    title: 'Every CPU attacks',
+    date: '16 Nov 2026',
+    changes: [
+      "Every CPU style attacks more now, not just the All-rounder: the Defender, Fast retriever, Defensive wall and Net player smash more and clear less, and the Easy and Medium CPUs smash more too.",
+      "CPUs drive and push low balls in the mid and back court more often instead of lifting them.",
+    ],
+  },
+  {
     version: '3.9.2',
     title: 'Attacking CPUs',
     date: '16 Nov 2026',

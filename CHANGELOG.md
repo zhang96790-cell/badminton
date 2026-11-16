@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.10: Breaking up net battles (16 Nov 2026)
+
+- Net battles can't go on forever. A net shot only stays tight when you play it close to the net and take it early: from further back it floats higher over the tape, and so does one taken late near the floor.
+- The longer a net exchange goes, the harder it gets: each net shot in a row floats a little higher and is a little less accurate, until someone can attack it or has to lift.
+- Pushes keep more of their pace, so a slightly loose net shot can be punished and you have to stay ready at the net.
+- The rules for net faults, net kills and spinning net shots are unchanged.
+
 ## 3.9.5: Player pick fixes (16 Nov 2026)
 
 - Fixed: in the ranked player pick, your player list no longer snaps shut when your opponent changes their player.

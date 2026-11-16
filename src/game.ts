@@ -220,6 +220,8 @@ export class Game {
   private statMode: 'ranked' | 'career' = 'ranked';
   private statChars: (Character | null)[] = [null, null];
   private heavyOf: number[] = [1, 1, 1, 1];
+  /** 3.10: net shots in a row this rally (the next one floats a little higher). */
+  private netRun = 0;
   private baseMods: Modifier[][] = [[], []];
   private baseSpeed: number[] = [];
   /** Recompute a player's stats with any timed ability effects. */
@@ -640,6 +642,7 @@ export class Game {
     this.rallyHits = 1;
     this.lastContact = null;
     this.lastShot = { label: shot.label, hand: 'serve', netCord: false };
+    this.netRun = 0;
     this.lastHitterId = srv.id;
     this.stats.shots.push({ by: idx, pid: srv.id, label: shot.label, speedKmh: shot.speedKmh, hand: 'serve', landing: this.predicted });
     this.announce(srv, shot, null);
@@ -807,6 +810,7 @@ export class Game {
           break;
         }
         const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : ctrl instanceof AIController ? ctrl.aimScaleFor(req, c.point.z) : 1;
+        c.netRun = this.netRun;
         let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
         p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)
         // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.
@@ -847,6 +851,7 @@ export class Game {
         this.rallyHits++;
         this.lastContact = { ...c, incomingKmh };
         this.lastShot = { label: shot.label, hand: c.hand, netCord: false };
+        this.netRun = /^net shot/i.test(shot.label) ? this.netRun + 1 : 0;
         this.lastHitterId = p.id;
         this.stats.shots.push({ by: this.teamOf(i), pid: p.id, label: shot.label, speedKmh: shot.speedKmh, hand: c.hand, landing: this.predicted });
         this.observe({ type: 'hit', by: p.side, contact: c, label: shot.label, landing: this.predicted, hitter: p });
@@ -1740,6 +1745,7 @@ export class Game {
     this.lastContact = null;
     const hand = m.serve ? 'serve' : (m.hand as Contact['hand']);
     this.lastShot = { label: m.label, hand, netCord: false };
+    this.netRun = /^net shot/i.test(m.label) ? this.netRun + 1 : 0;
     this.lastHitterId = hitter.id;
     this.stats.shots.push({ by: this.teamOf(hi), pid: hitter.id, label: m.label, speedKmh: m.kmh, hand, landing: this.predicted });
     this.announce(hitter, { velocity: vel, label: m.label, speedKmh: m.kmh }, m.detail || null);

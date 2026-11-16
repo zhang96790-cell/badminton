@@ -180,7 +180,7 @@ export const SHOTS = {
    */
   netKill: { power: 0.62, minAbove: 0.25, lowPower: 0.5 },
   /** Hard shots from within netDriveWithin (m) of the net and below the tape lose this much pace (pushes from further back don't). */
-  netDrivePower: 0.85,
+  netDrivePower: 0.95,
   netDriveWithin: 1.0,
   /** A disguised shot hides the landing marker for its whole flight (3.0.5) and wrong-foots the other side. */
   disguise: { wrongFoot: 0.26 },
@@ -200,6 +200,12 @@ export const SHOTS = {
   /** Soft shots: how far above the tape they aim to pass (m). */
   dropClearance: 0.28,
   netShotClearance: 0.06,
+  /**
+   * 3.10: net battles. Extra height over the tape (m) for a net shot: per metre further back than tightWithin,
+   * up to `low` for taking it near the floor (over lowRange below the tape), and perRun for each net shot
+   * already played in a row this rally (up to runMax), plus more error the longer it goes. At most maxExtra.
+   */
+  netBattle: { tightWithin: 0.8, perMetre: 0.09, low: 0.09, lowRange: 1.0, perRun: 0.025, runMax: 6, noisePerRun: 0.12, maxExtra: 0.28 },
   blockClearance: 0.2,
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
   softMaxAngle: { overhead: 12, mid: 30, low: 45, net: 80 },

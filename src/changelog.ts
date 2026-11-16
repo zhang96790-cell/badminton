@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.10',
+    title: 'Breaking up net battles',
+    date: '16 Nov 2026',
+    changes: [
+      "Net battles can't go on forever. A net shot only stays tight when you play it close to the net and take it early: from further back it floats higher over the tape, and so does one taken late near the floor.",
+      "The longer a net exchange goes, the harder it gets: each net shot in a row floats a little higher and is a little less accurate, until someone can attack it or has to lift.",
+      "Pushes keep more of their pace, so a slightly loose net shot can be punished and you have to stay ready at the net.",
+      "The rules for net faults, net kills and spinning net shots are unchanged.",
+    ],
+  },
+  {
     version: '3.9.5',
     title: 'Player pick fixes',
     date: '16 Nov 2026',

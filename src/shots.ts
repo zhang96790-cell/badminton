@@ -18,6 +18,8 @@ export type Hand = 'forehand' | 'backhand' | 'round-the-head';
 export type TimingLabel = 'Perfect' | 'Good' | 'Early' | 'Late';
 
 export interface Contact {
+  /** 3.10: net shots in a row this rally, before this one (net battles build pressure). */
+  netRun?: number;
   point: V3;
   side: Side;
   hand: Hand;
@@ -243,7 +245,15 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
   const sigma = (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
   target = clampTarget({ x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor * (defence ? eff.defenceDepth : 1) }, opp, 0.1);
-  const clearance = Math.max(-0.1, softClearance + (tumbleSoft ? T.softClearance : 0) + gauss() * SHOTS.clearanceNoise * noiseMult * aimScale);
+  // 3.10: net shots only stay tight from close in, taken early: from further back, taken low, or deep into a
+  // net battle they float higher over the tape (so the other player can attack them).
+  const NB = SHOTS.netBattle, run = Math.min(c.netRun ?? 0, NB.runMax);
+  const netExtra = netPlay ? Math.min(NB.maxExtra,
+    NB.perMetre * Math.max(0, Math.abs(c.point.y) - NB.tightWithin)
+    + NB.low * Math.min(1, Math.max(0, netHeightAt(c.point.x) - z0) / NB.lowRange)
+    + NB.perRun * run) : 0;
+  const netNoise = netPlay ? 1 + NB.noisePerRun * run : 1;
+  const clearance = Math.max(-0.1, softClearance + netExtra + (tumbleSoft ? T.softClearance : 0) + gauss() * SHOTS.clearanceNoise * noiseMult * aimScale * netNoise);
   const g = geometry(c.point, target);
 
   let angle: number, speed: number;

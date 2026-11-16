@@ -10,8 +10,8 @@ import { eventLook, kitBrandOf } from '../brands';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, energyPenalty, enter, eventsThisWeek, findEvent, hotelCost, hotelOf, medalOf, milestones, newMilestones, refuelCost, retire, setStaff, skipByes, sponsorUpgrade, travelClassOf, money, myRank, newCareer,
-  nextMatch, payFor, prizeFor, recordMatch, refuel, roundEnergy, softLocked, travelCost, travelEnergy, withdraw, world, type CareerState, type LiveMatch,
+  advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, money, myRank, newCareer,
+  nextMatch, payFor, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
@@ -34,7 +34,7 @@ export interface CareerDeps {
 }
 
 const STYLE_AI: Record<string, Style> = { 'all-rounder': 'allround', attacker: 'attacker', defender: 'defender', 'net player': 'net', deceptive: 'deceptive', 'fast retriever': 'retriever', 'defensive wall': 'wall' };
-const HANDICAP_TEXT: Record<string, string> = { no_smash: 'No smashes (hard overheads become drives)', no_drop: 'No drop shots (soft overheads become clears)', fast_opponent: 'Your opponent moves 10% faster', start_behind: 'You start {n} points down', to_11: 'A single game to 11', half_energy: 'You play at 50% energy' };
+const HANDICAP_TEXT: Record<string, string> = { no_smash: 'No smashes (hard overheads become drives)', no_drop: 'No drop shots (soft overheads become clears)', fast_opponent: 'Your opponent moves 10% faster', start_behind: 'You start {n} points down', to_11: 'A single game to 11', half_energy: 'You play tired: a little slower, and your timing is a little harder' };
 
 export function initCareer(d: CareerDeps) {
   const $ = (id: string) => document.getElementById(id)!;
@@ -112,7 +112,6 @@ export function initCareer(d: CareerDeps) {
   // ── Rendering ──
   const NAV: [string, string, string][] = [
     ['hub', 'Next up', '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'],
-    ['energy', 'Energy & travel', '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'],
     ['ranking', 'Ranking', '<path d="M5 20V10M12 20V4M19 20v-7"/>'],
     ['squad', 'Squad', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M14.5 15c.8-.4 1.6-.5 2.5-.5 2.3 0 4 1.5 4.5 4.5"/>'],
     ['ledger', 'Money', '<path d="M12 3v18M16.5 7.5c-.8-1.2-2.4-2-4.5-2-2.6 0-4.5 1.3-4.5 3.2 0 4.6 9 2.4 9 6.8 0 1.9-1.9 3.3-4.5 3.3-2.2 0-4-.9-4.8-2.3"/>'],
@@ -128,14 +127,12 @@ export function initCareer(d: CareerDeps) {
     if (!s) { renderNew(); return; }
     if (s.recap !== null) { renderRecap(); return; }
     const r = myRank(s, W());
-    const pen = energyPenalty(s.energy);
     head.innerHTML = `<p class="hero-kicker">${s.year} · Week ${s.week} · in ${e(countryName(s.currentLocation))}</p><h2>${e(s.name)}</h2>
       <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div>
-      <div class="c-energy${pen ? ' low' : ''}"><b>${s.energy}</b><span>Energy</span><i style="--e:${s.energy}%"></i></div>
       <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
     $('careerTabs').innerHTML = NAV.map(([k, l, p]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span></button>`).join('');
     if (s.pendingRecruitOffer || s.offerDue) { void renderOffer(); return; }
-    ({ hub: renderHub, energy: renderEnergy, ranking: renderRanking, squad: renderSquad, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
+    ({ hub: renderHub, ranking: renderRanking, squad: renderSquad, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
   }
 
   /** You v them, for the next match. */
@@ -148,9 +145,8 @@ export function initCareer(d: CareerDeps) {
       <p class="c-trait"><b>${e(STYLES[STYLE_AI[opp.style]].label)}:</b> ${e(STYLES[STYLE_AI[opp.style]].trait)}</p>`;
   };
   const fact = (label: string, value: string, warn = false) => `<div class="c-fact${warn ? ' warn' : ''}"><span>${label}</span><b>${value}</b></div>`;
-  const recover = () => `<div class="c-recover"><span>Travelling ${e(CFG.travelClass[travelClassOf(s!)].label.toLowerCase())} · ${e(CFG.hotels[hotelOf(s!)].label)} hotels${s!.staff?.physio ? ' · physio' : ''}${s!.staff?.coach ? ' · coach' : ''}</span>
-    <button data-ctab="energy">Energy & travel</button>
-</div>`;
+  // 3.9: no energy, so no travel and recovery bar (flights are economy and hotels 3-star).
+  const recover = () => '';
 
   /** The season at a glance: every event on a 52-week line, your results on the ones you played. */
   function seasonStrip() {
@@ -179,14 +175,14 @@ export function initCareer(d: CareerDeps) {
     let hero = '';
     if (s!.injury && !s!.current) {
       hero = `<p class="c-kicker">Injured</p><h3 class="c-title">${s!.injury.weeks} week${s!.injury.weeks === 1 ? '' : 's'} out</h3>
-        <p class="c-lead">You played too tired and picked up an injury. You can’t enter events until it heals; each week counts down${s!.staff?.physio ? ' (your physio keeps your energy up meanwhile)' : ''}.</p>
-        <div class="c-cta"><button class="walk" data-week="next">Next week ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="rest">Rest week (+${CFG.rest.energy}, ${money(CFG.rest.cost)})</button></div>${recover()}`;
+        <p class="c-lead">You can’t enter events until it heals; each week counts down.</p>
+        <div class="c-cta"><button class="walk" data-week="next">Next week ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
     } else if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
       const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
       hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${a.bronze ? 'Bronze medal match' : ROUND_LABEL[a.round]}</h3>
         ${versus(nm.opponent)}
-        <div class="c-facts">${fact('Format', 'Best of 3 to 15')}${fact('Your energy', `${s!.energy}${energyPenalty(s!.energy) ? ` (−${Math.round(energyPenalty(s!.energy) * 100)}%)` : ''}`, !!energyPenalty(s!.energy))}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
+        <div class="c-facts">${fact('Format', nm.games === 1 ? 'One game to 15' : 'Best of 3 to 15')}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
         <div class="c-cta"><button class="walk" data-playnext>Play ${a.bronze ? 'for 3rd place' : ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
         ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: ${a.bronze && i === a.scores.length - 1 ? 'lost to' : 'beat'} ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
         ${recover()}
@@ -200,14 +196,14 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">This week · ${TIER_LABEL[x.tier]}${x.dates ? ` · ${e(x.dates)}` : ''}</p><h3 class="c-title">${e(x.name)}</h3>
         <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players</p>
         ${also.length ? `<p class="c-also">Also this week (you can play one): ${also.map((v) => `<button class="linkish" data-pickev="${v.id}">${e(v.name)} · ${TIER_LABEL[v.tier]}</button>`).join(' ')}</p>` : ''}
-        <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact(`Hotel (${CFG.hotels[hotelOf(s!)].label})`, `${money(hotelCost(s!, x))} a night`)}${fact('Energy to go all the way', `about ${Math.round(travelEnergy(s!, x) + roundEnergy(s!, x) * roundsFor(x.draw_size).length)}`)}</div>
+        <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(hotelCost(s!, x))} a night`)}</div>
         <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
           <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>${recover()}`;
     } else if (next) {
       const weeks = next.week - s!.week;
       hero = `<p class="c-kicker">Next event in ${weeks} week${weeks === 1 ? '' : 's'} · ${TIER_LABEL[next.tier]}</p><h3 class="c-title">${e(next.name)}</h3>
         <p class="c-lead">${e(countryName(next.host_country))} · week ${next.week}${canEnter(s!, next, W()).ok ? '' : ` · ${e(canEnter(s!, next, W()).why ?? '')}`}</p>
-        <div class="c-cta"><button class="walk" data-skip>Go to week ${next.week} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="next">Just one week</button><button class="edit" data-week="rest">Rest a week (+${CFG.rest.energy}, ${money(CFG.rest.cost)})</button></div>${recover()}`;
+        <div class="c-cta"><button class="walk" data-skip>Go to week ${next.week} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="next">Just one week</button></div>${recover()}`;
     } else {
       hero = `<p class="c-kicker">Season over</p><h3 class="c-title">That’s the ${s!.year} season</h3>
         <div class="c-cta"><button class="walk" data-skip>See your season ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
@@ -323,7 +319,7 @@ export function initCareer(d: CareerDeps) {
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">${e(x.dates ?? `Week ${x.week}`)} · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
       <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players: ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}${h ? ` · you reached the ${ROUND_LABEL[h.round].toLowerCase()}` : ''}</p>
       <table class="c-table"><tr><th>If you go out in</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${r === 'W' ? 'Win it' : ROUND_LABEL[r]}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
-      <div class="c-facts">${fact('Travel (economy / premium / business)', `${money(travelCost(s!, x, 'economy'))} / ${money(travelCost(s!, x, 'premium'))} / ${money(travelCost(s!, x, 'business'))}`)}${fact('Hotel a night (hostel–5-star)', `${money(hotelCost(s!, x, 'hostel'))}–${money(hotelCost(s!, x, 'five'))}`)}${fact('Energy per round', `about ${Math.round(roundEnergy(s!, x))}`)}</div>
+      <div class="c-facts">${fact('Flight', money(travelCost(s!, x)))}${fact('Hotel a night', money(hotelCost(s!, x)))}</div>
       <h3 class="c-title small">The draw</h3>${drawTable(x)}
       <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
@@ -353,38 +349,11 @@ export function initCareer(d: CareerDeps) {
       <div class="c-squad">${mine.map((c) => `<button class="${c.id === s!.characterId ? 'on' : ''}" data-pick="${c.id}" ${s!.current ? 'disabled' : ''}>${card(c, `<span class="sub">career strength ${c.career_strength}${c.abilities.length ? ` · ${c.abilities.map((ab) => `★ ${e(ab.name)}`).join(', ')}` : ''}</span>`)}</button>`).join('') || '<p>No players yet.</p>'}</div></div>`;
   }
 
-  /** Energy & travel: how tired you are, how you travel and where you stay, and ways to recover. */
-  function renderEnergy() {
-    const pen = energyPenalty(s!.energy);
-    const nextEv = s!.current ? ev() : eventsThisWeek(s!, d.appVersion)[0] ?? W().cal.find((v) => v.week > s!.week) ?? null;
-    const cls = travelClassOf(s!), ht = hotelOf(s!);
-    const clsCards = (Object.keys(CFG.travelClass) as TravelClass[]).map((k) => {
-      const t = CFG.travelClass[k];
-      return `<button class="c-opt${k === cls ? ' on' : ''}" data-class="${k}"><b>${t.label}</b><span>${t.cost === 1 ? 'Cheapest' : `${t.cost}× the fare`}${nextEv ? ` · ${money(travelCost(s!, nextEv, k))} to ${e(nextEv.city ?? countryName(nextEv.host_country))}` : ''}</span><span>${t.energySaved ? `Saves ${Math.round(t.energySaved * 100)}% of travel energy` : 'Full travel tiredness'}${nextEv ? ` · uses ${travelEnergy(s!, nextEv, k)}` : ''}</span></button>`;
-    }).join('');
-    const hotelCards = (Object.keys(CFG.hotels) as HotelTier[]).map((k) => {
-      const h = CFG.hotels[k];
-      return `<button class="c-opt${k === ht ? ' on' : ''}" data-hotel="${k}"><b>${h.label}</b><span>${nextEv ? `${money(hotelCost(s!, nextEv, k))} a night in ${e(nextEv.city ?? countryName(nextEv.host_country))}` : `${money(h.perNight)} a night (more in pricier cities)`}</span><span>${h.recover ? `+${h.recover} energy a night` : 'No energy back'} · ${e(h.note)}</span></button>`;
-    }).join('');
-    const injuryRisk = Math.round(Math.min(CFG.injury.max, Math.max(0, CFG.injury.below - s!.energy) * CFG.injury.perPoint) * (s!.staff?.physio ? 0.5 : 1) * 100);
-    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Energy & travel</p>
-      <div class="c-energybar${pen ? ' low' : ''}"><i style="width:${s!.energy}%"></i><b>${s!.energy}</b></div>
-      <p class="c-lead">${s!.injury ? `<b>Injured:</b> ${s!.injury.weeks} more week${s!.injury.weeks === 1 ? '' : 's'}. ` : ''}${pen ? `Tired: you’re ${Math.round(pen * 100)}% slower and your timing is ${Math.round(pen * 100)}% harder in matches. ` : 'Fresh: no penalty in matches. '}Below ${CFG.energyPenaltyFrom} energy you start to slow down; below ${CFG.injury.below} you can get injured${injuryRisk ? ` (${injuryRisk}% a match right now)` : ''}. A match uses about ${Math.round(roundEnergy(s!, nextEv ?? clubEvent(s!)))}; a week off gives +${CFG.idleWeekEnergy} back.</p>
-      <h3 class="c-title small">How you travel</h3><div class="c-opts">${clsCards}</div>
-      <h3 class="c-title small">Where you stay</h3><p class="c-lead small">One night for each round you play.</p><div class="c-opts">${hotelCards}</div>
-      <h3 class="c-title small">Recover now</h3>
-      <div class="c-opts">
-        <button class="c-opt" data-refuel="food"><b>Good food</b><span>+${CFG.food.energy} energy</span><span>${money(refuelCost(s!, 'food'))}</span></button>
-        <button class="c-opt" data-refuel="physio"><b>Physio session</b><span>+${CFG.physio.energy} energy</span><span>${money(refuelCost(s!, 'physio'))}${s!.staff?.physio ? ' (half price with your physio)' : ''}</span></button>
-        ${s!.current ? '' : `<button class="c-opt" data-week="rest"><b>Rest a week</b><span>+${CFG.rest.energy} energy</span><span>${money(CFG.rest.cost)} living costs · the week passes</span></button>`}
-      </div></section>`;
-  }
-
   /** Sponsors and staff (in the Money tab). */
   function teamHtml() {
     const offers = sponsorUpgrade(s!, myRank(s!, W()));
     const sp = s!.sponsor;
-    const staff = (Object.keys(CFG.staff) as StaffRole[]).map((k) => {
+    const staff = (['coach'] as StaffRole[]).map((k) => {
       const st = CFG.staff[k], on = !!s!.staff?.[k];
       return `<button class="c-opt${on ? ' on' : ''}" data-staff="${k}"><b>${st.label}${on ? ' (hired)' : ''}</b><span>${money(st.wage)} a week</span><span>${e(st.note)}</span><span>${on ? 'Click to let them go' : 'Click to hire'}</span></button>`;
     }).join('');
@@ -619,16 +588,15 @@ export function initCareer(d: CareerDeps) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
     if (!x || !nm || busy) return;
     const a = s!.current!;
-    if (!resume) a.energyAtMatch = s!.energy;
     delete a.live;
     await save();
-    const opp = nm.opponent, energy = resume ? a.energyAtMatch ?? s!.energy : s!.energy;
+    const opp = nm.opponent;
     const live: LiveMatch = { eventId: a.eventId, round: nm.round, opp: opp.id, snap: '', rally: false };
     close();
     d.play({
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
-        player: { characterId: a.as, modifiers: [energyModifier(energy), coachModifier(s!)], abilities: true },
+        player: { characterId: a.as, modifiers: [coachModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
         restrictions: {}, resume, look: eventLook(x.id, x.tier),
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
@@ -674,14 +642,13 @@ export function initCareer(d: CareerDeps) {
   const TOUR_KEY = 'badminton.careerTourDone';
   const go = (t: string) => () => { tab = t; render(); };
   const careerTour = new Tour([
-    { target: '#careerHead .c-stats', title: 'Your numbers', text: 'Money, energy, world rank and titles. Money pays for flights, hotels and recovery; energy drops with every match and flight, and below 70 you start to slow down.', before: go('hub') },
+    { target: '#careerHead .c-stats', title: 'Your numbers', text: 'Money, world rank and titles. Money pays for flights and hotels; prizes and sponsors bring it in.', before: go('hub') },
     { target: '.c-hero', title: 'Next up', text: 'Always your next step: your next match (with a big Play button), this week’s tournament to enter, or the next event to travel to. Before each match you get a scouting report on your opponent.' },
     { target: '.c-strip', title: 'The season', text: 'Every tournament of the year on one line, coloured by level, with your results. Click one for its prizes and draw. Bigger events open as you reach finals or climb the world ranking.' },
     { target: '.c-listbtn', title: 'All tournaments', text: 'The full calendar as a list: dates, level, players, host, prize and whether you can enter.' },
-    { target: '[data-ctab="energy"]', title: 'Energy & travel', text: 'Choose how you fly and where you stay. Better seats and hotels cost more but keep you fresh. Recover here too, but it isn’t cheap, and playing below 25 energy can injure you.' },
     { target: '[data-ctab="ranking"]', title: 'World ranking', text: 'Your best 10 results in the last 52 weeks count. It decides your seeding and which events you can enter.' },
     { target: '[data-ctab="squad"]', title: 'Your squad', text: 'Everyone starts as a Common player with no signature ability. Finish in the top 3 of a Super 100, 300 or 500 (or win any bigger event) to recruit a player from its draw. Better places and bigger events give better odds of rarer players.' },
-    { target: '[data-ctab="ledger"]', title: 'Money, sponsors and staff', text: 'Every cost and prize. Sponsors pay you weekly once you’re in the top 200, and you can hire a coach or physio for weekly wages.' },
+    { target: '[data-ctab="ledger"]', title: 'Money, sponsors and staff', text: 'Every cost and prize. Sponsors pay you weekly once you’re in the top 200, and you can hire a coach for weekly wages.' },
     { target: '[data-ctab="daily"]', title: 'Daily challenge', text: 'One challenge a day for everyone, against a strong player with a handicap or two. Win it for rating points.' },
     { target: '[data-ctab="trophies"]', title: 'Trophies', text: 'Your titles, medals and milestones. After your first season you can retire into the Hall of Fame and start again.' },
     { target: '[data-ctab="settings"]', title: 'Starting again', text: 'Settings has Restart career. Note: in 3.3.1 everyone’s career was reset, so if an old career is gone, that’s why. Players you recruited are still on your account.' },
@@ -753,7 +720,7 @@ export function initCareer(d: CareerDeps) {
       retiredHall = retire(s); s = null; render(); return;
     }
     const rf = at('[data-refuel]')?.dataset.refuel as 'food' | 'physio' | undefined;
-    if (rf) { if (!refuel(s, rf)) d.toast('Not enough money', ''); else { await save(); render(); } return; }
+    if (rf) return;
     if (at('[data-playnext]')) { renderPreMatch(); return; }
     if (at('[data-startmatch]')) { void playNext(); return; }
     if (at('[data-withdraw]')) { if (!confirm('Withdraw from this tournament? You keep any prize and points from rounds you’ve already won.')) return; withdraw(s, W(), ev()!); await save(); render(); return; }

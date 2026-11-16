@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.9: No more energy (16 Nov 2026)
+
+- Energy is gone from career. No more energy bar, tiredness penalties or injuries, so you can play every event you can afford.
+- Travel is simpler: you always fly economy and stay in a 3-star hotel. Travel classes, hotel choices, good food, physio sessions, rest weeks and the physio staff member are gone.
+- Stamina still matters in career: like in quick play, players tire a little during long rallies and games, and high Stamina tires more slowly.
+- Fixed: the Next up screen said best of 3 for one-game early rounds.
+
 ## 3.8.1: No more rank-up picks (16 Nov 2026)
 
 - Reaching a new ranked tier no longer gives you a new player. Players now come from recruiting in career mode. Any players you've already picked stay yours.

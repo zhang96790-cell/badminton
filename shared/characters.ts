@@ -191,7 +191,8 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
     shotSpeed: career ? 1 : 1 + J.drivePerPower * p,
     netClearance: career ? 1 : 1 - J.netClearancePerNet * n,
     defReach: career ? 0 : J.defReachPerDefence * d,
-    fatigue: career ? 0 : 1 - J.fatiguePerStamina * st,
+    // 3.9: career has no energy any more, so Stamina works there through tiring too.
+    fatigue: 1 - J.fatiguePerStamina * st,
     heavy: career ? 1 : 1 + J.heavyPerPower * p,
     netMove: career ? 1 : 1 + J.netMovePerNet * n,
   };
@@ -201,7 +202,7 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
       : k === 'netClearance' ? clamp(e[k], ...J.netClearance)
       : k === 'defReach' ? clamp(e[k], ...J.defReach)
       : k === 'heavy' ? clamp(e[k], ...J.heavy)
-      : k === 'fatigue' ? (career ? 0 : clamp(e[k], ...J.fatigue))
+      : k === 'fatigue' ? clamp(e[k], ...J.fatigue)
       : clamp(e[k], 1 - lim, 1 + lim);
   }
   return e;

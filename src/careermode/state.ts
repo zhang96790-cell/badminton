@@ -4,7 +4,6 @@ import { characterById, type Character, type Modifier } from '../../shared/chara
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
 import { COUNTRIES, World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
-import { energyUseFactor } from './signatures';
 
 export interface LedgerLine { year: number; week: number; label: string; amount: number }
 export interface RecruitOffer { id: number; tournamentId: string; candidates: string[]; rerolled: boolean; place?: 1 | 2 | 3 }
@@ -87,8 +86,9 @@ export interface Sponsor { name: string; weekly: number; bonus: number; band: nu
 export interface HallEntry { name: string; from: number; to: number; titles: number; bestRank: number | null; golds: number; silvers: number; bronzes: number; prize: number; as: string }
 
 export const APP_VERSION_KEY = '3.0';
-export const travelClassOf = (s: CareerState): TravelClass => s.settings.travelClass ?? (s.settings.business ? 'business' : 'economy');
-export const hotelOf = (s: CareerState): HotelTier => s.settings.hotel ?? 'three';
+// 3.9: no energy, so no choice of seat or hotel: economy flights and a 3-star every time.
+export const travelClassOf = (_s: CareerState): TravelClass => 'economy';
+export const hotelOf = (_s: CareerState): HotelTier => 'three';
 
 export function newCareer(o: { name: string; homeCountry: string; characterId: string; difficulty: Difficulty; seed?: number }): CareerState {
   return {
@@ -107,7 +107,13 @@ export function migrate(raw: unknown): CareerState | null {
   if (s.v !== 1 || !s.characterId) return null;
   // Careers from before this reset start over (3.3.1: everyone restarted).
   if (s.epoch !== CAREER_EPOCH) return null;
-  return { ...newCareer({ name: s.name ?? 'Player', homeCountry: s.homeCountry ?? 'GBR', characterId: s.characterId, difficulty: s.difficulty ?? 'relaxed', seed: s.rngSeed }), ...s } as CareerState;
+  const out = { ...newCareer({ name: s.name ?? 'Player', homeCountry: s.homeCountry ?? 'GBR', characterId: s.characterId, difficulty: s.difficulty ?? 'relaxed', seed: s.rngSeed }), ...s } as CareerState;
+  // 3.9: no more energy. Everyone's fresh, uninjured, flies economy and stays in a 3-star; the physio goes.
+  out.energy = 100; out.injury = null;
+  out.settings = { ...out.settings, travelClass: 'economy', business: false, hotel: 'three' };
+  if (out.staff?.physio) out.staff.physio = false;
+  if (out.current) { out.current.travelClass = 'economy'; out.current.business = false; out.current.hotelTier = 'three'; }
+  return out;
 }
 
 export const world = (s: CareerState, appVersion: string) =>
@@ -199,8 +205,7 @@ export const findEvent = (s: CareerState, id: string, appVersion: string): TourE
 export function enter(s: CareerState, ev: TourEvent) {
   const travel = travelCost(s, ev);
   const cls = travelClassOf(s);
-  if (travel) book(s, `Travel to ${ev.name} (${CFG.travelClass[cls].label.toLowerCase()})`, -travel);
-  s.energy = Math.max(0, s.energy - travelEnergy(s, ev));
+  if (travel) book(s, `Travel to ${ev.name}`, -travel);
   s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true };
 }
 
@@ -262,7 +267,6 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
 }
 
 /** A match finished: pay the hotel, use energy, and move on (or finish the event). */
-const rngFor = (s: CareerState, ev: TourEvent, k: string) => rng(hash(s.rngSeed, s.year, ev.id, k, 'injury', s.history.length));
 
 export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolean, games: [number, number][], opponentId: string): { finished: boolean; result?: PlayerResult; injured?: number } {
   const a = s.current!;
@@ -270,20 +274,7 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
   a.scores.push(games);
   const tier = a.hotelTier ?? hotelOf(s);
   if (ev.tier !== 'CLUB') { const c = hotelCost(s, ev, tier); a.hotel += c; book(s, `Hotel: ${CFG.hotels[tier].label} (${ev.name})`, -c); }
-  s.energy = Math.max(0, Math.round(s.energy - roundEnergy(s, ev) * energyUseFactor(characterById(a.as), a.energyAtMatch ?? s.energy)));
-  // A night's rest in the hotel.
-  s.energy = Math.min(100, s.energy + hotelRecover(ev, tier));
-  // Played very tired: a chance of an injury (a physio halves it). Out of the event and off for a few weeks.
-  const start = a.energyAtMatch ?? 100, I = CFG.injury;
-  if (start < I.below && rngFor(s, ev, a.round)() < Math.min(I.max, (I.below - start) * I.perPoint) * (s.staff?.physio ? 0.5 : 1)) {
-    const weeks = I.weeks[0] + Math.floor(rngFor(s, ev, `${a.round}w`)() * (I.weeks[1] - I.weeks[0] + 1));
-    s.injury = { weeks };
-    book(s, 'Injury treatment', -Math.round(I.treatment * (s.staff?.physio ? 0.5 : 1)));
-    if (a.bronze) return { finished: true, result: finish(s, w, ev, 'SF', false, won ? 3 : 4), injured: weeks };
-    if (!won && a.round === 'SF') return { finished: true, result: finish(s, w, ev, 'SF', false, 4), injured: weeks };
-    if (won && a.round !== 'F') { a.round = nextRound(a.round); return { finished: true, result: finish(s, w, ev, a.round), injured: weeks }; }
-    return { finished: true, result: finish(s, w, ev, won ? 'W' : a.round), injured: weeks };
-  }
+  // 3.9: no energy and no injuries.
   // Lose a semi-final and you play for 3rd place.
   if (a.bronze) return { finished: true, result: finish(s, w, ev, 'SF', false, won ? 3 : 4) };
   if (!won && a.round === 'SF') { a.bronze = true; return { finished: false }; }
@@ -330,11 +321,10 @@ export function withdraw(s: CareerState, w: World, ev: TourEvent): PlayerResult 
 export type WeekAction = 'next' | 'rest';
 export function advanceWeek(s: CareerState, action: WeekAction, appVersion: string) {
   if (s.current) return;
-  if (action === 'rest') { book(s, 'Rest week (living costs)', -CFG.rest.cost); s.energy = Math.min(100, s.energy + CFG.rest.energy); }
-  else s.energy = Math.min(100, s.energy + CFG.idleWeekEnergy);
-  // The week's wages and sponsor money; a physio keeps you ticking over.
-  for (const role of ['coach', 'physio'] as StaffRole[]) if (s.staff?.[role]) book(s, `${CFG.staff[role].label}’s wages`, -CFG.staff[role].wage);
-  if (s.staff?.physio) s.energy = Math.min(100, s.energy + 4);
+  void action; // 3.9: no rest weeks (no energy); a week is a week.
+  s.energy = 100;
+  // The week's wages and sponsor money.
+  if (s.staff?.coach) book(s, `${CFG.staff.coach.label}’s wages`, -CFG.staff.coach.wage);
   if (s.sponsor) book(s, `Sponsor: ${s.sponsor.name}`, s.sponsor.weekly);
   if (s.injury && s.injury.weeks > 0) { s.injury.weeks--; if (!s.injury.weeks) s.injury = null; }
   const last = Math.max(...calendar(appVersion, s.year).map((e) => e.week), 1);

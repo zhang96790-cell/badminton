@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.9',
+    title: 'No more energy',
+    date: '16 Nov 2026',
+    changes: [
+      "Energy is gone from career. No more energy bar, tiredness penalties or injuries, so you can play every event you can afford.",
+      "Travel is simpler: you always fly economy and stay in a 3-star hotel. Travel classes, hotel choices, good food, physio sessions, rest weeks and the physio staff member are gone.",
+      "Stamina still matters in career: like in quick play, players tire a little during long rallies and games, and high Stamina tires more slowly.",
+      "Fixed: the Next up screen said best of 3 for one-game early rounds.",
+    ],
+  },
+  {
     version: '3.8.1',
     title: 'No more rank-up picks',
     date: '16 Nov 2026',

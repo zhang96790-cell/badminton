@@ -813,7 +813,7 @@ async function showAdminPlayer(username: string) {
   const c = d.career;
   const career = c ? tiles([
     ['Playing as', charName(c.characterId)], ['Name', c.name], ['Season', `${c.year} · week ${c.week}`],
-    ['Money', `$${adminNum(Math.round(c.money))}`], ['Energy', Math.round(c.energy)], ['Titles', c.titles],
+    ['Money', `$${adminNum(Math.round(c.money))}`], ['Titles', c.titles],
     ['Best ranking', c.bestRank ? `#${c.bestRank}` : '–'], ['Tournaments', c.history?.length ?? 0], ['Squad', (c.squad ?? []).map(charName).join(', ') || '–'],
   ]) + `<p class="sub">Saved ${adminAgo(d.career_updated)}${c.current ? ' · in a tournament now' : ''}${c.injury?.weeks ? ` · injured ${c.injury.weeks} wk` : ''}</p>` : '<p class="sub">No career save.</p>';
   const stats = statGroups(d.stats ?? {}).map((g) => `<h4>${g.title}</h4>${tiles(g.tiles.map((t) => [t.label, t.value] as [string, string]))}`).join('');

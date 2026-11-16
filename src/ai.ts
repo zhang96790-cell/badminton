@@ -403,15 +403,17 @@ export class AIController implements Controller {
       else {
         // A short lift (taken overhead mid-court) is there to be punished.
         const shortLift = dNet < 4.8;
-        fast = L.smash * S.smash * (shortLift ? 1.6 : 0.5);
-        soft = L.drop * S.drop * (oppDeep ? 1.5 : 0.8);
-        high = S.clear * (oppForward ? 1.6 : 0.7);
+        // 3.9.2: attack more: smash from the back court too, clear less (real singles players smash about
+        // 1 overhead in 3; before this it was about 1 in 7).
+        fast = L.smash * S.smash * (shortLift ? 2.0 : 1.0);
+        soft = L.drop * S.drop * (oppDeep ? 1.25 : 0.75);
+        high = S.clear * (oppForward ? 1.4 : 0.5);
         // 3.7.2: nobody clears a short lift away more often than they attack it (even the defensive styles).
         if (shortLift) fast = Math.max(fast, high * 1.05, soft);
       }
     } else if (c.z >= SHOTS.lowHeight) {
       if (dNet < SHOTS.nearNet && c.z > netHeightAt(c.x) + 0.1) { fast = 2.5 * L.kill * S.kill; soft = 1; high = 0.3; }
-      else { fast = Math.sqrt(S.smash); soft = L.net * S.net * (oppDeep ? 1.5 : 0.6); high = S.clear * (oppForward ? 1.4 : 0.6); }
+      else { fast = 1.3 * Math.sqrt(S.smash); soft = L.net * S.net * (oppDeep ? 1.5 : 0.6); high = S.clear * (oppForward ? 1.2 : 0.5); }
     } else if (dNet < SHOTS.nearNet) {
       // At the net: go tight if you're back or backing off, lift deep if you're rushing in.
       soft = L.net * S.net * (oppDeep || oppRetreating ? 1.6 : 0.7);
@@ -427,7 +429,8 @@ export class AIController implements Controller {
     if (doubles) { high *= 0.55; fast *= 1.3; }
     // A tumbling net shot can't be netted back or attacked: lift it.
     if (this.game.shuttle.tumbling) { high *= 4; soft *= 0.15; fast *= 0.3; }
-    const k = L.decisiveness;
+    // 3.9.2: the top levels still prefer their best shot, but keep a mix (above 3.5 they only ever smashed and blocked).
+    const k = Math.min(L.decisiveness, 3.5);
     return weightedPick<Intent>(['high', 'fast', 'soft'], [high ** k, fast ** k, soft ** k]);
   }
 

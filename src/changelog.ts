@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.9.2',
+    title: 'Attacking CPUs',
+    date: '16 Nov 2026',
+    changes: [
+      "CPUs attack much more: they smash from the back of the court as well as mid-court, and clear and lift less. At Hard, smashes go from about 6% to 15% of shots and clears from 17% to 9%. Drives and pushes are more common too.",
+      "The top levels keep a mix of shots instead of always choosing the same one. The Defensive wall is still the most patient style.",
+    ],
+  },
+  {
     version: '3.9.1',
     title: 'Tighter career money',
     date: '16 Nov 2026',

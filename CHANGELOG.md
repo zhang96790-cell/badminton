@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.9.2: Attacking CPUs (16 Nov 2026)
+
+- CPUs attack much more: they smash from the back of the court as well as mid-court, and clear and lift less. At Hard, smashes go from about 6% to 15% of shots and clears from 17% to 9%. Drives and pushes are more common too.
+- The top levels keep a mix of shots instead of always choosing the same one. The Defensive wall is still the most patient style.
+
 ## 3.9.1: Tighter career money (16 Nov 2026)
 
 - Career money is harder again, now that energy is gone: prize money is a little lower (about 10% above 3.7) and early-round losses pay less, while flights and hotels cost a little more.

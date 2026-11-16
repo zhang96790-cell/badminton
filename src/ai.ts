@@ -390,6 +390,9 @@ export class AIController implements Controller {
     const oppRetreating = opps.every((o) => o.vel.y * o.side > 0.5);
     const oppDeep = oppDepth > 4.3, oppForward = oppDepth < 2.8;
     let high = 1, fast = 1, soft = 1;
+    // 3.7.3: a counter-puncher blocks your smash short instead of lifting it back.
+    const sh = this.game.shuttle;
+    const vsSmash = !!S.counter && sh.lastHitter === -this.me.side && /smash/i.test(this.game.lastShotLabel);
     if (c.z >= SHOTS.overheadHeight) {
       if (dNet < 2.6) { fast = 3 * L.kill * S.kill; soft = 0.8; high = 0.1; }
       else {
@@ -414,6 +417,7 @@ export class AIController implements Controller {
       soft = 0.8 * S.net;
       fast = 0.3;
     }
+    if (vsSmash && c.z < SHOTS.overheadHeight) { soft *= S.counter!; high /= Math.sqrt(S.counter!); }
     // Doubles is about keeping the shuttle down: lift less, attack and push more.
     if (doubles) { high *= 0.55; fast *= 1.3; }
     // A tumbling net shot can't be netted back or attacked: lift it.

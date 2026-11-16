@@ -522,6 +522,8 @@ export const STYLES: Record<Style, {
   deepClears?: boolean;
   /** After losing this many points in a row, it changes its approach. */
   adaptAfter?: number;
+  /** 3.7.3: against your smash, blocks short this many times more often (and lifts less): the counter-attack. */
+  counter?: number;
 }> = {
   allround: { label: 'All-rounder', smash: 1.1, drop: 1.05, clear: 1, net: 1.05, kill: 1.1, jump: 1.1, baseDepth: 3.5, margin: -0.02, speed: 1.04, serveShort: 1, steady: 0.8, reach: 0.05,
     trait: 'No weak spots: a little quicker around the court and a little more precise than most, with every shot in its bag' },
@@ -535,8 +537,8 @@ export const STYLES: Record<Style, {
     trait: 'Disguises about 1 in 3 drops, net shots and flicks: no landing marker at all, and you step the wrong way' },
   retriever: { label: 'Fast retriever', smash: 0.8, drop: 0.95, clear: 1.2, net: 1.1, kill: 1.0, jump: 0.7, baseDepth: 3.6, margin: 0.12, speed: 1.06, serveShort: 0.9, reach: 0.08,
     trait: 'Reaches shots no one else would and plays safe and high, attacking only when you give it a short one' },
-  wall: { label: 'Defensive wall', smash: 0.65, drop: 0.75, clear: 1.6, net: 0.8, kill: 1.0, jump: 0.5, baseDepth: 4.0, margin: 0.25, speed: 1.06, serveShort: 0.7, reach: 0.07, steady: 0.45, deepClears: true,
-    trait: 'Almost never misses and clears to the back line every time, waiting for your error' },
+  wall: { label: 'Defensive wall', smash: 0.65, drop: 1.35, clear: 1.15, net: 1.25, kill: 1.0, jump: 0.5, baseDepth: 3.9, margin: 0.15, speed: 1.02, serveShort: 0.8, reach: 0.03, steady: 0.6, deepClears: true, counter: 2.2,
+    trait: 'Soaks up your smashes, blocks them short to the net and counters with drops and net shots; its clears go to the back line' },
 };
 
 export interface KeyMap {

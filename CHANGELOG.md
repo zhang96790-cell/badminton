@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.7.3: A fairer Defensive wall (16 Nov 2026)
+
+- The Defensive wall plays differently: it soaks up your smashes and blocks them short to the net, then counters with drops and net shots instead of clearing everything back. It clears less, reaches a little less and plays a little less safe, so it can be beaten.
+
 ## 3.7.2: More attacking CPUs (16 Nov 2026)
 
 - CPUs attack more, like real players: none of them clear a short lift away more often than they smash it.

@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.7.3',
+    title: 'A fairer Defensive wall',
+    date: '16 Nov 2026',
+    changes: [
+      "The Defensive wall plays differently: it soaks up your smashes and blocks them short to the net, then counters with drops and net shots instead of clearing everything back. It clears less, reaches a little less and plays a little less safe, so it can be beaten.",
+    ],
+  },
+  {
     version: '3.7.2',
     title: 'More attacking CPUs',
     date: '16 Nov 2026',

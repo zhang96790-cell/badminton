@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.6: Ranked player pick (16 Nov 2026)
+
+- Ranked matches now start with a player pick. Once you're matched, you and your opponent each choose a player and can see each other's pick live: their rarity, country, style and stats, with a stats shape that compares the two. Press Ready to lock in. The match starts when you're both ready, or after 30 seconds.
+- Your opponent now looks like the player they picked, in ranked and in friend rooms.
+- As before, each player's stats count in ranked. Signature abilities still only work in career and the daily challenge.
+
 ## 3.5.1: Easier energy (16 Nov 2026)
 
 - Career: energy now comes back over time. Every week you don't play gives +10 energy, and a rest week gives +30 (was +10) for the same $200.

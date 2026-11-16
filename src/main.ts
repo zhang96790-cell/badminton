@@ -10,7 +10,7 @@ import { ZONE_NAMES, loadMemory } from './ai';
 import { drawHeat, loadSessions, recordHeat, type ShotKind } from './heatmap';
 import { DEFAULT_CHARACTER, RARITY, ROSTER_HASH, characterById, rosterFor, statTotal } from '../shared/characters';
 import { drawPentagon } from './pentagon';
-import { defaultSetup } from './setup';
+import { defaultSetup, type MatchSetup } from './setup';
 import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
 import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from './highlights';
 import { Playback } from './replay';
@@ -22,7 +22,7 @@ import { drawReview } from './hawkeye';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
-import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type MatchSnapshot, type QueueEvent, type Roster, type ServerMsg } from './net';
+import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type MatchSnapshot, type QueueEvent, type Roster, type RosterSeat, type ServerMsg } from './net';
 import { tierIndex, tierOf, TIERS } from './rating';
 import { drawRatingGraph, rankBarHtml } from './rankbar';
 import { PresenceLink, type PresenceCounts } from './presence';
@@ -1299,7 +1299,9 @@ function renderLobby() {
   const doubles = ONLINE_DOUBLES && !ranked && roomSettings.event === 'doubles';
   const me = people.find((p) => p.seat === r?.you);
   // Doubles: your team on the left, CPUs in the empty places.
-  document.getElementById('roomSingles')!.hidden = doubles;
+  const picking = rankedPicking(r);
+  document.getElementById('roomSingles')!.hidden = doubles || picking;
+  renderVs(picking ? r : null);
   document.getElementById('roomTeams')!.hidden = !doubles;
   if (doubles) {
     const level = roomSettings.level ?? 'medium';
@@ -1370,7 +1372,8 @@ function renderLobby() {
     roomStart.hidden = true;
     roomStatus.textContent = (rankedOver ? 'This ranked match is over. Find another when you’re ready.'
       : noShow ? 'Your opponent hasn’t joined. Find another match, or keep waiting.'
-      : ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · starts as soon as you’re both connected') + conn;
+      : ready && picking ? `Pick your player and press Ready. Starts when you’re both ready, or in ${pickSecondsLeft()} s.`
+      : ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · pick your player once you’re both here') + conn;
     return;
   }
   roomStart.hidden = !host;
@@ -1386,6 +1389,10 @@ function renderLobby() {
 
 /** When this room was opened (to notice an opponent who never joins). */
 let roomOpenedAt = 0;
+/** Ranked pick (3.6): when both players were first here, and what the pick cards last showed. */
+let bothHereAt = 0;
+let vsKey = '';
+const PICK_SECONDS = 30;
 /** Asked the room to carry on a match in progress (after a reload), once per connection. */
 let resumeAsked = false;
 /** Carried on a match while these players were away: when one comes back, everyone lines up again. */
@@ -1407,6 +1414,7 @@ function openRoom(code: string) {
   leaveRoom();
   room = new RoomConnection(code, roomToken(code), myName(), GAME_VERSION, roomExtra());
   roomOpenedAt = Date.now();
+  bothHereAt = 0; vsKey = '';
   resumeAsked = false;
   room.on(onRoomMsg);
   // Reloading the page brings you back to the same seat in this room.
@@ -1437,7 +1445,8 @@ function onRoomMsg(m: GameMsg | ServerMsg) {
         // other player is away right now (you wait for them in the match, not on the room screen).
         if (m.match?.playing && !game && same && !resumeAsked) { resumeAsked = true; room.send({ type: 'resumeReq' }); }
         // Ranked: the host's screen starts the match as soon as both players are connected (and on the same version).
-        else if (m.ranked && m.you === 'host' && both && same && !game && !m.match) hostStart();
+        else if (m.ranked && both && same && !game && !m.match) { if (!bothHereAt) bothHereAt = Date.now(); maybeStartRanked(); }
+        if (!both) bothHereAt = 0;
       }
       break;
     case 'resume': {
@@ -1488,7 +1497,7 @@ function startOnline(host: boolean, lineup?: LineupSlot[], resume?: MatchSnapsho
   const level = lineup ? roomSettings.level ?? 'medium' : settings.opponent;
   game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21, opponent: level }, input, broadcast, 'online',
     { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined, resume, friendRated: !ranked && !lineup && !!roomSettings.elo && !!r.host?.account && !!r.guest?.account },
-    defaultSetup(ranked ? 'ranked' : 'friendly', roomSettings.games as 1 | 3, roomSettings.points as 15 | 21, myCharacter()));
+    withOpponent(defaultSetup(ranked ? 'ranked' : 'friendly', roomSettings.games as 1 | 3, roomSettings.points as 15 | 21, myCharacter()), lineup || !('connected' in opp) ? null : opp.character ?? null));
   game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
@@ -1496,6 +1505,70 @@ function startOnline(host: boolean, lineup?: LineupSlot[], resume?: MatchSnapsho
   menu.classList.add('hidden');
   (document.activeElement as HTMLElement | null)?.blur();
 }
+
+// ── Ranked player pick (3.6): both players choose, see each other's player and stats, then lock in. ──
+function withOpponent(setup: MatchSetup, id: string | null): MatchSetup { return id ? { ...setup, opponent: { ...setup.opponent, characterId: id } } : setup; }
+function rankedPicking(r: Roster | null | undefined) { return !!r?.ranked && !!r.host && !!r.guest && !r.match && !game; }
+function pickSecondsLeft() { return Math.max(0, Math.ceil(PICK_SECONDS - (Date.now() - (bothHereAt || Date.now())) / 1000)); }
+function maybeStartRanked() {
+  const r = room?.roster;
+  if (!r || r.you !== 'host' || !rankedPicking(r) || !r.host?.connected || !r.guest?.connected || versionClash(r)) return;
+  if ((r.host.ready && r.guest.ready) || (bothHereAt && pickSecondsLeft() <= 0)) hostStart();
+}
+window.setInterval(() => {
+  if (!room || !rankedPicking(room.roster)) return;
+  maybeStartRanked();
+  if (!game) renderLobby();
+}, 1000);
+
+function vsCard(seat: RosterSeat, mine: boolean, other: RosterSeat | null) {
+  const c = characterById(seat.character ?? DEFAULT_CHARACTER), r = RARITY[c.rarity];
+  const o = other ? characterById(other.character ?? DEFAULT_CHARACTER) : null;
+  const rows = STAT_LABELS.map((l, i) => {
+    const d = o ? c.stats[i] - o.stats[i] : 0;
+    return `<tr><td>${l}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${c.stats[i]}</td></tr>`;
+  }).join('');
+  const pick = mine && !seat.ready
+    ? `<select data-vspick>${VISIBLE.filter((x) => canUse(x.id)).sort((a, b) => RARITY[b.rarity].order - RARITY[a.rarity].order || a.name.localeCompare(b.name))
+        .map((x) => `<option value="${x.id}"${x.id === c.id ? ' selected' : ''}>${hubEsc(x.name)} · ${RARITY[x.rarity].label}</option>`).join('')}</select>`
+    : '';
+  const btn = mine ? `<button type="button" class="${seat.ready ? '' : 'primary'} vs-ready" data-vsready>${seat.ready ? 'Change player' : 'Ready'}</button>` : '';
+  return `<div class="vs-card${seat.ready ? ' ready' : ''}" style="--rar:${r.color}">
+    <div class="who"><span>${hubEsc(seat.name)}${mine ? ' (you)' : ''}</span>${seat.ready ? '<b>Ready</b>' : `<span>${seat.connected ? 'Picking…' : 'Reconnecting'}</span>`}</div>
+    <p class="rar-line" style="--rar:${r.color}"><span class="rar">${r.label}</span> ${hubEsc(countryName(c.country))}</p>
+    <h3>${hubEsc(c.name)}</h3>
+    ${pick}
+    <canvas class="pentagon" data-vspent="${mine ? 'me' : 'them'}"></canvas>
+    <p class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'} · stats total ${statTotal(c)}</p>
+    <table>${rows}</table>
+    ${btn}
+  </div>`;
+}
+function renderVs(r: Roster | null) {
+  const box = document.getElementById('roomVs')!;
+  box.hidden = !r;
+  if (!r) { vsKey = ''; return; }
+  const mine = r.you === 'host' ? r.host! : r.guest!, theirs = r.you === 'host' ? r.guest! : r.host!;
+  const key = JSON.stringify([mine, theirs]);
+  if (key === vsKey) return;
+  vsKey = key;
+  box.innerHTML = `${vsCard(mine, true, theirs)}<span class="vs">VS</span>${vsCard(theirs, false, mine)}`;
+  const me = characterById(mine.character ?? DEFAULT_CHARACTER), them = characterById(theirs.character ?? DEFAULT_CHARACTER);
+  drawPentagon(box.querySelector('[data-vspent="me"]') as HTMLCanvasElement, me.stats, RARITY[me.rarity].color, { stats: them.stats, color: '#1f2937' });
+  drawPentagon(box.querySelector('[data-vspent="them"]') as HTMLCanvasElement, them.stats, RARITY[them.rarity].color, { stats: me.stats, color: '#1f2937' });
+}
+document.getElementById('roomVs')!.addEventListener('change', (e) => {
+  const sel = (e.target as HTMLElement).closest<HTMLSelectElement>('[data-vspick]');
+  if (!sel || !room || !canUse(sel.value)) return;
+  settings.character = sel.value; saveSettings();
+  room.setCharacter(sel.value);
+  room.send({ type: 'pick', character: sel.value });
+});
+document.getElementById('roomVs')!.addEventListener('click', (e) => {
+  if (!(e.target as HTMLElement).closest('[data-vsready]') || !room?.roster) return;
+  const r = room.roster, mine = r.you === 'host' ? r.host : r.guest;
+  room.send({ type: 'pick', ready: !mine?.ready });
+});
 
 /** Host: start the match on every screen (doubles: with the lineup as the room stands now). */
 function hostStart() {

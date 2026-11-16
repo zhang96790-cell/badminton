@@ -27,6 +27,8 @@ interface SeatInfo {
   drops?: number;
   /** Their player (character id). */
   character?: string;
+  /** Ranked lobby (3.6): they've locked in their player. */
+  ready?: boolean;
   /** Logged-in account, checked by the server (needed for a friend room to count for rating). */
   player?: Player;
 }
@@ -119,7 +121,7 @@ export class Room extends DurableObject<Env> {
   }
 
   private roster(s: RoomState) {
-    const view = (seat: Seat) => { const x = s[seat]; return x ? { name: x.name, connected: x.connected, team: this.teamOf(s, seat), v: x.v ?? '', r: x.r ?? '', character: x.character ?? null, account: !!x.player } : null; };
+    const view = (seat: Seat) => { const x = s[seat]; return x ? { name: x.name, connected: x.connected, team: this.teamOf(s, seat), v: x.v ?? '', r: x.r ?? '', character: x.character ?? null, ready: !!x.ready, account: !!x.player } : null; };
     const ranked = s.ranked ? { host: s.ranked.players.host.rating, guest: s.ranked.players.guest.rating } : null;
     const p = s.progress;
     // Where the match stands: playing (so a reloaded page can resume it) or finished.
@@ -176,7 +178,7 @@ export class Room extends DurableObject<Env> {
     s[seat] = {
       token, name, connected: true, awaySince: null, team, drops: s[seat]?.drops ?? 0, player: s[seat]?.player,
       v: (url.searchParams.get('v') ?? '').slice(0, 16), r: (url.searchParams.get('r') ?? '').slice(0, 16),
-      character: characterById(url.searchParams.get('c')).id,
+      character: characterById(url.searchParams.get('c')).id, ready: s[seat]?.ready,
     };
     await this.save();
     this.broadcastRoster(s);
@@ -204,6 +206,17 @@ export class Room extends DurableObject<Env> {
       const s = await this.load();
       const info = s[att.seat];
       if (info && player) { info.player = player; info.name = player.name; await this.save(); this.broadcastRoster(s); }
+      return;
+    }
+    // Before the match (3.6): pick your player and lock in. Not once a match is under way.
+    if (msg.type === 'pick') {
+      const s = await this.load();
+      const info = s[att.seat];
+      if (!info || s.progress?.playing) return;
+      if (typeof msg.character === 'string') { info.character = characterById(msg.character).id; info.ready = false; }
+      if (typeof msg.ready === 'boolean') info.ready = msg.ready;
+      await this.save();
+      this.broadcastRoster(s);
       return;
     }
     // Doubles lobby: a player moves to the other team, if it has room.

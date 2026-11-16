@@ -22,6 +22,8 @@ export interface RosterSeat {
   v?: string; r?: string;
   /** Their player (character id), and whether the room has checked they're logged in. */
   character?: string | null; account?: boolean;
+  /** Ranked lobby (3.6): locked in their player. */
+  ready?: boolean;
 }
 /** Where a match stands, in the host's view (side 0 = the host). */
 export interface MatchSnapshot { games: [number, number]; scores: [number, number]; history: [number, number][]; server: 0 | 1 }
@@ -137,13 +139,16 @@ export class RoomConnection {
   /** Game messages sent while the connection was down, sent as soon as it's back (positions are skipped: they'd be stale). */
   private outbox: string[] = [];
 
-  send(msg: GameMsg | { type: 'leave' } | { type: 'resumeReq' } | { type: 'auth'; token: string }) {
+  send(msg: GameMsg | { type: 'leave' } | { type: 'resumeReq' } | { type: 'auth'; token: string } | { type: 'pick'; character?: string; ready?: boolean }) {
     const raw = JSON.stringify(msg);
     if (this.ws?.readyState === WebSocket.OPEN) { this.ws.send(raw); return; }
     if (msg.type === 'pos' || msg.type === 'rtt' || this.closedByUs) return;
     this.outbox.push(raw);
     if (this.outbox.length > 60) this.outbox.shift();
   }
+
+  /** Your player changed (sent with every reconnect from now on). */
+  setCharacter(id: string) { this.extra.character = id; }
 
   close() {
     this.closedByUs = true;

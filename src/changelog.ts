@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.6',
+    title: 'Ranked player pick',
+    date: '16 Nov 2026',
+    changes: [
+      "Ranked matches now start with a player pick. Once you're matched, you and your opponent each choose a player and can see each other's pick live: their rarity, country, style and stats, with a stats shape that compares the two. Press Ready to lock in. The match starts when you're both ready, or after 30 seconds.",
+      "Your opponent now looks like the player they picked, in ranked and in friend rooms.",
+      "As before, each player's stats count in ranked. Signature abilities still only work in career and the daily challenge.",
+    ],
+  },
+  {
     version: '3.5.1',
     title: 'Easier energy',
     date: '16 Nov 2026',

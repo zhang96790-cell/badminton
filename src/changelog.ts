@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.7.4',
+    title: 'Career Play button fix',
+    date: '16 Nov 2026',
+    changes: [
+      "Fixed: the Play button did nothing in some career tournaments (the pre-match screen couldn\u2019t find that event\u2019s official shuttle). Some of those tournaments also had the wrong court colours and scoreboard; they\u2019re right now.",
+    ],
+  },
+  {
     version: '3.7.3',
     title: 'A fairer Defensive wall',
     date: '16 Nov 2026',

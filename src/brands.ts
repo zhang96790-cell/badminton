@@ -68,7 +68,7 @@ export function eventLook(id: string, tier: string): EventLook {
   const others = [...SPONSOR_BRANDS].sort((a, b) => h32(id + a.id) - h32(id + b.id));
   const kit = [...KIT_BRANDS].sort((a, b) => h32(id + b.id) - h32(id + a.id));
   const boards = [others[1], kit[0], others[2], kit[1], others[3], others[4]];
-  const shuttle = pick(SHUTTLE_BRANDS, k >> 3);
+  const shuttle = pick(SHUTTLE_BRANDS, k >>> 3);
   if (tier === 'OLYMPICS') return { court: 'purple', scoreboard: 'light', presenter: null, boards: [others[0], others[1], others[2], others[3], others[4], others[5]], shuttle, blazer: '#3b2a6b', accent: '#b69cff' };
   if (tier === 'WORLDS') return { court: 'worlds', scoreboard: 'classic', presenter: null, boards, shuttle, blazer: '#1b2a4a', accent: '#ffd166' };
   if (tier === 'WTF') return { court: 'finals', scoreboard: 'broadcast', presenter: others[0], boards, shuttle, blazer: '#1a1a1a', accent: '#e8c25a' };
@@ -78,9 +78,9 @@ export function eventLook(id: string, tier: string): EventLook {
   const blazers = ['#26344d', '#2b2f36', '#4a1f2a', '#1f3b34'];
   const accents = ['#ffd166', '#7fd1ff', '#ff8fa3', '#9be58a'];
   return {
-    court: pick(courts, k), scoreboard: pick(boardsStyles, k >> 5),
+    court: pick(courts, k), scoreboard: pick(boardsStyles, k >>> 5),
     presenter: tier === 'S100' ? null : others[0], boards, shuttle,
-    blazer: pick(blazers, k >> 7), accent: pick(accents, k >> 9),
+    blazer: pick(blazers, k >>> 7), accent: pick(accents, k >>> 9),
   };
 }
 

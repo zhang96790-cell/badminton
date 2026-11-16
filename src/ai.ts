@@ -48,6 +48,9 @@ export function loadMemory(): Memory | null {
 /** The approaches an All-rounder cycles through when it's losing. */
 const ADAPT: Style[] = ['allround', 'net', 'defender'];
 
+/** 3.7.5: how much more often every CPU blocks a smash to the net (and lifts it less). */
+const CPU_BLOCK = 1.8;
+
 export class AIController implements Controller {
   private L: AILevel;
   private S: (typeof STYLES)[Style];
@@ -390,9 +393,11 @@ export class AIController implements Controller {
     const oppRetreating = opps.every((o) => o.vel.y * o.side > 0.5);
     const oppDeep = oppDepth > 4.3, oppForward = oppDepth < 2.8;
     let high = 1, fast = 1, soft = 1;
-    // 3.7.3: a counter-puncher blocks your smash short instead of lifting it back.
+    // 3.7.3/3.7.5: against a smash, block it short to the net more often than lifting it back (as real players
+    // do). Every style does this; counter-punchers (the Defensive wall) do it most.
     const sh = this.game.shuttle;
-    const vsSmash = !!S.counter && sh.lastHitter === -this.me.side && /smash/i.test(this.game.lastShotLabel);
+    const counter = S.counter ?? CPU_BLOCK;
+    const vsSmash = sh.lastHitter === -this.me.side && /smash/i.test(this.game.lastShotLabel);
     if (c.z >= SHOTS.overheadHeight) {
       if (dNet < 2.6) { fast = 3 * L.kill * S.kill; soft = 0.8; high = 0.1; }
       else {
@@ -417,7 +422,7 @@ export class AIController implements Controller {
       soft = 0.8 * S.net;
       fast = 0.3;
     }
-    if (vsSmash && c.z < SHOTS.overheadHeight) { soft *= S.counter!; high /= Math.sqrt(S.counter!); }
+    if (vsSmash && c.z < SHOTS.overheadHeight) { soft *= counter; high /= Math.sqrt(counter); }
     // Doubles is about keeping the shuttle down: lift less, attack and push more.
     if (doubles) { high *= 0.55; fast *= 1.3; }
     // A tumbling net shot can't be netted back or attacked: lift it.

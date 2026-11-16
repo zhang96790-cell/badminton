@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.7.5: More net blocks (16 Nov 2026)
+
+- CPUs defend more like real players: against a smash, they now usually block it short to the net instead of lifting it back every time. The Defensive wall does this the most.
+
 ## 3.7.4: Career Play button fix (16 Nov 2026)
 
 - Fixed: the Play button did nothing in some career tournaments (the pre-match screen couldn’t find that event’s official shuttle). Some of those tournaments also had the wrong court colours and scoreboard; they’re right now.

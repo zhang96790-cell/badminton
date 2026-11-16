@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.7.5',
+    title: 'More net blocks',
+    date: '16 Nov 2026',
+    changes: [
+      "CPUs defend more like real players: against a smash, they now usually block it short to the net instead of lifting it back every time. The Defensive wall does this the most.",
+    ],
+  },
+  {
     version: '3.7.4',
     title: 'Career Play button fix',
     date: '16 Nov 2026',

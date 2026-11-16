@@ -1547,6 +1547,7 @@ function vsCard(seat: RosterSeat, mine: boolean, other: RosterSeat | null) {
 function renderVs(r: Roster | null) {
   const box = document.getElementById('roomVs')!;
   box.hidden = !r;
+  roomModal.classList.toggle('picking', !!r);
   if (!r) { vsKey = ''; return; }
   const mine = r.you === 'host' ? r.host! : r.guest!, theirs = r.you === 'host' ? r.guest! : r.host!;
   const key = JSON.stringify([mine, theirs]);
@@ -1557,6 +1558,7 @@ function renderVs(r: Roster | null) {
   drawPentagon(box.querySelector('[data-vspent="me"]') as HTMLCanvasElement, me.stats, RARITY[me.rarity].color, { stats: them.stats, color: '#1f2937' });
   drawPentagon(box.querySelector('[data-vspent="them"]') as HTMLCanvasElement, them.stats, RARITY[them.rarity].color, { stats: me.stats, color: '#1f2937' });
 }
+if (import.meta.env.DEV) (window as unknown as { renderVs: typeof renderVs }).renderVs = renderVs;
 document.getElementById('roomVs')!.addEventListener('change', (e) => {
   const sel = (e.target as HTMLElement).closest<HTMLSelectElement>('[data-vspick]');
   if (!sel || !room || !canUse(sel.value)) return;

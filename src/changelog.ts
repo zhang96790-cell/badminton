@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.7.1',
+    title: 'Full-screen player pick',
+    date: '16 Nov 2026',
+    changes: [
+      "The ranked player pick now fills the whole screen, with bigger player cards, a bigger stats shape and clearer stats.",
+    ],
+  },
+  {
     version: '3.7',
     title: 'Every stat counts',
     date: '16 Nov 2026',

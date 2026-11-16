@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.7.1: Full-screen player pick (16 Nov 2026)
+
+- The ranked player pick now fills the whole screen, with bigger player cards, a bigger stats shape and clearer stats.
+
 ## 3.7: Every stat counts (16 Nov 2026)
 
 - Every stat now has a clear job in ranked, friend rooms and quick play (career is unchanged):

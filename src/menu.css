@@ -683,6 +683,23 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .act-pair { display: flex; gap: 8px; }
 #roomModal { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 20px; background: rgba(4, 10, 28, 0.72); }
 #roomModal.hidden { display: none; }
+/* Ranked player pick (3.7.1): full screen, so both players' cards have room. */
+#roomModal.picking { padding: 0; }
+#roomModal.picking .room-code, #roomModal.picking #roomSingles, #roomModal.picking #roomTeams, #roomModal.picking .field-row, #roomModal.picking #roomSwitch { display: none; }
+#roomModal.picking .pass { width: 100%; height: 100vh; max-height: none; border-radius: 0; display: flex; flex-direction: column; background-image: none; }
+#roomModal.picking .pass-head { padding: 22px 48px 14px; }
+#roomModal.picking .pass-body { flex: 1; grid-template-rows: 1fr auto auto; gap: 16px; padding: 24px 48px 28px; width: min(1200px, 100%); margin: 0 auto; }
+#roomModal.picking .room-vs { gap: 32px; min-height: 0; }
+#roomModal.picking .room-vs .vs { font: 800 56px/1 var(--display); }
+#roomModal.picking .vs-card { gap: 10px; padding: 22px 26px; border-top-width: 6px; border-radius: 12px; overflow-y: auto; }
+#roomModal.picking .vs-card .who { font-size: 14px; }
+#roomModal.picking .vs-card h3 { font-size: 34px; }
+#roomModal.picking .vs-card select { padding: 10px 12px; font-size: 16px; }
+#roomModal.picking .vs-card .pentagon { height: min(320px, 34vh); }
+#roomModal.picking .vs-card table { font-size: 17px; line-height: 1.8; }
+#roomModal.picking .vs-card .vs-ready { padding: 14px; font-size: 17px; }
+#roomModal.picking #roomStatus { text-align: center; font-size: 15px; }
+#roomModal.picking .pass-actions { justify-content: center; }
 .room-code { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 12px 14px; border-radius: 6px; background: rgba(12, 34, 89, 0.06); }
 .room-code span { font: 700 12px/1 var(--text); letter-spacing: 0.14em; text-transform: uppercase; color: var(--card-ink-2); }
 .room-code b { grid-row: 2; font: 800 40px/1 var(--display); letter-spacing: 0.18em; color: var(--card-ink); }

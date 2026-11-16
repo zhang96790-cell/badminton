@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.9.5: Player pick fixes (16 Nov 2026)
+
+- Fixed: in the ranked player pick, your player list no longer snaps shut when your opponent changes their player.
+- Fixed: sometimes the ranked player pick showed Club Player in your list, or started you as the Club Player, because your players hadn't loaded yet.
+
 ## 3.9.4: Tighter money at the top (16 Nov 2026)
 
 - Career money stays tight as you climb: bigger events cost more to get to and stay at (Super 300 about 15% more than a Super 100, up to about twice as much for Super 1000s, the Worlds, the Finals and the Olympics).

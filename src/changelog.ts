@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.9.5',
+    title: 'Player pick fixes',
+    date: '16 Nov 2026',
+    changes: [
+      "Fixed: in the ranked player pick, your player list no longer snaps shut when your opponent changes their player.",
+      "Fixed: sometimes the ranked player pick showed Club Player in your list, or started you as the Club Player, because your players hadn't loaded yet.",
+    ],
+  },
+  {
     version: '3.9.4',
     title: 'Tighter money at the top',
     date: '16 Nov 2026',

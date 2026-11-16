@@ -1519,7 +1519,7 @@ function vsCard(seat: RosterSeat, mine: boolean, other: RosterSeat | null) {
     return `<tr><td>${l}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${c.stats[i]}</td></tr>`;
   }).join('');
   const pick = mine && !seat.ready
-    ? `<select data-vspick>${VISIBLE.filter((x) => canUse(x.id)).sort((a, b) => RARITY[b.rarity].order - RARITY[a.rarity].order || a.name.localeCompare(b.name))
+    ? `<select data-vspick>${VISIBLE.filter((x) => canUse(x.id) || x.id === c.id).sort((a, b) => RARITY[b.rarity].order - RARITY[a.rarity].order || a.name.localeCompare(b.name))
         .map((x) => `<option value="${x.id}"${x.id === c.id ? ' selected' : ''}>${hubEsc(x.name)} · ${RARITY[x.rarity].label}</option>`).join('')}</select>`
     : '';
   const btn = mine ? `<button type="button" class="${seat.ready ? '' : 'primary'} vs-ready" data-vsready>${seat.ready ? 'Change player' : 'Ready'}</button>` : '';
@@ -1542,6 +1542,8 @@ function renderVs(r: Roster | null) {
   const mine = r.you === 'host' ? r.host! : r.guest!, theirs = r.you === 'host' ? r.guest! : r.host!;
   const key = JSON.stringify([mine, theirs]);
   if (key === vsKey) return;
+  // 3.9.5: don't redraw under an open player list (it would snap shut); the next tick catches up.
+  if (document.activeElement?.matches?.('#roomVs [data-vspick]')) return;
   vsKey = key;
   box.innerHTML = `${vsCard(mine, true, theirs)}<span class="vs">VS</span>${vsCard(theirs, false, mine)}`;
   const me = characterById(mine.character ?? DEFAULT_CHARACTER), them = characterById(theirs.character ?? DEFAULT_CHARACTER);
@@ -1553,6 +1555,7 @@ document.getElementById('roomVs')!.addEventListener('change', (e) => {
   const sel = (e.target as HTMLElement).closest<HTMLSelectElement>('[data-vspick]');
   if (!sel || !room || !canUse(sel.value)) return;
   settings.character = sel.value; saveSettings();
+  sel.blur(); // lets the cards redraw with the new pick
   room.setCharacter(sel.value);
   room.send({ type: 'pick', character: sel.value });
 });
@@ -1587,6 +1590,8 @@ async function startQuickMatch() {
   const m = await loadAccount();
   const token = await m.freshToken();
   if (!token) { openAccount('Your login has expired. Log in again to play quick match.'); return; }
+  // 3.9.5: know which players you own before matching, so you join as your own player (not the Club Player).
+  await refreshOwned().catch(() => {});
   leaveRoom();
   showRoomView('queue');
   const started = Date.now();

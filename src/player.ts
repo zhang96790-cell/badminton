@@ -63,6 +63,8 @@ function hurry(flight: number, c: { full: number; quick: number; min: number }):
 }
 /** How much of the lunge bonus is left against a shot that's taken this long to reach you: lunging takes time. */
 export const lungeScale = (flight: number) => hurry(flight, PLAYER.lungeQuick);
+/** 3.10.2: a person's extra reach only helps against shots that give you time (none against a quick drive or kill). */
+export const humanReachScale = (flight: number) => hurry(flight, PLAYER.humanReachQuick);
 /** How much of the perfect window is left against a shot that's taken this long to reach you. */
 export const quickScale = (flight: number) => hurry(flight, SWING.quickTolerance);
 
@@ -105,6 +107,8 @@ export class Player implements PlayerView {
 
   /** This player's character stats in play (neutral = today's game). */
   eff: Effective = NEUTRAL;
+  /** 3.10.2: a person (their extra reach shrinks against quick shots). */
+  humanReach = false;
   /** 3.7: how tired you are this game (shots played, eased between points). */
   tire = 0;
   /** 3.7: the shuttle coming at you is the other side's smash (Defence reaches further). */
@@ -285,7 +289,7 @@ export class Player implements PlayerView {
 
   /** How far you can reach at this height; a low lunge reaches less against a shot that's on you quickly (flight: game seconds since it was hit). */
   reachFor(z: number, flight = Infinity): number {
-    return PLAYER.reach + this.extraReach + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(flight) : 0);
+    return PLAYER.reach + this.extraReach * (this.humanReach ? humanReachScale(flight) : 1) + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(flight) : 0);
   }
 
   /** The shuttle is within reach now but won't be next step. */

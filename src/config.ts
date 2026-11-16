@@ -55,7 +55,9 @@ export const PLAYER = {
   /** Lunging adds reach for low shuttles, then slows you while you recover. */
   lungeReach: 0.25,
   /** A lunge needs time: against a shot that arrives in under `full` game seconds it reaches less, down to `min` of the bonus at `quick`. */
-  lungeQuick: { full: 0.85, quick: 0.4, min: 0.3 },
+  lungeQuick: { full: 0.85, quick: 0.4, min: 0.1 },
+  /** 3.10.2: a person's extra reach: all of it against a shot that takes `full` s or more to reach them, none under `quick`. */
+  humanReachQuick: { full: 0.7, quick: 0.35, min: 0 },
   lungeMaxZ: 1.2,
   lungeTime: 0.4,
   lungeRecoverySpeed: 0.6,

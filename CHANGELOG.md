@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.10.2: Fast shots harder to return (16 Nov 2026)
+
+- Fast shots are harder to get back. The extra reach players get only helps against shots that give you time: against a drive, push or net kill that reaches you in under about 0.7 seconds it shrinks, and it's gone under 0.35 seconds.
+- Lunging for a quick shot reaches less too, so net kills and flat drives aimed away from you are much harder to scrape back. Lifts, clears and drops are as easy to reach as before.
+
 ## 3.10.1: Fast and high lifts (16 Nov 2026)
 
 - Keyboard: the lift key (J) now has two shots. Tap it for a fast, flat lift or clear that gets behind an opponent at the net but is easier to cut off. Hold it for the normal high lift. Serving with J is unchanged.

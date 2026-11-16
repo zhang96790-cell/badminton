@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.10.2',
+    title: 'Fast shots harder to return',
+    date: '16 Nov 2026',
+    changes: [
+      "Fast shots are harder to get back. The extra reach players get only helps against shots that give you time: against a drive, push or net kill that reaches you in under about 0.7 seconds it shrinks, and it's gone under 0.35 seconds.",
+      "Lunging for a quick shot reaches less too, so net kills and flat drives aimed away from you are much harder to scrape back. Lifts, clears and drops are as easy to reach as before.",
+    ],
+  },
+  {
     version: '3.10.1',
     title: 'Fast and high lifts',
     date: '16 Nov 2026',

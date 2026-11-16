@@ -398,6 +398,8 @@ export class AIController implements Controller {
         fast = L.smash * S.smash * (shortLift ? 1.6 : 0.5);
         soft = L.drop * S.drop * (oppDeep ? 1.5 : 0.8);
         high = S.clear * (oppForward ? 1.6 : 0.7);
+        // 3.7.2: nobody clears a short lift away more often than they attack it (even the defensive styles).
+        if (shortLift) fast = Math.max(fast, high * 1.05, soft);
       }
     } else if (c.z >= SHOTS.lowHeight) {
       if (dNet < SHOTS.nearNet && c.z > netHeightAt(c.x) + 0.1) { fast = 2.5 * L.kill * S.kill; soft = 1; high = 0.3; }

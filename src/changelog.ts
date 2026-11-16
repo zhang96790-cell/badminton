@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.7.2',
+    title: 'More attacking CPUs',
+    date: '16 Nov 2026',
+    changes: [
+      "CPUs attack more, like real players: none of them clear a short lift away more often than they smash it.",
+      "The Defender, Fast retriever and Defensive wall styles smash, kill and jump-smash more and clear less. They're still the most patient players on court.",
+    ],
+  },
+  {
     version: '3.7.1',
     title: 'Full-screen player pick',
     date: '16 Nov 2026',

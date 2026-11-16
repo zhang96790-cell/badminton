@@ -145,7 +145,7 @@ export const prizeFor = (ev: TourEvent, round: Round) => Math.round(purseOf(ev) 
 export const travelCost = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) => {
   if (ev.tier === 'CLUB') return 0;
   const base = CFG.travel[travelBand(s.currentLocation, ev.host_country)];
-  return Math.round(base * CFG.travelClass[cls].cost);
+  return Math.round(base * CFG.travelClass[cls].cost * (CFG.tierCost[ev.tier] ?? 1));
 };
 export const travelEnergy = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) => {
   if (ev.tier === 'CLUB') return 0;
@@ -154,7 +154,7 @@ export const travelEnergy = (s: CareerState, ev: TourEvent, cls: TravelClass = t
 };
 /** A hotel night at this event (Club Opens: you sleep at home). */
 export const hotelCost = (s: CareerState, ev: TourEvent, tier: HotelTier = hotelOf(s)) =>
-  ev.tier === 'CLUB' ? 0 : Math.round(CFG.hotels[tier].perNight * (CFG.cityCost[COUNTRIES[ev.host_country]?.region ?? ''] ?? 1));
+  ev.tier === 'CLUB' ? 0 : Math.round(CFG.hotels[tier].perNight * (CFG.cityCost[COUNTRIES[ev.host_country]?.region ?? ''] ?? 1) * (CFG.tierCost[ev.tier] ?? 1));
 export const hotelRecover = (ev: TourEvent, tier: HotelTier) => (ev.tier === 'CLUB' ? 2 : CFG.hotels[tier].recover);
 /** Energy you'd use going all the way (a guide for the tournament screen). */
 export const roundEnergy = (s: CareerState, ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.energyPerRound : CFG.energyPerRound) * staminaFactor(characterById(s.characterId));

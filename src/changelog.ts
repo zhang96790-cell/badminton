@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.9.4',
+    title: 'Tighter money at the top',
+    date: '16 Nov 2026',
+    changes: [
+      "Career money stays tight as you climb: bigger events cost more to get to and stay at (Super 300 about 15% more than a Super 100, up to about twice as much for Super 1000s, the Worlds, the Finals and the Olympics).",
+      "Winning pays a little less (about 23% less from the quarter-finals on). Early-round prize money is unchanged.",
+    ],
+  },
+  {
     version: '3.9.3',
     title: 'Every CPU attacks',
     date: '16 Nov 2026',

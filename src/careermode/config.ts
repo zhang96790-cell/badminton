@@ -19,7 +19,7 @@ export const CAREER_CFG = {
   /** Purse = prize_pool_usd × moneyScale (a Super 100's 140k is a 14,000 purse). */
   moneyScale: 0.11,
   /** Share of the purse by how far you got. The winner gets 7.5%; losing early still pays a little. */
-  prizeShare: { W: 0.075, F: 0.058, SF: 0.046, QF: 0.036, R16: 0.014, R32: 0.007, R64: 0.004 } as Record<Round, number>,
+  prizeShare: { W: 0.058, F: 0.044, SF: 0.035, QF: 0.028, R16: 0.014, R32: 0.007, R64: 0.004 } as Record<Round, number>,
 
   // ── Travel, hotels, recovery (3.3: "Hard": energy is scarce and recovering costs real money) ──
   travel: { domestic: 180, regional: 480, intercontinental: 1000 },
@@ -79,6 +79,8 @@ export const CAREER_CFG = {
   // ── Soft-lock protection ──
   /** Offered free when you can't afford any event: 16 players, tiny prize, small energy cost. */
   clubOpen: { purse: 6000, energyPerRound: 4, tier: 'CLUB' as const },
+  /** 3.9.4: bigger events cost more to attend (flights and hotels × this), so money stays tight as you climb. */
+  tierCost: { S100: 1, S300: 1.15, S500: 1.35, S750: 1.65, S1000: 2, WTF: 2.2, WORLDS: 2, OLYMPICS: 2.2 } as Record<string, number>,
   /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
   tourMinMoney: 1500,
 

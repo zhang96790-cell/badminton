@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.9.4: Tighter money at the top (16 Nov 2026)
+
+- Career money stays tight as you climb: bigger events cost more to get to and stay at (Super 300 about 15% more than a Super 100, up to about twice as much for Super 1000s, the Worlds, the Finals and the Olympics).
+- Winning pays a little less (about 23% less from the quarter-finals on). Early-round prize money is unchanged.
+
 ## 3.9.3: Every CPU attacks (16 Nov 2026)
 
 - Every CPU style attacks more now, not just the All-rounder: the Defender, Fast retriever, Defensive wall and Net player smash more and clear less, and the Easy and Medium CPUs smash more too.

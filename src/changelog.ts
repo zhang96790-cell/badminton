@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.8.1',
+    title: 'No more rank-up picks',
+    date: '16 Nov 2026',
+    changes: [
+      "Reaching a new ranked tier no longer gives you a new player. Players now come from recruiting in career mode. Any players you've already picked stay yours.",
+    ],
+  },
+  {
     version: '3.8',
     title: 'Easier career money',
     date: '16 Nov 2026',

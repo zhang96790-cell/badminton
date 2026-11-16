@@ -563,7 +563,6 @@ document.querySelectorAll<HTMLButtonElement>('#heatKind button').forEach((b) => 
 /** Characters you can use right now: the Club Player, this season's free ones, and ones you've earned. */
 let ownedIds = new Set<string>([DEFAULT_CHARACTER]);
 let featuredIds = new Set<string>();
-let pendingPicks = 0;
 let selectedPlayer = DEFAULT_CHARACTER;
 let comparePlayer: string | null = null;
 const canUse = (id: string) => id === DEFAULT_CHARACTER || ownedIds.has(id) || featuredIds.has(id);
@@ -574,11 +573,10 @@ async function refreshOwned() {
   const m = await loadAccount();
   if (account) {
     const r = await m.myCharacters();
-    if (r) { ownedIds = new Set([DEFAULT_CHARACTER, ...r.owned]); featuredIds = new Set(r.featured); pendingPicks = r.pending; }
+    if (r) { ownedIds = new Set([DEFAULT_CHARACTER, ...r.owned]); featuredIds = new Set(r.featured); }
   } else {
     ownedIds = new Set([DEFAULT_CHARACTER]);
     featuredIds = new Set(await m.featuredNow());
-    pendingPicks = 0;
   }
 }
 
@@ -650,16 +648,8 @@ async function renderPlayers() {
   fillPlayerFilters();
   filterPlayers();
   renderPlayerDetail();
-  // An unlock pick waiting: offer three locked players, or say they're coming.
-  const offer = document.getElementById('pickOffer')!;
-  offer.hidden = !account || pendingPicks <= 0;
-  if (!offer.hidden) {
-    const m = await loadAccount();
-    const ids = await m.offerPick();
-    offer.innerHTML = ids.length
-      ? `<b>You’ve earned a new player!</b> Pick one:${ids.map((id) => `<button type="button" class="primary" data-pick="${id}">${hubEsc(characterById(id).name)}</button>`).join('')}`
-      : `<b>You’ve earned a new player.</b> More players are coming soon: your pick will be waiting for you.`;
-  }
+  // 3.8.1: rank-up player picks are gone (players come from career recruiting).
+  document.getElementById('pickOffer')!.hidden = true;
 }
 
 function renderPlayerDetail() {
@@ -684,7 +674,7 @@ function renderPlayerDetail() {
     <label class="cmp">Compare with <input id="playerCompare" list="playerNames" placeholder="Type a name" value="${cmp ? hubEsc(cmp.name) : ''}" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" /></label>
     ${cmp ? '<button type="button" class="linkish" data-uncompare>Stop comparing</button>' : ''}
     ${use ? (c.id === myCharacter() ? '<p class="tag-on">This is your player</p>' : `<button type="button" class="primary" data-use="${c.id}">Play as ${hubEsc(c.name)}</button>`)
-      : '<p class="sub">Locked. Earn players by reaching a new rank tier for the first time (from Regional up), or by recruiting them in career mode.</p>'}`;
+      : '<p class="sub">Locked. Earn players by recruiting them in career mode.</p>'}`;
   drawPentagon(document.getElementById('playerPentagon') as HTMLCanvasElement, c.stats, r.color, cmp ? { stats: cmp.stats, color: '#1f2937' } : undefined);
 }
 {

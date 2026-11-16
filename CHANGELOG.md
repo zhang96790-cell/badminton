@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.8.1: No more rank-up picks (16 Nov 2026)
+
+- Reaching a new ranked tier no longer gives you a new player. Players now come from recruiting in career mode. Any players you've already picked stay yours.
+
 ## 3.8: Easier career money (16 Nov 2026)
 
 - Career money is easier. Prize money is up 50%, and losing in the early rounds pays more (Round of 64 ×2, Round of 32 ×1.7, Round of 16 ×1.5 on top of that).

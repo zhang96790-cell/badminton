@@ -128,8 +128,8 @@ function describeControls() {
   const H = kb('high', 'C', 'J'), F = kb('fast', 'V', 'K'), S = kb('soft', 'B', 'L');
   const J = twoP ? k('Space') : key('jump');
   const rows: [string, string, string, string][] = [
-    ['Clear', 'Shuttle high above you', 'Hold right-click', H],
-    ['Lift', 'Shuttle low: at the net or defending', 'Hold right-click', H],
+    ['Clear', 'Shuttle high above you', 'Hold right-click', `Hold ${H} (tap for a fast, flat one)`],
+    ['Lift', 'Shuttle low: at the net or defending', 'Hold right-click', `Hold ${H} (tap for a fast, flat one)`],
     ['Drop', 'Shuttle high above you', 'Tap right-click', S],
     ['Net shot', 'At the net, shuttle below the tape', 'Tap right-click', S],
     ['Block', 'Defending a smash', 'Tap right-click', S],

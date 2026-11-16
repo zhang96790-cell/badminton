@@ -10,7 +10,7 @@ export type Intent = 'high' | 'fast' | 'soft';
 
 export type ShotRequest =
   /** Keyboard / AI. aimX: -1 left, 0 centre, 1 right (screen). aimDepth: 1 deeper, -1 shorter. target overrides both. */
-  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number; disguise?: boolean }
+  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number; disguise?: boolean; /** 3.10.1: a fast, flat lift or clear (a tap of the high key). */ flat?: boolean }
   /** Mouse. low (left) = drive → smash, high (right) = drop on a tap, lob when held. power 0..1 from charge. target = cursor. */
   | { kind: 'mouse'; arc: 'low' | 'high'; power: number; target: V2 };
 
@@ -198,7 +198,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     target = req.target ?? intentTarget(req.intent, c.point, c.side, req.aimX, req.aimDepth);
     if (req.intent === 'high') {
       const base = zone === 'overhead' ? SHOTS.clearAngle : zone === 'mid' ? SHOTS.midHighAngle : SHOTS.liftAngle;
-      const angle = base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0);
+      const angle = base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0) - (req.flat ? SHOTS.flatLiftDeg : 0);
       plan = { type: 'angle', angle: zone !== 'overhead' && netArea ? Math.max(angle, SHOTS.netLiftAngle) : angle };
     } else if (req.intent === 'fast') {
       // Keyboard K: a tap is full normal power; holding it adds a little extra.

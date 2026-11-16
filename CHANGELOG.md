@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.10.1: Fast and high lifts (16 Nov 2026)
+
+- Keyboard: the lift key (J) now has two shots. Tap it for a fast, flat lift or clear that gets behind an opponent at the net but is easier to cut off. Hold it for the normal high lift. Serving with J is unchanged.
+- Mouse controls are unchanged (hold right-click to lift).
+
 ## 3.10: Breaking up net battles (16 Nov 2026)
 
 - Net battles can't go on forever. A net shot only stays tight when you play it close to the net and take it early: from further back it floats higher over the tape, and so does one taken late near the floor.

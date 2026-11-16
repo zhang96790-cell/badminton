@@ -38,11 +38,16 @@ function moveDir(input: Input, k: KeyMap): V2 {
  */
 export class KeyboardController implements Controller {
   private chargeT: number | null = null;
+  /** 3.10.1: the high key held this long (s): a tap gives a fast, flat lift; holding gives the normal high one. */
+  private highT: number | null = null;
 
   /** With a camera, the cursor (trackpad) aims left/right; the aim keys still override it. */
   constructor(private input: Input, private keys: KeyMap, private player: Player, private camera?: Camera) {}
 
-  bind(p: Player) { this.player = p; this.chargeT = null; }
+  bind(p: Player) { this.player = p; this.chargeT = null; this.highT = null; }
+
+  /** Waiting to see if the high key is a tap or a hold. */
+  holding(): boolean { return this.highT !== null; }
 
   get cursorAim(): boolean { return !!this.camera; }
 
@@ -69,8 +74,14 @@ export class KeyboardController implements Controller {
     if (this.input.tapped(this.keys.kill)) {
       this.chargeT = null;
       shot = { kind: 'intent', intent: 'fast', ...aim };
-    } else if (this.input.tapped(this.keys.high)) shot = { kind: 'intent', intent: 'high', ...aim };
+    } else if (this.input.tapped(this.keys.high)) this.highT = 0;
     else if (this.input.tapped(this.keys.soft)) shot = { kind: 'intent', intent: 'soft', ...aim };
+    if (this.highT !== null && !shot) {
+      this.highT += dt;
+      // Released quickly: a fast, flat lift. Still held: the normal high lift.
+      if (!this.input.held(this.keys.high)) { shot = { kind: 'intent', intent: 'high', ...aim, flat: true }; this.highT = null; }
+      else if (this.highT >= SWING.highHoldTime) { shot = { kind: 'intent', intent: 'high', ...aim }; this.highT = null; }
+    }
     if (!shot && this.input.tapped(this.keys.fast)) this.chargeT = 0;
     if (this.chargeT !== null && !shot) {
       this.chargeT += dt;
@@ -86,6 +97,7 @@ export class KeyboardController implements Controller {
   private power(): number { return clamp((this.chargeT ?? 0) / SWING.keyChargeTime, 0, 1); }
 
   forceRelease(): ShotRequest | null {
+    if (this.highT !== null) { this.highT = null; return { kind: 'intent', intent: 'high', aimX: this.aimX(), aimDepth: 0, flat: true }; }
     if (this.chargeT === null) return null;
     const shot: ShotRequest = { kind: 'intent', intent: 'fast', aimX: this.aimX(), aimDepth: 0, power: this.power() };
     this.chargeT = null;

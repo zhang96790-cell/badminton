@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.10.1',
+    title: 'Fast and high lifts',
+    date: '16 Nov 2026',
+    changes: [
+      "Keyboard: the lift key (J) now has two shots. Tap it for a fast, flat lift or clear that gets behind an opponent at the net but is easier to cut off. Hold it for the normal high lift. Serving with J is unchanged.",
+      "Mouse controls are unchanged (hold right-click to lift).",
+    ],
+  },
+  {
     version: '3.10',
     title: 'Breaking up net battles',
     date: '16 Nov 2026',

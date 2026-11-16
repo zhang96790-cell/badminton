@@ -738,7 +738,8 @@ export class Game {
     // Holding a charge too long: swing for them before the shuttle gets past (it'll be a late hit).
     if (sh.inFlight && !sh.touchedNet) {
       this.players.forEach((p, i) => {
-        if (p.charge === null || p.swing || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
+        const ctrl = this.controllers[i] as { holding?: () => boolean };
+        if ((p.charge === null && !ctrl.holding?.()) || p.swing || sh.lastHitter === p.side || sh.pos.y * p.side <= 0) return;
         if (!p.aboutToMiss(sh.pos, sh.vel, dt, this.flightT)) return;
         const req = this.controllers[i].forceRelease?.();
         if (req) p.startSwing(req);

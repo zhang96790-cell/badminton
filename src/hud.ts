@@ -803,7 +803,7 @@ export class Hud {
     const p1 = game.settings.p1Control === 'mouse'
       ? `${move} move · ${n(K.jump)} jump · cursor = direction · left: tap drive, hold smash · right: tap drop, hold lob · ${n(K.kill)} kill`
       : vsAI
-        ? `${move} move · ${n(K.high)} high · ${n(K.fast)} fast (hold = extra power) · ${n(K.soft)} soft · ${n(K.kill)} kill · ${hybrid ? 'cursor aims' : `${n(K.aimLeft)}/${n(K.aimRight)} aim`} · ${n(K.jump)} jump`
+        ? `${move} move · ${n(K.high)} lift (tap fast, hold high) · ${n(K.fast)} fast (hold = extra power) · ${n(K.soft)} soft · ${n(K.kill)} kill · ${hybrid ? 'cursor aims' : `${n(K.aimLeft)}/${n(K.aimRight)} aim`} · ${n(K.jump)} jump`
         : 'P1: WASD · C high · V fast (hold = extra power) · B soft · X/N aim · Space jump';
     const p2 = vsAI ? '' : '   |   P2: Arrows · J high · K fast · L soft · U/O aim · R-Shift jump';
     if (game.online) return `${p1}   ·   1–6 quick chat · H challenge · R replay · G marker · F fullscreen · M mute · Esc pause`;

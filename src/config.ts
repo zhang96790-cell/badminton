@@ -107,6 +107,8 @@ export const SWING = {
   chargeTime: 0.5,
   /** Keyboard fast key: hold time to reach its extra-power bonus. */
   keyChargeTime: 0.35,
+  /** 3.10.1: keyboard high key: let go sooner than this for a fast, flat lift; hold this long for the high one. */
+  highHoldTime: 0.16,
   /** Keyboard fast key: a tap is full normal power; holding adds up to this much on top. */
   keyChargeBonus: 1.08,
 };
@@ -199,6 +201,8 @@ export const SHOTS = {
   mouseHighAngleMax: 52,
   /** Soft shots: how far above the tape they aim to pass (m). */
   dropClearance: 0.28,
+  /** 3.10.1: a tapped lift or clear (keyboard) flies this many degrees flatter: faster, but easier to cut off. */
+  flatLiftDeg: 10,
   netShotClearance: 0.06,
   /**
    * 3.10: net battles. Extra height over the tape (m) for a net shot: per metre further back than tightWithin,

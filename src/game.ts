@@ -292,7 +292,7 @@ export class Game {
       : drill
       ? { poll: () => ({ move: { x: 0, y: 0 }, jump: false, shot: null }) } // the coach only feeds
       : vsAI
-        ? new AIController(this, p2, settings.opponent as Level, settings.style)
+        ? new AIController(this, p2, settings.opponent as Level, settings.style, this.setup.mode !== 'career' && this.setup.mode !== 'daily')
         : new KeyboardController(input, KEYS.p2Shared, p2);
     this.controllers = [c1, c2];
     if (doubles) {

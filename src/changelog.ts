@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.6.1',
+    title: 'Tougher top CPUs',
+    date: '16 Nov 2026',
+    changes: [
+      "Pro, Elite, World Class and Legend CPUs are much harder: they react sooner, move faster, reach further, time their shots better, read you more and attack more. Smashes hit no harder than before. Career and the daily challenge are unchanged.",
+    ],
+  },
+  {
     version: '3.6',
     title: 'Ranked player pick',
     date: '16 Nov 2026',

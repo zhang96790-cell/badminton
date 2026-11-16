@@ -1,4 +1,4 @@
-import { AI, COURT, DOUBLES, OFFICIALS, PHYSICS, PLAYER, RULES, SHOTS, STYLES, SWING, type AILevel, type Level, type Style } from './config';
+import { AI, AI_TOUGH, COURT, DOUBLES, OFFICIALS, PHYSICS, PLAYER, RULES, SHOTS, STYLES, SWING, type AILevel, type Level, type Style } from './config';
 import type { Command, Controller, Observation } from './controllers';
 import { distanceOut, inHalf, netHeightAt } from './court';
 import { coverable, interceptSlack } from './doubles';
@@ -74,8 +74,9 @@ export class AIController implements Controller {
   private approach = 0;
   private baseReach = 0;
 
-  constructor(private game: Game, private me: Player, level: Level, style: Style) {
-    this.L = AI[level];
+  /** tough: the harder top levels (everything but career and the daily challenge). */
+  constructor(private game: Game, private me: Player, level: Level, style: Style, tough = false) {
+    this.L = tough ? { ...AI[level], ...AI_TOUGH[level] } : AI[level];
     this.S = STYLES[style];
     this.style = style;
     me.speedMult = this.L.speed * this.S.speed;

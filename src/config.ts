@@ -473,6 +473,30 @@ export const AI: Record<Level, AILevel> = {
   },
 };
 
+/**
+ * 3.6.1: the levels above Expert are much tougher outside career and the daily challenge (career keeps the
+ * values above). They react sooner, move faster, reach further, time and place shots better, read you more
+ * and attack more. Shot power is unchanged (still within 8% of normal).
+ */
+export const AI_TOUGH: Partial<Record<Level, Partial<AILevel>>> = {
+  pro: {
+    reaction: 0.05, speed: 1.3, timingError: 0.004, margin: 0.18, decisiveness: 4.5, anticipation: 0.5,
+    smash: 1.5, drop: 1.25, net: 1.25, kill: 2.0, jumpSmash: 0.85, outMargin: 0.02, serveShort: 0.9, serveDelay: 0.5, reach: 0.2,
+  },
+  elite: {
+    reaction: 0.035, speed: 1.42, timingError: 0.003, margin: 0.17, decisiveness: 5.5, anticipation: 0.55,
+    smash: 1.65, drop: 1.3, net: 1.3, kill: 2.3, jumpSmash: 0.95, outMargin: 0.015, serveShort: 0.9, serveDelay: 0.45, reach: 0.3,
+  },
+  world: {
+    reaction: 0.02, speed: 1.55, timingError: 0.002, margin: 0.16, decisiveness: 6.5, anticipation: 0.58,
+    smash: 1.8, drop: 1.35, net: 1.35, kill: 2.6, jumpSmash: 1, outMargin: 0.01, serveShort: 0.92, serveDelay: 0.4, reach: 0.42,
+  },
+  legend: {
+    reaction: 0.01, speed: 1.7, timingError: 0.0012, margin: 0.16, decisiveness: 8, anticipation: 0.6,
+    smash: 1.95, drop: 1.4, net: 1.4, kill: 3.0, jumpSmash: 1, outMargin: 0.008, serveShort: 0.95, serveDelay: 0.35, reach: 0.55,
+  },
+};
+
 export type Style = 'allround' | 'attacker' | 'defender' | 'net' | 'deceptive' | 'retriever' | 'wall';
 
 /** CPU personalities: multipliers on shot preferences plus where they like to stand. */

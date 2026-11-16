@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.6.1: Tougher top CPUs (16 Nov 2026)
+
+- Pro, Elite, World Class and Legend CPUs are much harder: they react sooner, move faster, reach further, time their shots better, read you more and attack more. Smashes hit no harder than before. Career and the daily challenge are unchanged.
+
 ## 3.6: Ranked player pick (16 Nov 2026)
 
 - Ranked matches now start with a player pick. Once you're matched, you and your opponent each choose a player and can see each other's pick live: their rarity, country, style and stats, with a stats shape that compares the two. Press Ready to lock in. The match starts when you're both ready, or after 30 seconds.

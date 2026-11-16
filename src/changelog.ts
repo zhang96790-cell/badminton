@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.8',
+    title: 'Easier career money',
+    date: '16 Nov 2026',
+    changes: [
+      "Career money is easier. Prize money is up 50%, and losing in the early rounds pays more (Round of 64 \u00d72, Round of 32 \u00d71.7, Round of 16 \u00d71.5 on top of that).",
+      "Flights, hotels, food, physio, rest weeks and injury treatment all cost about a third less. New careers start with $2,500 (was $1,500).",
+      "The Local Club Open pays much more: a $6,000 purse (was $900), so winning it pays $450. It's still offered only when you can't afford a real tournament.",
+    ],
+  },
+  {
     version: '3.7.5',
     title: 'More net blocks',
     date: '16 Nov 2026',

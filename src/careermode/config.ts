@@ -12,17 +12,17 @@ export type StaffRole = 'coach' | 'physio';
 export const CAREER_CFG = {
   dataVersion: 1,
   startYear: 2027,
-  startMoney: 1500,
+  startMoney: 2500,
   startEnergy: 100,
 
   // ── Prize money ──
   /** Purse = prize_pool_usd × moneyScale (a Super 100's 140k is a 14,000 purse). */
-  moneyScale: 0.1,
+  moneyScale: 0.15,
   /** Share of the purse by how far you got. The winner gets 7.5%; losing early still pays a little. */
-  prizeShare: { W: 0.075, F: 0.058, SF: 0.046, QF: 0.036, R16: 0.012, R32: 0.006, R64: 0.003 } as Record<Round, number>,
+  prizeShare: { W: 0.075, F: 0.058, SF: 0.046, QF: 0.036, R16: 0.018, R32: 0.01, R64: 0.006 } as Record<Round, number>,
 
   // ── Travel, hotels, recovery (3.3: "Hard": energy is scarce and recovering costs real money) ──
-  travel: { domestic: 200, regional: 550, intercontinental: 1200 },
+  travel: { domestic: 140, regional: 380, intercontinental: 820 },
   /** Travel classes: price × economy, and the share of the travel energy they save. */
   travelClass: {
     economy: { label: 'Economy', cost: 1, energySaved: 0 },
@@ -31,16 +31,16 @@ export const CAREER_CFG = {
   } as Record<TravelClass, { label: string; cost: number; energySaved: number }>,
   /** Hotels: price a night (× the city's cost) and energy back each night. You stay one night per round you play. */
   hotels: {
-    hostel: { label: 'Hostel', perNight: 25, recover: 0, note: 'Cheap, noisy, no real rest' },
-    three: { label: '3-star', perNight: 70, recover: 2, note: 'A decent night’s sleep' },
-    four: { label: '4-star', perNight: 160, recover: 4, note: 'Good rest and a proper breakfast' },
-    five: { label: '5-star by the venue', perNight: 380, recover: 7, note: 'The best rest, no commute' },
+    hostel: { label: 'Hostel', perNight: 18, recover: 0, note: 'Cheap, noisy, no real rest' },
+    three: { label: '3-star', perNight: 48, recover: 2, note: 'A decent night’s sleep' },
+    four: { label: '4-star', perNight: 110, recover: 4, note: 'Good rest and a proper breakfast' },
+    five: { label: '5-star by the venue', perNight: 260, recover: 7, note: 'The best rest, no commute' },
   } as Record<HotelTier, { label: string; perNight: number; recover: number; note: string }>,
   /** How expensive each region's hotels are. */
   cityCost: { SEA: 0.8, 'SOUTH ASIA': 0.7, 'EAST ASIA': 1.2, EUROPE: 1.3, AMERICAS: 1.3, OCEANIA: 1.25, 'MIDDLE EAST': 1.1, AFRICA: 0.8 } as Record<string, number>,
-  food: { cost: 90, energy: 5 },
-  physio: { cost: 450, energy: 15 },
-  rest: { cost: 200, energy: 30 },
+  food: { cost: 60, energy: 5 },
+  physio: { cost: 300, energy: 15 },
+  rest: { cost: 120, energy: 30 },
   /** A week where you don't play still gives some energy back (3.5.1). */
   idleWeekEnergy: 10,
 
@@ -54,7 +54,7 @@ export const CAREER_CFG = {
   /** Stamina (career stats) changes energy use: each point above 20 uses this much less. */
   staminaPerPoint: 0.015,
   /** Starting a match below this energy risks an injury: (threshold − energy) × perPoint, at most max. */
-  injury: { below: 25, perPoint: 0.02, max: 0.5, weeks: [2, 4] as [number, number], treatment: 600 },
+  injury: { below: 25, perPoint: 0.02, max: 0.5, weeks: [2, 4] as [number, number], treatment: 400 },
 
   // ── Staff and sponsors ──
   staff: {
@@ -78,7 +78,7 @@ export const CAREER_CFG = {
 
   // ── Soft-lock protection ──
   /** Offered free when you can't afford any event: 16 players, tiny prize, small energy cost. */
-  clubOpen: { purse: 900, energyPerRound: 4, tier: 'CLUB' as const },
+  clubOpen: { purse: 6000, energyPerRound: 4, tier: 'CLUB' as const },
 
   // ── Entry ──
   /**

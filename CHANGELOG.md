@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.8: Easier career money (16 Nov 2026)
+
+- Career money is easier. Prize money is up 50%, and losing in the early rounds pays more (Round of 64 ×2, Round of 32 ×1.7, Round of 16 ×1.5 on top of that).
+- Flights, hotels, food, physio, rest weeks and injury treatment all cost about a third less. New careers start with $2,500 (was $1,500).
+- The Local Club Open pays much more: a $6,000 purse (was $900), so winning it pays $450. It's still offered only when you can't afford a real tournament.
+
 ## 3.7.5: More net blocks (16 Nov 2026)
 
 - CPUs defend more like real players: against a smash, they now usually block it short to the net instead of lifting it back every time. The Defensive wall does this the most.

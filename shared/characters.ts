@@ -112,12 +112,37 @@ export interface Effective {
   aim: number;
   /** Speed of fast shots that aren't smashes (drives, pushes, flicks). */
   shotSpeed: number;
+  /** 3.7: how far over the tape net shots pass (lower is tighter: Net). */
+  netClearance: number;
+  /** 3.7: extra reach (m) when defending a smash (Defence). */
+  defReach: number;
+  /** 3.7: how fast you tire in long rallies and games (lower tires slower: Stamina). */
+  fatigue: number;
+  /** 3.7: a heavy smash (Power): the defender's timing window is divided by this. Smash speed is unchanged. */
+  heavy: number;
+  /** 3.7: footwork speed in the front court (Net). */
+  netMove: number;
 }
 
-export const NEUTRAL: Effective = { smash: 1, clearDepth: 1, move: 1, swingWait: 1, netAim: 1, netTiming: 1, defenceTiming: 1, defenceDepth: 1, timing: 1, aim: 1, shotSpeed: 1 };
+export const NEUTRAL: Effective = { smash: 1, clearDepth: 1, move: 1, swingWait: 1, netAim: 1, netTiming: 1, defenceTiming: 1, defenceDepth: 1, timing: 1, aim: 1, shotSpeed: 1, netClearance: 1, defReach: 0, fatigue: 1, heavy: 1, netMove: 1 };
 
 /** How much each point away from 20 changes things (tuned with simulations; see docs/2.7-notes.md). */
 export const PER_POINT = { power: 0.005, speed: 0.007, netAim: 0.01, netTiming: 0.006, defenceTiming: 0.01, defenceDepth: 0.004 };
+/**
+ * 3.7: jobs for the stats beyond Speed (ranked, friendly and quick play; career keeps its own tuning).
+ * Power: drives, pushes and flicks are faster. Net: net shots skim the tape tighter. Defence: longer reach
+ * against smashes. Stamina: you tire more slowly in long rallies and games.
+ */
+export const STAT_JOBS = {
+  drivePerPower: 0.003,
+  heavyPerPower: 0.012, heavy: [0.88, 1.18] as [number, number],
+  netClearancePerNet: 0.01, netClearance: [0.85, 1.1] as [number, number],
+  netMovePerNet: 0.008, netMoveWithin: 2.3,
+  defReachPerDefence: 0.004, defReach: [-0.04, 0.06] as [number, number],
+  fatiguePerStamina: 0.03, fatigue: [0.55, 1.3] as [number, number],
+  /** Tiring: each shot you play adds 1; a new point keeps `keep` of it; a new game clears it. */
+  fadePerShot: 0.0035, fadeMax: 0.08, keep: 0.55,
+};
 
 /** Later systems (energy, abilities, …) add modifiers: multipliers on the derived values. */
 export type Modifier = Partial<Record<keyof Effective, number>>;
@@ -151,7 +176,8 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
   const lim = career ? CAREER.clamp : 0.1;
   const [smLo, smHi] = career ? CAREER.smash : [0.95, 1.08];
   const src = career ? (c.base_stats ?? c.stats).map((v) => v * careerMult(c)) : c.stats;
-  const [p, sp, n, d] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  const [p, sp, n, d, st] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  const J = STAT_JOBS;
   const e: Effective = {
     smash: 1 + P.power * p,
     clearDepth: 1 + P.power * p,
@@ -161,10 +187,23 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
     netTiming: 1 + P.netTiming * n,
     defenceTiming: 1 + P.defenceTiming * d,
     defenceDepth: 1 - P.defenceDepth * d,
-    timing: 1, aim: 1, shotSpeed: 1,
+    timing: 1, aim: 1,
+    shotSpeed: career ? 1 : 1 + J.drivePerPower * p,
+    netClearance: career ? 1 : 1 - J.netClearancePerNet * n,
+    defReach: career ? 0 : J.defReachPerDefence * d,
+    fatigue: career ? 0 : 1 - J.fatiguePerStamina * st,
+    heavy: career ? 1 : 1 + J.heavyPerPower * p,
+    netMove: career ? 1 : 1 + J.netMovePerNet * n,
   };
   for (const m of modifiers) for (const k of Object.keys(m) as (keyof Effective)[]) e[k] *= m[k] ?? 1;
-  for (const k of Object.keys(e) as (keyof Effective)[]) e[k] = k === 'smash' ? clamp(e[k], smLo, smHi) : clamp(e[k], 1 - lim, 1 + lim);
+  for (const k of Object.keys(e) as (keyof Effective)[]) {
+    e[k] = k === 'smash' ? clamp(e[k], smLo, smHi)
+      : k === 'netClearance' ? clamp(e[k], ...J.netClearance)
+      : k === 'defReach' ? clamp(e[k], ...J.defReach)
+      : k === 'heavy' ? clamp(e[k], ...J.heavy)
+      : k === 'fatigue' ? (career ? 0 : clamp(e[k], ...J.fatigue))
+      : clamp(e[k], 1 - lim, 1 + lim);
+  }
   return e;
 }
 

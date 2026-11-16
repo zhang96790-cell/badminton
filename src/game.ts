@@ -17,7 +17,7 @@ import { Match, partnerIdx, type PointOutcome } from './rules';
 import type { GameMsg, ServerMsg } from './net';
 import { CHAT, RemoteController, flip2, flip3, type OnlineLink } from './online';
 import type { Seat } from './net';
-import { DEFAULT_CHARACTER, characterById, getEffectiveStats, type Character, type Modifier } from '../shared/characters';
+import { DEFAULT_CHARACTER, STAT_JOBS, characterById, getEffectiveStats, type Character, type Modifier } from '../shared/characters';
 import { defaultSetup, restrictionsAllowed, usesCareerStats, type MatchSetup, type Restrictions } from './setup';
 import { Signatures, shotKind, type ShotCtx, type SigDef } from './careermode/signatures';
 import { REPLAY_CAMS, type ReplayCam } from './camera';
@@ -219,6 +219,7 @@ export class Game {
   abilityPop: { text: string; mine: boolean; t: number } | null = null;
   private statMode: 'ranked' | 'career' = 'ranked';
   private statChars: (Character | null)[] = [null, null];
+  private heavyOf: number[] = [1, 1, 1, 1];
   private baseMods: Modifier[][] = [[], []];
   private baseSpeed: number[] = [];
   /** Recompute a player's stats with any timed ability effects. */
@@ -321,6 +322,9 @@ export class Game {
     this.limits = restrictionsAllowed() || this.setup.forced ? this.setup.restrictions : {};
     if (this.limits.opponentSpeedMult) this.players[1].speedMult *= this.limits.opponentSpeedMult;
     this.baseSpeed = this.players.map((p) => p.speedMult / p.eff.move);
+    // 3.7: how heavy each player's smash is. Online, the other player's comes from the player they picked.
+    const oppChar = online && !online.lineup && this.setup.opponent.characterId ? characterById(this.setup.opponent.characterId) : null;
+    this.heavyOf = this.players.map((p, i) => (oppChar && i === 1 ? getEffectiveStats(oppChar, [], 'ranked').heavy : p.eff.heavy));
     // Signature abilities (career and the daily challenge; never online until they're balanced for it).
     if (!online && !doubles && (this.setup.player.abilities || this.setup.opponent.abilities)) {
       this.sigs = Signatures.forCharacters([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null], (i) => this.teamOf(i));
@@ -570,6 +574,7 @@ export class Game {
 
   private startServe() {
     this.state = 'serve';
+    for (const p of this.players) p.tire *= STAT_JOBS.keep; // a breather between points
     this.setup.checkpoint?.(this.match.snapshot(), false);
     // Online, the server waits a moment after each point so the receiver is ready.
     this.timer = this.online ? RULES.onlineServeWait : 0.35;
@@ -656,6 +661,12 @@ export class Game {
   }
 
   private step(dt: number, cmds: Command[], first: boolean) {
+    // 3.7: Defence reaches further against the other side's smashes.
+    const smashIn = this.shuttle.inFlight && /smash/i.test(this.lastShotLabel);
+    for (const p of this.players) {
+      p.vsSmash = smashIn && this.shuttle.lastHitter === -p.side;
+      p.smashHeavy = p.vsSmash ? Math.max(...this.players.map((q, j) => (q.side === this.shuttle.lastHitter ? this.heavyOf[j] : 1))) : 1;
+    }
     this.players.forEach((p, i) => {
       if (first && cmds[i].shot) p.startSwing(cmds[i].shot!, false, this.isHuman(i));
       if (p.update(dt, cmds[i].move, first && cmds[i].jump) === 'whiff') this.events.push({ type: 'whiff' });
@@ -797,6 +808,7 @@ export class Game {
         }
         const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : ctrl instanceof AIController ? ctrl.aimScaleFor(req, c.point.z) : 1;
         let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
+        p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)
         // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.
         let sigCtx: ShotCtx | null = null, sigFired: SigDef[] = [], deceived = false;
         const sigBefore = this.sigs?.last ?? null;
@@ -1096,6 +1108,7 @@ export class Game {
     } else {
       if (this.state === 'gameBreak') {
         m.newGame();
+        for (const p of this.players) p.tire = 0;
         this.challenges = [OFFICIALS.challengesPerGame, OFFICIALS.challengesPerGame];
         this.say('umpire', gameStartCall(m.gameNumber, m.gamesToWin), true);
       } else if (this.state === 'interval') {

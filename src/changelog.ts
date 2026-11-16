@@ -5,6 +5,18 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.7',
+    title: 'Every stat counts',
+    date: '16 Nov 2026',
+    changes: [
+      "Every stat now has a clear job in ranked, friend rooms and quick play (career is unchanged):",
+      "Power: a heavier smash. It isn't any faster, but it's harder to return, because the other player's timing window shrinks against it. Drives and pushes are a little faster too.",
+      "Net: quicker footwork in the front court, and net shots skim the tape a little tighter.",
+      "Defence: longer reach against smashes, on top of the wider timing window and deeper lifts and blocks.",
+      "Stamina: players now tire as a game goes on, especially in long rallies: a little slower and a little worse timed (at most 8%). A breather between points helps, and a new game starts fresh. High Stamina tires much more slowly.",
+    ],
+  },
+  {
     version: '3.6.1',
     title: 'Tougher top CPUs',
     date: '16 Nov 2026',

@@ -181,7 +181,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (netPlay ? eff.netAim : 1) * eff.aim
     * (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;
-  const softClearance = netArea ? SHOTS.netShotClearance : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;
+  const softClearance = netArea ? SHOTS.netShotClearance * (netPlay ? eff.netClearance : 1) : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;
   const M = SHOTS.softMaxAngle;
   const softMax = (zone === 'overhead' ? M.overhead : netArea ? M.net : zone === 'mid' ? M.mid : M.low) * DEG;
   const opp = -c.side;

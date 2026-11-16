@@ -5,6 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.7: Every stat counts (16 Nov 2026)
+
+- Every stat now has a clear job in ranked, friend rooms and quick play (career is unchanged):
+- Power: a heavier smash. It isn't any faster, but it's harder to return, because the other player's timing window shrinks against it. Drives and pushes are a little faster too.
+- Net: quicker footwork in the front court, and net shots skim the tape a little tighter.
+- Defence: longer reach against smashes, on top of the wider timing window and deeper lifts and blocks.
+- Stamina: players now tire as a game goes on, especially in long rallies: a little slower and a little worse timed (at most 8%). A breather between points helps, and a new game starts fresh. High Stamina tires much more slowly.
+
 ## 3.6.1: Tougher top CPUs (16 Nov 2026)
 
 - Pro, Elite, World Class and Legend CPUs are much harder: they react sooner, move faster, reach further, time their shots better, read you more and attack more. Smashes hit no harder than before. Career and the daily challenge are unchanged.

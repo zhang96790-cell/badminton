@@ -1,5 +1,5 @@
 import { COURT, PHYSICS, PLAYER, SHOTS, SWING } from './config';
-import { NEUTRAL, type Effective } from '../shared/characters';
+import { NEUTRAL, STAT_JOBS, type Effective } from '../shared/characters';
 import { add3, clamp, len3, mul3, norm3, sub3, type Side, type V2, type V3 } from './math';
 import type { Contact, Hand, ShotRequest, TimingLabel } from './shots';
 
@@ -105,15 +105,24 @@ export class Player implements PlayerView {
 
   /** This player's character stats in play (neutral = today's game). */
   eff: Effective = NEUTRAL;
+  /** 3.7: how tired you are this game (shots played, eased between points). */
+  tire = 0;
+  /** 3.7: the shuttle coming at you is the other side's smash (Defence reaches further). */
+  vsSmash = false;
+  /** 3.7: how heavy that smash is (the hitter's Power): your timing window is divided by it. */
+  smashHeavy = 1;
+  /** Slower and a little worse timed when tired (0 to 8%); Stamina slows it. */
+  get fade() { return Math.min(STAT_JOBS.fadeMax, this.tire * STAT_JOBS.fadePerShot * this.eff.fatigue); }
 
   /** Character stats widen or narrow the perfect window: Net for net shots, Defence for lifts and blocks. */
   private statTiming(req: ShotRequest, s: V3): number {
     const netArea = Math.abs(s.y) < SHOTS.nearNet, overhead = s.z >= SHOTS.overheadHeight;
     const soft = req.kind === 'intent' ? req.intent === 'soft' : req.arc === 'high' && req.power < SHOTS.mouse.dropMaxPower;
     const high = req.kind === 'intent' ? req.intent === 'high' : req.arc === 'high' && req.power >= SHOTS.mouse.dropMaxPower;
-    if (soft && netArea && !overhead) return this.eff.netTiming * this.eff.timing;
-    if (!overhead && (high || soft)) return this.eff.defenceTiming * this.eff.timing;
-    return this.eff.timing;
+    const tired = (1 - this.fade * 0.8) / (this.vsSmash ? this.smashHeavy : 1);
+    if (soft && netArea && !overhead) return this.eff.netTiming * this.eff.timing * tired;
+    if (!overhead && (high || soft)) return this.eff.defenceTiming * this.eff.timing * tired;
+    return this.eff.timing * tired;
   }
 
   /** Racket frame colour, if not the standard one. */
@@ -192,7 +201,7 @@ export class Player implements PlayerView {
 
     const len = Math.min(1, Math.hypot(move.x, move.y));
     const mag = Math.hypot(move.x, move.y) || 1;
-    let max = PLAYER.maxSpeed * this.speedMult;
+    let max = PLAYER.maxSpeed * this.speedMult * (1 - this.fade) * (Math.abs(this.pos.y) < STAT_JOBS.netMoveWithin ? this.eff.netMove : 1);
     if (this.swing) max *= PLAYER.swingMoveFactor;
     if (this.landLag > 0) max *= 0.5;
     if (this.lunge < PLAYER.lungeTime) max *= PLAYER.lungeRecoverySpeed;
@@ -276,7 +285,7 @@ export class Player implements PlayerView {
 
   /** How far you can reach at this height; a low lunge reaches less against a shot that's on you quickly (flight: game seconds since it was hit). */
   reachFor(z: number, flight = Infinity): number {
-    return PLAYER.reach + this.extraReach + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(flight) : 0);
+    return PLAYER.reach + this.extraReach + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(flight) : 0);
   }
 
   /** The shuttle is within reach now but won't be next step. */

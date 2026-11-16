@@ -163,6 +163,7 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
   if (s.current) return { ok: false, why: 'Finish your current tournament first.' };
   if (s.injury && s.injury.weeks > 0) return { ok: false, why: `You’re injured: ${s.injury.weeks} more week${s.injury.weeks === 1 ? '' : 's'} of rest.` };
   if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
+  if (s.money < CFG.tourMinMoney) return { ok: false, why: `You need at least ${money(CFG.tourMinMoney)} to go on tour. Win it back at the Local Club Open.` };
   const gate = (CFG.gates as Record<string, { finalIn?: string; rankAtMost: number } | undefined>)[ev.tier];
   if (gate && !unlocked(s, ev.tier)) {
     const r = myRank(s, w);
@@ -190,6 +191,7 @@ export const eventThisWeek = (s: CareerState, appVersion: string) => eventsThisW
 /** Nothing you can afford for the rest of the season: offer the free Local Club Open. */
 export function softLocked(s: CareerState, w: World): boolean {
   if (s.current) return false;
+  if (s.money < CFG.tourMinMoney) return true; // 3.9.1: low on money, Club Opens only
   const upcoming = w.cal.filter((e) => e.week >= s.week);
   const cheapest = Math.min(...(upcoming.length ? upcoming : w.cal).map((e) => travelCost(s, e, 'economy') + hotelCost(s, e, 'hostel')));
   return s.money < cheapest;

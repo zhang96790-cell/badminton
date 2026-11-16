@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.9.1',
+    title: 'Tighter career money',
+    date: '16 Nov 2026',
+    changes: [
+      "Career money is harder again, now that energy is gone: prize money is a little lower (about 10% above 3.7) and early-round losses pay less, while flights and hotels cost a little more.",
+      "Low on money? Below $1,500 you can't go on tour: play the Local Club Open (free, and it pays well) until you've won it back.",
+    ],
+  },
+  {
     version: '3.9',
     title: 'No more energy',
     date: '16 Nov 2026',

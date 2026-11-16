@@ -17,12 +17,12 @@ export const CAREER_CFG = {
 
   // ── Prize money ──
   /** Purse = prize_pool_usd × moneyScale (a Super 100's 140k is a 14,000 purse). */
-  moneyScale: 0.15,
+  moneyScale: 0.11,
   /** Share of the purse by how far you got. The winner gets 7.5%; losing early still pays a little. */
-  prizeShare: { W: 0.075, F: 0.058, SF: 0.046, QF: 0.036, R16: 0.018, R32: 0.01, R64: 0.006 } as Record<Round, number>,
+  prizeShare: { W: 0.075, F: 0.058, SF: 0.046, QF: 0.036, R16: 0.014, R32: 0.007, R64: 0.004 } as Record<Round, number>,
 
   // ── Travel, hotels, recovery (3.3: "Hard": energy is scarce and recovering costs real money) ──
-  travel: { domestic: 140, regional: 380, intercontinental: 820 },
+  travel: { domestic: 180, regional: 480, intercontinental: 1000 },
   /** Travel classes: price × economy, and the share of the travel energy they save. */
   travelClass: {
     economy: { label: 'Economy', cost: 1, energySaved: 0 },
@@ -32,7 +32,7 @@ export const CAREER_CFG = {
   /** Hotels: price a night (× the city's cost) and energy back each night. You stay one night per round you play. */
   hotels: {
     hostel: { label: 'Hostel', perNight: 18, recover: 0, note: 'Cheap, noisy, no real rest' },
-    three: { label: '3-star', perNight: 48, recover: 2, note: 'A decent night’s sleep' },
+    three: { label: '3-star', perNight: 60, recover: 2, note: 'A decent night’s sleep' },
     four: { label: '4-star', perNight: 110, recover: 4, note: 'Good rest and a proper breakfast' },
     five: { label: '5-star by the venue', perNight: 260, recover: 7, note: 'The best rest, no commute' },
   } as Record<HotelTier, { label: string; perNight: number; recover: number; note: string }>,
@@ -79,6 +79,8 @@ export const CAREER_CFG = {
   // ── Soft-lock protection ──
   /** Offered free when you can't afford any event: 16 players, tiny prize, small energy cost. */
   clubOpen: { purse: 6000, energyPerRound: 4, tier: 'CLUB' as const },
+  /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
+  tourMinMoney: 1500,
 
   // ── Entry ──
   /**

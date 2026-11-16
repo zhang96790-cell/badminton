@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.9.1: Tighter career money (16 Nov 2026)
+
+- Career money is harder again, now that energy is gone: prize money is a little lower (about 10% above 3.7) and early-round losses pay less, while flights and hotels cost a little more.
+- Low on money? Below $1,500 you can't go on tour: play the Local Club Open (free, and it pays well) until you've won it back.
+
 ## 3.9: No more energy (16 Nov 2026)
 
 - Energy is gone from career. No more energy bar, tiredness penalties or injuries, so you can play every event you can afford.

@@ -189,7 +189,7 @@ export function initCareer(d: CareerDeps) {
 `;
     } else if (softLocked(s!, W())) {
       hero = `<p class="c-kicker">Next up</p><h3 class="c-title">Local Club Open</h3>
-        <p class="c-lead">You can’t afford any tour events right now. The club open is free and close by: win a little money and some ranking points to get going again.</p>
+        <p class="c-lead">${s!.money < CFG.tourMinMoney ? `You’re low on money: you need ${money(CFG.tourMinMoney)} to go on tour. Play the club open (it’s free and close by) until you’ve won it back.` : 'You can’t afford any tour events right now. The club open is free and close by: win a little money and some ranking points to get going again.'}</p>
         <div class="c-cta"><button class="walk" data-club>Play the club open ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>${recover()}`;
     } else if (x) {
       const c = canEnter(s!, x, W());

@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.7',
+    title: 'Recruit prices by place',
+    date: '17 Nov 2026',
+    changes: [
+      "Recruit prices changed again: win the event and Commons are free and everyone else is half price; finish 2nd and Commons cost $150 and everyone else is a quarter off; finish 3rd and you pay the full price ($300 for a Common).",
+    ],
+  },
+  {
     version: '3.12.6',
     title: 'Win it, recruit for free',
     date: '17 Nov 2026',

@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.14: Weighted titles and player cards (17 Nov 2026)
+
+- Career titles are now worth different amounts. Olympic gold 50 title points, World Championships 35, World Tour Finals 25, Super 1000 18, Super 750 12, Super 500 8, Super 300 5, Super 100 3, a club open 1. Titles won before this update count 3 each, and the titles in your current career get their proper tier the next time you open career mode.
+- The Career titles leaderboard now ranks by title points and shows what each player has won as coloured badges (Olympics, Worlds, S1000 ×2 and so on).
+- Player cards: click anyone on any leaderboard, or a friend's name, to see their card: rank and rating, ranked and career records, every title by tier with its points, best world ranking, prize money, fastest smash, longest rally and more.
+- Your Stats tab has a new Career mode section (title points, best world ranking, career record, titles by tier and prize money), and the Account tab shows a summary of your account with a button for your own player card.
+
 ## 3.13: Way more companies on the boards (17 Nov 2026)
 
 - The boards round the court now carry around 50 companies of every kind: airlines, banks, phones, cars, energy and sports drinks, water, food, delivery, hotels, watches and more. Some are made up, some sound a lot like brands you know (Leeming, Samsong, Toyoka, Red Bison, Pocara Sweat). Only a few are badminton brands.

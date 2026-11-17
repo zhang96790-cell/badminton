@@ -62,6 +62,8 @@ export interface CareerState {
   /** Out injured: weeks to go. */
   injury?: { weeks: number } | null;
   staff?: Partial<Record<StaffRole, boolean>>;
+  /** 3.14: this career's titles have been added to the account's per-tier title counts. */
+  titleTiersSynced?: boolean;
   sponsor?: Sponsor | null;
   sponsorOffers?: Sponsor[] | null;
   /** Milestones reached (ids), for the trophy cabinet. */

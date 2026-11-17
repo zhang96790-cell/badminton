@@ -126,6 +126,14 @@ export const myMatches = async () => (await rpc<MatchRow[]>('my_matches')) ?? []
 export const leaderboard = async () => (await rpc<Stats[]>('leaderboard')) ?? [];
 /** Top 50 for a career record, challenge stars or achievements (null if the database isn't set up for it yet). */
 export const leaderboardStat = (stat: string) => rpc<{ username: string; value: number }[]>('leaderboard_stat', { stat });
+/** 3.14: the Career titles board, by title points (null if it couldn't load or the database isn't updated yet). */
+export const leaderboardTitles = () => rpc<{ username: string; points: number; stats: Record<string, number> }[]>('leaderboard_titles');
+export interface PlayerCard {
+  username: string; rating: number; wins: number; losses: number; title_points: number; title_rank: number; rating_rank: number | null;
+  stats: Record<string, number>; achievements: number;
+}
+/** Anyone's public card (rating, record, titles and their leaderboard stats). */
+export const playerCard = (username: string) => rpc<PlayerCard | null>('player_card', { p_username: username });
 export const friendsList = async () => (await rpc<Friend[]>('friends_list')) ?? [];
 export const myInvites = async () => (await rpc<Invite[]>('my_invites')) ?? [];
 export const heartbeat = () => rpc('heartbeat');

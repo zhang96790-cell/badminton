@@ -1381,3 +1381,43 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .d-tabs button:hover { border-color: rgba(168, 196, 255, 0.45); color: var(--ink); }
 .d-tabs button.on { background: var(--ink); border-color: var(--ink); color: var(--card-ink); }
 .d-tabs button small { margin-left: 4px; padding: 2px 5px; border-radius: 3px; background: var(--amber); color: var(--amber-ink); font: 800 10px/1 var(--text); }
+
+/* 3.14: title chips, clickable leaderboard rows, the player card and the account summary. */
+.t-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.t-chip { display: inline-block; padding: 2px 7px; border-radius: 999px; background: var(--c, #4b5563); color: #fff; font: 800 10.5px/1.4 var(--text); letter-spacing: 0.04em; white-space: nowrap; }
+.t-chip.old { background: transparent; color: var(--card-ink-2); box-shadow: inset 0 0 0 1px var(--card-rule); }
+.leaders li[data-player] { cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.leaders li[data-player]:hover { border-color: var(--card-ink); background: rgba(12, 34, 89, 0.04); }
+.hub-list .name-link { padding: 0; border: 0; background: none; font: inherit; letter-spacing: 0; text-transform: none; color: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--card-rule); text-underline-offset: 3px; }
+#playerCard { position: fixed; inset: 0; z-index: 10002; display: grid; place-items: center; padding: 20px; background: rgba(4, 10, 28, 0.72); }
+#playerCard.hidden { display: none; }
+.pc-panel { position: relative; width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 0 0 22px; border-radius: 12px; background: var(--card, #f4f7fc); color: var(--card-ink, #0c2259); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); animation: pc-in 0.22s ease-out; }
+@keyframes pc-in { from { transform: translateY(10px) scale(0.98); opacity: 0; } }
+.pc-x { position: absolute; top: 10px; right: 12px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.15); color: #fff; font: 600 22px/1 var(--text); cursor: pointer; }
+.pc-loading { padding: 40px 24px; text-align: center; color: var(--card-ink-2); }
+.pc-head { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-radius: 12px 12px 0 0; background: linear-gradient(120deg, #0c2259 0%, #0c2259 55%, color-mix(in srgb, var(--tier) 55%, #0c2259) 100%); color: #f4f7fc; border-bottom: 4px solid var(--tier); }
+.pc-badge { display: grid; place-items: center; width: 58px; height: 58px; flex: none; border-radius: 50%; background: var(--tier); color: #fff; font: 800 22px/1 var(--display); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25); }
+.pc-head h2 { margin: 2px 0 4px; font: 800 30px/1 var(--display); }
+.pc-kicker { margin: 0; font: 700 11px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.7; }
+.pc-tier { margin: 0; font: 600 14px/1.3 var(--text); opacity: 0.9; }
+.pc-tier b { filter: brightness(1.4); }
+.pc-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 18px 24px 0; }
+.pc-facts.small { grid-template-columns: repeat(3, 1fr); padding-top: 0; }
+.pc-fact { display: grid; gap: 3px; padding: 12px 14px; border: 1px solid var(--card-rule); border-radius: 8px; background: #fff; }
+.pc-fact span { font: 700 11px/1.2 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--card-ink-2); }
+.pc-fact b { font: 800 26px/1 var(--display); font-variant-numeric: tabular-nums; }
+.pc-facts.small .pc-fact b { font-size: 20px; }
+.pc-fact em { font: 500 12px/1.3 var(--text); font-style: normal; color: var(--card-ink-2); }
+.pc-h { margin: 20px 24px 10px; font: 700 12px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--card-ink-2); }
+.pc-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 24px 10px; }
+.pc-chips .t-chip { font-size: 12px; padding: 3px 9px; }
+.pc-table { width: calc(100% - 48px); margin: 0 24px; border-collapse: collapse; font: 600 14px/1.3 var(--text); }
+.pc-table th { padding: 6px 4px; text-align: left; font: 700 11px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--card-ink-2); border-bottom: 1px solid var(--card-rule); }
+.pc-table td { padding: 7px 4px; border-bottom: 1px solid var(--card-rule); }
+.pc-table td:nth-child(n + 2), .pc-table th:nth-child(n + 2) { text-align: right; font-variant-numeric: tabular-nums; width: 70px; }
+.ac-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+.ac-summary div { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid var(--card-rule); border-radius: 8px; background: #fff; }
+.ac-summary span { font: 700 10.5px/1.2 var(--text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--card-ink-2); }
+.ac-summary b { font: 800 19px/1.1 var(--display); color: var(--card-ink); }
+.ac-summary i { font-style: normal; }
+.ac-card-btn { margin-bottom: 16px; padding: 9px 14px; border: 1px solid var(--card-ink); border-radius: 6px; background: var(--card-ink); color: var(--card); font: 700 12px/1 var(--text); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }

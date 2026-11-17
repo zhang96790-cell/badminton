@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.14',
+    title: 'Weighted titles and player cards',
+    date: '17 Nov 2026',
+    changes: [
+      "Career titles are now worth different amounts. Olympic gold 50 title points, World Championships 35, World Tour Finals 25, Super 1000 18, Super 750 12, Super 500 8, Super 300 5, Super 100 3, a club open 1. Titles won before this update count 3 each, and the titles in your current career get their proper tier the next time you open career mode.",
+      "The Career titles leaderboard now ranks by title points and shows what each player has won as coloured badges (Olympics, Worlds, S1000 ×2 and so on).",
+      "Player cards: click anyone on any leaderboard, or a friend's name, to see their card: rank and rating, ranked and career records, every title by tier with its points, best world ranking, prize money, fastest smash, longest rally and more.",
+      "Your Stats tab has a new Career mode section (title points, best world ranking, career record, titles by tier and prize money), and the Account tab shows a summary of your account with a button for your own player card.",
+    ],
+  },
+  {
     version: '3.13',
     title: 'Way more companies on the boards',
     date: '17 Nov 2026',

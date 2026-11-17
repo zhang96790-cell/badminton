@@ -1,6 +1,7 @@
 // Career stats: added up after every finished match (against the CPU or online). Saved to your
 // account when you're logged in, and on this computer either way.
 import type { Game } from './game';
+import { titleSummary, OLD_TITLE_POINTS } from './titles';
 
 /**
  * Keys starting max_ keep the best value, now_ replace the old value, everything else adds up.
@@ -88,6 +89,25 @@ const minutes = (s: number | undefined) => {
 
 export interface StatTile { label: string; value: string; hint?: string; big?: boolean }
 
+/** Career mode: titles by tier (bigger titles are worth more title points), ranking and money. */
+function careerModeGroup(c: Career): { title: string; tiles: StatTile[] } {
+  const g = (k: string) => c[k] ?? 0, sum = titleSummary(c);
+  const best = g('max_career_best_rank') ? 1000 - g('max_career_best_rank') : 0;
+  const cm = g('career_matches'), cw = g('career_wins');
+  return {
+    title: 'Career mode',
+    tiles: [
+      { label: 'Title points', value: num(sum.points), hint: `${num(sum.titles)} title${sum.titles === 1 ? '' : 's'} · bigger titles are worth more`, big: true },
+      { label: 'Best world ranking', value: best ? `#${best}` : '–', big: true },
+      { label: 'Career record', value: `${num(cw)}–${num(cm - cw)}`, hint: cm ? `${pct(cw, cm)} won` : 'Play career mode to fill this in', big: true },
+      ...sum.rows.map(({ t, n }) => t
+        ? { label: t.label, value: num(n), hint: `${t.points} points each · ${num(n * t.points)} in all` }
+        : { label: 'Earlier titles', value: num(n), hint: `Won before 3.14 · ${OLD_TITLE_POINTS} points each` }),
+      { label: 'Prize money', value: `$${num(g('career_prize'))}` },
+    ],
+  };
+}
+
 /** The stats screen, in groups. */
 export function statGroups(c: Career): { title: string; tiles: StatTile[] }[] {
   const g = (k: string) => c[k] ?? 0;
@@ -141,6 +161,7 @@ export function statGroups(c: Career): { title: string; tiles: StatTile[] }[] {
         { label: 'Net shots', value: num(g('net_shots')) },
       ],
     },
+    careerModeGroup(c),
     {
       title: 'Hawk-Eye',
       tiles: [

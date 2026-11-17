@@ -7,6 +7,7 @@ import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
 import type { MatchSetup } from '../setup';
 import { Match } from '../rules';
 import { eventLook, kitBrandOf } from '../brands';
+import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
@@ -103,6 +104,14 @@ export function initCareer(d: CareerDeps) {
     if (l.offline) d.toast('Offline', 'Showing the copy saved on this computer.');
     if (l.conflict) { await settleConflict(l.conflict); return; }
     if (s && repairCurrent(s, W(), d.appVersion)) await save();
+    // 3.14: titles from before then get their tier on your account once (they already count as titles).
+    if (s && !s.titleTiersSynced) {
+      const delta: Record<string, number> = {};
+      for (const h of s.history) { const t = h.round === 'W' ? titleTierOf(h.tier) : undefined; if (t) delta[t.key] = (delta[t.key] ?? 0) + 1; }
+      if (Object.keys(delta).length) d.saveStats(delta);
+      s.titleTiersSynced = true;
+      await save();
+    }
     if (s && await resumeLive()) return;
     render();
     maybeCareerTour();
@@ -644,7 +653,7 @@ export function initCareer(d: CareerDeps) {
     const r = recordMatch(s!, W(), x, won, games, oppId);
     d.saveStats({ career_matches: 1, career_wins: won ? 1 : 0 });
     if (r.finished && r.result) {
-      if (r.result.round === 'W') d.saveStats({ career_titles: 1 });
+      if (r.result.round === 'W') { const t = titleTierOf(x.tier); d.saveStats(t ? { career_titles: 1, [t.key]: 1 } : { career_titles: 1 }); }
       d.saveStats({ career_prize: r.result.prize });
     }
     await save();

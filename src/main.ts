@@ -16,6 +16,8 @@ import { deleteHighlight, loadHighlights, saveHighlight, type Highlight } from '
 import { Playback } from './replay';
 import { CHANGELOG } from './changelog';
 import { DEFAULT_LOOK } from './brands';
+import { openPlayerCard } from './playercard';
+import { titleChips, titleSummary } from './titles';
 import { COURT_THEMES, LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
@@ -284,6 +286,20 @@ function syncAccountUi() {
   document.getElementById('matchesLogin')!.hidden = !!account;
   document.getElementById('acMatches')!.hidden = !account;
   if (account) document.getElementById('acName')!.textContent = account.username;
+  if (account) {
+    const sum = titleSummary(career), t = myRating ? tierOf(myRankInfo?.rating ?? myRating.rating, myRankInfo?.tier) : null;
+    const best = career.max_career_best_rank ? 1000 - career.max_career_best_rank : 0;
+    const cell = (label: string, value: string) => `<div><span>${label}</span><b>${value}</b></div>`;
+    document.getElementById('acSummary')!.innerHTML =
+      cell('Rank', t && myRating && myRating.wins + myRating.losses ? `<i style="color:${t.color}">${hubEsc(t.name)}</i>` : 'Unranked')
+      + cell('Rating', myRating ? String(myRankInfo?.rating ?? myRating.rating) : '–')
+      + cell('Ranked record', myRating ? `${myRating.wins}–${myRating.losses}` : '–')
+      + cell('Matches won', (career.wins ?? 0).toLocaleString('en-GB'))
+      + cell('Title points', sum.points.toLocaleString('en-GB'))
+      + cell('Career titles', String(sum.titles))
+      + cell('Best world ranking', best ? `#${best}` : '–')
+      + cell('Fastest smash', career.max_smash ? `${career.max_smash} km/h` : '–');
+  }
   renderStats();
 }
 
@@ -895,7 +911,7 @@ const BOARDS: Record<string, { note: string; unit: (v: number) => string }> = {
   perfect_hits: { note: 'Most perfectly timed hits, all time.', unit: (v) => `${v}` },
   max_streak: { note: 'Longest run of matches won in a row.', unit: (v) => `${v} in a row` },
   achievements: { note: 'Most achievements unlocked.', unit: (v) => `${v}` },
-  career_titles: { note: 'Most tournaments won in career mode.', unit: (v) => `${v} title${v === 1 ? '' : 's'}` },
+  career_titles: { note: 'Career titles by title points: bigger titles are worth more. Olympics 50, Worlds 35, Tour Finals 25, Super 1000 18, 750 12, 500 8, 300 5, 100 3, club 1 (titles from before 3.14: 3).', unit: (v) => `${v} pts` },
   career_best_rank: { note: 'Best world ranking reached in career mode.', unit: (v) => `#${v}` },
 };
 document.querySelectorAll<HTMLButtonElement>('#boardSeg button').forEach((b) => b.addEventListener('click', () => { board = b.dataset.value!; void renderLeaders(); }));
@@ -911,12 +927,23 @@ async function renderLeaders(listId = 'leaderList') {
       const B = BOARDS[board], list = document.getElementById(listId)!;
       document.getElementById('boardNote')!.textContent = `${B.note} Stats count when you’re logged in.`;
       list.innerHTML = '<li class="empty">Loading…</li>';
+      if (board === 'career_titles') {
+        const tr = await m.leaderboardTitles();
+        if (req !== boardReq) return;
+        if (tr) {
+          list.innerHTML = tr.length ? tr.map((r, i) => {
+            const sum = titleSummary(r.stats ?? {});
+            return `<li class="${r.username === account?.username ? 'me' : ''}" data-player="${hubEsc(r.username)}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="t-chips">${titleChips(sum, 6)}</span></span><span class="sub">${sum.titles} title${sum.titles === 1 ? '' : 's'}</span><b>${Number(r.points)} pts</b></li>`;
+          }).join('') : '<li class="empty">Nobody has won a career title yet. Be the first.</li>';
+          return;
+        }
+      }
       // One failed request (a network blip, a login that needs refreshing) shouldn't blank the board: try again once.
       let rows = await m.leaderboardStat(board);
       if (rows === null && req === boardReq) { await new Promise((r) => setTimeout(r, 800)); rows = await m.leaderboardStat(board); }
       if (req !== boardReq) return;
       list.innerHTML = rows === null ? '<li class="empty">Couldn’t load this leaderboard. Check your connection, then click the tab again.</li>'
-        : rows.length ? rows.map((r, i) => `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}</span><b>${B.unit(Number(r.value))}</b></li>`).join('')
+        : rows.length ? rows.map((r, i) => `<li class="${r.username === account?.username ? 'me' : ''}" data-player="${hubEsc(r.username)}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}</span><b>${board === 'career_titles' ? `${r.value} title${Number(r.value) === 1 ? '' : 's'}` : B.unit(Number(r.value))}</b></li>`).join('')
         : '<li class="empty">Nobody on this board yet. Be the first.</li>';
       return;
     }
@@ -926,9 +953,17 @@ async function renderLeaders(listId = 'leaderList') {
   if (req !== boardReq) return;
   document.getElementById(listId)!.innerHTML = rows.length ? rows.map((r, i) => {
     const t = tierOf(r.rating);
-    return `<li class="${r.username === account?.username ? 'me' : ''}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
+    return `<li class="${r.username === account?.username ? 'me' : ''}" data-player="${hubEsc(r.username)}"><span class="rank">${i + 1}</span><span class="grow">${hubEsc(r.username)}<span class="sub" style="color:${t.color}">${t.name}</span></span><span class="sub">${r.wins}–${r.losses}</span><b>${r.rating}</b></li>`;
   }).join('') : '<li class="empty">Nobody has played a ranked match yet. Be the first.</li>';
 }
+
+// 3.14: click anyone on a leaderboard (or a friend) to see their player card.
+const showCard = (name: string) => void loadAccount().then((m) => openPlayerCard(name, m.playerCard, account?.username));
+document.getElementById('leaderList')!.addEventListener('click', (e) => {
+  const li = (e.target as HTMLElement).closest<HTMLElement>('[data-player]');
+  if (li?.dataset.player) showCard(li.dataset.player);
+});
+document.getElementById('acCard')?.addEventListener('click', () => { if (account) showCard(account.username); });
 
 let friendRows: import('./account').Friend[] = [];
 async function renderFriends() {
@@ -941,7 +976,7 @@ async function renderFriends() {
   badge.textContent = String(incoming);
   const list = document.getElementById('friendList')!;
   list.innerHTML = friendRows.length ? friendRows.map((f) => {
-    const name = `<span class="grow">${hubEsc(f.username)}<span class="sub">${f.direction === 'friend' ? (f.online ? 'Online' : 'Offline') + ` · ${f.rating}` : f.direction === 'incoming' ? 'Wants to be friends' : 'Request sent'}</span></span>`;
+    const name = `<span class="grow"><button type="button" class="name-link" data-card="${hubEsc(f.username)}">${hubEsc(f.username)}</button><span class="sub">${f.direction === 'friend' ? (f.online ? 'Online' : 'Offline') + ` · ${f.rating}` : f.direction === 'incoming' ? 'Wants to be friends' : 'Request sent'}</span></span>`;
     const actions = f.direction === 'friend'
       ? `<button class="primary" data-act="invite" data-id="${f.id}" ${f.online ? '' : 'disabled'}>Invite</button><button class="quiet" data-act="remove" data-id="${f.id}">Remove</button>`
       : f.direction === 'incoming'
@@ -951,6 +986,8 @@ async function renderFriends() {
   }).join('') : '<li class="empty">No friends yet. Add someone by their username.</li>';
 }
 document.getElementById('friendList')!.addEventListener('click', async (e) => {
+  const card = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
+  if (card?.dataset.card) { showCard(card.dataset.card); return; }
   const b = (e.target as HTMLElement).closest('button');
   if (!b?.dataset.act) return;
   const m = await loadAccount(), id = b.dataset.id!;

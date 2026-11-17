@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.11: All-out Attacker (17 Nov 2026)
+
+- The Attacker CPU style is much more aggressive: it smashes and jump-smashes far more often, kills anything loose at the net, rarely clears, follows its smash further in, and drives smashes back more often instead of blocking them.
+
 ## 3.12.10: No accidental hits (17 Nov 2026)
 
 - Holding the fast key (K) no longer swings by itself when the shuttle comes near you. It only swings when you let go, so you won't hit shuttles you didn't mean to. If you're still holding it when the shuttle goes past, you miss it.

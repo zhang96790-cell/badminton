@@ -555,7 +555,7 @@ export const STYLES: Record<Style, {
   // 3.12.2: everyone but the Attacker smashes and kills more and clears less; the defensive styles most.
   allround: { label: 'All-rounder', smash: 1.2, drop: 1.05, clear: 0.95, net: 1.05, kill: 1.2, jump: 1.1, baseDepth: 3.5, margin: -0.02, speed: 1.04, serveShort: 1, steady: 0.8, reach: 0.05,
     trait: 'No weak spots: a little quicker around the court and a little more precise than most, with every shot in its bag' },
-  attacker: { label: 'Attacker', smash: 1.9, drop: 0.9, clear: 0.6, net: 0.8, kill: 1.4, jump: 2.0, baseDepth: 3.3, margin: -0.04, speed: 1, serveShort: 0.9, followUp: 0.6,
+  attacker: { label: 'Attacker', smash: 2.5, drop: 0.85, clear: 0.4, net: 0.75, kill: 2.0, jump: 2.6, baseDepth: 3.2, margin: -0.04, speed: 1, serveShort: 0.9, followUp: 0.8, counter: 1.2,
     trait: 'Jump-smashes whenever it can and follows its smash to the net for the kill, but takes risks near the lines' },
   defender: { label: 'Defender', smash: 1.3, drop: 0.95, clear: 0.85, net: 0.95, kill: 1.2, jump: 0.75, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8, defReach: 0.04, defAim: 0.8,
     trait: 'Gets more smashes back than anyone, and its lifts and blocks land deep and accurate' },

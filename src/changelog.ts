@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.11',
+    title: 'All-out Attacker',
+    date: '17 Nov 2026',
+    changes: [
+      "The Attacker CPU style is much more aggressive: it smashes and jump-smashes far more often, kills anything loose at the net, rarely clears, follows its smash further in, and drives smashes back more often instead of blocking them.",
+    ],
+  },
+  {
     version: '3.12.10',
     title: 'No accidental hits',
     date: '17 Nov 2026',

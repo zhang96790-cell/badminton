@@ -217,7 +217,9 @@ export const SHOTS = {
   // 3.11: turned off again (net shots back to how they were before 3.10: lifting had become too punishing).
   netBattle: { tightWithin: 0.8, perMetre: 0.09, low: 0.09, lowRange: 1.0, perRun: 0.025, runMax: 6, noisePerRun: 0, maxExtra: 0 },
   /** 3.11: a smash loses pace the further back it's hit from: full pace up to `from` m from the net, `power` of it from `to` m. */
-  deepSmash: { from: 4.5, to: 6.4, power: 0.82 },
+  // 3.12.5: a jump smash keeps most of its pace from the back (jumpPower), a standing one doesn't (power); every
+  // smash is `all` faster; and smashes from the back are less accurate (aim error × up to `noise` at `to`).
+  deepSmash: { from: 4.5, to: 6.4, power: 0.8, jumpPower: 0.94, all: 1.04, noise: 1.45 },
   blockClearance: 0.2,
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
   softMaxAngle: { overhead: 12, mid: 30, low: 45, net: 80 },

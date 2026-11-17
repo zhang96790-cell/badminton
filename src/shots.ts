@@ -138,9 +138,10 @@ function fastSolve(z0: number, g: ReturnType<typeof geometry>, speed: number, ex
  */
 /** eff: the hitter's character stats in play (neutral = today's game). */
 /** 3.11: smashes from the back of the court are slower, so a good lift isn't punished as hard. */
-function deepSmashPower(dist: number): number {
+const deepSmashFrac = (dist: number) => { const D = SHOTS.deepSmash; return Math.min(1, Math.max(0, (dist - D.from) / (D.to - D.from))); };
+function deepSmashPower(dist: number, jumping: boolean): number {
   const D = SHOTS.deepSmash;
-  return 1 - (1 - D.power) * Math.min(1, Math.max(0, (dist - D.from) / (D.to - D.from)));
+  return D.all * (1 - (1 - (jumping ? D.jumpPower : D.power)) * deepSmashFrac(dist));
 }
 
 export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJumps = false, eff: Effective = NEUTRAL): Shot {
@@ -177,13 +178,14 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (netDrive ? SHOTS.netDrivePower : 1)
     * (netKill ? (lowKill ? SHOTS.netKill.lowPower : SHOTS.netKill.power) : 1)
     * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
-    * (shotZone === 'overhead' && kindOf === 'fast' ? eff.smash * deepSmashPower(Math.abs(c.point.y)) : 1)
+    * (shotZone === 'overhead' && kindOf === 'fast' ? eff.smash * deepSmashPower(Math.abs(c.point.y), !!c.airborne) : 1)
     // Drives, pushes and flicks (never net kills, which keep their own thresholds).
     * (shotZone !== 'overhead' && kindOf === 'fast' && !netKill && !netArea ? eff.shotSpeed : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);
   // Character stats: net shots (Net) and lifts and blocks (Defence) are a little more or less accurate.
   const netPlay = kindOf === 'soft' && netArea, defence = !netPlay && zone !== 'overhead' && kindOf !== 'fast';
   const noiseMult = (scrambled ? SHOTS.behindNoise : 1) * (deep ? B.deepNoise : 1)
+    * (shotZone === 'overhead' && kindOf === 'fast' ? 1 + (SHOTS.deepSmash.noise - 1) * deepSmashFrac(Math.abs(c.point.y)) : 1)
     * (tumbleSoft ? T.softNoise : tumbleFast ? T.fastNoise : 1)
     * (perfect && zone === 'overhead' && kindOf === 'high' ? B.clearAim : 1)
     * (netPlay ? eff.netAim : 1) * eff.aim

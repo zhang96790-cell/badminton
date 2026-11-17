@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.5',
+    title: 'Jump smash from the back',
+    date: '17 Nov 2026',
+    changes: [
+      "From the back of the court a jump smash keeps most of its pace, while a standing smash is still slowed down. A jump smash is worth the extra effort, but you still have to recover in time for the reply.",
+      "Every smash is about 4% faster.",
+      "Smashes from the back of the court are less accurate: the further back you are, the more they stray, up to about 45% more error from the baseline.",
+    ],
+  },
+  {
     version: '3.12.4',
     title: 'Maintenance notice',
     date: '17 Nov 2026',

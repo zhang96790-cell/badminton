@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.5: Jump smash from the back (17 Nov 2026)
+
+- From the back of the court a jump smash keeps most of its pace, while a standing smash is still slowed down. A jump smash is worth the extra effort, but you still have to recover in time for the reply.
+- Every smash is about 4% faster.
+- Smashes from the back of the court are less accurate: the further back you are, the more they stray, up to about 45% more error from the baseline.
+
 ## 3.12.4: Maintenance notice (17 Nov 2026)
 
 - When the game is down for maintenance you now see a notice saying so, instead of a broken page. The page checks every minute and opens again by itself when the game is back.

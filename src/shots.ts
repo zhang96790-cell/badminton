@@ -81,6 +81,17 @@ export function mouseTarget(arc: 'low' | 'high', power: number, cursor: V2, oppS
 }
 
 /** Keep a target on the far side of the net and roughly on the court. */
+/** 3.12.8: aim error past a line (that the aim itself was inside) only carries the shot part of the way out. */
+function softenOut(aim: V2, hit: V2): V2 {
+  const L = SHOTS.lineSoft;
+  const soften = (a: number, h: number, line: number) => {
+    if (Math.abs(a) > line || Math.abs(h) <= line) return h;
+    const s = Math.sign(h);
+    return s * (line + (Math.abs(h) - line) * L.keep);
+  };
+  return { x: soften(aim.x, hit.x, L.halfWidth), y: soften(aim.y, hit.y, L.back) };
+}
+
 function clampTarget(t: V2, opp: number, minDepth = SHOTS.minTargetDepth): V2 {
   return { x: clamp(t.x, -4.5, 4.5), y: opp * clamp(t.y * opp, minDepth, 8.5) };
 }
@@ -252,7 +263,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const A = SHOTS.aim;
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
   const sigma = (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
-  target = clampTarget({ x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor * (defence ? eff.defenceDepth : 1) }, opp, 0.1);
+  target = clampTarget(softenOut(target, { x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor * (defence ? eff.defenceDepth : 1) }), opp, 0.1);
   // 3.10: net shots only stay tight from close in, taken early: from further back, taken low, or deep into a
   // net battle they float higher over the tape (so the other player can attack them).
   const NB = SHOTS.netBattle, run = Math.min(c.netRun ?? 0, NB.runMax);

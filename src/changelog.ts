@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.8',
+    title: 'Fewer shots out',
+    date: '17 Nov 2026',
+    changes: [
+      "Shots are a bit more accurate than in 3.12.3, and far fewer land out. You still can't put the shuttle on an exact spot, but aim error that would carry a shot over the side or back line only carries it part of the way, so most near-misses now land just inside or just out instead of well out. Smashes from the back stray a little less too.",
+    ],
+  },
+  {
     version: '3.12.7',
     title: 'Recruit prices by place',
     date: '17 Nov 2026',

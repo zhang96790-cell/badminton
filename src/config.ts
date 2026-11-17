@@ -150,13 +150,18 @@ export const SHOTS = {
    * Aim error (std-dev, m) on a perfectly timed forehand. Longer and harder shots are less accurate:
    * base + perMetre·distance + perPower·(pace)^1.5, where pace is launch speed / 86 m/s.
    * Roughly: net shot 10 cm, drop 29 cm, clear 43 cm, full smash 52 cm. Timing, backhand and stretch multiply it.
-   * 3.12.3: about 30% more error for everyone (was base 0.05, perMetre 0.017, perPower 0.2).
+   * 3.12.3: about 30% more error for everyone (was base 0.05, perMetre 0.017, perPower 0.2); 3.12.8: about 18%.
    */
-  aim: { base: 0.065, perMetre: 0.022, perPower: 0.26, depthFactor: 1.2 },
+  aim: { base: 0.06, perMetre: 0.02, perPower: 0.24, depthFactor: 1.2 },
+  /**
+   * 3.12.8: error that would carry a shot past the side or back line only carries it `keep` as far out, so shots
+   * still scatter (it's hard to hit a spot exactly) but far fewer land out (singles side line and back line).
+   */
+  lineSoft: { keep: 0.45, halfWidth: 2.59, back: 6.7 },
   /** Menu accuracy setting: multiplier on aim error for human players. */
   aimModes: { realistic: 1, casual: 0.55 },
   /** Random error in how far over the tape soft shots pass (std-dev, m), scaled like aim. */
-  clearanceNoise: 0.042, // 3.12.3: was 0.035
+  clearanceNoise: 0.038, // 3.12.3: was 0.035 (0.042 in 3.12.3)
   speedNoise: 0.02, // 3.12.3: was 0.015
   /** Launch angles (deg) for high shots, by contact zone. */
   clearAngle: 30,
@@ -219,7 +224,7 @@ export const SHOTS = {
   /** 3.11: a smash loses pace the further back it's hit from: full pace up to `from` m from the net, `power` of it from `to` m. */
   // 3.12.5: a jump smash keeps most of its pace from the back (jumpPower), a standing one doesn't (power); every
   // smash is `all` faster; and smashes from the back are less accurate (aim error × up to `noise` at `to`).
-  deepSmash: { from: 4.5, to: 6.4, power: 0.8, jumpPower: 0.94, all: 1.04, noise: 1.45 },
+  deepSmash: { from: 4.5, to: 6.4, power: 0.8, jumpPower: 0.94, all: 1.04, noise: 1.3 },
   blockClearance: 0.2,
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
   softMaxAngle: { overhead: 12, mid: 30, low: 45, net: 80 },

@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.8: Fewer shots out (17 Nov 2026)
+
+- Shots are a bit more accurate than in 3.12.3, and far fewer land out. You still can't put the shuttle on an exact spot, but aim error that would carry a shot over the side or back line only carries it part of the way, so most near-misses now land just inside or just out instead of well out. Smashes from the back stray a little less too.
+
 ## 3.12.7: Recruit prices by place (17 Nov 2026)
 
 - Recruit prices changed again: win the event and Commons are free and everyone else is half price; finish 2nd and Commons cost $150 and everyone else is a quarter off; finish 3rd and you pay the full price ($300 for a Common).

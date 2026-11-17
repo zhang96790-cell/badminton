@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.12',
+    title: 'A better-looking draw',
+    date: '17 Nov 2026',
+    changes: [
+      "The career draw is a proper bracket now: lines join every match to the one its winner plays next, winners are marked in green and losers fade out, seeds and countries get small badges, matches not played yet show as empty outlines, your matches are outlined in gold (your next one glows), and the champion gets a gold trophy card at the end. Big draws scroll sideways instead of squashing the names.",
+    ],
+  },
+  {
     version: '3.12.11',
     title: 'All-out Attacker',
     date: '17 Nov 2026',

@@ -227,9 +227,9 @@ export function initCareer(d: CareerDeps) {
       : h ? (a: string, b: string, rd: Round) => (a !== YOU && b !== YOU ? null : withW.indexOf(h.round) > withW.indexOf(rd) ? YOU : a === YOU ? b : a) : undefined;
     const { rounds } = playOut(plan.slots, W().strength, hash(s!.rngSeed, s!.year, x.id, 'play'), decide);
     const myScores = cur?.scores ?? h?.scores ?? [];
-    const seed = (id: string) => (plan.seeds.includes(id) ? `<sup>${plan.seeds.indexOf(id) + 1}</sup>` : '');
+    const seed = (id: string) => (plan.seeds.includes(id) ? `<span class="d-seed" title="Seed ${plan.seeds.indexOf(id) + 1}">${plan.seeds.indexOf(id) + 1}</span>` : '');
     const nm = (id: string) => (id === YOU ? e(s!.name) : id === 'bye' ? 'Bye' : e(characterById(id).name));
-    const who = (id: string) => (id === YOU ? '' : id === 'bye' ? '' : `<small>${e(characterById(id).country)}</small>`);
+    const who = (id: string) => (id === YOU ? '<small class="d-cc you">You</small>' : id === 'bye' ? '' : `<small class="d-cc">${e(characterById(id).country)}</small>`);
     const cols = order.map((rd, i) => {
       const alive = rounds[i];
       const matches = [];
@@ -239,13 +239,16 @@ export function initCareer(d: CareerDeps) {
         const winner = i < known ? rounds[i + 1][m / 2] : null;
         const mine = a === YOU || b === YOU;
         const sc = mine && i < myScores.length ? myScores[i].map(([p, q]) => `${p}–${q}`).join(', ') : '';
-        const line = (id: string) => `<div class="d-p${winner === id ? ' won' : winner ? ' lost' : ''}${id === YOU ? ' me' : ''}">${shown ? `${nm(id)}${seed(id)} ${who(id)}` : '<span class="tbd">To be decided</span>'}</div>`;
-        matches.push(`<div class="d-m${mine && shown ? ' mine' : ''}${cur && i === known && mine ? ' next' : ''}">${line(a)}${line(b)}${sc ? `<div class="d-sc">${sc}</div>` : ''}</div>`);
+        const line = (id: string) => `<div class="d-p${winner === id ? ' won' : winner ? ' lost' : ''}${id === YOU ? ' me' : ''}${id === 'bye' ? ' bye' : ''}">${shown ? `${seed(id)}<span class="d-n">${nm(id)}</span>${who(id)}` : '<span class="tbd"></span>'}</div>`;
+        matches.push(`<div class="d-m${mine && shown ? ' mine' : ''}${cur && i === known && mine ? ' next' : ''}${shown ? '' : ' empty'}">${line(a)}${line(b)}${sc ? `<div class="d-sc">${sc}</div>` : ''}</div>`);
       }
-      return `<div class="d-col"><h4>${ROUND_LABEL[rd]}</h4><div class="d-ms">${matches.join('')}</div></div>`;
+      // 3.12.12: matches in pairs, so a bracket line can join each pair to the match they feed.
+      const grouped = [];
+      for (let k = 0; k < matches.length; k += 2) grouped.push(`<div class="d-pair${matches.length === 1 ? ' solo' : ''}">${matches.slice(k, k + 2).join('')}</div>`);
+      return `<div class="d-col${i === 0 ? ' first' : ''}"><h4>${ROUND_LABEL[rd]}</h4><div class="d-ms">${grouped.join('')}</div></div>`;
     });
     const champ = known >= order.length ? rounds[order.length][0] : null;
-    cols.push(`<div class="d-col d-win"><h4>Winner</h4><div class="d-ms"><div class="d-m${champ === YOU ? ' mine' : ''}"><div class="d-p won${champ === YOU ? ' me' : ''}">${champ ? `🏆 ${nm(champ)}${seed(champ)}` : '<span class="tbd">To be decided</span>'}</div></div></div></div>`);
+    cols.push(`<div class="d-col d-win"><h4>Champion</h4><div class="d-ms"><div class="d-pair solo"><div class="d-m d-champ${champ === YOU ? ' mine' : ''}${champ ? '' : ' empty'}"><span class="d-trophy">🏆</span><div class="d-p won${champ === YOU ? ' me' : ''}">${champ ? `<span class="d-n">${nm(champ)}</span>${who(champ)}` : '<span class="tbd">To be decided</span>'}</div></div></div></div></div>`);
     return `<div class="d-draw" role="table" aria-label="${e(x.name)} draw" style="--rounds:${cols.length}">${cols.join('')}</div>
       <p class="c-lead small">${known === 0 ? 'The first-round pairings. Seeds (top 4 in the world ranking) are marked with their number.' : 'Winners in bold. Your matches show your scores; other results are the winner only.'}</p>`;
   }

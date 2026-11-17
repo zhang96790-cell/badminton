@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.12: A better-looking draw (17 Nov 2026)
+
+- The career draw is a proper bracket now: lines join every match to the one its winner plays next, winners are marked in green and losers fade out, seeds and countries get small badges, matches not played yet show as empty outlines, your matches are outlined in gold (your next one glows), and the champion gets a gold trophy card at the end. Big draws scroll sideways instead of squashing the names.
+
 ## 3.12.11: All-out Attacker (17 Nov 2026)
 
 - The Attacker CPU style is much more aggressive: it smashes and jump-smashes far more often, kills anything loose at the net, rarely clears, follows its smash further in, and drives smashes back more often instead of blocking them.

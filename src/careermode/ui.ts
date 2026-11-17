@@ -230,10 +230,11 @@ export function initCareer(d: CareerDeps) {
     const seed = (id: string) => (plan.seeds.includes(id) ? `<span class="d-seed" title="Seed ${plan.seeds.indexOf(id) + 1}">${plan.seeds.indexOf(id) + 1}</span>` : '');
     const nm = (id: string) => (id === YOU ? e(s!.name) : id === 'bye' ? 'Bye' : e(characterById(id).name));
     const who = (id: string) => (id === YOU ? '<small class="d-cc you">You</small>' : id === 'bye' ? '' : `<small class="d-cc">${e(characterById(id).country)}</small>`);
-    const cols = order.map((rd, i) => {
-      const alive = rounds[i];
+    /** One column: round i, only matches [from, to). */
+    const column = (i: number, from: number, to: number, first: boolean) => {
+      const rd = order[i], alive = rounds[i];
       const matches = [];
-      for (let m = 0; m < alive.length; m += 2) {
+      for (let m = from * 2; m < to * 2; m += 2) {
         const a = alive[m], b = alive[m + 1];
         const shown = i <= known;
         const winner = i < known ? rounds[i + 1][m / 2] : null;
@@ -245,12 +246,28 @@ export function initCareer(d: CareerDeps) {
       // 3.12.12: matches in pairs, so a bracket line can join each pair to the match they feed.
       const grouped = [];
       for (let k = 0; k < matches.length; k += 2) grouped.push(`<div class="d-pair${matches.length === 1 ? ' solo' : ''}">${matches.slice(k, k + 2).join('')}</div>`);
-      return `<div class="d-col${i === 0 ? ' first' : ''}"><h4>${ROUND_LABEL[rd]}</h4><div class="d-ms">${grouped.join('')}</div></div>`;
-    });
+      return `<div class="d-col${first ? ' first' : ''}"><h4>${ROUND_LABEL[rd]}</h4><div class="d-ms">${grouped.join('')}</div></div>`;
+    };
     const champ = known >= order.length ? rounds[order.length][0] : null;
-    cols.push(`<div class="d-col d-win"><h4>Champion</h4><div class="d-ms"><div class="d-pair solo"><div class="d-m d-champ${champ === YOU ? ' mine' : ''}${champ ? '' : ' empty'}"><span class="d-trophy">🏆</span><div class="d-p won${champ === YOU ? ' me' : ''}">${champ ? `<span class="d-n">${nm(champ)}</span>${who(champ)}` : '<span class="tbd">To be decided</span>'}</div></div></div></div></div>`);
-    return `<div class="d-draw" role="table" aria-label="${e(x.name)} draw" style="--rounds:${cols.length}">${cols.join('')}</div>
-      <p class="c-lead small">${known === 0 ? 'The first-round pairings. Seeds (top 4 in the world ranking) are marked with their number.' : 'Winners in bold. Your matches show your scores; other results are the winner only.'}</p>`;
+    const champCol = `<div class="d-col d-win"><h4>Champion</h4><div class="d-ms"><div class="d-pair solo"><div class="d-m d-champ${champ === YOU ? ' mine' : ''}${champ ? '' : ' empty'}"><span class="d-trophy">🏆</span><div class="d-p won${champ === YOU ? ' me' : ''}">${champ ? `<span class="d-n">${nm(champ)}</span>${who(champ)}` : '<span class="tbd">To be decided</span>'}</div></div></div></div></div>`;
+    const grid = (cols: string[]) => `<div class="d-draw" role="table" aria-label="${e(x.name)} draw" style="--rounds:${cols.length}">${cols.join('')}</div>`;
+    const note = `<p class="c-lead small">${known === 0 ? 'The first-round pairings. Seeds (top 4 in the world ranking) are marked with their number.' : 'Winners in green. Your matches show your scores; other results are the winner only.'}</p>`;
+    // 3.12.13: draws of 32 or more split into four quarters (up to the quarter-finals), then a draw from the quarter-finals on, so each fits on one screen.
+    const qf = order.indexOf('QF' as Round);
+    if (qf < 2) return grid([...order.map((_, i) => column(i, 0, rounds[i].length / 2, i === 0)), champCol]) + note;
+    const views: { label: string; html: string; has: boolean }[] = [];
+    for (let q = 0; q < 4; q++) {
+      const cols = [];
+      for (let i = 0; i < qf; i++) { const n = rounds[i].length / 2 / 4; cols.push(column(i, q * n, (q + 1) * n, i === 0)); }
+      const seg = rounds[0].slice(q * rounds[0].length / 4, (q + 1) * rounds[0].length / 4);
+      views.push({ label: `Quarter ${q + 1}`, html: grid(cols), has: seg.includes(YOU) });
+    }
+    views.push({ label: 'Quarter-finals on', html: grid([...order.slice(qf).map((_, j) => column(qf + j, 0, rounds[qf + j].length / 2, true && j === 0)), champCol]), has: false });
+    // Open on your quarter while it's still being played; on the last stage once the quarter-finals start.
+    let open = known >= qf ? 4 : views.findIndex((v) => v.has);
+    if (open < 0) open = 0;
+    return `<div class="d-tabs" role="tablist">${views.map((v, k) => `<button type="button" role="tab" data-drawsec="${k}" class="${k === open ? 'on' : ''}">${v.label}${v.has ? ' <small>You</small>' : ''}</button>`).join('')}</div>
+      ${views.map((v, k) => `<div class="d-view" data-drawview="${k}"${k === open ? '' : ' hidden'}>${v.html}</div>`).join('')}${note}`;
   }
 
   /** Every event this season: dates, level, draw, host, and whether you can play it. */
@@ -741,6 +758,13 @@ export function initCareer(d: CareerDeps) {
       return;
     }
     if (busy) return;
+    const sec = at('[data-drawsec]');
+    if (sec) {
+      const box = sec.closest('.c-card, section, #careerBody') ?? body;
+      box.querySelectorAll<HTMLElement>('[data-drawsec]').forEach((b) => b.classList.toggle('on', b === sec));
+      box.querySelectorAll<HTMLElement>('[data-drawview]').forEach((v) => { v.hidden = v.dataset.drawview !== sec.dataset.drawsec; });
+      return;
+    }
     const dr = at('[data-draw]')?.dataset.draw;
     if (dr) { renderDraw(dr); return; }
     const det = at('[data-detail]')?.dataset.detail;

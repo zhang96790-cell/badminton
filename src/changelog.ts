@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.13',
+    title: 'The draw in quarters',
+    date: '17 Nov 2026',
+    changes: [
+      "Big draws fit on one screen now: a draw of 32 or more players is split into four quarters, each played down to its quarter-finalist, plus a separate draw from the quarter-finals to the champion. Tabs above the draw switch between them, and it opens on the quarter you're in (or on the quarter-finals once they've started).",
+    ],
+  },
+  {
     version: '3.12.12',
     title: 'A better-looking draw',
     date: '17 Nov 2026',

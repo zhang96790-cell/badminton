@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.6',
+    title: 'Win it, recruit for free',
+    date: '17 Nov 2026',
+    changes: [
+      "What a recruit costs now depends on where you finished: win the event and any player you recruit is free, finish 2nd and they're half price, finish 3rd and you pay the full price. Common players are always free.",
+    ],
+  },
+  {
     version: '3.12.5',
     title: 'Jump smash from the back',
     date: '17 Nov 2026',

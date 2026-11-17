@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.6: Win it, recruit for free (17 Nov 2026)
+
+- What a recruit costs now depends on where you finished: win the event and any player you recruit is free, finish 2nd and they're half price, finish 3rd and you pay the full price. Common players are always free.
+
 ## 3.12.5: Jump smash from the back (17 Nov 2026)
 
 - From the back of the court a jump smash keeps most of its pace, while a standing smash is still slowed down. A jump smash is worth the extra effort, but you still have to recover in time for the reply.

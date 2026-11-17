@@ -74,6 +74,8 @@ export const CAREER_CFG = {
   /** 3rd place: the semi-final prize plus this share. */
   bronzeBonus: 0.15,
   // 3.12.1: you earned the offer, so Commons are free and the rest cost far less (was 600 / 1800 / 4000 / 8000 / 15000 / 25000 / 40000 / 60000).
+  /** 3.12.6: what you pay of recruitCost by where you finished: win it and they're free, 2nd half price, 3rd full price. */
+  recruitPlaceShare: { 1: 0, 2: 0.5, 3: 1 } as Record<1 | 2 | 3, number>,
   recruitCost: { common: 0, rare: 400, super_rare: 900, epic: 1800, elite: 3500, mythic: 6000, legendary: 10000, champion: 15000 } as Record<Rarity, number>,
   rerollCost: 150,
 

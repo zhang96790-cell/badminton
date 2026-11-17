@@ -478,8 +478,8 @@ export function initCareer(d: CareerDeps) {
       if (!s!.pendingRecruitOffer) { render(); return; }
     }
     const o = s!.pendingRecruitOffer!;
-    body.innerHTML = `<div class="c-card"><h3>Recruit a player</h3><p class="sub">${o.place === 3 ? 'Third place!' : o.place === 2 ? 'Runner-up!' : 'You won!'} Three players from that draw want to join you${o.place && o.place > 1 ? ' (win the event for better odds of rarer players)' : ''}. Recruiting one adds them to your account for every mode. The offer lasts until you enter your next tournament.</p>
-      <div class="c-offer">${o.candidates.map((id) => { const c = characterById(id); const price = CFG.recruitCost[c.rarity]; return `<div class="c-recruit">${card(c)}<canvas class="pentagon" data-pent="${id}"></canvas>
+    body.innerHTML = `<div class="c-card"><h3>Recruit a player</h3><p class="sub">${o.place === 3 ? 'Third place!' : o.place === 2 ? 'Runner-up!' : 'You won!'} Three players from that draw want to join you${o.place === 2 ? ' at half price' : o.place === 3 ? '' : ' for free'}${o.place && o.place > 1 ? ' (win the event for better odds of rarer players, and free recruits)' : ''}. Recruiting one adds them to your account for every mode. The offer lasts until you enter your next tournament.</p>
+      <div class="c-offer">${o.candidates.map((id) => { const c = characterById(id); const price = recruitPrice(c.rarity, o.place); return `<div class="c-recruit">${card(c)}<canvas class="pentagon" data-pent="${id}"></canvas>
         ${c.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('')}
         <button class="primary" data-recruit="${id}" ${s!.money < price ? 'disabled' : ''}>${price ? `Recruit for ${money(price)}` : 'Recruit for free'}</button></div>`; }).join('')}</div>
       <div class="c-actions">${o.rerolled ? '' : `<button data-reroll ${s!.money < CFG.rerollCost ? 'disabled' : ''}>New candidates (${money(CFG.rerollCost)})</button>`}<button data-offerskip>Not now</button><button data-offerlater>Decide later</button></div></div>`;
@@ -487,6 +487,8 @@ export function initCareer(d: CareerDeps) {
     body.querySelectorAll<HTMLCanvasElement>('[data-pent]').forEach((cv) => { const c = characterById(cv.dataset.pent!); drawPentagon(cv, c.base_stats ?? c.stats, RARITY[c.rarity].color); });
   }
   let offerLater = false;
+  /** 3.12.6: the rarity's price times your place's share (1st free, 2nd half, 3rd full). */
+  const recruitPrice = (r: keyof typeof CFG.recruitCost, place?: 1 | 2 | 3) => Math.round(CFG.recruitCost[r] * CFG.recruitPlaceShare[place ?? 1]);
 
   // ── Daily challenge ──
   let daily: import('../account').DailyInfo | null = null;
@@ -786,7 +788,7 @@ export function initCareer(d: CareerDeps) {
     const rc = at('[data-recruit]')?.dataset.recruit;
     const o = s.pendingRecruitOffer;
     if (rc && o) {
-      const c = characterById(rc), price = CFG.recruitCost[c.rarity];
+      const c = characterById(rc), price = recruitPrice(c.rarity, o.place);
       if (s.money < price) return;
       const m = await d.loadAccount();
       const got = await m.offerChoose(o.id, rc);

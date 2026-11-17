@@ -308,7 +308,7 @@ export function initCareer(d: CareerDeps) {
       return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
     }).join('');
     const lk = eventLook(x.id, x.tier);
-    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.presenter ? ` presented by ${e(lk.presenter.name)}` : ''} · ${roundName(nm)} · ${nm.games === 1 ? 'one game' : 'best of 3'} to 15 · ${e(lk.shuttle.name)} shuttles</p>
+    body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.poweredBy ? `, powered by ${e(lk.poweredBy.name)}` : ''} · ${roundName(nm)} · ${nm.games === 1 ? 'one game' : 'best of 3'} to 15 · ${e(lk.shuttle.name)} shuttles</p>
       <div class="c-pre-grid">
         <div class="c-pre-who">
           <h3 class="c-title">${e(o.name)}</h3>

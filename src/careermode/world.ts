@@ -1,6 +1,7 @@
 // The career world: calendar, draws, NPC results and the world ranking. Nothing here is saved: it's all worked
 // out from the save's seed and the player's own results, so it comes out the same on every reload.
 import tournamentsData from '../../data/tournaments.json';
+import { sponsoredName } from '../brands';
 import regionsData from '../../data/country_regions.json';
 import yearsData from '../../data/calendar_years.json';
 import { RARITY, ROSTER, compareVersions, type Character, type Rarity } from '../../shared/characters';
@@ -48,7 +49,7 @@ export function calendar(appVersion: string, year = 2027): TourEvent[] {
   for (const ev of r.add ?? []) list.push({ order: 99, sponsor: null, released_in: '3.0', enabled: true, notes: '', city: null, week: null, draw_size: 32, prize_pool_usd: 0, tier: 'S100', host_country: 'XXX', name: ev.id, ...ev } as RawEvent);
   list = list.filter((e) => !(r.remove ?? []).includes(e.id) && e.enabled && compareVersions(e.released_in, appVersion) <= 0);
   const gap = Math.max(1, Math.floor(50 / Math.max(1, list.length)));
-  const out = list.map((e, i) => ({ ...e, week: e.week ?? Math.min(52, 2 + i * gap) })).sort((a, b) => a.week - b.week || a.order - b.order);
+  const out = list.map((e, i) => ({ ...e, name: sponsoredName(e.id, e.name), week: e.week ?? Math.min(52, 2 + i * gap) })).sort((a, b) => a.week - b.week || a.order - b.order);
   calCache.set(key, out);
   return out;
 }

@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.13: Way more companies on the boards (17 Nov 2026)
+
+- The boards round the court now carry around 50 companies of every kind: airlines, banks, phones, cars, energy and sports drinks, water, food, delivery, hotels, watches and more. Some are made up, some sound a lot like brands you know (Leeming, Samsong, Toyoka, Red Bison, Pocara Sweat). Only a few are badminton brands.
+- Solar Sparks and Ventra are now just on the two big boards behind the far baseline, not all down the sides.
+- Tournaments have title sponsors: the Ventra China Open, the Solar Sparks Singapore Open, the Petronex Malaysia Open, the Yonax All England Open, the Samsong Korea Open and more. Each tournament is also powered by a badminton brand, shown on the boards, the scoreboard and the pre-match screen.
+
 ## 3.12.14: Forfeit a match (17 Nov 2026)
 
 - You can forfeit a match: pause with Esc, then press X. The match ends straight away and counts as a loss (in career you're out of the tournament, and you keep what the rounds you won paid). Online, Q on the pause screen still forfeits as before.

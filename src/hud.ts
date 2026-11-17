@@ -308,8 +308,8 @@ export class Hud {
     const m = game.match, parts = game.setup.label ? game.setup.label.split(' · ') : [];
     const title = (parts[0] ?? game.opponentLabel).toUpperCase();
     const games = m.gamesToWin > 1 ? `Game ${m.gameNumber} of 3` : 'One game';
-    const pres = game.setup.look?.presenter;
-    return { title, round: parts[1] ?? '', format: `${games}  ·  to ${m.format.pointsToWin}`, presenter: pres ? `presented by ${pres.name}` : '' };
+    const pres = game.setup.look?.poweredBy;
+    return { title, round: parts[1] ?? '', format: `${games}  ·  to ${m.format.pointsToWin}`, presenter: pres ? `powered by ${pres.name}` : '' };
   }
 
   private sideName(game: Game, i: 0 | 1) {

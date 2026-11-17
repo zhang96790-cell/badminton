@@ -231,26 +231,19 @@ export class Renderer {
         ctx.font = `800 ${Math.max(6, Math.min(0.26, 4.4 / Math.max(8, title.length)) * q.s)}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText(title.toUpperCase(), q.x, q.y + 0.06 * q.s);
-        const pr = this.look.presenter;
+        const pr = this.look.poweredBy;
         if (pr) {
           ctx.fillStyle = 'rgba(255,255,255,0.7)';
           ctx.font = `700 ${Math.max(5, 0.1 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
-          ctx.fillText(`PRESENTED BY ${pr.name.toUpperCase()}`, q.x, q.y + 0.24 * q.s);
+          ctx.fillText(`POWERED BY ${pr.name.toUpperCase()}`, q.x, q.y + 0.24 * q.s);
         }
       }
     }
     for (const s of [-1, 1]) {
       for (let i = 0; i < 6; i++) {
         const y0 = -9 + i * 3.05;
-        // Read from the court: left-hand boards run near to far, right-hand ones far to near.
-        const ad = i === 2 ? (s < 0 ? ads.ventra : ads.solar) : i === 4 ? (s < 0 ? ads.solar : ads.ventra) : undefined;
-        if (ad) {
-          const [ya, yb] = s < 0 ? [y0, y0 + 3.05] : [y0 + 3.05, y0];
-          this.adBoard(ad, v3(s * 6.6, ya, 0.85), v3(s * 6.6, yb, 0.85), v3(s * 6.6, ya, 0));
-          continue;
-        }
-        // The rest carry the event's sponsors.
-        const b = this.look.boards[(i + (s > 0 ? 2 : 0)) % this.look.boards.length];
+        // Read from the court: left-hand boards run near to far, right-hand ones far to near. All companies.
+        const b = this.look.boards[(4 + i + (s > 0 ? 6 : 0)) % this.look.boards.length];
         const [ya, yb] = s < 0 ? [y0, y0 + 3.05] : [y0 + 3.05, y0];
         this.adBoard(brandBanner(b), v3(s * 6.6, ya, 0.85), v3(s * 6.6, yb, 0.85), v3(s * 6.6, ya, 0));
       }

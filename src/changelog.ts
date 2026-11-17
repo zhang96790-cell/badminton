@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.13',
+    title: 'Way more companies on the boards',
+    date: '17 Nov 2026',
+    changes: [
+      'The boards round the court now carry around 50 companies of every kind: airlines, banks, phones, cars, energy and sports drinks, water, food, delivery, hotels, watches and more. Some are made up, some sound a lot like brands you know (Leeming, Samsong, Toyoka, Red Bison, Pocara Sweat). Only a few are badminton brands.',
+      'Solar Sparks and Ventra are now just on the two big boards behind the far baseline, not all down the sides.',
+      'Tournaments have title sponsors: the Ventra China Open, the Solar Sparks Singapore Open, the Petronex Malaysia Open, the Yonax All England Open, the Samsong Korea Open and more. Each tournament is also powered by a badminton brand, shown on the boards, the scoreboard and the pre-match screen.',
+    ],
+  },
+  {
     version: '3.12.14',
     title: 'Forfeit a match',
     date: '17 Nov 2026',

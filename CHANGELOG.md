@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.9: Quicker CPU swings (17 Nov 2026)
+
+- CPUs recover from a swing much faster: after a hit they can swing again in under a fifth of a second instead of nearly half a second, and a missed swing barely holds them up. Your own swing recovery is unchanged.
+
 ## 3.12.8: Fewer shots out (17 Nov 2026)
 
 - Shots are a bit more accurate than in 3.12.3, and far fewer land out. You still can't put the shuttle on an exact spot, but aim error that would carry a shot over the side or back line only carries it part of the way, so most near-misses now land just inside or just out instead of well out. Smashes from the back stray a little less too.

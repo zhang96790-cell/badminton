@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.9',
+    title: 'Quicker CPU swings',
+    date: '17 Nov 2026',
+    changes: [
+      "CPUs recover from a swing much faster: after a hit they can swing again in under a fifth of a second instead of nearly half a second, and a missed swing barely holds them up. Your own swing recovery is unchanged.",
+    ],
+  },
+  {
     version: '3.12.8',
     title: 'Fewer shots out',
     date: '17 Nov 2026',

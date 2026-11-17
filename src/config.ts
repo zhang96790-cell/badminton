@@ -107,6 +107,8 @@ export const SWING = {
    */
   recovery: 0.25,
   hitRecovery: 0.45,
+  /** 3.12.9: CPUs recover from a swing this much faster (both times above × this). People keep the full times. */
+  cpuRecovery: 0.4,
   /** Mouse mode: hold time to reach full power. */
   chargeTime: 0.5,
   /** Keyboard fast key: hold time to reach its extra-power bonus. */

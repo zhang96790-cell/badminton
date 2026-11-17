@@ -109,6 +109,8 @@ export class Player implements PlayerView {
   eff: Effective = NEUTRAL;
   /** 3.10.2: a person (their extra reach shrinks against quick shots). */
   humanReach = false;
+  /** 3.12.9: swing recovery multiplier (CPUs recover faster). */
+  recoverMult = 1;
   /** 3.7: how tired you are this game (shots played, eased between points). */
   tire = 0;
   /** 3.7: the shuttle coming at you is the other side's smash (Defence reaches further). */
@@ -268,7 +270,7 @@ export class Player implements PlayerView {
       this.swing.t += dt;
       if (this.swing.t > SWING.window) {
         this.swing = null;
-        this.recover = SWING.recovery;
+        this.recover = SWING.recovery * this.recoverMult;
         this.anim = { kind: 'whiff', t: 0, point: null };
         result = 'whiff';
       }
@@ -350,7 +352,7 @@ export class Player implements PlayerView {
 
   onHit(point: V3, serve = false) {
     this.swing = null;
-    this.recover = SWING.hitRecovery * this.eff.swingWait;
+    this.recover = SWING.hitRecovery * this.eff.swingWait * this.recoverMult;
     this.anim = { kind: serve ? 'serve' : 'hit', t: 0, point: { ...point } };
     const dx = point.x - this.pos.x, dy = point.y - this.pos.y, d = Math.hypot(dx, dy);
     if (point.z < PLAYER.lungeMaxZ && d > 0.75 && !this.airborne) {

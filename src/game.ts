@@ -313,7 +313,10 @@ export class Game {
           : new AIController(this, this.players[i], settings.opponent as Level, i === 2 ? settings.partnerStyle : settings.style);
       }
     }
-    this.players.forEach((p, i) => { if (this.isHuman(i)) { p.extraReach = PLAYER.humanExtraReach; p.humanReach = true; } });
+    this.players.forEach((p, i) => {
+      if (this.isHuman(i)) { p.extraReach = PLAYER.humanExtraReach; p.humanReach = true; }
+      if (this.controllers[i] instanceof AIController) p.recoverMult = SWING.cpuRecovery;
+    });
     // Characters: you, and a CPU opponent if one was picked. Neutral stats leave everything as it was.
     const statMode = this.statMode = usesCareerStats(this.setup.mode) ? 'career' : 'ranked';
     this.statChars = [characterById(this.setup.player.characterId), this.setup.opponent.characterId && !online ? characterById(this.setup.opponent.characterId) : null];

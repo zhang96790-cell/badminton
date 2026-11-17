@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.4',
+    title: 'Maintenance notice',
+    date: '17 Nov 2026',
+    changes: [
+      "When the game is down for maintenance you now see a notice saying so, instead of a broken page. The page checks every minute and opens again by itself when the game is back.",
+    ],
+  },
+  {
     version: '3.12.3',
     title: 'Less pinpoint shots',
     date: '17 Nov 2026',

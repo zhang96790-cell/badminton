@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.4: Maintenance notice (17 Nov 2026)
+
+- When the game is down for maintenance you now see a notice saying so, instead of a broken page. The page checks every minute and opens again by itself when the game is back.
+
 ## 3.12.3: Less pinpoint shots (17 Nov 2026)
 
 - Every shot is a bit less accurate, for players and CPUs alike: about 30% more aim error on every shot, a little more variation in how high net shots and drops clear the tape, and a little more variation in pace. Good timing still makes shots much more accurate, and the Casual aim setting still halves the error.

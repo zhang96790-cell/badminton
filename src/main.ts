@@ -32,6 +32,7 @@ import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, sta
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
+import { startGate } from './gate';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -231,6 +232,8 @@ renderBinds();
 type AccountModule = typeof import('./account');
 let accountModule: Promise<AccountModule> | null = null;
 const loadAccount = () => (accountModule ??= import('./account'));
+// 3.13: maintenance and blocked players (checked on start, every minute, and after logging in or out).
+const recheckGate = startGate(loadAccount);
 const accountModal = document.getElementById('accountModal')!;
 const acForm = document.getElementById('acForm') as HTMLFormElement;
 const acUser = document.getElementById('acUser') as HTMLInputElement, acPass = document.getElementById('acPass') as HTMLInputElement;
@@ -369,6 +372,7 @@ void loadAccount().then((m) => m.onLoggedOut(() => {
 /** Logged in: use the settings saved to the account, or save this browser's settings to a new one. */
 async function afterLogin(a: { id: string; username: string }, isNew: boolean) {
   account = a;
+  void recheckGate();
   syncAccountUi();
   void refreshStats();
   startPresence();
@@ -770,7 +774,36 @@ async function renderAdmin() {
   // 3.5.2: every account (falls back to the 30 most recent if admin_players isn't set up yet).
   adminRows = (await m.adminPlayers()) ?? o.recent.map((p) => ({ ...p, owned: 0, career_player: null }));
   drawAdminList();
+  void drawGameSwitch();
 }
+
+/** 3.13: the game switch: maintenance for everyone, and the blocked players list. */
+async function drawGameSwitch() {
+  const m = await loadAccount();
+  const [st, blocked] = await Promise.all([m.gameStatus(null), m.adminBlocked()]);
+  const box = document.getElementById('adminSwitch')!;
+  if (!st || !blocked) { box.innerHTML = '<p class="sub">The game switch isn’t set up yet: run supabase/3.13-game-switch.sql in the Supabase SQL Editor.</p>'; return; }
+  box.innerHTML = `
+    <div class="gs-row"><span class="grow"><b>Maintenance</b> <span class="gs-state ${st.maintenance ? 'on' : ''}">${st.maintenance ? 'ON: the game is shut for everyone but admins' : 'Off: the game is open'}</span></span>
+      <button type="button" class="${st.maintenance ? 'primary' : 'edit'}" data-gsmaint="${st.maintenance ? 'off' : 'on'}">${st.maintenance ? 'Open the game' : 'Shut the game'}</button></div>
+    <input type="text" id="gsMessage" class="admin-search" maxlength="200" placeholder="Message for players (optional), e.g. Back at 6pm" value="${hubEsc(st.message ?? '')}">
+    <h4>Blocked players (${blocked.length})</h4>
+    ${blocked.length ? `<ol class="hub-list">${blocked.map((b) => `<li><span class="grow">${hubEsc(b.username)}<span class="sub">Blocked ${adminDay(b.at)}${b.reason ? ` · ${hubEsc(b.reason)}` : ''}</span></span><button type="button" class="edit" data-gsunblock="${hubEsc(b.username)}">Unblock</button></li>`).join('')}</ol>` : '<p class="sub">No one is blocked. Open a player below to block them.</p>'}`;
+}
+document.getElementById('adminSwitch')!.addEventListener('click', async (e) => {
+  const t = e.target as HTMLElement, m = await loadAccount();
+  const mt = t.closest<HTMLElement>('[data-gsmaint]')?.dataset.gsmaint;
+  if (mt) {
+    const on = mt === 'on';
+    if (on && !confirm('Shut the game for everyone except admins? Players in a match will be stopped within a minute.')) return;
+    const msg = (document.getElementById('gsMessage') as HTMLInputElement).value;
+    if (!(await m.adminSetMaintenance(on, msg))) { toast('Couldn’t change it', 'Is supabase/3.13-game-switch.sql set up?'); return; }
+    toast(on ? 'The game is shut' : 'The game is open', on ? 'Players see the maintenance notice within a minute.' : 'Players get back in within a minute.');
+    void drawGameSwitch(); void recheckGate();
+  }
+  const ub = t.closest<HTMLElement>('[data-gsunblock]')?.dataset.gsunblock;
+  if (ub) { await m.adminBlock(ub, false); toast(`${ub} unblocked`, 'They can play again within a minute.'); void drawGameSwitch(); }
+});
 
 let adminRows: import('./account').AdminListPlayer[] = [];
 const adminNum = (v: number) => Number(v ?? 0).toLocaleString('en-GB');
@@ -820,9 +853,21 @@ async function showAdminPlayer(username: string) {
   box.innerHTML = `
     <div class="ad-head"><span>${hubEsc(d.username)} <span class="sub">rating ${d.rating}${d.peak_rating ? ` (peak ${d.peak_rating})` : ''} · ranked ${d.wins}–${d.losses}</span></span><button type="button" class="edit" data-adclose>Close</button></div>
     <p class="sub">Joined ${adminDay(d.created_at)} · seen ${adminAgo(d.last_seen)}</p>
+    <div class="gs-row"><span class="grow sub">Block this player from the whole game (they see a notice instead).</span><input type="text" id="gsReason" class="admin-search gs-reason" maxlength="200" placeholder="Reason (optional)"><button type="button" class="edit" data-adblock>Block</button><button type="button" class="edit" data-adunblock>Unblock</button></div>
     <h4>Players owned (${d.owned.length})</h4>${owned}
     <h4>Career</h4>${career}
     ${stats}`;
+  box.querySelector('[data-adblock]')!.addEventListener('click', async () => {
+    if (!confirm(`Block ${d.username} from the game?`)) return;
+    const ok = await m.adminBlock(d.username, true, (document.getElementById('gsReason') as HTMLInputElement).value);
+    toast(ok ? `${d.username} is blocked` : 'Couldn’t block them', ok ? 'They see the notice within a minute.' : 'Is supabase/3.13-game-switch.sql set up?');
+    void drawGameSwitch();
+  });
+  box.querySelector('[data-adunblock]')!.addEventListener('click', async () => {
+    const ok = await m.adminBlock(d.username, false);
+    toast(ok ? `${d.username} unblocked` : 'Couldn’t unblock them', ok ? 'They can play again within a minute.' : 'Is supabase/3.13-game-switch.sql set up?');
+    void drawGameSwitch();
+  });
   box.querySelector('[data-adclose]')!.addEventListener('click', () => { box.hidden = true; document.querySelectorAll('#adminList li.sel').forEach((l) => l.classList.remove('sel')); });
   box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }

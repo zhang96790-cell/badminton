@@ -156,6 +156,14 @@ export interface AdminDetail {
 }
 export const adminPlayer = (username: string) => rpc<AdminDetail | null>('admin_player', { p_username: username });
 
+// ── 3.13: the game switch (maintenance for everyone, or blocking single players) ──
+export interface GameStatus { maintenance: boolean; message: string | null; admin: boolean; blocked: boolean; reason: string | null }
+/** null if the database can't be reached or isn't set up (the game then stays open). */
+export const gameStatus = (was: string | null) => rpc<GameStatus>('game_status', { p_was: was });
+export const adminSetMaintenance = async (on: boolean, message: string) => (await supabase.rpc('admin_set_maintenance', { p_on: on, p_message: message })).error === null;
+export const adminBlock = (username: string, block: boolean, reason = '') => rpc<boolean>('admin_block', { p_username: username, p_block: block, p_reason: reason });
+export const adminBlocked = () => rpc<{ username: string; reason: string | null; at: string }[]>('admin_blocked');
+
 // ── 2.7: characters, seasons, ranks ───────────────────────────────────────────
 /** Which characters you can use: ones you've earned, plus this season's free ones, plus unlock picks waiting. */
 export interface MyCharacters { owned: string[]; featured: string[]; pending: number }

@@ -1345,3 +1345,18 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 @keyframes pd-bob { 50% { transform: translateY(-6px) rotate(-6deg); } }
 @keyframes pd-fall { 0% { opacity: 1; transform: translateY(0) rotate(var(--r)); } 100% { opacity: 1; transform: translateY(105vh) rotate(calc(var(--r) + 540deg)); } }
 @media (prefers-reduced-motion: reduce) { #podium *, #podium { animation-duration: 0.01s !important; animation-delay: 0s !important; } #podium .pd-confetti { display: none; } }
+
+/* 3.13: game switch */
+#gate { position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 50% 30%, var(--board-lit), var(--board-deep) 70%); }
+#gate .gate-card { max-width: 560px; text-align: center; color: var(--ink); }
+#gate .gate-kicker { margin: 0; font: 700 13px/1 var(--text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
+#gate h1 { margin: 12px 0 14px; font: 800 clamp(40px, 7vh, 64px)/1 var(--display); text-transform: uppercase; }
+#gate p { margin: 0 0 10px; font: 500 19px/1.4 var(--text); color: var(--ink-2); }
+#gate .gate-sub { font-size: 15px; color: var(--ink-3); }
+#gateBanner { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 19000; padding: 6px 14px; border-radius: 0 0 6px 6px; background: var(--amber); color: var(--amber-ink); font: 700 13px var(--text); }
+.admin-switch { display: grid; gap: 10px; margin-bottom: 18px; }
+.gs-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gs-row .grow { flex: 1; min-width: 200px; }
+.gs-state { margin-left: 8px; color: var(--ink-3); }
+.gs-state.on { color: var(--amber-hi); font-weight: 700; }
+.gs-reason { max-width: 220px; margin: 0; }

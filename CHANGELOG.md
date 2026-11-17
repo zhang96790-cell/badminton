@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.14: Forfeit a match (17 Nov 2026)
+
+- You can forfeit a match: pause with Esc, then press X. The match ends straight away and counts as a loss (in career you're out of the tournament, and you keep what the rounds you won paid). Online, Q on the pause screen still forfeits as before.
+
 ## 3.12.13: The draw in quarters (17 Nov 2026)
 
 - Big draws fit on one screen now: a draw of 32 or more players is split into four quarters, each played down to its quarter-finalist, plus a separate draw from the quarter-finals to the champion. Tabs above the draw switch between them, and it opens on the quarter you're in (or on the quarter-finals once they've started).

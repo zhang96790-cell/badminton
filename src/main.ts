@@ -2007,6 +2007,11 @@ function frame(now: number) {
       if (input.tapped(UI_KEYS.saveHighlight)) keepHighlight(game);
     }
     if (game?.online) { /* handled in onlineKeys */ }
+    else if (game?.paused && !game.session && game.state !== 'matchOver' && input.tapped(['KeyX'])) {
+      // 3.12.14: forfeit: the match ends as a loss (in career, you're out of the event).
+      if (careerDone) { if (confirm('Forfeit this match? It counts as a loss, and you’re out of the tournament.')) endCareerMatch(true); }
+      else if (confirm('Forfeit this match? It counts as a loss.')) game.retire(0);
+    }
     else if (game?.paused && input.tapped(['KeyQ'])) {
       if (!careerDone) showMenu();
       else if (careerLeave) leaveCareerMatch();

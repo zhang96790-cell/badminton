@@ -1815,6 +1815,9 @@ export class Game {
   /** Online: seconds until the server may serve (0 once they can). */
   get serveCountdown(): number { return this.state === 'serve' ? Math.max(0, this.timer) : 0; }
 
+  /** 3.12.14: you give up the match from the pause screen (offline): it counts as a loss. */
+  retire(loser: 0 | 1 = 0) { this.paused = false; this.winByForfeit(loser); }
+
   /** Someone left or gave up: their team retires (loser = 1, the other team, or 0, yours). */
   private winByForfeit(loser: 0 | 1 = 1) {
     if (this.state === 'matchOver') return;

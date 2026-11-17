@@ -179,7 +179,7 @@ export class Hud {
           ? ['Connection lost', 'Reconnecting… your place is kept for 40 seconds  ·  Q to leave']
           : [`${gone} disconnected`, 'Waiting up to 40 seconds for them to come back. If they don’t, their side retires  ·  Q to leave']
         : !game.online
-          ? ['Paused', game.setup.mode === 'career' ? 'Esc to resume  ·  Q to save and leave (you carry on from this score next time)' : 'Esc to resume  ·  Q to quit to menu']
+          ? ['Paused', game.session ? 'Esc to resume  ·  Q to quit to menu' : game.setup.mode === 'career' ? 'Esc to resume  ·  Q to save and leave (you carry on from this score next time)  ·  X to forfeit (a loss)' : 'Esc to resume  ·  Q to quit to menu  ·  X to forfeit (counts as a loss)']
           : game.pauseMine && game.pauseTheirs
             ? [`You and ${them} paused`, 'Esc when you’re ready  ·  play starts once everyone has resumed  ·  Q to forfeit']
             : game.pauseMine
@@ -679,7 +679,7 @@ export class Hud {
     // Two players on one keyboard are P1 and P2; otherwise player 0 is you.
     const shared = game.settings.opponent === 'human' && !game.online;
     const won = wi === 0 && !shared ? (game.doubles ? 'You and your partner win!' : 'You win!') : `${winner.name} win${game.doubles ? '' : 's'}`;
-    ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.teamName((1 - wi) as 0 | 1)} left)` : won, x + 28, y + 72);
+    ctx.fillText(game.forfeitWinner !== null ? `${won} (${game.teamName((1 - wi) as 0 | 1)} retired)` : won, x + 28, y + 72);
     // Rated (a quick match, or a friend room set to count): how your rating changed. It arrives from the
     // server a moment after the last point.
     const rated = !!game.online?.ranked || !!game.online?.friendRated;

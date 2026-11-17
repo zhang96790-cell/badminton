@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.14',
+    title: 'Forfeit a match',
+    date: '17 Nov 2026',
+    changes: [
+      "You can forfeit a match: pause with Esc, then press X. The match ends straight away and counts as a loss (in career you're out of the tournament, and you keep what the rounds you won paid). Online, Q on the pause screen still forfeits as before.",
+    ],
+  },
+  {
     version: '3.12.13',
     title: 'The draw in quarters',
     date: '17 Nov 2026',

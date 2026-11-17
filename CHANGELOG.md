@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.2: More attacking CPUs (17 Nov 2026)
+
+- Every CPU style except the Attacker attacks a bit more: they smash and kill more often and clear less. The defensive styles change the most: the Defender, Fast retriever and Defensive wall now smash much more when they get the chance, while still defending as well as before.
+
 ## 3.12.1: Cheaper recruits (17 Nov 2026)
 
 - Recruiting after a good tournament result costs far less: Common players are free, and the rest are about a quarter of the old price or less (Rare $400, Super Rare $900, Epic $1,800, Elite $3,500, Mythic $6,000, Legendary $10,000, Champion $15,000).

@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.2',
+    title: 'More attacking CPUs',
+    date: '17 Nov 2026',
+    changes: [
+      "Every CPU style except the Attacker attacks a bit more: they smash and kill more often and clear less. The defensive styles change the most: the Defender, Fast retriever and Defensive wall now smash much more when they get the chance, while still defending as well as before.",
+    ],
+  },
+  {
     version: '3.12.1',
     title: 'Cheaper recruits',
     date: '17 Nov 2026',

@@ -542,19 +542,20 @@ export const STYLES: Record<Style, {
   /** 3.7.3: against your smash, blocks short this many times more often (and lifts less): the counter-attack. */
   counter?: number;
 }> = {
-  allround: { label: 'All-rounder', smash: 1.1, drop: 1.05, clear: 1, net: 1.05, kill: 1.1, jump: 1.1, baseDepth: 3.5, margin: -0.02, speed: 1.04, serveShort: 1, steady: 0.8, reach: 0.05,
+  // 3.12.2: everyone but the Attacker smashes and kills more and clears less; the defensive styles most.
+  allround: { label: 'All-rounder', smash: 1.2, drop: 1.05, clear: 0.95, net: 1.05, kill: 1.2, jump: 1.1, baseDepth: 3.5, margin: -0.02, speed: 1.04, serveShort: 1, steady: 0.8, reach: 0.05,
     trait: 'No weak spots: a little quicker around the court and a little more precise than most, with every shot in its bag' },
   attacker: { label: 'Attacker', smash: 1.9, drop: 0.9, clear: 0.6, net: 0.8, kill: 1.4, jump: 2.0, baseDepth: 3.3, margin: -0.04, speed: 1, serveShort: 0.9, followUp: 0.6,
     trait: 'Jump-smashes whenever it can and follows its smash to the net for the kill, but takes risks near the lines' },
-  defender: { label: 'Defender', smash: 1.05, drop: 0.9, clear: 1.0, net: 0.95, kill: 1.0, jump: 0.75, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8, defReach: 0.04, defAim: 0.8,
+  defender: { label: 'Defender', smash: 1.3, drop: 0.95, clear: 0.85, net: 0.95, kill: 1.2, jump: 0.75, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8, defReach: 0.04, defAim: 0.8,
     trait: 'Gets more smashes back than anyone, and its lifts and blocks land deep and accurate' },
-  net: { label: 'Net player', smash: 1.05, drop: 1.5, clear: 0.8, net: 1.6, kill: 1.5, jump: 0.8, baseDepth: 3.0, margin: 0.05, speed: 1, serveShort: 1.2, rush: 0.1,
+  net: { label: 'Net player', smash: 1.2, drop: 1.5, clear: 0.8, net: 1.6, kill: 1.5, jump: 0.8, baseDepth: 3.0, margin: 0.05, speed: 1, serveShort: 1.2, rush: 0.1,
     trait: 'Rushes the net after every net shot and kills anything loose above the tape' },
-  deceptive: { label: 'Deceptive', smash: 1.1, drop: 1.7, clear: 0.9, net: 1.5, kill: 1.1, jump: 0.9, baseDepth: 3.4, margin: 0.05, speed: 1, serveShort: 1.1, deceive: 0.3,
+  deceptive: { label: 'Deceptive', smash: 1.2, drop: 1.7, clear: 0.85, net: 1.5, kill: 1.2, jump: 0.9, baseDepth: 3.4, margin: 0.05, speed: 1, serveShort: 1.1, deceive: 0.3,
     trait: 'Disguises about 1 in 3 drops, net shots and flicks: no landing marker at all, and you step the wrong way' },
-  retriever: { label: 'Fast retriever', smash: 1.0, drop: 0.95, clear: 0.95, net: 1.1, kill: 1.0, jump: 0.7, baseDepth: 3.6, margin: 0.12, speed: 1.06, serveShort: 0.9, reach: 0.08,
-    trait: 'Reaches shots no one else would and plays safe and high, attacking only when you give it a short one' },
-  wall: { label: 'Defensive wall', smash: 0.85, drop: 1.35, clear: 0.95, net: 1.25, kill: 1.0, jump: 0.5, baseDepth: 3.9, margin: 0.15, speed: 1.02, serveShort: 0.8, reach: 0.03, steady: 0.6, deepClears: true, counter: 2.2,
+  retriever: { label: 'Fast retriever', smash: 1.3, drop: 1.0, clear: 0.85, net: 1.1, kill: 1.2, jump: 0.7, baseDepth: 3.6, margin: 0.12, speed: 1.06, serveShort: 0.9, reach: 0.08,
+    trait: 'Reaches shots no one else would and mixes safe, high lifts with smashes whenever it gets the chance' },
+  wall: { label: 'Defensive wall', smash: 1.15, drop: 1.35, clear: 0.85, net: 1.25, kill: 1.2, jump: 0.5, baseDepth: 3.9, margin: 0.15, speed: 1.02, serveShort: 0.8, reach: 0.03, steady: 0.6, deepClears: true, counter: 2.2,
     trait: 'Soaks up your smashes, blocks them short to the net and counters with drops and net shots; its clears go to the back line' },
 };
 

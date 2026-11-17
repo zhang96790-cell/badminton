@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.14.1',
+    title: 'Club titles don’t count',
+    date: '17 Nov 2026',
+    changes: [
+      'Local club opens no longer count as titles: not in career mode, your stats, the Career titles leaderboard or player cards. Club wins already counted are taken off the next time you open career mode.',
+    ],
+  },
+  {
     version: '3.14',
     title: 'Weighted titles and player cards',
     date: '17 Nov 2026',

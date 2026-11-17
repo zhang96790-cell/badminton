@@ -297,7 +297,8 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
   s.history.push(res);
   if (ev.tier !== 'CLUB') s.currentLocation = ev.host_country;
   if (reached === 'W') {
-    s.titles++;
+    // Local club opens don't count as titles (3.14.1).
+    if (ev.tier !== 'CLUB') s.titles++;
     if (s.sponsor && ev.tier !== 'CLUB') book(s, `Title bonus: ${s.sponsor.name}`, s.sponsor.bonus);
   }
   // A final opens the next level up.

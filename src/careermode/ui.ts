@@ -105,9 +105,16 @@ export function initCareer(d: CareerDeps) {
     if (l.conflict) { await settleConflict(l.conflict); return; }
     if (s && repairCurrent(s, W(), d.appVersion)) await save();
     // 3.14: titles from before then get their tier on your account once (they already count as titles).
+    // 3.14.1: club opens aren't titles, so take any already counted off this career's total.
+    if (s) { const n = s.history.filter((h) => h.round === 'W' && h.tier !== 'CLUB').length; if (s.titles !== n) { s.titles = n; await save(); } }
+    // Club wins still go in as ct_club, only so the account can take them off its old title count.
     if (s && !s.titleTiersSynced) {
       const delta: Record<string, number> = {};
-      for (const h of s.history) { const t = h.round === 'W' ? titleTierOf(h.tier) : undefined; if (t) delta[t.key] = (delta[t.key] ?? 0) + 1; }
+      for (const h of s.history) {
+        if (h.round !== 'W') continue;
+        const key = h.tier === 'CLUB' ? 'ct_club' : titleTierOf(h.tier)?.key;
+        if (key) delta[key] = (delta[key] ?? 0) + 1;
+      }
       if (Object.keys(delta).length) d.saveStats(delta);
       s.titleTiersSynced = true;
       await save();
@@ -394,7 +401,7 @@ export function initCareer(d: CareerDeps) {
 
   function renderTrophies() {
     const h = s!.history;
-    const titles = h.filter((x) => x.round === 'W');
+    const titles = h.filter((x) => x.round === 'W' && x.tier !== 'CLUB');
     const byTier = new Map<string, number>();
     for (const t of titles) byTier.set(t.tier, (byTier.get(t.tier) ?? 0) + 1);
     const medals = h.map((x) => ({ x, m: medalOf(x) })).filter((y) => y.m);
@@ -487,7 +494,7 @@ export function initCareer(d: CareerDeps) {
     const endRank = myRank(s!, W(), absWeek(y, 52));
     head.innerHTML = `<p class="hero-kicker">Career</p><h2>${y} season</h2>`;
     body.innerHTML = `<div class="c-card"><h3>Your season</h3>
-      <p>${hs.length} event${hs.length === 1 ? '' : 's'} · ${hs.filter((h) => h.round === 'W').length} title${hs.filter((h) => h.round === 'W').length === 1 ? '' : 's'} · finished ${endRank ? `ranked ${endRank}` : 'unranked'}</p>
+      <p>${hs.length} event${hs.length === 1 ? '' : 's'} · ${hs.filter((h) => h.round === 'W' && h.tier !== 'CLUB').length} title${hs.filter((h) => h.round === 'W' && h.tier !== 'CLUB').length === 1 ? '' : 's'} · finished ${endRank ? `ranked ${endRank}` : 'unranked'}</p>
       <p>Income ${money(inc)} · costs ${money(-out)} · net ${money(inc + out)}</p>
       <ul class="c-list">${hs.map((h) => `<li>${e(findEvent(s!, h.tournamentId, d.appVersion)?.name ?? 'Local Club Open')}: ${resultName(h)} (${h.points} points, ${money(h.prize)})</li>`).join('') || '<li>No events this season.</li>'}</ul>
       <div class="c-actions"><button class="primary" data-recapdone>On to ${y + 1}</button></div></div>`;
@@ -653,7 +660,8 @@ export function initCareer(d: CareerDeps) {
     const r = recordMatch(s!, W(), x, won, games, oppId);
     d.saveStats({ career_matches: 1, career_wins: won ? 1 : 0 });
     if (r.finished && r.result) {
-      if (r.result.round === 'W') { const t = titleTierOf(x.tier); d.saveStats(t ? { career_titles: 1, [t.key]: 1 } : { career_titles: 1 }); }
+      // Club opens aren't titles: nothing goes on your account for them.
+      if (r.result.round === 'W' && x.tier !== 'CLUB') { const t = titleTierOf(x.tier); d.saveStats(t ? { career_titles: 1, [t.key]: 1 } : { career_titles: 1 }); }
       d.saveStats({ career_prize: r.result.prize });
     }
     await save();

@@ -14,8 +14,13 @@ export const TITLE_TIERS: TitleTier[] = [
   { tier: 'S500', key: 'ct_s_five', label: 'Super 500', short: 'S500', points: 8, color: '#0e7490' },
   { tier: 'S300', key: 'ct_s_three', label: 'Super 300', short: 'S300', points: 5, color: '#157f3d' },
   { tier: 'S100', key: 'ct_s_hundred', label: 'Super 100', short: 'S100', points: 3, color: '#4b5563' },
-  { tier: 'CLUB', key: 'ct_club', label: 'Club open', short: 'Club', points: 1, color: '#8a8f98' },
 ];
+
+/**
+ * Club opens aren't titles (3.14.1). Club wins from before then are on accounts as ct_club (and in
+ * career_titles), so they're taken off the title count and are worth nothing.
+ */
+const CLUB_KEY = 'ct_club';
 
 /** Titles won before 3.14 (no tier saved) count this much each. */
 export const OLD_TITLE_POINTS = 3;
@@ -28,7 +33,7 @@ export interface TitleSummary { titles: number; points: number; rows: { t: Title
 
 /** A player's titles from their career stats: the total, title points, and how many of each tier. */
 export function titleSummary(c: Stats): TitleSummary {
-  const titles = Number(c.career_titles ?? 0);
+  const titles = Math.max(0, Number(c.career_titles ?? 0) - Number(c[CLUB_KEY] ?? 0));
   let counted = 0, points = 0;
   const rows: TitleSummary['rows'] = [];
   for (const t of TITLE_TIERS) {

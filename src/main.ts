@@ -911,7 +911,7 @@ const BOARDS: Record<string, { note: string; unit: (v: number) => string }> = {
   perfect_hits: { note: 'Most perfectly timed hits, all time.', unit: (v) => `${v}` },
   max_streak: { note: 'Longest run of matches won in a row.', unit: (v) => `${v} in a row` },
   achievements: { note: 'Most achievements unlocked.', unit: (v) => `${v}` },
-  career_titles: { note: 'Career titles by title points: bigger titles are worth more. Olympics 50, Worlds 35, Tour Finals 25, Super 1000 18, 750 12, 500 8, 300 5, 100 3, club 1 (titles from before 3.14: 3).', unit: (v) => `${v} pts` },
+  career_titles: { note: 'Career titles by title points: bigger titles are worth more. Olympics 50, Worlds 35, Tour Finals 25, Super 1000 18, 750 12, 500 8, 300 5, 100 3 (titles from before 3.14: 3). Local club opens don’t count.', unit: (v) => `${v} pts` },
   career_best_rank: { note: 'Best world ranking reached in career mode.', unit: (v) => `#${v}` },
 };
 document.querySelectorAll<HTMLButtonElement>('#boardSeg button').forEach((b) => b.addEventListener('click', () => { board = b.dataset.value!; void renderLeaders(); }));

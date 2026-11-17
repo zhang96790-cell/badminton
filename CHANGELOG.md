@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.14.1: Club titles don’t count (17 Nov 2026)
+
+- Local club opens no longer count as titles: not in career mode, your stats, the Career titles leaderboard or player cards. Club wins already counted are taken off the next time you open career mode.
+
 ## 3.14: Weighted titles and player cards (17 Nov 2026)
 
 - Career titles are now worth different amounts. Olympic gold 50 title points, World Championships 35, World Tour Finals 25, Super 1000 18, Super 750 12, Super 500 8, Super 300 5, Super 100 3, a club open 1. Titles won before this update count 3 each, and the titles in your current career get their proper tier the next time you open career mode.

@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.1',
+    title: 'Cheaper recruits',
+    date: '17 Nov 2026',
+    changes: [
+      "Recruiting after a good tournament result costs far less: Common players are free, and the rest are about a quarter of the old price or less (Rare $400, Super Rare $900, Epic $1,800, Elite $3,500, Mythic $6,000, Legendary $10,000, Champion $15,000).",
+    ],
+  },
+  {
     version: '3.12',
     title: 'Victory and the podium',
     date: '17 Nov 2026',

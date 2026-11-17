@@ -73,7 +73,8 @@ export const CAREER_CFG = {
   recruitTop3: ['S100', 'S300', 'S500'] as string[],
   /** 3rd place: the semi-final prize plus this share. */
   bronzeBonus: 0.15,
-  recruitCost: { common: 600, rare: 1800, super_rare: 4000, epic: 8000, elite: 15000, mythic: 25000, legendary: 40000, champion: 60000 } as Record<Rarity, number>,
+  // 3.12.1: you earned the offer, so Commons are free and the rest cost far less (was 600 / 1800 / 4000 / 8000 / 15000 / 25000 / 40000 / 60000).
+  recruitCost: { common: 0, rare: 400, super_rare: 900, epic: 1800, elite: 3500, mythic: 6000, legendary: 10000, champion: 15000 } as Record<Rarity, number>,
   rerollCost: 150,
 
   // ── Soft-lock protection ──

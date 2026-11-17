@@ -481,7 +481,7 @@ export function initCareer(d: CareerDeps) {
     body.innerHTML = `<div class="c-card"><h3>Recruit a player</h3><p class="sub">${o.place === 3 ? 'Third place!' : o.place === 2 ? 'Runner-up!' : 'You won!'} Three players from that draw want to join you${o.place && o.place > 1 ? ' (win the event for better odds of rarer players)' : ''}. Recruiting one adds them to your account for every mode. The offer lasts until you enter your next tournament.</p>
       <div class="c-offer">${o.candidates.map((id) => { const c = characterById(id); const price = CFG.recruitCost[c.rarity]; return `<div class="c-recruit">${card(c)}<canvas class="pentagon" data-pent="${id}"></canvas>
         ${c.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('')}
-        <button class="primary" data-recruit="${id}" ${s!.money < price ? 'disabled' : ''}>Recruit for ${money(price)}</button></div>`; }).join('')}</div>
+        <button class="primary" data-recruit="${id}" ${s!.money < price ? 'disabled' : ''}>${price ? `Recruit for ${money(price)}` : 'Recruit for free'}</button></div>`; }).join('')}</div>
       <div class="c-actions">${o.rerolled ? '' : `<button data-reroll ${s!.money < CFG.rerollCost ? 'disabled' : ''}>New candidates (${money(CFG.rerollCost)})</button>`}<button data-offerskip>Not now</button><button data-offerlater>Decide later</button></div></div>`;
     const { drawPentagon } = await import('../pentagon');
     body.querySelectorAll<HTMLCanvasElement>('[data-pent]').forEach((cv) => { const c = characterById(cv.dataset.pent!); drawPentagon(cv, c.base_stats ?? c.stats, RARITY[c.rarity].color); });
@@ -791,7 +791,7 @@ export function initCareer(d: CareerDeps) {
       const m = await d.loadAccount();
       const got = await m.offerChoose(o.id, rc);
       if (!got) { d.toast('Couldn’t recruit', 'The offer has expired or the server couldn’t be reached.'); return; }
-      payFor(s, `Recruited ${c.name}`, price);
+      if (price) payFor(s, `Recruited ${c.name}`, price);
       s.squad.push(rc);
       s.pendingRecruitOffer = null;
       await save();

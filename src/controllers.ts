@@ -98,11 +98,8 @@ export class KeyboardController implements Controller {
 
   forceRelease(): ShotRequest | null {
     if (this.highT !== null) { this.highT = null; return { kind: 'intent', intent: 'high', aimX: this.aimX(), aimDepth: 0, flat: true }; }
-    if (this.chargeT === null) return null;
-    const shot: ShotRequest = { kind: 'intent', intent: 'fast', aimX: this.aimX(), aimDepth: 0, power: this.power() };
-    this.chargeT = null;
-    this.player.charge = null;
-    return shot;
+    // 3.12.10: a held fast key never swings by itself (it hit shuttles you didn't mean to): it swings when you let go.
+    return null;
   }
 
   /** An aim key held at contact wins; otherwise keep the aim from when the shot key was pressed. */

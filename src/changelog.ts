@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.10',
+    title: 'No accidental hits',
+    date: '17 Nov 2026',
+    changes: [
+      "Holding the fast key (K) no longer swings by itself when the shuttle comes near you. It only swings when you let go, so you won't hit shuttles you didn't mean to. If you're still holding it when the shuttle goes past, you miss it.",
+    ],
+  },
+  {
     version: '3.12.9',
     title: 'Quicker CPU swings',
     date: '17 Nov 2026',

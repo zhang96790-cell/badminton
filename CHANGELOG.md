@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.10: No accidental hits (17 Nov 2026)
+
+- Holding the fast key (K) no longer swings by itself when the shuttle comes near you. It only swings when you let go, so you won't hit shuttles you didn't mean to. If you're still holding it when the shuttle goes past, you miss it.
+
 ## 3.12.9: Quicker CPU swings (17 Nov 2026)
 
 - CPUs recover from a swing much faster: after a hit they can swing again in under a fifth of a second instead of nearly half a second, and a missed swing barely holds them up. Your own swing recovery is unchanged.

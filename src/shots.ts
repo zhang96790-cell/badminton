@@ -137,6 +137,12 @@ function fastSolve(z0: number, g: ReturnType<typeof geometry>, speed: number, ex
  * perfectJumps: whether a perfect jump smash earns its bonus (players only; the CPU's timing is too exact).
  */
 /** eff: the hitter's character stats in play (neutral = today's game). */
+/** 3.11: smashes from the back of the court are slower, so a good lift isn't punished as hard. */
+function deepSmashPower(dist: number): number {
+  const D = SHOTS.deepSmash;
+  return 1 - (1 - D.power) * Math.min(1, Math.max(0, (dist - D.from) / (D.to - D.from)));
+}
+
 export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJumps = false, eff: Effective = NEUTRAL): Shot {
   const z0 = c.point.z;
   const zone = zoneOf(z0);
@@ -171,7 +177,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (netDrive ? SHOTS.netDrivePower : 1)
     * (netKill ? (lowKill ? SHOTS.netKill.lowPower : SHOTS.netKill.power) : 1)
     * (perfectJumps && isPerfectJump(c) ? SHOTS.perfectJump.bonus : 1)
-    * (shotZone === 'overhead' && kindOf === 'fast' ? eff.smash : 1)
+    * (shotZone === 'overhead' && kindOf === 'fast' ? eff.smash * deepSmashPower(Math.abs(c.point.y)) : 1)
     // Drives, pushes and flicks (never net kills, which keep their own thresholds).
     * (shotZone !== 'overhead' && kindOf === 'fast' && !netKill && !netArea ? eff.shotSpeed : 1)
     * (req.kind === 'intent' ? req.strength ?? 1 : 1);

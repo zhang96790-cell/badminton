@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.11: Fairer lifts, stronger stats (17 Nov 2026)
+
+- Net shots are back to how they were before 3.10. They no longer float higher when you play them from further back, low down, or deep into a net battle, so you aren't pushed into lifting as often.
+- Smashes hit from the back of the court are slower. The further back you are, the more pace you lose, up to about a fifth less from the baseline, so a good deep lift gives the defender a fair chance. Smashes from mid-court are unchanged.
+- Defending a smash uses the full reach again. The 3.10.2 reach cut now only applies to drives, pushes and net kills.
+- Every stat besides Speed counts for about twice as much in ranked, friendly and quick play. Power makes drives, pushes and heavy smashes harder to handle. Net makes net shots tighter and more accurate and speeds you up at the net. Defence gives better timing, deeper returns and more reach against smashes. Stamina means you tire much more slowly. Speed and the smash speed limit are unchanged.
+
 ## 3.10.2: Fast shots harder to return (16 Nov 2026)
 
 - Fast shots are harder to get back. The extra reach players get only helps against shots that give you time: against a drive, push or net kill that reaches you in under about 0.7 seconds it shrinks, and it's gone under 0.35 seconds.

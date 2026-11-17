@@ -127,21 +127,25 @@ export interface Effective {
 export const NEUTRAL: Effective = { smash: 1, clearDepth: 1, move: 1, swingWait: 1, netAim: 1, netTiming: 1, defenceTiming: 1, defenceDepth: 1, timing: 1, aim: 1, shotSpeed: 1, netClearance: 1, defReach: 0, fatigue: 1, heavy: 1, netMove: 1 };
 
 /** How much each point away from 20 changes things (tuned with simulations; see docs/2.7-notes.md). */
-export const PER_POINT = { power: 0.005, speed: 0.007, netAim: 0.01, netTiming: 0.006, defenceTiming: 0.01, defenceDepth: 0.004 };
+// 3.11: Net and Defence count double what they did (Speed unchanged; Power's smash still only 0.95–1.08).
+export const PER_POINT = { power: 0.005, speed: 0.007, netAim: 0.02, netTiming: 0.012, defenceTiming: 0.02, defenceDepth: 0.008 };
 /**
  * 3.7: jobs for the stats beyond Speed (ranked, friendly and quick play; career keeps its own tuning).
  * Power: drives, pushes and flicks are faster. Net: net shots skim the tape tighter. Defence: longer reach
  * against smashes. Stamina: you tire more slowly in long rallies and games.
  */
 export const STAT_JOBS = {
-  drivePerPower: 0.003,
-  heavyPerPower: 0.012, heavy: [0.88, 1.18] as [number, number],
-  netClearancePerNet: 0.01, netClearance: [0.85, 1.1] as [number, number],
-  netMovePerNet: 0.008, netMoveWithin: 2.3,
-  defReachPerDefence: 0.004, defReach: [-0.04, 0.06] as [number, number],
-  fatiguePerStamina: 0.03, fatigue: [0.55, 1.3] as [number, number],
+  // 3.11: all about doubled.
+  drivePerPower: 0.007,
+  heavyPerPower: 0.022, heavy: [0.8, 1.33] as [number, number],
+  netClearancePerNet: 0.02, netClearance: [0.7, 1.2] as [number, number],
+  netMovePerNet: 0.016, netMoveWithin: 2.3,
+  defReachPerDefence: 0.008, defReach: [-0.08, 0.12] as [number, number],
+  fatiguePerStamina: 0.05, fatigue: [0.4, 1.5] as [number, number],
   /** Tiring: each shot you play adds 1; a new point keeps `keep` of it; a new game clears it. */
-  fadePerShot: 0.0035, fadeMax: 0.08, keep: 0.55,
+  fadePerShot: 0.0035, fadeMax: 0.11, keep: 0.55,
+  /** 3.11: ranked limit for the non-Speed stats (Speed keeps ±10%). */
+  otherLim: 0.2,
 };
 
 /** Later systems (energy, abilities, …) add modifiers: multipliers on the derived values. */
@@ -203,7 +207,8 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
       : k === 'defReach' ? clamp(e[k], ...J.defReach)
       : k === 'heavy' ? clamp(e[k], ...J.heavy)
       : k === 'fatigue' ? clamp(e[k], ...J.fatigue)
-      : clamp(e[k], 1 - lim, 1 + lim);
+      : k === 'move' || k === 'swingWait' || career ? clamp(e[k], 1 - lim, 1 + lim)
+      : clamp(e[k], 1 - J.otherLim, 1 + J.otherLim);
   }
   return e;
 }

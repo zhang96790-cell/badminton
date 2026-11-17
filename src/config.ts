@@ -56,6 +56,8 @@ export const PLAYER = {
   lungeReach: 0.25,
   /** A lunge needs time: against a shot that arrives in under `full` game seconds it reaches less, down to `min` of the bonus at `quick`. */
   lungeQuick: { full: 0.85, quick: 0.4, min: 0.1 },
+  /** 3.11: against a smash the lunge keeps at least this much (as before 3.10.2), and a person keeps their extra reach. */
+  smashLungeMin: 0.3,
   /** 3.10.2: a person's extra reach: all of it against a shot that takes `full` s or more to reach them, none under `quick`. */
   humanReachQuick: { full: 0.7, quick: 0.35, min: 0 },
   lungeMaxZ: 1.2,
@@ -211,7 +213,10 @@ export const SHOTS = {
    * up to `low` for taking it near the floor (over lowRange below the tape), and perRun for each net shot
    * already played in a row this rally (up to runMax), plus more error the longer it goes. At most maxExtra.
    */
-  netBattle: { tightWithin: 0.8, perMetre: 0.09, low: 0.09, lowRange: 1.0, perRun: 0.025, runMax: 6, noisePerRun: 0.12, maxExtra: 0.28 },
+  // 3.11: turned off again (net shots back to how they were before 3.10: lifting had become too punishing).
+  netBattle: { tightWithin: 0.8, perMetre: 0.09, low: 0.09, lowRange: 1.0, perRun: 0.025, runMax: 6, noisePerRun: 0, maxExtra: 0 },
+  /** 3.11: a smash loses pace the further back it's hit from: full pace up to `from` m from the net, `power` of it from `to` m. */
+  deepSmash: { from: 4.5, to: 6.4, power: 0.82 },
   blockClearance: 0.2,
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
   softMaxAngle: { overhead: 12, mid: 30, low: 45, net: 80 },

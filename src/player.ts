@@ -289,7 +289,9 @@ export class Player implements PlayerView {
 
   /** How far you can reach at this height; a low lunge reaches less against a shot that's on you quickly (flight: game seconds since it was hit). */
   reachFor(z: number, flight = Infinity): number {
-    return PLAYER.reach + this.extraReach * (this.humanReach ? humanReachScale(flight) : 1) + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lungeScale(flight) : 0);
+    // 3.11: the quick-shot reach cut is for drives, pushes and kills; smash defence keeps its pre-3.10.2 reach.
+    const lunge = this.vsSmash ? hurry(flight, { ...PLAYER.lungeQuick, min: PLAYER.smashLungeMin }) : lungeScale(flight);
+    return PLAYER.reach + this.extraReach * (this.humanReach && !this.vsSmash ? humanReachScale(flight) : 1) + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lunge : 0);
   }
 
   /** The shuttle is within reach now but won't be next step. */

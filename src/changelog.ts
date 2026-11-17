@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.11',
+    title: 'Fairer lifts, stronger stats',
+    date: '17 Nov 2026',
+    changes: [
+      "Net shots are back to how they were before 3.10. They no longer float higher when you play them from further back, low down, or deep into a net battle, so you aren't pushed into lifting as often.",
+      "Smashes hit from the back of the court are slower. The further back you are, the more pace you lose, up to about a fifth less from the baseline, so a good deep lift gives the defender a fair chance. Smashes from mid-court are unchanged.",
+      "Defending a smash uses the full reach again. The 3.10.2 reach cut now only applies to drives, pushes and net kills.",
+      "Every stat besides Speed counts for about twice as much in ranked, friendly and quick play. Power makes drives, pushes and heavy smashes harder to handle. Net makes net shots tighter and more accurate and speeds you up at the net. Defence gives better timing, deeper returns and more reach against smashes. Stamina means you tire much more slowly. Speed and the smash speed limit are unchanged.",
+    ],
+  },
+  {
     version: '3.10.2',
     title: 'Fast shots harder to return',
     date: '16 Nov 2026',

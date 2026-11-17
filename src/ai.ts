@@ -9,6 +9,10 @@ import { intentTarget, type Intent, type ShotRequest } from './shots';
 import { predictPath } from './shuttle';
 import type { Game } from './game';
 
+/** 3.12: half-court shots. `depth` (m from the net) for the extra mid-court target, how much more often it's picked, and how much more often a low ball at the net is pushed. */
+const AI_HALF = { depth: 3.3, weight: 2.5, netPush: 2.5 };
+const HALF = 99;
+
 interface Plan {
   leave: boolean;
   contact: V3;
@@ -418,7 +422,7 @@ export class AIController implements Controller {
       // At the net: go tight if you're back or backing off, lift deep if you're rushing in.
       soft = L.net * S.net * (oppDeep || oppRetreating ? 1.6 : 0.7);
       high = S.clear * (oppForward || !oppRetreating ? 1.3 : 0.8);
-      fast = 0.2;
+      fast = 0.2 * AI_HALF.netPush; // 3.12: push it into the mid court more often
     } else {
       // 3.9.3: a low ball in mid or back court: drive or push it more, lift it less.
       high = 1.0 * S.clear;
@@ -457,11 +461,13 @@ export class AIController implements Controller {
     // Two defenders side by side: the middle between them causes hesitation.
     const sideBySide = doubles && opps.length === 2 && Math.abs(Math.abs(opps[0].pos.y) - Math.abs(opps[1].pos.y)) < 1.2;
     // Defensive wall: every clear goes to the back line.
+    // 3.12: half-court shots (pushes, drives, fast drops and blocks into the mid court), not only net or baseline.
+    const halfOk = intent !== 'high' && !(intent === 'soft' && nearNet);
     const depthMods = intent === 'soft' ? [0, -1] : intent === 'high' ? (this.S.deepClears ? [1] : [0, 1]) : [0, 1, -1];
-    const options: { target: V2; score: number }[] = [];
+    const options: { target: V2; score: number; half?: boolean }[] = [];
     for (const lat of doubles ? [-1, -0.45, 0, 0.45, 1] : [-1, -0.4, 0.4, 1]) {
-      for (const ad of depthMods) {
-        const t = intentTarget(intent, p.contact, this.me.side, 0, ad);
+      for (const ad of [...depthMods, ...(halfOk ? [HALF] : [])]) {
+        const t = ad === HALF ? { x: 0, y: AI_HALF.depth } : intentTarget(intent, p.contact, this.me.side, 0, ad);
         const depth = clamp(Math.abs(t.y), 0.5, lowFast ? 4 : COURT.halfLength - depthMargin);
         const target = { x: lat * (halfW - margin), y: opp.side * depth };
         let score = Math.min(...preds.map((q) => Math.hypot(target.x - q.x, target.y - q.y)));
@@ -469,10 +475,10 @@ export class AIController implements Controller {
         const z = zoneOf(target);
         score += L.adapt * 2 * (this.zoneWeak[z] / this.zoneTries[z]);
         if (Math.sign(target.x) === backhand && depth > 4.5) score += 0.4 * L.adapt;
-        options.push({ target, score });
+        options.push({ target, score, half: ad === HALF });
       }
     }
-    const chosen = weightedPick(options, options.map((o) => Math.exp(o.score * L.decisiveness * 1.5)));
+    const chosen = weightedPick(options, options.map((o) => Math.exp(o.score * L.decisiveness * 1.5) * (o.half ? AI_HALF.weight : 1)));
     const noise = L.aimNoise * (this.S.steady ?? 1);
     const target = { x: chosen.target.x + gauss() * noise, y: chosen.target.y + gauss() * noise };
     // A deceptive player disguises drops, net shots and flicks from the net.

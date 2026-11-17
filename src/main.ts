@@ -1551,6 +1551,7 @@ function renderVs(r: Roster | null) {
   drawPentagon(box.querySelector('[data-vspent="them"]') as HTMLCanvasElement, them.stats, RARITY[them.rarity].color, { stats: me.stats, color: '#1f2937' });
 }
 if (import.meta.env.DEV) (window as unknown as { renderVs: typeof renderVs }).renderVs = renderVs;
+if (import.meta.env.DEV) (window as unknown as { devGame: () => Game | null }).devGame = () => game;
 document.getElementById('roomVs')!.addEventListener('change', (e) => {
   const sel = (e.target as HTMLElement).closest<HTMLSelectElement>('[data-vspick]');
   if (!sel || !room || !canUse(sel.value)) return;

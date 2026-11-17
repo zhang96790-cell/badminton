@@ -13,7 +13,7 @@ import {
   advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
 } from './state';
-import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, travelBand, type TourEvent, type World } from './world';
+import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
 import { setWhere } from '../errorlog';
 import { Tour } from '../tour';
@@ -636,6 +636,58 @@ export function initCareer(d: CareerDeps) {
       d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : r.result.place ? `${r.result.place === 3 ? '3rd' : '4th'} place at the ${x.name}` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
     }
     render();
+    if (r.finished && r.result) showPodium(x, r.result);
+  }
+
+  /** 3.12: the top 3 of an event, once it's over (worked out the same way as the draw). */
+  function podiumOf(x: TourEvent, h: { as: string | null; round: Round; place?: number }): [string, string, string] | null {
+    const plan = W().plan(x, s!.year, h.as);
+    const order = roundsFor(plan.slots.length);
+    if (order.length < 2) return null;
+    const withW = [...order, 'W' as Round];
+    const decide = (a: string, b: string, rd: Round) => (a !== YOU && b !== YOU ? null : withW.indexOf(h.round) > withW.indexOf(rd) ? YOU : a === YOU ? b : a);
+    const { rounds } = playOut(plan.slots, W().strength, hash(s!.rngSeed, s!.year, x.id, 'play'), decide);
+    const n = order.length;
+    const champ = rounds[n][0], finalists = rounds[n - 1], semis = rounds[n - 2];
+    const runner = finalists.find((p) => p !== champ) ?? finalists[0];
+    const losers = semis.filter((p) => !finalists.includes(p) && p !== 'bye');
+    let third = losers[0];
+    if (losers.length === 2) {
+      third = h.place === 3 ? YOU : h.place === 4 ? losers.find((p) => p !== YOU)! : simMatch(losers[0], losers[1], W().strength, hash(s!.rngSeed, s!.year, x.id, 'bronze'));
+    }
+    return [champ, runner, third];
+  }
+
+  if (import.meta.env.DEV) (window as unknown as { devPodium: (top: [string, string, string]) => void }).devPodium = (top) => renderPodium('Malaysia Open', 'S1000', 2026, top, 'You');
+  function showPodium(x: TourEvent, h: { as: string | null; round: Round; place?: number }) {
+    let top: [string, string, string] | null = null;
+    try { top = podiumOf(x, h); } catch { return; }
+    if (top) renderPodium(x.name, x.tier, s!.year, top, s!.name);
+  }
+
+  function renderPodium(evName: string, tier: string, year: number, top: [string, string, string], myName: string) {
+    document.getElementById('podium')?.remove();
+    const nm = (id: string) => (id === YOU ? e(myName) : id === 'bye' ? '' : e(characterById(id).name));
+    const ct = (id: string) => (id === YOU ? '' : id === 'bye' ? '' : e(countryName(characterById(id).country)));
+    const you = top.indexOf(YOU);
+    const step = (i: 0 | 1 | 2) => `<div class="pd-step pd-${i + 1}${top![i] === YOU ? ' me' : ''}">
+      <div class="pd-who"><span class="pd-medal">${['🥇', '🥈', '🥉'][i]}</span><b>${nm(top![i])}</b><small>${ct(top![i])}${top![i] === YOU ? 'You' : ''}</small></div>
+      <div class="pd-block"><span>${i + 1}</span></div></div>`;
+    const el = document.createElement('div');
+    el.id = 'podium';
+    el.className = you === 0 ? 'won' : '';
+    el.innerHTML = `<div class="pd-card" role="dialog" aria-label="${e(evName)} podium">
+      <p class="c-kicker">${e(TIER_LABEL[tier] ?? '')} · ${year}</p>
+      <h2>${e(evName)}</h2>
+      <p class="pd-sub">${you === 0 ? 'Champion! You won the title.' : you > 0 ? `You finished ${you === 1 ? '2nd' : '3rd'}.` : 'The final standings.'}</p>
+      <div class="pd-stage">${step(1)}${step(0)}${step(2)}</div>
+      <button class="walk" data-podiumclose>Continue</button>
+    </div>${you === 0 ? `<div class="pd-confetti">${Array.from({ length: 60 }, (_, i) => `<i style="--x:${(i * 37) % 100}%;--d:${(i % 7) * 0.25}s;--c:${['#f2c14e', '#fff', '#5ad1a0', '#ff6b6b', '#7aa8ff'][i % 5]};--r:${(i * 53) % 360}deg"></i>`).join('')}</div>` : ''}`;
+    document.body.appendChild(el);
+    const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 250); document.removeEventListener('keydown', key); };
+    const key = (k: KeyboardEvent) => { if (k.key === 'Enter' || k.key === 'Escape') { k.preventDefault(); close(); } };
+    el.querySelector('[data-podiumclose]')!.addEventListener('click', close);
+    document.addEventListener('keydown', key);
   }
 
   // ── Career tour (first visit, and the Tour button) ──

@@ -31,9 +31,17 @@ function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
 export class Hud {
   constructor(private ctx: CanvasRenderingContext2D) {}
 
+  /** 3.12: the match-win celebration plays once per match (not again after watching a replay). */
+  private celebGame: Game | null = null;
+  private celebStart = 0;
+  private confetti: { x: number; y: number; vx: number; vy: number; rot: number; vr: number; w: number; h: number; color: string }[] = [];
+  private lastTime = 0;
+
   draw(game: Game, w: number, h: number, time: number) {
+    const dt = Math.min(0.05, Math.max(0, time - this.lastTime));
+    this.lastTime = time;
     if (game.state === 'replay') { this.replay(game, w, h, time); return; }
-    if (game.state === 'matchOver') { this.scoreboard(game, w); this.endScreen(game, w, h); return; }
+    if (game.state === 'matchOver') { this.celebrate(game, w, h, time, dt); return; }
     const ctx = this.ctx;
     if (game.session) this.sessionPanel(game, w);
     else {
@@ -543,6 +551,112 @@ export class Hud {
   }
 
   /** End-of-match scoreboard: result, game scores, stat comparison and where each player's shots landed. */
+  /**
+   * 3.12: the end of a match. If you won (or either player, two on one keyboard): a big title zooms in with
+   * confetti, then the result panel rises in under it. If you lost, the panel just fades in.
+   */
+  private celebrate(game: Game, w: number, h: number, time: number, dt: number) {
+    const ctx = this.ctx, m = game.match;
+    const wi = game.forfeitWinner ?? (m.games[0] > m.games[1] ? 0 : 1);
+    const shared = game.settings.opponent === 'human' && !game.online;
+    const youWon = wi === 0 || shared;
+    const color = game.teamColor(wi as 0 | 1);
+    if (this.celebGame !== game) {
+      this.celebGame = game;
+      this.celebStart = time;
+      this.confetti = [];
+      if (youWon) {
+        const cols = ['#f2c14e', '#ffffff', color, '#ff6b6b', '#5ad1a0', '#7aa8ff'];
+        for (let i = 0; i < 220; i++) {
+          // Two cannons in the bottom corners, firing up and inwards.
+          const left = i % 2 === 0, a = 0.3 + Math.random() * 0.55;
+          const sp = 700 + Math.random() * 900;
+          this.confetti.push({
+            x: left ? 0 : w, y: h * (0.75 + Math.random() * 0.2),
+            vx: (left ? 1 : -1) * Math.sin(a) * sp, vy: -Math.cos(a) * sp,
+            rot: Math.random() * 6, vr: (Math.random() - 0.5) * 14,
+            w: 6 + Math.random() * 6, h: 10 + Math.random() * 8, color: cols[i % cols.length],
+          });
+        }
+      }
+    }
+    const t = time - this.celebStart;
+    const ease = (x: number) => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+    this.scoreboard(game, w);
+
+    if (!youWon) {
+      ctx.globalAlpha = ease(t / 0.5);
+      this.endScreen(game, w, h);
+      ctx.globalAlpha = 1;
+      return;
+    }
+
+    // 1) The title: zooms in, holds, then shrinks away as the panel arrives.
+    const panelIn = 1.5;
+    if (t < panelIn + 0.4) {
+      ctx.fillStyle = `rgba(4,7,12,${0.55 * ease(t / 0.4)})`;
+      ctx.fillRect(0, 0, w, h);
+      const k = t < 0.45 ? 2.4 - 1.4 * ease(t / 0.45) : t < panelIn ? 1 + 0.03 * Math.sin((t - 0.45) * 5) : 1 - 0.5 * ease((t - panelIn) / 0.4);
+      const alpha = t < panelIn ? ease(t / 0.25) : 1 - ease((t - panelIn) / 0.4);
+      const title = shared ? `${game.teamName(wi as 0 | 1).toUpperCase()} WINS` : 'VICTORY';
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(w / 2, h * 0.42);
+      ctx.scale(k, k);
+      ctx.textAlign = 'center';
+      ctx.font = font(Math.min(110, w / 8), 900);
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 40;
+      ctx.fillStyle = '#f2c14e';
+      ctx.fillText(title, 0, 0);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#fff';
+      ctx.font = font(22, 700);
+      ctx.fillText(m.history.map(([a, b]) => `${a}–${b}`).join('   '), 0, 46);
+      ctx.restore();
+      // A light sweep across the title.
+      if (t > 0.45 && t < 1.2) {
+        const sx = w / 2 - 400 + ((t - 0.45) / 0.75) * 800;
+        const g = ctx.createLinearGradient(sx - 60, 0, sx + 60, 0);
+        g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.18)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(sx - 60, h * 0.42 - 110, 120, 170);
+      }
+    }
+
+    // 2) The result panel rises in.
+    if (t >= panelIn) {
+      const a = ease((t - panelIn) / 0.5);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(0, (1 - a) * 40);
+      this.endScreen(game, w, h);
+      ctx.restore();
+    }
+
+    // 3) Confetti over everything for a few seconds.
+    if (this.confetti.length) {
+      for (const p of this.confetti) {
+        p.vy += 900 * dt; p.vx *= 1 - 1.6 * dt; p.vy *= 1 - 1.2 * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      }
+      this.confetti = this.confetti.filter((p) => p.y < h + 30);
+      const fade = clamp(1 - (t - 5) / 1.5, 0, 1);
+      ctx.globalAlpha = fade;
+      for (const p of this.confetti) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.scale(1, Math.cos(p.rot * 1.7));
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      if (fade <= 0) this.confetti = [];
+    }
+  }
+
   private endScreen(game: Game, w: number, h: number) {
     const ctx = this.ctx, m = game.match, st = game.stats;
     const wi = game.forfeitWinner ?? (m.games[0] > m.games[1] ? 0 : 1) as 0 | 1;

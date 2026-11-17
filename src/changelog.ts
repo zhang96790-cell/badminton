@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12',
+    title: 'Victory and the podium',
+    date: '17 Nov 2026',
+    changes: [
+      "Winning a match now has a celebration: a big VICTORY title zooms in over the court with confetti from both corners, then the result panel rises in. Two players on one keyboard get it for whoever wins.",
+      "Career events end with a podium: gold, silver and bronze blocks rise one by one with the top 3 players on them, you highlighted if you made it. Win the title and confetti falls too. Press Continue or Enter to close it.",
+      "CPUs play more half-court shots: pushes, drives, fast drops and blocks into the middle of the court, not only tight to the net or deep to the back. They also push low balls at the net into the mid court more often.",
+    ],
+  },
+  {
     version: '3.11',
     title: 'Fairer lifts, stronger stats',
     date: '17 Nov 2026',

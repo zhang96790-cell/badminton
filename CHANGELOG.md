@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12: Victory and the podium (17 Nov 2026)
+
+- Winning a match now has a celebration: a big VICTORY title zooms in over the court with confetti from both corners, then the result panel rises in. Two players on one keyboard get it for whoever wins.
+- Career events end with a podium: gold, silver and bronze blocks rise one by one with the top 3 players on them, you highlighted if you made it. Win the title and confetti falls too. Press Continue or Enter to close it.
+- CPUs play more half-court shots: pushes, drives, fast drops and blocks into the middle of the court, not only tight to the net or deep to the back. They also push low balls at the net into the mid court more often.
+
 ## 3.11: Fairer lifts, stronger stats (17 Nov 2026)
 
 - Net shots are back to how they were before 3.10. They no longer float higher when you play them from further back, low down, or deep into a net battle, so you aren't pushed into lifting as often.

@@ -1312,3 +1312,36 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 .career .c-tourbtn { position: absolute; top: 18px; right: 70px; padding: 7px 12px; border: 1px solid var(--amber); border-radius: 3px; background: transparent; color: var(--amber-hi); font: 700 12px/1 var(--text); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
 .career .c-tourbtn:hover { background: rgba(255, 196, 61, 0.12); }
 .career.c-board .social-hero { padding-right: 150px; }
+
+/* 3.12: podium at the end of a career event */
+#podium { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: rgba(4, 10, 28, 0.78); animation: pd-fade 0.3s ease-out; overflow: hidden; }
+#podium.out { opacity: 0; transition: opacity 0.25s; }
+#podium .pd-card { position: relative; z-index: 1; width: min(760px, calc(100vw - 32px)); padding: 28px 32px 26px; border-radius: 8px; background: var(--board-deep); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.06) inset; text-align: center; animation: pd-rise 0.5s var(--ease-out); }
+#podium h2 { margin: 8px 0 4px; font: 800 clamp(30px, 5vh, 44px)/1 var(--display); text-transform: uppercase; color: var(--ink); }
+#podium .pd-sub { margin: 0 0 22px; font: 600 18px var(--text); color: var(--ink-2); }
+#podium.won .pd-sub { color: var(--amber-hi); }
+#podium .pd-stage { display: grid; grid-template-columns: repeat(3, 1fr); align-items: end; gap: 10px; margin-bottom: 24px; }
+#podium .pd-step { display: grid; gap: 10px; }
+#podium .pd-who { display: grid; justify-items: center; gap: 2px; opacity: 0; animation: pd-fade 0.4s ease-out forwards; }
+#podium .pd-medal { font-size: 34px; line-height: 1; }
+#podium .pd-who b { font: 700 19px/1.15 var(--text); color: var(--ink); }
+#podium .pd-who small { font: 600 13px var(--text); color: var(--ink-3); }
+#podium .pd-step.me .pd-who b { color: var(--amber-hi); }
+#podium .pd-block { display: grid; place-items: start center; padding-top: 10px; border-radius: 4px 4px 0 0; transform-origin: bottom; transform: scaleY(0); animation: pd-grow 0.6s var(--ease-out) forwards; font: 800 44px/1 var(--display); }
+#podium .pd-1 .pd-block { height: 150px; background: linear-gradient(#ffd666, #c9971f); color: #4a3300; animation-delay: 0.9s; }
+#podium .pd-2 .pd-block { height: 110px; background: linear-gradient(#e4ebf5, #9aa8bd); color: #2b3647; animation-delay: 0.5s; }
+#podium .pd-3 .pd-block { height: 80px; background: linear-gradient(#e2a06b, #9c5d2e); color: #3b1d06; animation-delay: 0.2s; }
+#podium .pd-3 .pd-who { animation-delay: 0.6s; }
+#podium .pd-2 .pd-who { animation-delay: 1s; }
+#podium .pd-1 .pd-who { animation-delay: 1.4s; }
+#podium .pd-1 .pd-medal { animation: pd-bob 1.6s ease-in-out 1.8s infinite; }
+#podium .pd-step.me .pd-block { box-shadow: 0 0 0 3px var(--amber), 0 0 30px rgba(255, 181, 31, 0.45); }
+#podium .walk { min-width: 220px; }
+#podium .pd-confetti { position: absolute; inset: 0; pointer-events: none; }
+#podium .pd-confetti i { position: absolute; top: -20px; left: var(--x); width: 9px; height: 15px; background: var(--c); transform: rotate(var(--r)); animation: pd-fall 3.2s linear calc(1.4s + var(--d)) 2 forwards; opacity: 0; }
+@keyframes pd-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pd-rise { from { opacity: 0; transform: translateY(30px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes pd-grow { to { transform: scaleY(1); } }
+@keyframes pd-bob { 50% { transform: translateY(-6px) rotate(-6deg); } }
+@keyframes pd-fall { 0% { opacity: 1; transform: translateY(0) rotate(var(--r)); } 100% { opacity: 1; transform: translateY(105vh) rotate(calc(var(--r) + 540deg)); } }
+@media (prefers-reduced-motion: reduce) { #podium *, #podium { animation-duration: 0.01s !important; animation-delay: 0s !important; } #podium .pd-confetti { display: none; } }

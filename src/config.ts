@@ -149,14 +149,15 @@ export const SHOTS = {
   /**
    * Aim error (std-dev, m) on a perfectly timed forehand. Longer and harder shots are less accurate:
    * base + perMetre·distance + perPower·(pace)^1.5, where pace is launch speed / 86 m/s.
-   * Roughly: net shot 8 cm, drop 22 cm, clear 33 cm, full smash 40 cm. Timing, backhand and stretch multiply it.
+   * Roughly: net shot 10 cm, drop 29 cm, clear 43 cm, full smash 52 cm. Timing, backhand and stretch multiply it.
+   * 3.12.3: about 30% more error for everyone (was base 0.05, perMetre 0.017, perPower 0.2).
    */
-  aim: { base: 0.05, perMetre: 0.017, perPower: 0.2, depthFactor: 1.2 },
+  aim: { base: 0.065, perMetre: 0.022, perPower: 0.26, depthFactor: 1.2 },
   /** Menu accuracy setting: multiplier on aim error for human players. */
   aimModes: { realistic: 1, casual: 0.55 },
   /** Random error in how far over the tape soft shots pass (std-dev, m), scaled like aim. */
-  clearanceNoise: 0.035,
-  speedNoise: 0.015,
+  clearanceNoise: 0.042, // 3.12.3: was 0.035
+  speedNoise: 0.02, // 3.12.3: was 0.015
   /** Launch angles (deg) for high shots, by contact zone. */
   clearAngle: 30,
   midHighAngle: 38,

@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.12.3: Less pinpoint shots (17 Nov 2026)
+
+- Every shot is a bit less accurate, for players and CPUs alike: about 30% more aim error on every shot, a little more variation in how high net shots and drops clear the tape, and a little more variation in pace. Good timing still makes shots much more accurate, and the Casual aim setting still halves the error.
+
 ## 3.12.2: More attacking CPUs (17 Nov 2026)
 
 - Every CPU style except the Attacker attacks a bit more: they smash and kill more often and clear less. The defensive styles change the most: the Defender, Fast retriever and Defensive wall now smash much more when they get the chance, while still defending as well as before.

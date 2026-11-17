@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.12.3',
+    title: 'Less pinpoint shots',
+    date: '17 Nov 2026',
+    changes: [
+      "Every shot is a bit less accurate, for players and CPUs alike: about 30% more aim error on every shot, a little more variation in how high net shots and drops clear the tape, and a little more variation in pace. Good timing still makes shots much more accurate, and the Casual aim setting still halves the error.",
+    ],
+  },
+  {
     version: '3.12.2',
     title: 'More attacking CPUs',
     date: '17 Nov 2026',

@@ -93,6 +93,8 @@ export const CAREER_CFG = {
    * What opens each level: reaching a final at the level below, or a world ranking this good. Worlds and the
    * World Tour Finals go by ranking only (the Finals take the world's top 8 that week).
    */
+  /** Levels closed to everyone for now (3.14.2): Super 500 and up wait until more players are in the game. */
+  closedTiers: ['S500', 'S750', 'S1000', 'WTF', 'WORLDS', 'OLYMPICS'] as string[],
   gates: {
     S300: { finalIn: 'S100', rankAtMost: 150 },
     S500: { finalIn: 'S300', rankAtMost: 100 },

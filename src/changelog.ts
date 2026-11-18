@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.14.2',
+    title: 'Super 500 and up locked for now',
+    date: '18 Nov 2026',
+    changes: [
+      'In career mode, Super 500 events and everything above them (Super 750, Super 1000, the World Tour Finals, the World Championships and the Olympics) are locked for now. They open again once more players are added. Super 100, Super 300 and the Local Club Open play as before.',
+    ],
+  },
+  {
     version: '3.14.1',
     title: 'Club titles don’t count',
     date: '17 Nov 2026',

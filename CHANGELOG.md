@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.14.2: Super 500 and up locked for now (18 Nov 2026)
+
+- In career mode, Super 500 events and everything above them (Super 750, Super 1000, the World Tour Finals, the World Championships and the Olympics) are locked for now. They open again once more players are added. Super 100, Super 300 and the Local Club Open play as before.
+
 ## 3.14.1: Club titles don’t count (17 Nov 2026)
 
 - Local club opens no longer count as titles: not in career mode, your stats, the Career titles leaderboard or player cards. Club wins already counted are taken off the next time you open career mode.

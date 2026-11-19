@@ -64,6 +64,7 @@ export interface CareerState {
   staff?: Partial<Record<StaffRole, boolean>>;
   /** 3.14: this career's titles have been added to the account's per-tier title counts. */
   titleTiersSynced?: boolean;
+  sponsorRescaled?: boolean;
   sponsor?: Sponsor | null;
   sponsorOffers?: Sponsor[] | null;
   /** Milestones reached (ids), for the trophy cabinet. */
@@ -98,7 +99,7 @@ export function newCareer(o: { name: string; homeCountry: string; characterId: s
     money: CFG.startMoney, energy: CFG.startEnergy, year: CFG.startYear, week: 1, season: CFG.startYear,
     rngSeed: o.seed ?? Math.floor(Math.random() * 2 ** 31), difficulty: o.difficulty, history: [], pendingRecruitOffer: null, offerDue: null,
     unlocks: { s300: false }, settings: { fasterEarlyRounds: false, business: false, travelClass: 'economy', hotel: 'three' }, current: null, ledger: [], titles: 0, bestRank: null,
-    recap: null, startedAt: new Date().toISOString(), epoch: CAREER_EPOCH, injury: null, staff: {}, sponsor: null, sponsorOffers: null, milestones: [], hallOfFame: [],
+    recap: null, startedAt: new Date().toISOString(), epoch: CAREER_EPOCH, injury: null, staff: {}, sponsor: null, sponsorOffers: null, sponsorRescaled: true, milestones: [], hallOfFame: [],
   };
 }
 
@@ -351,9 +352,21 @@ export function sponsorOffers(s: CareerState, rank: number | null): Sponsor[] | 
   const r = rng(hash(s.rngSeed, s.year, band.rank, 'sponsor'));
   const names = [...CFG.sponsorNames].sort(() => r() - 0.5);
   return [
-    { name: names[0], weekly: Math.round(band.weekly * 1.3), bonus: Math.round(band.bonus * 0.5), band: band.rank, year: s.year },
-    { name: names[1], weekly: Math.round(band.weekly * 0.6), bonus: Math.round(band.bonus * 2), band: band.rank, year: s.year },
+    { name: names[0], weekly: Math.round(band.weekly * CFG.sponsorSteady.weekly), bonus: Math.round(band.bonus * CFG.sponsorSteady.bonus), band: band.rank, year: s.year },
+    { name: names[1], weekly: Math.round(band.weekly * CFG.sponsorBonusy.weekly), bonus: Math.round(band.bonus * CFG.sponsorBonusy.bonus), band: band.rank, year: s.year },
   ];
+}
+/** 3.14.3: a deal signed before the sponsor cut drops to the new rates for its band (keeping its steady or bonus style). */
+export function rescaleSponsor(s: CareerState): boolean {
+  const sp = s.sponsor;
+  if (!sp || s.sponsorRescaled) return false;
+  s.sponsorRescaled = true;
+  const band = CFG.sponsorBands.find((b) => b.rank === sp.band);
+  if (!band) return true;
+  const style = sp.bonus > band.bonus * 3 ? CFG.sponsorBonusy : CFG.sponsorSteady;
+  sp.weekly = Math.min(sp.weekly, Math.round(band.weekly * style.weekly));
+  sp.bonus = Math.min(sp.bonus, Math.round(band.bonus * style.bonus));
+  return true;
 }
 /** A better sponsor deal is on offer (you're in a better ranking band than your sponsor's). */
 export const sponsorUpgrade = (s: CareerState, rank: number | null) => {

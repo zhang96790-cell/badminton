@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.14.3: Sponsors toned down (19 Nov 2026)
+
+- Sponsors pay a lot less. Weekly pay and title bonuses are now about a third of what they were (a top-10 sponsor's title bonus used to be worth more than 10 Super 100 wins). Prize money matters again.
+- Deals you've already signed drop to the new rates the next time you open career mode.
+
 ## 3.14.2: Super 500 and up locked for now (18 Nov 2026)
 
 - In career mode, Super 500 events and everything above them (Super 750, Super 1000, the World Tour Finals, the World Championships and the Olympics) are locked for now. They open again once more players are added. Super 100, Super 300 and the Local Club Open play as before.

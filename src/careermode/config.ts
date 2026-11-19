@@ -61,11 +61,17 @@ export const CAREER_CFG = {
     coach: { label: 'Coach', wage: 250, note: 'Sharper timing and aim in your matches (+3%).' },
     physio: { label: 'Physio', wage: 200, note: '+4 energy every week, half the injury risk, physio sessions half price.' },
   } as Record<StaffRole, { label: string; wage: number; note: string }>,
-  /** Sponsor pay by world ranking band: per week, and a bonus per title. */
+  /**
+   * Sponsor pay by world ranking band: per week, and a bonus per title. 3.14.3: cut to about a third (was 900/5000,
+   * 500/2500, 250/1200, 120/600, 60/300): the top bonus was over 10× the prize for winning a Super 100.
+   */
   sponsorBands: [
-    { rank: 10, weekly: 900, bonus: 5000 }, { rank: 20, weekly: 500, bonus: 2500 }, { rank: 50, weekly: 250, bonus: 1200 },
-    { rank: 100, weekly: 120, bonus: 600 }, { rank: 200, weekly: 60, bonus: 300 },
+    { rank: 10, weekly: 300, bonus: 1000 }, { rank: 20, weekly: 200, bonus: 600 }, { rank: 50, weekly: 120, bonus: 350 },
+    { rank: 100, weekly: 70, bonus: 200 }, { rank: 200, weekly: 35, bonus: 100 },
   ],
+  /** The two offers: steady (more weekly, smaller bonus) or bonus-heavy (less weekly, bigger bonus). */
+  sponsorSteady: { weekly: 1.2, bonus: 0.5 },
+  sponsorBonusy: { weekly: 0.6, bonus: 1.6 },
   sponsorNames: ['Northwind Sports', 'Apex Strings', 'Kestrel Air', 'Lumen Water', 'Halcyon Energy', 'Orbit Shoes', 'Tidal Telecom', 'Granite Insurance', 'Summit Grip', 'Blue Heron Bank'],
 
   // ── Recruiting ──

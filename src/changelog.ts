@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.14.3',
+    title: 'Sponsors toned down',
+    date: '19 Nov 2026',
+    changes: [
+      "Sponsors pay a lot less. Weekly pay and title bonuses are now about a third of what they were (a top-10 sponsor's title bonus used to be worth more than 10 Super 100 wins). Prize money matters again.",
+      "Deals you've already signed drop to the new rates the next time you open career mode.",
+    ],
+  },
+  {
     version: '3.14.2',
     title: 'Super 500 and up locked for now',
     date: '18 Nov 2026',

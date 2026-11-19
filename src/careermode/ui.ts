@@ -11,7 +11,7 @@ import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
@@ -119,6 +119,7 @@ export function initCareer(d: CareerDeps) {
       s.titleTiersSynced = true;
       await save();
     }
+    if (s && rescaleSponsor(s)) await save();
     if (s && await resumeLive()) return;
     render();
     maybeCareerTour();

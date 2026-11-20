@@ -632,6 +632,32 @@ export class Renderer {
     }
   }
 
+  /** 4.2.2: the name across the back of the shirt (and the kit brand under it), or the brand on the chest. */
+  private shirtText(v: PlayerView, pelvis: V3, neck: V3, fwd: V3) {
+    const ctx = this.ctx, facingAway = dot(fwd, this.cam.forward) > 0.25, facingUs = dot(fwd, this.cam.forward) < -0.25;
+    if (!facingAway && !facingUs) return;
+    const at = this.cam.project(add3(mul3(add3(pelvis, neck), 0.5), v3(0, 0, facingAway ? 0.1 : 0.12)));
+    if (at.s < 30) return;
+    const n = parseInt((v.color.startsWith('#') ? v.color : '#888888').slice(1), 16);
+    const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+    const ink = lum > 0.62 ? 'rgba(10,15,29,0.9)' : 'rgba(255,255,255,0.92)';
+    const brand = kitBrandOf(v.lookId ?? v.name ?? 'you').name.toUpperCase();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = ink;
+    if (facingAway) {
+      const surname = (v.name ?? '').trim().split(/\s+/).pop()?.toUpperCase() ?? '';
+      if (surname && surname.length <= 14) {
+        ctx.font = `900 ${Math.max(7, 0.1 * at.s)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillText(surname, at.x, at.y, 0.3 * at.s);
+      }
+      ctx.font = `800 ${Math.max(5, 0.052 * at.s)}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillText(brand, at.x, at.y + 0.085 * at.s, 0.28 * at.s);
+    } else {
+      ctx.font = `800 ${Math.max(5, 0.045 * at.s)}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillText(brand, at.x + 0.05 * at.s, at.y, 0.2 * at.s);
+    }
+  }
+
   private player(v: PlayerView) {
     const fwd = v3(0, -v.side, 0), right = v3(-v.side, 0, 0);
     const rs = v.racketSide;
@@ -701,6 +727,7 @@ export class Renderer {
           this.poly([add3(hipL, v3(0, 0, -0.04)), add3(hipR, v3(0, 0, -0.04)), add3(neck, mul3(right, 0.2)), add3(neck, mul3(right, -0.2))], shirt);
           this.seg(add3(neck, mul3(right, -0.2)), add3(hipL, v3(0, 0, -0.02)), 0.04, lk ? lk.trim : shirtDark, 1);
           if (lk) this.seg(add3(neck, mul3(right, 0.2)), add3(hipR, v3(0, 0, -0.02)), 0.04, lk.trim, 1);
+          this.shirtText(v, pelvis, neck, fwd);
         },
       },
       { at: mid(sh, elbow), draw: () => { this.seg(sh, elbow, 0.085, skinC, 1.6); this.seg(sh, add3(sh, mul3(sub3(elbow, sh), 0.45)), 0.11, shirt, 2); } },

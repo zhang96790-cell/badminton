@@ -2184,7 +2184,13 @@ function frame(now: number) {
   if (game) {
     const over = game.state === 'matchOver';
     if (game.online) onlineKeys(game, over);
-    else if (input.tapped(['Escape'])) { if (over && careerDone) endCareerMatch(false); else if (over || game.session) showMenu(); else game.paused = !game.paused; }
+    else if (input.tapped(['Escape'])) {
+      // 4.2.2: the career screens are open over a paused match: Esc closes them.
+      if (careerUi.isOpen()) careerUi.close();
+      else if (over && careerDone) endCareerMatch(false); else if (over || game.session) showMenu(); else game.paused = !game.paused;
+    }
+    // 4.2.2: C in a paused career match opens the career screens to look at (draw, ranking, money…).
+    if (game && careerDone && game.paused && !over && !careerUi.isOpen() && input.tapped(['KeyC'])) void careerUi.open('hub', true);
     if (game?.session) {
       for (const d of ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9']) if (input.tapped([d])) game.session.key(game, d);
     }

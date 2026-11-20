@@ -290,13 +290,17 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
     }
   }
   // 3.19: short of money? You can still play it: through qualifying (free, and the event pays if you get through).
+  if (cantAfford(s, ev) && !hasQualifying(ev)) return { ok: false, why: `You need ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, and this event has no qualifying. Save up, or take a tour loan (Money tab).` };
   if (needsQualifying(s, ev)) return { ok: true, qual: true, why: `You can’t afford the ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, so you’d go through qualifying: win two matches and the event pays your travel and hotel.` };
   return { ok: true };
 }
 
 /** 3.19: not enough money to go on tour to this event (or below the tour minimum): qualifying instead. */
 export const needsQualifying = (s: CareerState, ev: TourEvent) =>
-  ev.tier !== 'CLUB' && (s.money < CFG.tourMinMoney || s.money < travelCost(s, ev) + hotelCost(s, ev));
+  hasQualifying(ev) && cantAfford(s, ev);
+const cantAfford = (s: CareerState, ev: TourEvent) => ev.tier !== 'CLUB' && (s.money < CFG.tourMinMoney || s.money < travelCost(s, ev) + hotelCost(s, ev));
+/** 4.2.2: qualifying only at Super 100s, Super 300s and the Super 500s with a 48-player draw (the ones with a qualifying round). */
+export const hasQualifying = (ev: TourEvent) => ev.tier === 'S100' || ev.tier === 'S300' || (ev.tier === 'S500' && ev.draw_size === 48);
 
 // ── 3.19: tour loans ──
 /** The most you can borrow, by your best world ranking. */

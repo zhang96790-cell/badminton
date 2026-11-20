@@ -82,7 +82,11 @@ export function initCareer(d: CareerDeps) {
   }
 
   // ── Opening ──
-  async function open(startTab = 'hub') {
+  /** 4.2.2: opened during a match: look around, but nothing that plays, spends or moves the week. */
+  let viewOnly = false;
+  async function open(startTab = 'hub', view = false) {
+    viewOnly = view;
+    panel.classList.toggle('c-viewonly', view);
     panel.classList.remove('hidden');
     tab = startTab;
     const acc = d.account();
@@ -122,7 +126,7 @@ export function initCareer(d: CareerDeps) {
       await save();
     }
     if (s && rescaleSponsor(s)) await save();
-    if (s && await resumeLive()) return;
+    if (s && !viewOnly && await resumeLive()) return;
     render();
     maybeCareerTour();
   }
@@ -237,7 +241,7 @@ export function initCareer(d: CareerDeps) {
         <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players</p>
         ${also.length ? `<p class="c-also">Also this week (you can play one): ${also.map((v) => `<button class="linkish" data-pickev="${v.id}">${e(v.name)} · ${TIER_LABEL[v.tier]}</button>`).join(' ')}</p>` : ''}
         <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(hotelCost(s!, x))} a night`)}</div>
-        ${c.qual ? `<p class="c-lead">${e(c.why ?? '')}</p>${loanLine()}` : ''}
+        ${c.qual ? `<p class="c-lead">${e(c.why ?? '')}</p>${loanLine()}` : !c.ok && c.why?.startsWith('You need') ? loanLine() : ''}
         <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">${c.qual ? 'Enter qualifying · free' : `Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))}`} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
           <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>
         <p class="c-lead small">The week: qualifying and the round of 32 Tuesday and Wednesday, round of 16 Thursday, quarter-finals Friday, semi-finals Saturday, final Sunday.</p>${recover(x)}`;
@@ -250,7 +254,7 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">Season over</p><h3 class="c-title">That’s the ${s!.year} season</h3>
         <div class="c-cta"><button class="walk" data-skip>See your season ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
     }
-    body.innerHTML = `<section class="c-hero">${hero}</section>${seasonStrip()}`;
+    body.innerHTML = `${viewOnly ? '<p class="c-viewnote">You’re in a match: looking only. Press Esc to go back to it.</p>' : ''}<section class="c-hero">${hero}</section>${seasonStrip()}`;
   }
 
   /**
@@ -947,6 +951,11 @@ export function initCareer(d: CareerDeps) {
     if (at('[data-login]')) { close(); d.openAccount('Log in or sign up to start a career.'); return; }
     const ct = at('[data-ctab]')?.dataset.ctab;
     if (ct) { tab = ct; render(); return; }
+    // 4.2.2: in the middle of a match: you can look (tabs, draws, event details), not play or buy.
+    if (viewOnly) {
+      const lookOnly = at('[data-draw], [data-detail], [data-drawsec], [data-list], [data-pickev]');
+      if (!lookOnly) { if (at('button')) d.toast('You’re in a match', 'Finish or leave your match to do that. Press Esc to go back to it.'); return; }
+    }
     if (!s) {
       const st = at('[data-starter]');
       if (st) { starter = { id: st.dataset.starter!, free: st.dataset.free === '1' }; body.querySelectorAll('[data-starter]').forEach((b) => b.classList.toggle('on', b === st)); ($('cBegin') as HTMLButtonElement).disabled = false; return; }

@@ -5,6 +5,18 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.2.2',
+    title: 'Colourful events, names on shirts',
+    date: '21 Nov 2026',
+    changes: [
+      "Every event’s sponsors now come in different colours, so no tournament looks all one colour (the Canada Open was all blue and white). Yonax is green, like its logo.",
+      "Sponsor boards are easier to read: a bigger name and logo on every board.",
+      "Players have their name across the back of the shirt, with their kit brand (Yonax, Liming, Victer and so on) under it, and the brand on the front.",
+      "In a career match, pause and press C to look at your career screens (the draw, ranking, money and so on). It’s look-only during a match; Esc takes you back.",
+      "Qualifying is only at Super 100 and Super 300 events, and the Super 500s with a 48-player draw. Elsewhere, if you can’t afford an event you’ll need to save up or take a tour loan.",
+    ],
+  },
+  {
     version: '4.2.1',
     title: 'Court boards stay local',
     date: '21 Nov 2026',

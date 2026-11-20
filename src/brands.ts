@@ -12,7 +12,7 @@ const b = (id: string, name: string, line: string, bg: string, fg: string, mark:
 
 /** Racket and kit makers (4.1: the owner's list). Players wear one of these; Yonax most, then Liming, then Victer. */
 export const KIT_BRANDS: Brand[] = [
-  b('yonax', 'YONAX', 'Rackets', '#0a3d91', '#ffffff', 'chevron', 'JPN'),
+  b('yonax', 'YONAX', 'Rackets', '#00843d', '#ffffff', 'chevron', 'JPN'),
   b('liming', 'LIMING', 'Badminton', '#d71920', '#ffffff', 'wing', 'CHN'),
   b('victer', 'VICTER', 'Badminton', '#0d0d0d', '#e8b923', 'star', 'TPE'),
   b('mizuna', 'MIZUNA', 'Since 1906', '#001e62', '#ffffff', 'wave', 'JPN'),
@@ -170,6 +170,18 @@ const h32 = (s: string) => { let x = 2166136261; for (const c of s) x = Math.imu
 const pick = <T,>(a: T[], seed: number) => a[seed % a.length];
 const shuffled = <T extends Brand>(a: T[], id: string) => [...a].sort((x, y) => h32(id + x.id) - h32(id + y.id));
 
+/** A brand's colour as a hue (0–360), from its background, or its lettering when the board is white or black. */
+function hueOf(b: Brand): number {
+  const pickHex = (h: string) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; };
+  const grey = (c: number[]) => Math.max(...c) - Math.min(...c) < 0.12;
+  let c = pickHex(b.bg);
+  if (grey(c)) c = pickHex(b.fg);
+  if (grey(c)) return -1;
+  const [r, g, bl] = c, mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), d = mx - mn;
+  const h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4;
+  return (h * 60 + 360) % 360;
+}
+const hueGap = (a: number, b: number) => (a < 0 || b < 0 ? 180 : Math.min(Math.abs(a - b), 360 - Math.abs(a - b)));
 const weighted = (list: [string, number][], seed: number) => {
   const total = list.reduce((a, [, w]) => a + w, 0);
   let r = seed % total;
@@ -185,8 +197,15 @@ function sponsorsFor(id: string, poweredBy: Brand | null, shuttle: Brand, host?:
   const title = titleBrand(id);
   const local = host ? shuffled(SPONSOR_BRANDS.filter((x) => x.country === host), id).slice(0, 2) : [];
   const keep = [title, poweredBy, ...local, shuttle].filter((x, i, a): x is Brand => !!x && a.indexOf(x) === i);
-  const rest = shuffled(SPONSOR_BRANDS, id).filter((x) => !keep.includes(x) && !x.country).slice(0, Math.max(0, 5 - keep.length));
-  return [...keep, ...rest];
+  // 4.2.2: fill up with brands in different colours from the ones already there, so no event is all one colour.
+  const out = [...keep];
+  for (const x of shuffled(SPONSOR_BRANDS, id)) {
+    if (out.length >= 5) break;
+    if (keep.includes(x) || x.country) continue;
+    if (out.every((y) => hueGap(hueOf(x), hueOf(y)) > 40)) out.push(x);
+  }
+  for (const x of shuffled(SPONSOR_BRANDS, id)) { if (out.length >= 5) break; if (!out.includes(x) && !x.country) out.push(x); }
+  return out;
 }
 /** 16 side boards from the event's sponsors, repeated (never the same brand on two boards side by side). */
 function boardsFor(sponsors: Brand[]): Brand[] {
@@ -262,18 +281,17 @@ export function brandBanner(b: Brand): BrandBanner {
   cv.width = W; cv.height = H;
   const c = cv.getContext('2d')!;
   c.fillStyle = b.bg; c.fillRect(0, 0, W, H);
-  c.font = `800 ${H * 0.44}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
+  // 4.2.2: bigger name and logo so the boards read from the camera; the strapline is small underneath.
+  c.font = `900 ${H * 0.56}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
   const nameW = c.measureText(b.name).width;
-  c.font = `600 ${H * 0.17}px ui-sans-serif, system-ui, sans-serif`;
-  const lineW = c.measureText(b.line.toUpperCase()).width;
-  const markR = H * 0.3, total = markR * 2 + 26 + Math.max(nameW, lineW), x0 = (W - Math.min(total, W - 40)) / 2;
-  drawMark(c, b.mark, x0 + markR, H * 0.47, markR, b.fg);
+  const markR = H * 0.34, total = markR * 2 + 24 + nameW, x0 = Math.max(16, (W - Math.min(total, W - 32)) / 2);
+  drawMark(c, b.mark, x0 + markR, H * 0.46, markR, b.fg);
   c.fillStyle = b.fg; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
-  c.font = `800 ${H * 0.44}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
-  c.fillText(b.name, x0 + markR * 2 + 26, H * 0.6, W - x0 - markR * 2 - 46);
-  c.globalAlpha = 0.75;
-  c.font = `600 ${H * 0.17}px ui-sans-serif, system-ui, sans-serif`;
-  c.fillText(b.line.toUpperCase(), x0 + markR * 2 + 28, H * 0.84, W - x0 - markR * 2 - 46);
+  c.font = `900 ${H * 0.56}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
+  c.fillText(b.name, x0 + markR * 2 + 24, H * 0.66, W - x0 - markR * 2 - 40);
+  c.globalAlpha = 0.7;
+  c.font = `700 ${H * 0.13}px ui-sans-serif, system-ui, sans-serif`;
+  c.fillText(b.line.toUpperCase(), x0 + markR * 2 + 26, H * 0.88, W - x0 - markR * 2 - 40);
   const out = { banner: cv, bg: b.bg };
   banners.set(b.id, out);
   return out;

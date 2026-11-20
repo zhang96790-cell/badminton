@@ -1795,3 +1795,8 @@ body:has(#menu:not(.hidden)) #viewbar { display: none; }
 .c-table tr.me td { background: rgba(232, 17, 45, 0.12); }
 .c-card { border-radius: 0 !important; border-left: 4px solid #2f7bff; }
 .c-mark.now i { box-shadow: 0 0 0 3px #e8112d; }
+
+/* 4.2.2: career screens opened during a match (look only) */
+.c-viewnote { margin: 0 0 10px; padding: 8px 12px; background: rgba(232, 17, 45, 0.16); border-left: 4px solid #e8112d; font: 700 14px/1.3 var(--text); }
+.career.c-viewonly [data-playnext], .career.c-viewonly [data-startmatch], .career.c-viewonly [data-enter], .career.c-viewonly [data-week], .career.c-viewonly [data-skip] { opacity: 0.4; }
+.career { z-index: 9; }

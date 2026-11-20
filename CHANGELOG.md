@@ -5,6 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.2.2: Colourful events, names on shirts (21 Nov 2026)
+
+- Every event’s sponsors now come in different colours, so no tournament looks all one colour (the Canada Open was all blue and white). Yonax is green, like its logo.
+- Sponsor boards are easier to read: a bigger name and logo on every board.
+- Players have their name across the back of the shirt, with their kit brand (Yonax, Liming, Victer and so on) under it, and the brand on the front.
+- In a career match, pause and press C to look at your career screens (the draw, ranking, money and so on). It’s look-only during a match; Esc takes you back.
+- Qualifying is only at Super 100 and Super 300 events, and the Super 500s with a 48-player draw. Elsewhere, if you can’t afford an event you’ll need to save up or take a tour loan.
+
 ## 4.2.1: Court boards stay local (21 Nov 2026)
 
 - Your sponsor’s boards no longer go up at your matches: the boards around the court are always the tournament’s own sponsors, including its local brands.

@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.18: New home page, faster Impossible smashes (20 Nov 2026)
+
+- New home page. Career and Ranked are now the two big panels at the top. Career shows your best world ranking, title points and record. Ranked shows your rating, your tier and how far you are from the next one. A match against the CPU is a smaller row below, and the Tutorial and Drills sit along the bottom.
+- Impossible's smashes are much faster now. Before, they left the racket at about 530 km/h on average and had slowed to about 85 km/h by the time they reached you, giving you about a third of a second to react. Now they hit harder (up to about 780 km/h) and keep their pace, still around 300 km/h when they reach you, so you get about a fifth of a second.
+
 ## 3.17: Impossible, a better opponent picker (20 Nov 2026)
 
 - New CPU level: Impossible. It jump-smashes every high shuttle from about half court in, at around 700 km/h, and gets almost everything back. Beat it for the new achievement, The impossible.

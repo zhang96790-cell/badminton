@@ -26,6 +26,7 @@ Amber is the only warm colour and marks what to do next. Don't spread it to seco
 - Self-hosted via @fontsource. Import paths have no `.css` extension (the package's export map adds it).
 
 ## Layout
+- 3.18 home: Career and Ranked are the two big panels at the top (Career lit, amber Play career; Ranked with a white Quick match and your rating, tier and progress bar). The CPU match is a smaller Exhibition row below, and Tutorial and Drills sit in a strip along the bottom. The old five court rows are gone.
 - Desktop: a board centred over the arena. Header (shuttle mark and wordmark on the left, Order of play and date on the right),
   column heads, three court rows (`84px 188px 1fr auto`), keyboard-notice slot, then a footer with shortcuts and links.
 - ≤760px: rows restack (numeral on the left; event, match and actions below), the footer stacks, and the View/Fullscreen

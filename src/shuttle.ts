@@ -3,7 +3,14 @@ import { netHeightAt } from './court';
 import type { Side, V3 } from './math';
 
 /** Quadratic drag constant: drag accel = k·|v|·v, chosen so drag balances gravity at terminal velocity. */
-export const dragK = () => PHYSICS.gravity / (PHYSICS.terminalVelocity * PHYSICS.terminalVelocity);
+export const dragK = () => (PHYSICS.gravity / (PHYSICS.terminalVelocity * PHYSICS.terminalVelocity)) * dragScale;
+/**
+ * 3.18: drag on the shuttle in flight, as a share of normal. Only the Impossible CPU's smashes change it (they
+ * keep far more of their pace); every other shot, serve and new point puts it back to 1. The shot solver, the
+ * flight and every landing prediction all read it, so the shot still lands where it was aimed.
+ */
+let dragScale = 1;
+export const setDragScale = (s: number) => { dragScale = s; };
 
 const A1 = [0, 0, 0], A2 = [0, 0, 0], A3 = [0, 0, 0], A4 = [0, 0, 0];
 
@@ -74,6 +81,7 @@ export class Shuttle {
   trail: V3[] = [];
 
   hold(at: V3) {
+    dragScale = 1;
     this.pos = { ...at };
     this.vel = { x: 0, y: 0, z: 0 };
     this.dir = { x: 0, y: 0, z: -1 };

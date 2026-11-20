@@ -458,6 +458,8 @@ export interface AILevel {
   mustSmash?: number;
   /** 3.17: extra power on its smashes only (Impossible: about 700 km/h jump smashes). */
   smashPower?: number;
+  /** 3.18: drag on its smashes as a share of normal: lower keeps more of the pace all the way to you. */
+  smashDrag?: number;
 }
 
 export const AI: Record<Level, AILevel> = {
@@ -543,7 +545,7 @@ export const AI: Record<Level, AILevel> = {
     reaction: 0.001, speed: 2.6, strength: 1.2, aimNoise: 0, timingError: 0.0002, margin: 0.3, caution: 2.6,
     decisiveness: 10, anticipation: 0.75, adapt: 1, smash: 3.5, drop: 1.5, net: 1.6, kill: 5, jumpSmash: 1,
     judgesOut: true, outMargin: 0.002, serveShort: 0.95, serveDelay: 0.25, challengeSkill: 1, reach: 1.0, aggression: 1,
-    mustSmash: 4.8, smashPower: 1.55,
+    mustSmash: 4.8, smashPower: 1.75, smashDrag: 0.55,
   },
 };
 

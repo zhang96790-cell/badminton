@@ -55,72 +55,58 @@
           </div>
         </header>
 
-        <div class="oop-table">
-          <div class="oop-cols" aria-hidden="true">
-            <span>Court</span><span>Event</span><span>Match</span><span></span>
+        <div class="home">
+          <div class="heroes">
+            <section class="hero hero-career" aria-label="Career">
+              <p class="h-kick"><span class="status"><i></i>Your career</span></p>
+              <h2 class="h-title">Career mode</h2>
+              <p class="sub" id="careerSub">Travel the tour, win prize money, climb the world ranking and recruit players</p>
+              <div class="h-stats" id="careerStats"></div>
+              <div class="h-actions">
+                <button id="careerOpen" class="walk">
+                  Play career
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
+                </button>
+                <button id="dailyOpen" class="edit">Daily challenge</button>
+              </div>
+            </section>
+
+            <section class="hero hero-ranked" aria-label="Ranked and online">
+              <p class="h-kick">Ranked · pure skill</p>
+              <h2 class="h-title">Play online</h2>
+              <p class="sub" id="rankedSub">Quick match finds someone near your rating. Both of you play the Club Player.</p>
+              <div class="h-rank" id="rankedLine"></div>
+              <div class="h-actions">
+                <button id="quickMatch" class="walk walk-ink">Quick match</button>
+                <div class="act-pair"><button id="createRoom" class="edit">Create room</button><button id="joinRoom" class="edit">Join</button></div>
+              </div>
+            </section>
           </div>
 
-          <section class="oop-row live" aria-label="Court 1, career">
-            <span class="ct" aria-hidden="true">1</span>
-            <p class="event"><span class="status"><i></i>New in 3.0</span><span>Career</span></p>
-            <div class="match">
-              <p class="vs">Career mode</p>
-              <p class="sub" id="careerSub">Travel the tour, win prize money, climb the world ranking and recruit players</p>
-            </div>
-            <div class="act">
-              <button id="careerOpen" class="walk">
-                Play career
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
-              </button>
-              <button id="dailyOpen" class="edit">Daily challenge</button>
-            </div>
-          </section>
-
-          <section class="oop-row" aria-label="Court 2, online">
-            <span class="ct" aria-hidden="true">2</span>
-            <p class="event"><span>Ranked &amp; online</span></p>
-            <div class="match">
-              <p class="vs">Play online</p>
-              <p class="sub">Ranked quick match against someone your level, or a room with a friend</p>
-            </div>
-            <div class="act act-online">
-              <button id="quickMatch" class="go go-primary">Quick match</button>
-              <div class="act-pair"><button id="createRoom" class="go">Create room</button><button id="joinRoom" class="go">Join</button></div>
-            </div>
-          </section>
-
-          <section class="oop-row cpu" aria-label="Court 3, a match against the CPU">
-            <span class="ct" aria-hidden="true">3</span>
-            <p class="event"><span id="eventLabel">Singles</span></p>
-            <div class="match">
+          <section class="exhib" aria-label="A match against the CPU">
+            <p class="ex-kick">Exhibition<span id="eventLabel">Singles</span></p>
+            <div class="ex-match">
               <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
               <p class="sub" id="tag">Best of 3 games to 15</p>
             </div>
-            <div class="act">
-              <button id="start" class="go go-primary go-arrow">Walk on <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
-              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Edit match card</button>
+            <div class="ex-act">
+              <button id="start" class="go go-arrow">Walk on <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
+              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Match card</button>
             </div>
           </section>
 
-          <section class="oop-row" aria-label="Court 4, tutorial">
-            <span class="ct" aria-hidden="true">4</span>
-            <p class="event"><span>Warm-up</span></p>
-            <div class="match">
-              <p class="vs">Tutorial <span id="newHint" class="tip">Start here if you’re new</span></p>
-              <p class="sub">16 short lessons with the coach, about 6 minutes</p>
-            </div>
-            <div class="act"><button id="tutorial" class="go">Start</button></div>
-          </section>
-
-          <section class="oop-row" aria-label="Court 5, practice">
-            <span class="ct" aria-hidden="true">5</span>
-            <p class="event"><span>Practice</span></p>
-            <div class="match">
-              <p class="vs">Drills</p>
-              <p class="sub">Smash, clear and drop, net play, drives, defence and doubles drills</p>
-            </div>
-            <div class="act"><button id="practice" class="go">Start</button></div>
-          </section>
+          <nav class="strip" aria-label="Learn">
+            <button id="tutorial" class="ltile ltile-tutorial">
+              <span class="tile-k">Warm-up</span>
+              <b>Tutorial <span id="newHint" class="tip">Start here</span></b>
+              <span class="tile-s">16 short lessons with the coach, about 6 minutes</span>
+            </button>
+            <button id="practice" class="ltile ltile-practice">
+              <span class="tile-k">Practice</span>
+              <b>Drills</b>
+              <span class="tile-s">Smash, net play, drives, defence and doubles</span>
+            </button>
+          </nav>
         </div>
 
         <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>

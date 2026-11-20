@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.18',
+    title: 'New home page, faster Impossible smashes',
+    date: '20 Nov 2026',
+    changes: [
+      "New home page. Career and Ranked are now the two big panels at the top. Career shows your best world ranking, title points and record. Ranked shows your rating, your tier and how far you are from the next one. A match against the CPU is a smaller row below, and the Tutorial and Drills sit along the bottom.",
+      "Impossible's smashes are much faster now. Before, they left the racket at about 530 km/h on average and had slowed to about 85 km/h by the time they reached you, giving you about a third of a second to react. Now they hit harder (up to about 780 km/h) and keep their pace, still around 300 km/h when they reach you, so you get about a fifth of a second.",
+    ],
+  },
+  {
     version: '3.17',
     title: 'Impossible, a better opponent picker',
     date: '20 Nov 2026',

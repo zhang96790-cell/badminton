@@ -24,7 +24,7 @@ import { REPLAY_CAMS, type ReplayCam } from './camera';
 import type { Highlight } from './highlights';
 import type { MatchFacts } from './achievements';
 import { isPerfectJump, mouseShotKind, resolveServe, resolveShot, type Contact, type Shot, type ShotRequest } from './shots';
-import { Shuttle, predictPath, stepFlight, type PathSample } from './shuttle';
+import { Shuttle, predictPath, setDragScale, stepFlight, type PathSample } from './shuttle';
 import { MatchStats } from './stats';
 import type { Speaker } from './voice';
 
@@ -629,6 +629,7 @@ export class Game {
 
     const box = serviceBox(this.receiver.side, this.match.serverInRightCourt(), this.doublesCourt);
     const from = this.serveContact(srv);
+    setDragScale(1);
     const shot = resolveServe(req, from, srv.side, box);
     this.serveBox = box;
     this.recorder.reset();
@@ -819,6 +820,9 @@ export class Game {
         }
         const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : ctrl instanceof AIController ? ctrl.aimScaleFor(req, c.point.z) : 1;
         c.netRun = this.netRun;
+        // 3.18: the Impossible CPU's smashes keep their pace (less drag for this flight only).
+        const lowDrag = cpu && req.kind === 'intent' && req.intent === 'fast' && c.point.z >= SHOTS.overheadHeight ? ctrl.smashDrag : 1;
+        setDragScale(lowDrag);
         let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
         p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)
         // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.

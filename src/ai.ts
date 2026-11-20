@@ -82,6 +82,8 @@ export class AIController implements Controller {
   private baseReach = 0;
 
   /** tough: the harder top levels (everything but career and the daily challenge). */
+  /** 3.18: drag on its smashes as a share of normal (only the Impossible level sets it). */
+  get smashDrag() { return this.L.smashDrag ?? 1; }
   constructor(private game: Game, private me: Player, level: Level, style: Style, tough = false) {
     this.L = tough ? { ...AI[level], ...AI_TOUGH[level] } : AI[level];
     this.S = STYLES[style];

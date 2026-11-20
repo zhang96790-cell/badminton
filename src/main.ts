@@ -25,7 +25,7 @@ import { Hud } from './hud';
 import { Input } from './input';
 import { Tour } from './tour';
 import { CODE_PATTERN, QueueConnection, RoomConnection, SEATS, newRoomCode, type GameMsg, type LineupSlot, type MatchSnapshot, type QueueEvent, type Roster, type RosterSeat, type ServerMsg } from './net';
-import { tierIndex, tierOf, TIERS } from './rating';
+import { tierIndex, tierOf, toNext, TIERS } from './rating';
 import { drawRatingGraph, rankBarHtml } from './rankbar';
 import { PresenceLink, type PresenceCounts } from './presence';
 import { initCareer } from './careermode/ui';
@@ -261,7 +261,33 @@ let isAdmin = false;
 /** Your career stats: from your account when logged in, otherwise kept on this computer. */
 let career: Career = loadLocalCareer();
 
+/** 3.18: the Career and Ranked panels on the home page show where you stand. */
+function syncHomeCards() {
+  const g = (k: string) => career[k] ?? 0, sum = titleSummary(career);
+  const best = g('max_career_best_rank') ? 1000 - g('max_career_best_rank') : 0;
+  const cm = g('career_matches'), cw = g('career_wins');
+  document.getElementById('careerStats')!.innerHTML = [
+    [best ? `#${best}` : '–', 'Best world rank'],
+    [String(sum.points), 'Title points'],
+    [cm ? `${cw}–${cm - cw}` : '–', 'Career record'],
+  ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
+  const line = document.getElementById('rankedLine')!;
+  if (!account || !myRating) {
+    line.className = 'h-rank guest';
+    line.textContent = account ? 'Play a quick match to get your rating.' : 'Log in to play ranked and get a rating. Rooms with friends work without one.';
+    return;
+  }
+  const r = myRankInfo?.rating ?? myRating.rating, t = tierOf(r, myRankInfo?.tier);
+  const next = toNext(r, t.index), span = next === null ? 0 : TIERS[t.index + 1].min - t.min;
+  const fill = next === null ? 100 : Math.max(4, Math.min(100, Math.round((100 * (span - next)) / span)));
+  line.className = 'h-rank';
+  line.style.setProperty('--tier', t.color);
+  line.innerHTML = `<b>${Math.round(r)}</b><span class="tier-name">${hubEsc(t.name)} · ${myRating.wins}–${myRating.losses}</span><span class="tier-bar"><i style="width:${fill}%"></i></span>`
+    + `<span class="tier-next">${next === null ? 'Top tier' : `${next} to ${hubEsc(TIERS[t.index + 1].name)}`}</span>`;
+}
+
 function syncAccountUi() {
+  syncHomeCards();
   document.getElementById('accountLabel')!.textContent = account ? `${account.username}${myRating ? ` · ${myRating.rating}` : ''}` : 'Log in';
   document.getElementById('accountBtn')!.classList.toggle('in', !!account);
   // Social screen: who you are, your tier and rating, and what needs a login.
@@ -898,7 +924,7 @@ async function renderMatches() {
   list.innerHTML = rows.length ? rows.map((r) => {
     const when = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     return `<li><span class="${r.won ? 'won' : 'lost'}">${r.won ? 'W' : 'L'}</span><span class="grow">v ${hubEsc(r.opponent)}<span class="sub">${hubEsc(r.score)} · ${when}</span></span><b class="${r.change >= 0 ? 'won' : 'lost'}">${r.change >= 0 ? '+' : ''}${r.change}</b></li>`;
-  }).join('') : '<li class="empty">No ranked matches yet. Try Quick match on Court 2.</li>';
+  }).join('') : '<li class="empty">No ranked matches yet. Try Quick match on the home page.</li>';
 }
 
 /** Fill a leaderboard list (the hub's tab or the footer pop-up). Anyone can see it, logged in or not. */
@@ -1069,13 +1095,13 @@ try {
 
 // ── Tour of the start screen ─────────────────────────────────────────────────
 const tour = new Tour([
-  { target: '.oop-row:has(#careerOpen)', title: 'Career', text: 'Court 1 is career mode: travel the tour, earn prize money, climb the world ranking and recruit players. The daily challenge is here too (log in first).', before: () => { closeDrawers(); closeSocial(); } },
-  { target: '.oop-row:has(#quickMatch)', title: 'Ranked and online', text: 'Court 2. Quick match finds someone near your rating for a ranked game (log in first). Create room gives you a code to send a friend, and Join takes you into theirs.' },
-  { target: '.oop-row:has(#start)', title: 'A match against the CPU', text: 'Court 3 is a quick match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play.' },
+  { target: '.hero-career', title: 'Career', text: 'Career mode: travel the tour, earn prize money, climb the world ranking and recruit players. Your best ranking, title points and record show here. The daily challenge is here too (log in first).', before: () => { closeDrawers(); closeSocial(); } },
+  { target: '.hero-ranked', title: 'Ranked and online', text: 'Quick match finds someone near your rating for a ranked game (log in first). Your rating and tier show here. Create room gives you a code to send a friend, and Join takes you into theirs.' },
+  { target: '.exhib', title: 'A match against the CPU', text: 'An exhibition match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play, and Match card to change the level and format.' },
   { target: '#controlsBtn', title: 'Your controls', text: 'How you play: keyboard and mouse, keys with a trackpad, or keyboard only. Click it any time to switch.' },
-  { target: '#matchcard', title: 'Match card', text: 'Edit match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
-  { target: '.oop-row:has(#tutorial)', title: 'Tutorial', text: 'New to the game? Court 4 is the tutorial: short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
-  { target: '.oop-row:has(#practice)', title: 'Practice', text: 'Court 5 is practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
+  { target: '#matchcard', title: 'Match card', text: 'Match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
+  { target: '.ltile-tutorial', title: 'Tutorial', text: 'New to the game? The tutorial is short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
+  { target: '.ltile-practice', title: 'Practice', text: 'Drills are practice: drill any shot against a feeder. In practice, number keys 1–9 switch drills.' },
   { target: '#kitBtn', title: 'Assists & controls', text: 'This tab on the left edge slides out your assists and controls. Click it again to put it away.' },
   { target: '#kitcard', title: 'Assists', text: 'Turn help on or off: the landing marker (on by default), the timing light, swing assist, doubles auto-switch and the umpire’s voice.', before: () => openDrawer('kit', 'assists') },
   { target: '#kitcard', title: 'Controls and keys', text: 'Switch control mode, change any key under Your keys, and see how to play every shot.', before: () => openDrawer('kit', 'controls') },
@@ -1084,7 +1110,7 @@ const tour = new Tour([
   { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to keep your stats and settings on any computer, play ranked and add friends. Once you’re in, it shows your rating.', before: closeSocial },
   { target: '.board-foot', title: 'Help and updates', text: 'How to play lists every shot and key, Take the tour brings you back here, and What’s new shows every update (with a NEW badge when there’s one you haven’t seen).' },
   { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
-  { target: '#start', title: 'Ready?', text: 'That’s everything. Start a career on Court 1, play someone online on Court 2, or press Walk on to play the CPU.' },
+  { target: '#start', title: 'Ready?', text: 'That’s everything. Start a career, play someone online, or press Walk on to play the CPU.' },
 ], () => { closeSocial(); closeDrawers(); document.getElementById('tourBtn')?.focus(); });
 /** Taking the tour (from the footer or the welcome card) counts as having seen it. */
 function startTour() {
@@ -1967,6 +1993,7 @@ document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
 syncMenu();
 describeControls();
 describeFormat();
+syncHomeCards(); // 3.18: guests and first paint (logging in fills it again)
 
 const TUTORIAL_DONE = 'badminton.tutorialDone';
 const tutorialDone = () => { try { return localStorage.getItem(TUTORIAL_DONE) === '1'; } catch { return false; } };
@@ -2187,7 +2214,7 @@ function showCounts(c: PresenceCounts | null) {
     <li><span>Looking for a quick match</span><span>${c.inQueue}</span></li>
     <li><span>In a friend’s room</span><span>${c.inRoom}</span></li>
     <li><span>On the menu</span><span>${Math.max(0, c.online - c.inMatch - c.inQueue - c.inRoom)}</span></li></ul>
-    <p>${c.online <= 1 ? 'You’re the only one online right now. Make a room on Court 2 and send a friend the code.' : 'Quick match pairs you with someone near your rating.'}</p>`;
+    <p>${c.online <= 1 ? 'You’re the only one online right now. Make a room under Play online and send a friend the code.' : 'Quick match pairs you with someone near your rating.'}</p>`;
 }
 presence.onCounts(showCounts);
 onlineBtn.addEventListener('click', (e) => {

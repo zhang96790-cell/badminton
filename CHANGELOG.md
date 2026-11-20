@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.15: Ranked is pure skill (20 Nov 2026)
+
+- Ranked is now pure skill. Both players always play the Club Player, so no one has better stats than anyone else and the result comes down to how you play.
+- The ranked lobby no longer has a player pick. It shows you and your opponent with your ratings, and you press Ready.
+- Friend rooms with rating on also use the Club Player for both of you. Unrated friend rooms, career mode and practice still let you pick your player.
+
 ## 3.14.3: Sponsors toned down (19 Nov 2026)
 
 - Sponsors pay a lot less. Weekly pay and title bonuses are now about a third of what they were (a top-10 sponsor's title bonus used to be worth more than 10 Super 100 wins). Prize money matters again.

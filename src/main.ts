@@ -1407,7 +1407,7 @@ function renderLobby() {
     const both = !!r?.host?.account && !!r?.guest?.account;
     const note = document.getElementById('roomEloNote')!;
     note.textContent = !roomSettings.elo ? 'Off: this match won’t change anyone’s rating.'
-      : both ? 'On: counts at 0.75× a quick match, up to 3 a day against the same friend.'
+      : both ? 'On: counts at 0.75× a quick match, up to 3 a day against the same friend. You both play the Club Player.'
       : 'On, but both players need to be logged in for it to count.';
   }
   // Singles can't seat more than two.
@@ -1444,8 +1444,8 @@ function renderLobby() {
     roomStart.hidden = true;
     roomStatus.textContent = (rankedOver ? 'This ranked match is over. Find another when you’re ready.'
       : noShow ? 'Your opponent hasn’t joined. Find another match, or keep waiting.'
-      : ready && picking ? `Pick your player and press Ready. Starts when you’re both ready, or in ${pickSecondsLeft()} s.`
-      : ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · pick your player once you’re both here') + conn;
+      : ready && picking ? `Press Ready. Starts when you’re both ready, or in ${pickSecondsLeft()} s.`
+      : ready ? 'Both here. Starting…' : 'Ranked · 1 game to 21 · you both play the Club Player') + conn;
     return;
   }
   roomStart.hidden = !host;
@@ -1567,9 +1567,13 @@ function startOnline(host: boolean, lineup?: LineupSlot[], resume?: MatchSnapsho
   peerRematch = false;
   const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
   const level = lineup ? roomSettings.level ?? 'medium' : settings.opponent;
+  const friendRated = !ranked && !lineup && !!roomSettings.elo && !!r.host?.account && !!r.guest?.account;
+  // 3.15: anything that changes your rating is played as the Club Player on both sides: pure skill.
+  const pure = !!ranked || friendRated;
   game = new Game({ ...settings, games: roomSettings.games as 1 | 3, points: roomSettings.points as 15 | 21, opponent: level }, input, broadcast, 'online',
-    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined, resume, friendRated: !ranked && !lineup && !!roomSettings.elo && !!r.host?.account && !!r.guest?.account },
-    withOpponent(defaultSetup(ranked ? 'ranked' : 'friendly', roomSettings.games as 1 | 3, roomSettings.points as 15 | 21, myCharacter()), lineup || !('connected' in opp) ? null : opp.character ?? null));
+    { conn: room, host, opponentName: opp.name, ranked, lineup, me: lineup ? me : undefined, resume, friendRated },
+    withOpponent(defaultSetup(ranked ? 'ranked' : 'friendly', roomSettings.games as 1 | 3, roomSettings.points as 15 | 21, pure ? DEFAULT_CHARACTER : myCharacter()),
+      pure ? DEFAULT_CHARACTER : lineup || !('connected' in opp) ? null : opp.character ?? null));
   game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
   closeDrawers();
@@ -1593,6 +1597,18 @@ window.setInterval(() => {
   if (!game) renderLobby();
 }, 1000);
 
+/** 3.15: ranked is the Club Player for both, so the cards show who you're playing and their rating. */
+function rankedVsCard(seat: RosterSeat, mine: boolean, rating: number | undefined) {
+  const t = rating != null ? tierOf(rating) : null;
+  const btn = mine ? `<button type="button" class="${seat.ready ? '' : 'primary'} vs-ready" data-vsready>${seat.ready ? 'Not ready' : 'Ready'}</button>` : '';
+  return `<div class="vs-card${seat.ready ? ' ready' : ''}" style="--rar:${RARITY.common.color}">
+    <div class="who"><span>${hubEsc(seat.name)}${mine ? ' (you)' : ''}</span>${seat.ready ? '<b>Ready</b>' : `<span>${seat.connected ? 'Getting ready…' : 'Reconnecting'}</span>`}</div>
+    <h3>${rating != null ? Math.round(rating) : '–'}</h3>
+    <p class="sub">${t ? hubEsc(t.name) + ' · ' : ''}rating</p>
+    <p class="sub">Playing as the Club Player. Same player on both sides, so it comes down to your skill.</p>
+    ${btn}
+  </div>`;
+}
 function vsCard(seat: RosterSeat, mine: boolean, other: RosterSeat | null) {
   const c = characterById(seat.character ?? DEFAULT_CHARACTER), r = RARITY[c.rarity];
   const o = other ? characterById(other.character ?? DEFAULT_CHARACTER) : null;
@@ -1627,6 +1643,11 @@ function renderVs(r: Roster | null) {
   // 3.9.5: don't redraw under an open player list (it would snap shut); the next tick catches up.
   if (document.activeElement?.matches?.('#roomVs [data-vspick]')) return;
   vsKey = key;
+  if (r.ranked) {
+    const rt = r.ranked, myR = r.you === 'host' ? rt.host : rt.guest, theirR = r.you === 'host' ? rt.guest : rt.host;
+    box.innerHTML = `${rankedVsCard(mine, true, myR)}<span class="vs">VS</span>${rankedVsCard(theirs, false, theirR)}`;
+    return;
+  }
   box.innerHTML = `${vsCard(mine, true, theirs)}<span class="vs">VS</span>${vsCard(theirs, false, mine)}`;
   const me = characterById(mine.character ?? DEFAULT_CHARACTER), them = characterById(theirs.character ?? DEFAULT_CHARACTER);
   drawPentagon(box.querySelector('[data-vspent="me"]') as HTMLCanvasElement, me.stats, RARITY[me.rarity].color, { stats: them.stats, color: '#1f2937' });

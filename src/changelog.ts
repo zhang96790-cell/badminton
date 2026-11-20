@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.15',
+    title: 'Ranked is pure skill',
+    date: '20 Nov 2026',
+    changes: [
+      "Ranked is now pure skill. Both players always play the Club Player, so no one has better stats than anyone else and the result comes down to how you play.",
+      "The ranked lobby no longer has a player pick. It shows you and your opponent with your ratings, and you press Ready.",
+      "Friend rooms with rating on also use the Club Player for both of you. Unrated friend rooms, career mode and practice still let you pick your player.",
+    ],
+  },
+  {
     version: '3.14.3',
     title: 'Sponsors toned down',
     date: '19 Nov 2026',

@@ -9,7 +9,7 @@ import { LOCATION } from './location';
 import { Matchmaker } from './matchmaker';
 import { Presence } from './presence';
 import { logDispute, recordResult, verifyPlayer, type Player, type SupabaseEnv } from './supabase';
-import { characterById } from '../../shared/characters';
+import { DEFAULT_CHARACTER, characterById } from '../../shared/characters';
 
 export { Matchmaker, Presence };
 export interface Env extends SupabaseEnv { ROOMS: DurableObjectNamespace<Room>; QUEUE: DurableObjectNamespace<Matchmaker>; PRESENCE: DurableObjectNamespace<Presence> }
@@ -178,7 +178,8 @@ export class Room extends DurableObject<Env> {
     s[seat] = {
       token, name, connected: true, awaySince: null, team, drops: s[seat]?.drops ?? 0, player: s[seat]?.player,
       v: (url.searchParams.get('v') ?? '').slice(0, 16), r: (url.searchParams.get('r') ?? '').slice(0, 16),
-      character: characterById(url.searchParams.get('c')).id, ready: s[seat]?.ready,
+      // 3.15: ranked is the Club Player for everyone (pure skill).
+      character: s.ranked ? DEFAULT_CHARACTER : characterById(url.searchParams.get('c')).id, ready: s[seat]?.ready,
     };
     await this.save();
     this.broadcastRoster(s);
@@ -213,7 +214,7 @@ export class Room extends DurableObject<Env> {
       const s = await this.load();
       const info = s[att.seat];
       if (!info || s.progress?.playing) return;
-      if (typeof msg.character === 'string') { info.character = characterById(msg.character).id; info.ready = false; }
+      if (typeof msg.character === 'string' && !s.ranked) { info.character = characterById(msg.character).id; info.ready = false; }
       if (typeof msg.ready === 'boolean') info.ready = msg.ready;
       await this.save();
       this.broadcastRoster(s);

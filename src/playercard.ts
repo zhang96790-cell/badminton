@@ -20,7 +20,7 @@ function shell(): HTMLElement {
   return el;
 }
 
-export async function openPlayerCard(username: string, load: (u: string) => Promise<PlayerCard | null>, me?: string) {
+export async function openPlayerCard(username: string, load: (u: string) => Promise<PlayerCard | null>, me?: string, mine?: Record<string, number>) {
   const el = shell();
   el.classList.remove('hidden');
   el.innerHTML = `<div class="pc-panel"><button class="pc-x" data-pc-close aria-label="Close">×</button><p class="pc-loading">Loading ${esc(username)}…</p></div>`;
@@ -60,5 +60,24 @@ export async function openPlayerCard(username: string, load: (u: string) => Prom
       ${fact('Smash winners', num(st.smash_winners))}
       ${fact('Achievements', num(c.achievements))}
     </div>
+    ${mine && c.username !== me ? compareHtml(st, mine, c.username) : ''}
   </div>`;
+}
+
+/** 4.4: you against this player, side by side (their account stats against yours). */
+function compareHtml(them: Record<string, number>, me: Record<string, number>, name: string): string {
+  const g = (o: Record<string, number>, k: string) => o[k] ?? 0;
+  const pct = (o: Record<string, number>) => (g(o, 'matches') ? Math.round((100 * g(o, 'wins')) / g(o, 'matches')) : 0);
+  const rows: [string, number, number, string?][] = [
+    ['Matches played', g(me, 'matches'), g(them, 'matches')],
+    ['Win rate', pct(me), pct(them), '%'],
+    ['Title points', titleSummary(me).points, titleSummary(them).points],
+    ['Fastest smash', g(me, 'max_smash'), g(them, 'max_smash'), ' km/h'],
+    ['Longest rally', g(me, 'max_rally'), g(them, 'max_rally')],
+    ['Best win streak', g(me, 'max_streak'), g(them, 'max_streak')],
+    ['Smash winners', g(me, 'smash_winners'), g(them, 'smash_winners')],
+    ['Aces', g(me, 'aces'), g(them, 'aces')],
+  ];
+  return `<h3 class="pc-h">You v ${esc(name)}</h3><table class="pc-table pc-compare"><tr><th></th><th>You</th><th>${esc(name)}</th></tr>${rows.map(([l, a, b, u = '']) =>
+    `<tr><td>${l}</td><td class="${a > b ? 'up' : ''}">${num(a)}${u}</td><td class="${b > a ? 'up' : ''}">${num(b)}${u}</td></tr>`).join('')}</table>`;
 }

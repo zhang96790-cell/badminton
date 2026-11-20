@@ -23,7 +23,7 @@ export interface MatchSetup {
   mode: SetupMode;
   format: { games: 1 | 3; points: 11 | 15 | 21 };
   /** modifiers: energy and the like (career). abilities: signature effects switched on for this match. */
-  player: { characterId: string; modifiers?: Modifier[]; abilities?: boolean };
+  player: { characterId: string; modifiers?: Modifier[]; abilities?: boolean; /** 4.4: your kit sponsor's brand id (career), shown on your shirt. */ kitBrand?: string };
   opponent: { kind: 'cpu' | 'remote'; characterId?: string; cpuLevel?: Level; style?: Style; modifiers?: Modifier[]; abilities?: boolean };
   /** Restrictions from a mode itself (the daily challenge), applied even outside development. */
   forced?: boolean;

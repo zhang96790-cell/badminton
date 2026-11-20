@@ -1,7 +1,7 @@
 import type { Camera } from './camera';
 import { ARENA, COURT, SHOTS, VISUAL } from './config';
 import { ads, type Ad } from './ads';
-import { DEFAULT_LOOK, brandBanner, kitBrandOf, type EventLook } from './brands';
+import { DEFAULT_LOOK, brandBanner, brandById, kitBrandOf, type EventLook } from './brands';
 import { KeyboardController, MouseController } from './controllers';
 import { courtLineRects, inHalf, isIn, netHeightAt, serviceBox, type Rect } from './court';
 import type { Game } from './game';
@@ -77,6 +77,8 @@ function buildCrowd(palette: string[] = C.crowd, density = ARENA.crowdDensity, s
 export class Renderer {
   /** The tournament's name for the court boards (career and daily matches), or null. */
   eventTitle: string | null = null;
+  /** 4.4: a second line on the middle boards instead of "powered by" (exhibitions: who you're playing). */
+  boardLine: string | null = null;
   /** The tournament's court colours (career), or null for the usual green. */
   courtTheme: import('./config').CourtTheme | null = null;
   /** The tournament's sponsors, officials' blazers and so on (career); the exhibition look otherwise. */
@@ -231,11 +233,11 @@ export class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = `800 ${Math.max(6, Math.min(0.34, 5.6 / Math.max(10, title.length)) * q.s)}px ui-sans-serif, system-ui, sans-serif`;
         ctx.fillText(title.toUpperCase(), q.x, q.y + 0.04 * q.s);
-        const pr = this.look.poweredBy;
-        if (pr) {
+        const pr = this.look.poweredBy, line = this.boardLine ?? (pr ? `POWERED BY ${pr.name.toUpperCase()}` : null);
+        if (line) {
           ctx.fillStyle = this.look.accent;
-          ctx.font = `700 ${Math.max(5, 0.11 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
-          ctx.fillText(`POWERED BY ${pr.name.toUpperCase()}`, q.x, q.y + 0.24 * q.s);
+          ctx.font = `700 ${Math.max(5, 0.12 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillText(line.toUpperCase(), q.x, q.y + 0.25 * q.s);
         }
       }
     }
@@ -641,7 +643,7 @@ export class Renderer {
     const n = parseInt((v.color.startsWith('#') ? v.color : '#888888').slice(1), 16);
     const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
     const ink = lum > 0.62 ? 'rgba(10,15,29,0.9)' : 'rgba(255,255,255,0.92)';
-    const brand = kitBrandOf(v.lookId ?? v.name ?? 'you').name.toUpperCase();
+    const brand = (brandById(v.kitBrand) ?? kitBrandOf(v.lookId ?? v.name ?? 'you')).name.toUpperCase();
     ctx.textAlign = 'center';
     ctx.fillStyle = ink;
     if (facingAway) {

@@ -5,6 +5,22 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4',
+    title: 'Sponsors, profile and feedback',
+    date: '21 Nov 2026',
+    changes: [
+      "Up to three sponsors in career: a kit deal with a badminton brand (some money, a bonus for every final, and their name on your shirt), a main sponsor that’s a perk brand (little money, one perk: cheaper flights, free hotels, cheaper loans, win bonuses, or 35% off tournament costs), and a money sponsor (the most pay, no perk).",
+      "Career has separate pages now: Next up, Ranking, Squad, Sponsors, Shop and Money (your loan and every cost and prize). Shop items you haven’t looked at yet say New.",
+      "A new Profile tab in Social: your favourite shot, your best shot (how often it wins the point), what you lose most points to, and full shot analytics by kind of shot (counted from now on), plus your rarest achievements.",
+      "Achievements show how rare they are (“3% of players have this”), and other players’ cards compare them with you side by side.",
+      "A big Send feedback button on the home page for ideas and bugs. Bug reports can attach the problem log automatically.",
+      "Press ? for a list of keyboard shortcuts.",
+      "Search and Reset to default in the match card and Assists & controls.",
+      "In exhibition matches, the boards behind the court show who you’re playing (vs CPU Legend and so on).",
+      "Fixed: some stat tiles in Social were white with pale text.",
+    ],
+  },
+  {
     version: '4.3',
     title: 'A more all-round game',
     date: '21 Nov 2026',

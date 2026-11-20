@@ -34,7 +34,7 @@ import { drawRatingGraph, rankBarHtml } from './rankbar';
 import { PresenceLink, type PresenceCounts } from './presence';
 import { initCareer } from './careermode/ui';
 import { clearLog, installErrorLog, logText, readLog } from './errorlog';
-import { addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
+import { SHOT_KINDS, addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
@@ -464,6 +464,7 @@ function openAccount(note?: string) {
 /** Add a finished match to your career: on your account if you're logged in, otherwise on this computer. */
 function recordCareer(g: Game) {
   if (g.mode !== 'match' && g.mode !== 'online') return;
+  logEvent('finish', g.online ? 'online' : g.setup.mode, levelOf(g), g);
   recordHeat(g);
   const delta = careerDelta(g, career);
   const fresh = checkAchievements(addCareer(career, delta), g.matchFacts());
@@ -586,7 +587,8 @@ function showHubTab(name: string) {
   if (name === 'leaders') void renderLeaders();
   if (name === 'admin') void renderAdmin();
   if (name === 'highlights') renderHighlights();
-  if (name === 'awards') renderAwards();
+  if (name === 'awards') void renderAwards();
+  if (name === 'profile') void renderProfile();
   if (name === 'players') void renderPlayers();
   if (name === 'heat') renderHeat();
 }
@@ -778,15 +780,69 @@ document.getElementById('pickOffer')!.addEventListener('click', async (e) => {
 });
 
 /** Awards tab: achievements. */
-function renderAwards() {
+/** 4.4: how rare each achievement is (share of players who have it), loaded once. */
+let rarity: Record<string, number> | null = null;
+async function loadRarity() { if (!rarity) rarity = (await (await loadAccount()).achievementRarity()) ?? {}; return rarity; }
+const rareText = (id: string) => (rarity && rarity[id] !== undefined ? `${rarity[id] < 1 ? '<1' : Math.round(rarity[id])}% of players have this` : '');
+
+async function renderAwards() {
   const got = loadUnlocked();
   const n = ACHIEVEMENTS.filter((a) => got[a.id] || career[`max_ach_${a.id}`]).length;
   document.getElementById('awardsScope')!.innerHTML = `<b>${n}</b> of ${ACHIEVEMENTS.length} achievements`;
-  document.getElementById('achList')!.innerHTML = ACHIEVEMENTS.map((a) => {
-    const on = !!(got[a.id] || career[`max_ach_${a.id}`]);
-    return `<div class="tile ach${on ? ' on' : ''}"><b>${on ? '★' : '☆'} ${hubEsc(a.name)}</b><span>${hubEsc(a.desc)}</span></div>`;
-  }).join('');
+  const draw = () => {
+    document.getElementById('achList')!.innerHTML = ACHIEVEMENTS.map((a) => {
+      const on = !!(got[a.id] || career[`max_ach_${a.id}`]), r = rareText(a.id);
+      return `<div class="tile ach${on ? ' on' : ''}"><b>${on ? '★' : '☆'} ${hubEsc(a.name)}</b><span>${hubEsc(a.desc)}</span>${r ? `<em class="ach-rare${(rarity?.[a.id] ?? 100) < 5 ? ' very' : ''}">${r}</em>` : ''}</div>`;
+    }).join('');
+  };
+  draw();
+  await loadRarity().catch(() => null);
+  draw();
 }
+
+/** 4.4: the Profile tab: who you are, what you play, what wins and loses you points, and your rarest achievements. */
+async function renderProfile() {
+  const el = document.getElementById('profilePane')!, g = (k: string) => career[k] ?? 0;
+  const kinds = SHOT_KINDS.map(([k, label]) => ({ k, label, played: g(`st_${k}`), won: g(`sw_${k}`), errors: g(`se_${k}`), lost: g(`sl_${k}`) }));
+  const played = kinds.filter((x) => x.played > 0);
+  const fav = [...played].sort((a, b) => b.played - a.played)[0];
+  const best = [...played].filter((x) => x.played >= 15).sort((a, b) => b.won / b.played - a.won / a.played)[0];
+  const nemesis = [...kinds].sort((a, b) => b.lost - a.lost)[0];
+  const t = myRating ? tierOf(myRankInfo?.rating ?? myRating.rating, myRankInfo?.tier) : null;
+  const sum = titleSummary(career);
+  const pct = (a: number, b: number) => (b ? `${Math.round((100 * a) / b)}%` : '–');
+  const got = loadUnlocked();
+  const mine = ACHIEVEMENTS.filter((a) => got[a.id] || career[`max_ach_${a.id}`]);
+  const draw = () => {
+    const rare = [...mine].filter((a) => rarity?.[a.id] !== undefined).sort((a, b) => (rarity![a.id] ?? 100) - (rarity![b.id] ?? 100)).slice(0, 4);
+    el.innerHTML = `<div class="pf-head" style="--tier:${t?.color ?? '#8ea6d8'}">
+        <div class="pf-badge">${hubEsc((account?.username ?? 'You').slice(0, 2).toUpperCase())}</div>
+        <div><p class="hero-kicker">Your profile</p><h3 class="pf-name">${hubEsc(account?.username ?? 'Guest')}</h3>
+        <p class="sub">${t ? `<b style="color:${t.color}">${hubEsc(t.name)}</b> · ${myRating!.rating} rating · ${myRating!.wins}–${myRating!.losses} ranked` : 'Not ranked yet'} · ${sum.titles} career title${sum.titles === 1 ? '' : 's'} · ${g('matches')} matches played</p></div>
+        <button type="button" class="edit" data-mycard>Your player card</button>
+      </div>
+      <div class="pf-facts">
+        <div><span>Favourite shot</span><b>${fav ? hubEsc(fav.label) : '–'}</b><em>${fav ? `${fav.played} played` : 'Play a match to fill this in'}</em></div>
+        <div><span>Best shot</span><b>${best ? hubEsc(best.label) : '–'}</b><em>${best ? `wins ${pct(best.won, best.played)} of the time` : 'Needs 15 of one shot'}</em></div>
+        <div><span>You lose most points to</span><b>${nemesis && nemesis.lost ? hubEsc(nemesis.label.toLowerCase()) : '–'}</b><em>${nemesis && nemesis.lost ? `${nemesis.lost} points` : ''}</em></div>
+        <div><span>Fastest smash</span><b>${g('max_smash') ? `${g('max_smash')} km/h` : '–'}</b><em>${g('max_rally') ? `longest rally ${g('max_rally')} shots` : ''}</em></div>
+      </div>
+      <h4 class="pf-h">Shot analytics</h4>
+      ${played.length ? `<table class="pf-table"><tr><th>Shot</th><th>Played</th><th>Winners</th><th>Win %</th><th>Your errors</th><th>Points lost to it</th></tr>
+        ${kinds.map((x) => `<tr><td>${hubEsc(x.label)}</td><td>${x.played}</td><td>${x.won}</td><td>${pct(x.won, x.played)}</td><td>${x.errors}</td><td>${x.lost}</td></tr>`).join('')}</table>
+        <p class="sub">Counted from matches since 4.4. Win % is the share of those shots that won the point outright.</p>`
+        : '<p class="sub">Your shot analytics start with your next match.</p>'}
+      <h4 class="pf-h">Rarest achievements</h4>
+      ${rare.length ? `<div class="pf-rare">${rare.map((a) => `<div><b>★ ${hubEsc(a.name)}</b><span>${rareText(a.id)}</span></div>`).join('')}</div>` : `<p class="sub">${mine.length ? 'Loading…' : 'No achievements yet.'}</p>`}
+      <p class="sub">Your rating graph is in Stats, your heatmap in Heatmap and your matches in Matches.</p>`;
+  };
+  draw();
+  await loadRarity().catch(() => null);
+  if (!document.querySelector('[data-hubpane="profile"]')!.hasAttribute('hidden')) draw();
+}
+document.getElementById('profilePane')!.addEventListener('click', (e) => {
+  if ((e.target as HTMLElement).closest('[data-mycard]') && account) showCard(account.username);
+});
 
 /** Highlights tab: rallies you saved with P, kept on this computer. */
 function renderHighlights() {
@@ -825,7 +881,69 @@ async function renderAdmin() {
   adminRows = (await m.adminPlayers()) ?? o.recent.map((p) => ({ ...p, owned: 0, career_player: null }));
   drawAdminList();
   void drawGameSwitch();
+  void loadAdminFeedback();
 }
+
+// ── 4.4: admin pages: analytics and the feedback inbox ──
+function showAdminPage(p: string) {
+  document.querySelectorAll<HTMLElement>('#adminNav [data-apage]').forEach((b) => b.classList.toggle('on', b.dataset.apage === p));
+  document.querySelectorAll<HTMLElement>('[data-apane]').forEach((x) => { x.hidden = x.dataset.apane !== p; });
+  if (p === 'analytics') void drawAnalytics();
+  if (p === 'feedback') drawAdminFeedback();
+}
+document.getElementById('adminNav')!.addEventListener('click', (e) => {
+  const p = (e.target as HTMLElement).closest<HTMLElement>('[data-apage]')?.dataset.apage;
+  if (p) showAdminPage(p);
+});
+async function drawAnalytics() {
+  const box = document.getElementById('adminAnalytics')!, a = await (await loadAccount()).adminAnalytics();
+  if (!a) { box.innerHTML = '<p class="sub">Analytics aren’t set up yet: run supabase/4.4-feedback-analytics.sql in the Supabase SQL Editor.</p>'; return; }
+  const n = (v: number) => Number(v).toLocaleString('en-GB');
+  const bar = (v: number, max: number) => `<i class="an-bar" style="width:${max ? Math.max(2, (100 * v) / max) : 0}%"></i>`;
+  const maxL = Math.max(1, ...a.by_level.map((r) => r.started)), maxD = Math.max(1, ...a.per_day.map((r) => r.started)), maxQ = Math.max(1, ...a.quit_points.map((r) => r.quits));
+  const label = (l: string) => LEVEL_LABEL[l as Level] ?? l;
+  box.innerHTML = `<p class="sub">The last 30 days, everyone (guests too). Counts come in from 4.4 on.</p>
+    <h3 class="admin-h">CPU levels played</h3>
+    <table class="an-table"><tr><th>Level</th><th>Started</th><th></th><th>Finished</th><th>Quit</th><th>Quit rate</th></tr>
+      ${a.by_level.map((r) => `<tr><td>${hubEsc(label(r.level))}</td><td>${n(r.started)}</td><td class="an-cell">${bar(r.started, maxL)}</td><td>${n(r.finished)}</td><td>${n(r.quit)}</td><td>${r.started ? Math.round((100 * r.quit) / r.started) : 0}%</td></tr>`).join('') || '<tr><td colspan="6">Nothing yet.</td></tr>'}</table>
+    <h3 class="admin-h">Modes</h3>
+    <table class="an-table"><tr><th>Mode</th><th>Started</th><th>Finished</th><th>Quit</th></tr>
+      ${a.by_mode.map((r) => `<tr><td>${hubEsc(r.mode ?? '–')}</td><td>${n(r.started)}</td><td>${n(r.finished)}</td><td>${n(r.quit)}</td></tr>`).join('') || '<tr><td colspan="4">Nothing yet.</td></tr>'}</table>
+    <h3 class="admin-h">Where people quit (points played before leaving)</h3>
+    <table class="an-table">${a.quit_points.map((r) => `<tr><td>${r.bucket}–${r.bucket + 4} points</td><td>${n(r.quits)}</td><td class="an-cell">${bar(r.quits, maxQ)}</td></tr>`).join('') || '<tr><td>No quits yet.</td></tr>'}</table>
+    <h3 class="admin-h">Matches started per day</h3>
+    <table class="an-table">${a.per_day.map((r) => `<tr><td>${new Date(r.day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</td><td>${n(r.started)}</td><td class="an-cell">${bar(r.started, maxD)}</td></tr>`).join('') || '<tr><td>Nothing yet.</td></tr>'}</table>`;
+}
+let adminFb: import('./account').FeedbackRow[] = [];
+let fbFilter = 'open';
+async function loadAdminFeedback() {
+  adminFb = (await (await loadAccount()).adminFeedback()) ?? [];
+  const open = adminFb.filter((f) => !f.done).length, badge = document.getElementById('adminFbCount')!;
+  badge.hidden = !open; badge.textContent = String(open);
+  drawAdminFeedback();
+}
+function drawAdminFeedback() {
+  const list = document.getElementById('adminFeedback')!;
+  const rows = adminFb.filter((f) => fbFilter === 'all' ? true : fbFilter === 'open' ? !f.done : f.kind === fbFilter);
+  list.innerHTML = rows.length ? rows.map((f) => `<li class="${f.done ? 'done' : ''}"><span class="grow"><b class="fb-k ${f.kind}">${f.kind}</b> ${hubEsc(f.message)}
+      <span class="sub">${hubEsc(f.username ?? 'Guest')} · ${adminDay(f.created_at)} · v${hubEsc(f.version ?? '?')}${f.page ? ` · ${hubEsc(f.page)}` : ''}</span>
+      ${f.log ? `<details><summary>Problem log</summary><pre>${hubEsc(f.log)}</pre></details>` : ''}</span>
+      <button type="button" class="edit" data-fbdone="${f.id}" data-v="${f.done ? '0' : '1'}">${f.done ? 'Reopen' : 'Done'}</button></li>`).join('')
+    : '<p class="sub">Nothing here. (If you expected feedback, run supabase/4.4-feedback-analytics.sql.)</p>';
+}
+document.getElementById('adminFbFilter')!.addEventListener('click', (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLElement>('[data-fbf]');
+  if (!b) return;
+  fbFilter = b.dataset.fbf!;
+  document.querySelectorAll<HTMLElement>('#adminFbFilter [data-fbf]').forEach((x) => x.classList.toggle('on', x === b));
+  drawAdminFeedback();
+});
+document.getElementById('adminFeedback')!.addEventListener('click', async (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLElement>('[data-fbdone]');
+  if (!b) return;
+  await (await loadAccount()).adminFeedbackDone(Number(b.dataset.fbdone), b.dataset.v === '1');
+  await loadAdminFeedback();
+});
 
 /** 3.13: the game switch: maintenance for everyone, and the blocked players list. */
 async function drawGameSwitch() {
@@ -992,7 +1110,7 @@ async function renderLeaders(listId = 'leaderList') {
 }
 
 // 3.14: click anyone on a leaderboard (or a friend) to see their player card.
-const showCard = (name: string) => void loadAccount().then((m) => openPlayerCard(name, m.playerCard, account?.username));
+const showCard = (name: string) => void loadAccount().then((m) => openPlayerCard(name, m.playerCard, account?.username, career));
 document.getElementById('leaderList')!.addEventListener('click', (e) => {
   const li = (e.target as HTMLElement).closest<HTMLElement>('[data-player]');
   if (li?.dataset.player) showCard(li.dataset.player);
@@ -1599,6 +1717,7 @@ function startOnline(host: boolean, lineup?: LineupSlot[], resume?: MatchSnapsho
   voice.enabled = settings.voice;
   voice.unlock();
   peerRematch = false;
+  logEvent('start', 'online', null);
   const ranked = r?.ranked ? { mine: host ? r.ranked.host : r.ranked.guest, theirs: host ? r.ranked.guest : r.ranked.host } : null;
   const level = lineup ? roomSettings.level ?? 'medium' : settings.opponent;
   const friendRated = !ranked && !lineup && !!roomSettings.elo && !!r.host?.account && !!r.guest?.account;
@@ -2100,6 +2219,9 @@ async function startMatch(mode: Mode = 'match') {
   sound.init();
   voice.enabled = settings.voice;
   voice.unlock();
+  // 4.4: exhibition boards say who you're playing; and a note for the admin analytics.
+  renderer.boardLine = mode === 'match' && settings.opponent !== 'human' ? `vs CPU ${LEVEL_LABEL[settings.opponent as Level]}` : null;
+  logEvent('start', mode, mode === 'match' && settings.opponent !== 'human' ? settings.opponent : null);
   const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, myCharacter());
   game = new Game({ ...settings }, input, broadcast, mode, null, setup);
   game.onMatchOver = recordCareer;
@@ -2109,7 +2231,16 @@ async function startMatch(mode: Mode = 'match') {
   (document.activeElement as HTMLElement | null)?.blur();
 }
 
+/** 4.4: match starts, finishes and quits for the admin analytics (mode, CPU level, points played; nothing personal). */
+function logEvent(kind: 'start' | 'finish' | 'quit', mode: string, level: string | null, g: Game | null = null) {
+  const pts = g ? g.match.history.reduce((n, [a, b]) => n + a + b, 0) + g.match.scores[0] + g.match.scores[1] : 0;
+  void loadAccount().then((m) => m.logGameEvent(kind, mode, level, pts, g?.stats.seconds ?? 0)).catch(() => {});
+}
+const levelOf = (g: Game) => (g.mode === 'match' && !g.online && g.settings.opponent !== 'human' ? g.settings.opponent : null);
+
 function showMenu() {
+  if (game && game.state !== 'matchOver' && (game.mode === 'match' || game.mode === 'online')) logEvent('quit', game.online ? 'online' : game.setup.mode, levelOf(game), game);
+  renderer.boardLine = null;
   // Practice adds to your heatmap too (matches add theirs when they finish).
   if (game?.mode === 'practice') recordHeat(game);
   if (game?.mode === 'tutorial' && game.session?.done) {
@@ -2354,6 +2485,8 @@ const careerUi = initCareer({
     voice.unlock();
     careerDone = o.onDone;
     careerLeave = o.onLeave ?? null;
+    renderer.boardLine = null;
+    logEvent('start', o.setup.mode, null);
     renderer.eventTitle = o.setup.label?.split(' · ')[0] ?? null;
     renderer.courtTheme = (o.setup.look && COURT_THEMES[o.setup.look.court]) || null;
     renderer.look = o.setup.look ?? DEFAULT_LOOK;
@@ -2392,6 +2525,75 @@ document.getElementById('careerOpen')!.addEventListener('click', () => void care
 document.getElementById('dailyOpen')!.addEventListener('click', () => void careerUi.open('daily'));
 
 // ── Problem log (3.0.2): errors and freezes, kept on this computer ───────────
+// ── 4.4: feedback and bug reports ──
+const fbModal = document.getElementById('feedbackModal')!, fbText = document.getElementById('fbText') as HTMLTextAreaElement;
+const fbLog = document.getElementById('fbLog') as HTMLInputElement, fbMsg = document.getElementById('fbMsg')!;
+let fbKind: 'idea' | 'bug' | 'other' = 'idea';
+function openFeedback(kind: 'idea' | 'bug' | 'other' = 'idea') {
+  fbKind = kind;
+  document.querySelectorAll<HTMLButtonElement>('#fbKind button').forEach((b) => b.classList.toggle('on', b.dataset.kind === kind));
+  fbLog.checked = kind === 'bug';
+  fbMsg.textContent = '';
+  fbModal.classList.remove('hidden');
+  fbText.focus();
+}
+document.getElementById('feedbackBtn')!.addEventListener('click', () => openFeedback());
+document.getElementById('fbKind')!.addEventListener('click', (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-kind]');
+  if (!b) return;
+  fbKind = b.dataset.kind as typeof fbKind;
+  document.querySelectorAll<HTMLButtonElement>('#fbKind button').forEach((x) => x.classList.toggle('on', x === b));
+  if (fbKind === 'bug') fbLog.checked = true;
+});
+document.getElementById('fbCancel')!.addEventListener('click', () => fbModal.classList.add('hidden'));
+fbModal.addEventListener('click', (e) => { if (e.target === fbModal) fbModal.classList.add('hidden'); });
+document.getElementById('fbSend')!.addEventListener('click', async () => {
+  const text = fbText.value.trim();
+  if (!text) { fbMsg.textContent = 'Write something first.'; return; }
+  fbMsg.textContent = 'Sending…';
+  const m = await loadAccount();
+  const ok = await m.sendFeedback(fbKind, text, fbLog.checked ? logText() : null, GAME_VERSION, `${location.pathname} · ${innerWidth}×${innerHeight} · ${navigator.userAgent.slice(0, 120)}`);
+  if (ok) { fbText.value = ''; fbModal.classList.add('hidden'); toast('Thanks!', 'Your feedback was sent.'); }
+  else fbMsg.textContent = 'Couldn’t send it. Try again in a minute.';
+});
+
+// ── 4.4: the ? shortcut list ──
+const shortcuts = document.getElementById('shortcuts')!;
+function showShortcuts() {
+  const k = (c: string) => `<kbd>${hubEsc(c)}</kbd>`;
+  const rows: [string, string][] = settings.p1Control === 'mouse'
+    ? [['Move', k('W') + k('A') + k('S') + k('D')], ['Drive / smash', 'Left click (tap / hold)'], ['Drop / lob', 'Right click (tap / hold)'], ['Net kill', k('E')], ['Jump', k('Space')]]
+    : [['Move', k('W') + k('A') + k('S') + k('D')], ['Lift (tap fast, hold high)', k('J')], ['Fast (hold for extra power)', k('K')], ['Soft', k('L')], ['Aim', k('U') + ' / ' + k('O')], ['Jump', k('Space')]];
+  rows.push(['Pause', k('Esc')], ['Challenge a line call', k('H')], ['Replay the last rally', k('R')], ['Landing marker on/off', k('G')], ['Fullscreen', k('F')], ['Mute', k('M')],
+    ['Quick chat (online)', k('1') + '–' + k('6')], ['Your career (paused career match)', k('C')], ['Start the match (home page)', k('Enter')], ['This list', k('?')]);
+  document.getElementById('shortcutList')!.innerHTML = `<table class="sc-table">${rows.map(([a, b]) => `<tr><td>${hubEsc(a)}</td><td>${b}</td></tr>`).join('')}</table><p class="sub">Your own keys may differ if you changed them (Assists &amp; controls → Controls).</p>`;
+  shortcuts.classList.remove('hidden');
+}
+window.addEventListener('keydown', (e) => {
+  const typing = (e.target as HTMLElement)?.closest?.('input, textarea, select');
+  if (typing) return;
+  if (e.key === '?') { e.preventDefault(); if (shortcuts.classList.contains('hidden')) showShortcuts(); else shortcuts.classList.add('hidden'); }
+  else if (e.key === 'Escape' && !shortcuts.classList.contains('hidden')) shortcuts.classList.add('hidden');
+});
+shortcuts.addEventListener('click', (e) => { if (e.target === shortcuts) shortcuts.classList.add('hidden'); });
+
+// ── 4.4: search and reset in the settings drawers ──
+document.querySelectorAll<HTMLInputElement>('.mc-search').forEach((inp) => inp.addEventListener('input', () => {
+  const drawer = inp.closest('.matchcard')!, q = inp.value.trim().toLowerCase();
+  drawer.classList.toggle('searching', !!q);
+  drawer.querySelectorAll<HTMLElement>('.field').forEach((f) => { f.classList.toggle('no-match', !!q && !f.textContent!.toLowerCase().includes(q)); });
+}));
+const RESET_KEYS: Record<string, (keyof Settings)[]> = {
+  card: ['event', 'opponent', 'style', 'partnerStyle', 'games', 'points', 'aim'],
+  kit: ['guides', 'timingLight', 'swingAssist', 'voice', 'hideChat', 'autoSwitch', 'performance'],
+};
+document.querySelectorAll<HTMLButtonElement>('.mc-reset').forEach((b) => b.addEventListener('click', () => {
+  if (!confirm('Put these settings back to how they start?')) return;
+  for (const key of RESET_KEYS[b.dataset.reset!] ?? []) (settings as unknown as Record<string, unknown>)[key] = (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[key];
+  saveSettings(); syncMenu(); describeControls(); describeFormat(); resize();
+  toast('Settings reset', 'Back to the defaults.');
+}));
+
 const errlogBtn = document.getElementById('errlogBtn')!;
 const syncErrlog = () => { const n = readLog().length; errlogBtn.hidden = n === 0; errlogBtn.textContent = `Problem log (${n})`; };
 installErrorLog(CHANGELOG[0].version, syncErrlog);

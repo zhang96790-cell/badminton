@@ -5,6 +5,18 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.4: Sponsors, profile and feedback (21 Nov 2026)
+
+- Up to three sponsors in career: a kit deal with a badminton brand (some money, a bonus for every final, and their name on your shirt), a main sponsor that’s a perk brand (little money, one perk: cheaper flights, free hotels, cheaper loans, win bonuses, or 35% off tournament costs), and a money sponsor (the most pay, no perk).
+- Career has separate pages now: Next up, Ranking, Squad, Sponsors, Shop and Money (your loan and every cost and prize). Shop items you haven’t looked at yet say New.
+- A new Profile tab in Social: your favourite shot, your best shot (how often it wins the point), what you lose most points to, and full shot analytics by kind of shot (counted from now on), plus your rarest achievements.
+- Achievements show how rare they are (“3% of players have this”), and other players’ cards compare them with you side by side.
+- A big Send feedback button on the home page for ideas and bugs. Bug reports can attach the problem log automatically.
+- Press ? for a list of keyboard shortcuts.
+- Search and Reset to default in the match card and Assists & controls.
+- In exhibition matches, the boards behind the court show who you’re playing (vs CPU Legend and so on).
+- Fixed: some stat tiles in Social were white with pale text.
+
 ## 4.3: A more all-round game (21 Nov 2026)
 
 - Real net kills. A hard shot from close to the net, above the tape, now goes steeply down into the middle of the court instead of flying flat to the back like a drive. Only just above the tape it’s a net tap: short and downward. (Where kills can be hit from hasn’t changed.)

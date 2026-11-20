@@ -214,3 +214,20 @@ export interface DailyInfo { challenge: DailyChallenge | null; claimed: boolean;
 export const dailyGet = () => rpc<DailyInfo>('daily_get');
 export const dailyStart = () => rpc<{ ok: boolean; token?: string; challenge?: DailyChallenge; claimed?: boolean; limited?: boolean }>('daily_start');
 export const dailyClaim = (token: string, games: [number, number][]) => rpc<{ ok: boolean; reason?: string; reward?: number; rating?: number; full_reward?: number; season_total?: number }>('daily_claim', { p_token: token, p_games: games });
+
+// ── 4.4: feedback, analytics, rating history and achievement rarity (supabase/4.4-feedback-analytics.sql) ──
+export const sendFeedback = (kind: 'idea' | 'bug' | 'other', message: string, log: string | null, version: string, page: string) =>
+  rpc<boolean>('send_feedback', { p_kind: kind, p_message: message, p_log: log, p_version: version, p_page: page });
+export const logGameEvent = (kind: 'start' | 'finish' | 'quit', mode: string, level: string | null, points: number, seconds: number) =>
+  void rpc<null>('log_game_event', { p_kind: kind, p_mode: mode, p_level: level, p_points: Math.round(points), p_seconds: Math.round(seconds) });
+export interface FeedbackRow { id: number; username: string | null; kind: 'idea' | 'bug' | 'other'; message: string; log: string | null; version: string | null; page: string | null; done: boolean; created_at: string }
+export const adminFeedback = () => rpc<FeedbackRow[]>('admin_feedback', { p_limit: 150 });
+export const adminFeedbackDone = (id: number, done: boolean) => rpc<boolean>('admin_feedback_done', { p_id: id, p_done: done });
+export interface AnalyticsRow { started: number; finished: number; quit: number }
+export interface Analytics {
+  by_level: (AnalyticsRow & { level: string })[]; by_mode: (AnalyticsRow & { mode: string })[];
+  quit_points: { bucket: number; quits: number }[]; per_day: { day: string; started: number }[];
+}
+export const adminAnalytics = () => rpc<Analytics>('admin_analytics');
+/** Share of players (%) with each achievement, by id. */
+export const achievementRarity = () => rpc<Record<string, number>>('achievement_rarity');

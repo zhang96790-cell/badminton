@@ -271,6 +271,7 @@ export class Game {
     if (doubles) this.players.push(new Player(-1, 'Partner', VISUAL.colors.p3, 'Partner'), new Player(1, 'CPU 2', VISUAL.colors.p4, 'C P U two'));
     this.players.forEach((p, i) => { p.id = i; });
     // Everyone's look (skin, hair, kit) follows who they are, so it's the same every match.
+    p1.kitBrand = setup?.player.kitBrand;
     p1.lookId = setup?.player.characterId && setup.player.characterId !== DEFAULT_CHARACTER ? setup.player.characterId : `you:${myName ?? ''}`;
     this.players.forEach((p, i) => { if (i > 0) p.lookId = setup?.opponent.characterId && i === 1 ? setup.opponent.characterId : `p:${p.name}:${i}`; });
     // Career and the daily challenge: the opponent is a real player from the roster, by name.

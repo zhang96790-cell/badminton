@@ -11,6 +11,8 @@ export interface PlayerView {
   racket?: string;
   /** Who this is, for their look (skin, hair, kit): a character id or name. */
   lookId?: string;
+  /** 4.4: a kit sponsor's brand id, shown on the shirt instead of their usual kit brand. */
+  kitBrand?: string;
   /** 4.2.2: the name on the back of their shirt. */
   name?: string;
   /** x sign of the racket hand. */
@@ -74,6 +76,7 @@ export class Player implements PlayerView {
   /** Stable identity (0–3) for stats; array positions can swap when auto-switch changes who you control. */
   id = 0;
   lookId?: string;
+  kitBrand?: string;
   pos: V2;
   vel: V2 = { x: 0, y: 0 };
   z = 0;
@@ -369,7 +372,7 @@ export class Player implements PlayerView {
 
   snapshot(): PlayerView {
     return {
-      side: this.side, color: this.color, racket: this.racket, racketSide: this.racketSide, lookId: this.lookId, name: this.name,
+      side: this.side, color: this.color, racket: this.racket, racketSide: this.racketSide, lookId: this.lookId, name: this.name, kitBrand: this.kitBrand,
       pos: { ...this.pos }, vel: { ...this.vel }, z: this.z, vz: this.vz,
       hand: { ...this.hand }, rdir: { ...this.rdir }, stride: this.stride,
       split: this.split, lunge: this.lunge, lungeDir: { ...this.lungeDir }, charge: this.charge, serving: this.serving,

@@ -10,6 +10,27 @@ import { titleSummary, OLD_TITLE_POINTS } from './titles';
 export type Career = Record<string, number>;
 
 /** What this finished match adds to your career. prev is your career so far (for streaks). */
+/** 4.4: shot families for the shot analytics (account keys: letters only). */
+export const SHOT_KINDS: [string, string][] = [['smash', 'Smashes'], ['kill', 'Net kills and taps'], ['net', 'Net shots'], ['drop', 'Drops'], ['clear', 'Clears'], ['lift', 'Lifts'], ['drive', 'Drives and pushes'], ['block', 'Blocks'], ['serve', 'Serves']];
+export function shotKindKey(label: string): string | null {
+  const l = label.toLowerCase();
+  if (/serve/.test(l)) return 'serve';
+  if (/smash/.test(l)) return 'smash';
+  if (/net kill|net tap/.test(l)) return 'kill';
+  if (/net shot/.test(l)) return 'net';
+  if (/drop/.test(l)) return 'drop';
+  if (/clear/.test(l)) return 'clear';
+  if (/lift/.test(l)) return 'lift';
+  if (/drive|push/.test(l)) return 'drive';
+  if (/block/.test(l)) return 'block';
+  return null;
+}
+const countBy = (labels: string[], prefix: string) => {
+  const out: Record<string, number> = {};
+  for (const l of labels) { const k = shotKindKey(l); if (k) out[`${prefix}_${k}`] = (out[`${prefix}_${k}`] ?? 0) + 1; }
+  return out;
+};
+
 export function careerDelta(g: Game, prev: Career): Career {
   const st = g.stats, m = g.match;
   const won = (g.forfeitWinner ?? (m.games[0] > m.games[1] ? 0 : 1)) === 0;
@@ -56,6 +77,11 @@ export function careerDelta(g: Game, prev: Career): Career {
     max_rally: st.longestRally,
     max_streak: streak,
     now_streak: streak,
+    // 4.4: shot analytics: shots you played, your winners and errors, and points you lost, by kind of shot.
+    ...countBy(mine.map((s) => s.label), 'st'),
+    ...countBy(myWinners.map((r) => r.lastLabel), 'sw'),
+    ...countBy(myErrors.map((r) => r.lastLabel), 'se'),
+    ...countBy(rallies.filter((r) => r.kind === 'winner' && r.hitter === 1).map((r) => r.lastLabel), 'sl'),
     // Wins and losses with the player (character) you used.
     [`char_wins_${g.setup.player.characterId}`]: won ? 1 : 0,
     [`char_losses_${g.setup.player.characterId}`]: won ? 0 : 1,

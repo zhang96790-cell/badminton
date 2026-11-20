@@ -90,12 +90,14 @@ const BY_ID = new Map(ALL_BRANDS.map((x) => [x.id, x]));
 export const brandById = (id: string | undefined) => (id ? BY_ID.get(id) : undefined);
 
 /** 4.2: what a career sponsor gives besides money (airlines, hotels, banks, drinks), or nothing (they pay the most). */
-export type SponsorPerk = 'flights' | 'hotels' | 'loans' | 'wins';
+export type SponsorPerk = 'flights' | 'hotels' | 'loans' | 'wins' | 'entry';
 const PERKS: Record<SponsorPerk, string[]> = {
   flights: ['emiratas', 'cathaypacifec', 'skylineair', 'singapura', 'airasio', 'qantaz'],
   hotels: ['marriot', 'hillton', 'coralbay', 'bookly'],
   loans: ['hsbk', 'maybanc', 'harbourline', 'krungthai', 'dbx', 'goldenlion'],
   wins: ['pocara', 'avian', 'pepsi', 'hundredminus', 'mylo', 'beanstreet', 'gatorush', 'singha', 'amula'],
+  // 4.4: delivery and shopping brands pay part of your tournament costs.
+  entry: ['grabbit', 'dhx', 'shoppi', 'uniqo'],
 };
 export const perkOf = (brandId: string): SponsorPerk | null => (Object.keys(PERKS) as SponsorPerk[]).find((k) => PERKS[k].includes(brandId)) ?? null;
 export const PERK_TEXT: Record<SponsorPerk, string> = {
@@ -103,6 +105,7 @@ export const PERK_TEXT: Record<SponsorPerk, string> = {
   hotels: 'Hotels paid for',
   loans: 'Cheaper tour loans (a third of the fee, no yearly interest)',
   wins: 'A bonus for every match you win',
+  entry: 'Tournament costs 35% off (travel and hotels)',
 };
 
 /** Title sponsors: their name goes in front of the tournament's (a brand id, or one of the two image sponsors). */

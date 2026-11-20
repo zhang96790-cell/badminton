@@ -5,7 +5,7 @@ import type { Rarity } from '../../shared/characters';
 export type Tier = 'S100' | 'S300' | 'S500' | 'S750' | 'S1000' | 'WTF' | 'WORLDS' | 'OLYMPICS';
 export type Round = 'R64' | 'R32' | 'R16' | 'QF' | 'SF' | 'F' | 'W';
 export type Difficulty = 'relaxed' | 'normal' | 'hard';
-export type TravelClass = 'economy' | 'premium' | 'business';
+export type TravelClass = 'economy' | 'premium' | 'business' | 'first';
 export type HotelTier = 'hostel' | 'three' | 'four' | 'five';
 export type StaffRole = 'coach' | 'physio';
 
@@ -27,7 +27,8 @@ export const CAREER_CFG = {
   travelClass: {
     economy: { label: 'Economy', cost: 1, energySaved: 0 },
     premium: { label: 'Premium economy', cost: 1.6, energySaved: 0.25 },
-    business: { label: 'Business', cost: 2.6, energySaved: 0.45 },
+    business: { label: 'Business', cost: 2.6, energySaved: 0.5 },
+    first: { label: 'First class', cost: 4.2, energySaved: 0.8 },
   } as Record<TravelClass, { label: string; cost: number; energySaved: number }>,
   /** Hotels: price a night (× the city's cost) and energy back each night. You stay one night per round you play. */
   hotels: {
@@ -93,6 +94,57 @@ export const CAREER_CFG = {
   tierCost: { S100: 1, S300: 1.15, S500: 1.35, S750: 1.65, S1000: 2, WTF: 2.2, WORLDS: 2, OLYMPICS: 2.2 } as Record<string, number>,
   /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
   tourMinMoney: 1500,
+  /** 4.1: the big events pay less (prizes there grew much faster than costs). Purse × this. */
+  prizeCut: { S750: 0.65, S1000: 0.62, WORLDS: 0.62, WTF: 0.6, OLYMPICS: 0.6 } as Record<string, number>,
+  /** 4.1: your team grows as you climb: weekly costs by world ranking. */
+  teamCosts: [{ rank: 10, weekly: 900 }, { rank: 20, weekly: 600 }, { rank: 50, weekly: 350 }, { rank: 100, weekly: 180 }],
+  /** 4.1: coaches. One at a time; each has its own perk (and gives you notes after every match). */
+  coaches: {
+    club: { label: 'Club coach', wage: 150, perk: 'Slightly better timing (+2%).', mod: { timing: 1.02 } },
+    technical: { label: 'Technical coach', wage: 300, perk: 'More accurate net shots and aim.', mod: { netAim: 0.94, aim: 0.97 } },
+    fitness: { label: 'Fitness coach', wage: 300, perk: 'You tire 20% slower and stay sharper in long rallies.', mod: { fatigue: 0.85 } },
+    tactical: { label: 'Tactical analyst', wage: 350, perk: 'Scouting notes before every match, and sharper defence (+3%).', mod: { defenceTiming: 1.03 } },
+    elite: { label: 'Elite head coach', wage: 900, perk: 'A bit of everything: timing, aim and stamina, and you tire 20% slower.', mod: { timing: 1.03, aim: 0.97, fatigue: 0.92 } },
+  } as Record<string, { label: string; wage: number; perk: string; mod: Record<string, number> }>,
+  /** 4.1: other staff and upgrades (weekly). */
+  extras: {
+    nutritionist: { label: 'Nutritionist', wage: 120, perk: '+5% Rested every night at an event.' },
+    psychologist: { label: 'Sports psychologist', wage: 200, perk: 'Steadier under pressure: a little better timing (+2%).' },
+    stringing: { label: 'Stringing service', wage: 80, perk: 'Freshly strung rackets: smashes 2% harder.' },
+  } as Record<string, { label: string; wage: number; perk: string }>,
+  /** 4.1: a custom racket in your colours (once). */
+  rackets: { cost: 6000, colours: ['Gold', 'Black and red', 'White and blue', 'Neon green', 'Purple'] },
+  /** 4.1: training camps: a week and money for +1 to a stat (at most 5 per stat). Each one costs more. */
+  camp: { cost: 3000, step: 0.5, max: 5, baseDiscount: 0.3 },
+  /** 4.1: a training base: weeks off rest you more (+10 a level) and camps cost 30% less. */
+  base: { buy: 25000, upgrade: [15000, 30000], restPerLevel: 10 },
+  /** 4.1: a house in a country: free nights and +25% Rested a night at events there. Price × the city's cost. */
+  house: 40000,
+  /** 4.1: walk-on looks (cosmetic). */
+  walkOns: { gold: { label: 'Gold', cost: 2500 }, fire: { label: 'Fire', cost: 2500 }, ice: { label: 'Ice', cost: 2500 }, royal: { label: 'Royal purple', cost: 4000 } } as Record<string, { label: string; cost: number }>,
+  /**
+   * 4.1: the Rested bar (replaces the old energy). Matches tire you by how long they were; travel tires you by
+   * distance and seat; nights in a hotel (or your own house) and weeks off bring it back. Being low never stops
+   * you playing, it just makes you slower and less sharp, more so the lower you go.
+   */
+  rested: {
+    tiers: [
+      { min: 85, label: 'Fresh', p: 0, aim: 0 },
+      { min: 70, label: 'Good', p: 0.01, aim: 0 },
+      { min: 55, label: 'Tired', p: 0.03, aim: 0 },
+      { min: 40, label: 'Weary', p: 0.05, aim: 0.02 },
+      { min: 25, label: 'Exhausted', p: 0.08, aim: 0.04 },
+      { min: 10, label: 'Drained', p: 0.11, aim: 0.06 },
+      { min: 0, label: 'Running on empty', p: 0.14, aim: 0.09 },
+    ],
+    match: { base: 3, per10Shots: 1, thirdGame: 6, deuceGame: 2 },
+    travel: { domestic: 3, regional: 8, intercontinental: 15 } as Record<string, number>,
+    night: { hostel: 5, three: 10, four: 14, five: 20 } as Record<string, number>,
+    /** A night in your own house (an event in a country where you own one). */
+    house: 25,
+    weekOff: 35,
+    weekAfterEvent: 15,
+  },
   /**
    * 3.19: can't afford an event? Go through qualifying instead: two one-game matches against lower-level
    * players, free, with travel and hotel paid by the event if you get through. Losing still earns a share of the

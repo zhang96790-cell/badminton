@@ -5,6 +5,19 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.1: Rested bar, career shop and new arenas (20 Nov 2026)
+
+- New brands. Kit: Yonax (by far the most players), Liming, Victer, Mizuna, Kompoo and Hundreds. Companies: Emiratas, Cathay Pacifec, Skyline Airlines, Singapura Airlines, Marriot, Hillton, Samsong, Apple’s, BNW, Peps-i, 100-minus and more, plus local brands like Indomee, AirAsio, Singh-a Water, Amula, DBX Bank and Qantaz. Tournaments are mostly powered by Yonax, sometimes Victer, rarely Liming.
+- Each tournament now has a handful of sponsors whose boards repeat around the court, with local brands at events in their country. The middle boards behind the court show the tournament’s name, Solar Sparks and Ventra are on the corners, and a big scoreboard behind the court shows the score.
+- The crowd changes at every tournament: fans in the host country’s colours, and fuller stands at the bigger events.
+- The Rested bar. Every career match tires you depending on how long it was (shots, a third game, long deuce games), and so does travel (less in business or first class). Nights in your hotel, your own house, and weeks off bring it back. It has seven levels, from Fresh to Running on empty: the lower you go, the slower and less sharp you play. You can always play, even on empty. Opponents get tired too, and both of you show your Rested in the walk-on.
+- Tournament weeks have a schedule: qualifying and the round of 32 on Tuesday and Wednesday, round of 16 Thursday, quarter-finals Friday, semi-finals Saturday, final Sunday.
+- The career shop (Money tab): five coaches, each with its own perk (club, technical, fitness, tactical analyst with scouting notes, and elite), and every coach gives you notes after each match. Also a nutritionist, a sports psychologist, a stringing service, training camps (+1 to a stat, up to 5 each), a training base, houses in different countries (free nights and better rest there), economy to first class flights, hostel to 5-star hotels, a custom racket and walk-on looks.
+- Career money is fairer: the biggest events pay less prize money, and your team costs grow as you climb the world ranking.
+- The fastest players were unrealistically quick. In career, Speed now counts half as much, adds at most +13%, and each point above 30 counts for less.
+- Impossible makes almost no errors now: about 1 shot in 1,000, and every other shot lands exactly where it aims. It also moves faster and reaches further, so you only win points against it with real winners.
+- Calmer colours on the home page (red, blue, white, gold and purple). Stats, Social, your account and the match card now have the same dark broadcast look, buttons match everywhere, and screens wipe in like a TV cut. The score in the corner during a match is simpler, like a real TV score.
+
 ## 4.0.1: More colour, nothing covering What’s new (20 Nov 2026)
 
 - Fixed: on the home page, the View and Fullscreen buttons covered What’s new. They now hide while you’re on the home page, and Fullscreen is a link in the footer (they’re still there in a match).

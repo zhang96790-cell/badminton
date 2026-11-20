@@ -821,7 +821,7 @@ export class Game {
         const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : ctrl instanceof AIController ? ctrl.aimScaleFor(req, c.point.z) : 1;
         c.netRun = this.netRun;
         // 3.18: the Impossible CPU's smashes keep their pace (less drag for this flight only).
-        const lowDrag = cpu && req.kind === 'intent' && req.intent === 'fast' && c.point.z >= SHOTS.overheadHeight ? ctrl.smashDrag : 1;
+        const lowDrag = cpu && req.kind === 'intent' && req.intent === 'fast' && c.point.z >= SHOTS.overheadHeight && Math.abs(c.point.y) < 4.8 ? ctrl.smashDrag : 1;
         setDragScale(lowDrag);
         let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
         p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)

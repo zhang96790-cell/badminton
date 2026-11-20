@@ -159,7 +159,10 @@ export type Modifier = Partial<Record<keyof Effective, number>>;
 export const CAREER = {
   /** mult = 1 + (career_strength − 100) / 100 × k */
   k: 0.4,
-  perPoint: { power: 0.016, speed: 0.024, netAim: 0.032, netTiming: 0.024, defenceTiming: 0.032, defenceDepth: 0.016 },
+  // 4.1: Speed halved (was 0.024: the fastest players moved 24% faster, which looked unrealistic).
+  perPoint: { power: 0.016, speed: 0.012, netAim: 0.032, netTiming: 0.024, defenceTiming: 0.032, defenceDepth: 0.016 },
+  /** 4.1: the most Speed can add to movement in career (+13%). */
+  moveMax: 0.13,
   /** ±24% (3.2: was ±18%, which Super Rares and Epics hit, so they were barely stronger than Rares). */
   clamp: 0.24,
   smash: [0.95, 1.1] as [number, number],
@@ -180,7 +183,9 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
   const lim = career ? CAREER.clamp : 0.1;
   const [smLo, smHi] = career ? CAREER.smash : [0.95, 1.08];
   const src = career ? (c.base_stats ?? c.stats).map((v) => v * careerMult(c)) : c.stats;
-  const [p, sp, n, d, st] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  const [p, sp0, n, d, st] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  // 4.1: diminishing returns on Speed above 30: each point past it counts half.
+  const sp = sp0 <= 10 ? sp0 : 10 + (sp0 - 10) * 0.5;
   const J = STAT_JOBS;
   const e: Effective = {
     smash: 1 + P.power * p,
@@ -207,6 +212,7 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
       : k === 'defReach' ? clamp(e[k], ...J.defReach)
       : k === 'heavy' ? clamp(e[k], ...J.heavy)
       : k === 'fatigue' ? clamp(e[k], ...J.fatigue)
+      : k === 'move' && career ? clamp(e[k], 1 - lim, 1 + CAREER.moveMax)
       : k === 'move' || k === 'swingWait' || career ? clamp(e[k], 1 - lim, 1 + lim)
       : clamp(e[k], 1 - J.otherLim, 1 + J.otherLim);
   }

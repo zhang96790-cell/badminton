@@ -1,6 +1,6 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
-import { characterById, type Character, type Modifier } from '../../shared/characters';
+import { CAREER as CAREER_STATS, characterById, type Character, type Modifier } from '../../shared/characters';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
 import { COUNTRIES, World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
@@ -71,6 +71,14 @@ export interface CareerState {
   sponsorRescaled?: boolean;
   sponsor?: Sponsor | null;
   sponsorOffers?: Sponsor[] | null;
+  /** 4.1: your world ranking as of the last check (for weekly team costs). */
+  bestRankNow?: number | null;
+  /** 4.1: set once the Rested bar is in use (older saves start fully rested). */
+  restedSince?: string;
+  /** 4.1: countries you own a house in (sleep there for free and rest better). */
+  houses?: string[];
+  /** 4.1: things you've bought or hired (coach tier, staff, upgrades, cosmetics). See the Shop. */
+  shop?: Shop;
   /** 3.19: a tour loan you're paying back. */
   loan?: { owed: number; borrowed: number } | null;
   /** Milestones reached (ids), for the trophy cabinet. */
@@ -92,12 +100,65 @@ export interface CareerState {
 export const CAREER_EPOCH = '3.3.1';
 
 export interface Sponsor { name: string; weekly: number; bonus: number; band: number; year: number }
+/** 4.1: the shop. coach: the coach tier you employ; the rest are on/off or levels. */
+export interface Shop {
+  coach?: string | null;
+  fitness?: boolean; nutritionist?: boolean; psychologist?: boolean; stringing?: boolean;
+  racket?: string | null;
+  /** Training base: region and level. */
+  base?: { region: string; level: number } | null;
+  /** Stat points gained at training camps: [Power, Speed, Net, Defence, Stamina]. */
+  camps?: [number, number, number, number, number];
+  cosmetics?: string[];
+  equipped?: Record<string, string>;
+}
 export interface HallEntry { name: string; from: number; to: number; titles: number; bestRank: number | null; golds: number; silvers: number; bronzes: number; prize: number; as: string }
 
 export const APP_VERSION_KEY = '3.0';
-// 3.9: no energy, so no choice of seat or hotel: economy flights and a 3-star every time.
-export const travelClassOf = (_s: CareerState): TravelClass => 'economy';
-export const hotelOf = (_s: CareerState): HotelTier => 'three';
+// 4.1: seats and hotels matter again (the Rested bar): your choice, economy and a 3-star by default.
+export const travelClassOf = (s: CareerState): TravelClass => s.settings.travelClass ?? 'economy';
+export const hotelOf = (s: CareerState): HotelTier => s.settings.hotel ?? 'three';
+
+// ── 4.1: the Rested bar and the week's schedule ──
+export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+/**
+ * The day a round is played: qualifying and the first round Tuesday (a round of 32 runs Tuesday and Wednesday),
+ * round of 16 Thursday, quarter-finals Friday, semi-finals Saturday, final (and bronze) Sunday.
+ */
+export function roundDay(ev: TourEvent, round: Round, seed: number, qual = false): number {
+  if (qual) return 1;
+  const order = roundsFor(ev.draw_size);
+  const fromEnd = order.length - 1 - order.indexOf(round);
+  const day = 6 - fromEnd; // F 6, SF 5, QF 4, R16 3, R32 2, R64 1
+  if (round === 'R32' && order[0] === 'R32') return seed % 2 ? 1 : 2; // half the round of 32 on Tuesday
+  return Math.max(1, day);
+}
+export const restedTier = (r: number) => CFG.rested.tiers.find((t) => r >= t.min) ?? CFG.rested.tiers[CFG.rested.tiers.length - 1];
+/** How a Rested level plays: slower feet, a later swing, a smaller timing window, and lower down a bit less aim. */
+export function restedModifier(r: number): Modifier {
+  const t = restedTier(r);
+  return t.p ? { move: 1 - t.p, swingWait: 1 + t.p, timing: 1 - t.p, ...(t.aim ? { aim: 1 + t.aim } : {}) } : {};
+}
+/** What one match takes out of you: its length (shots), a third game and long deuce games. */
+export function matchDrain(shots: number, games: [number, number][], pointsToWin: number, s?: CareerState): number {
+  const M = CFG.rested.match;
+  const raw = M.base + (shots / 10) * M.per10Shots + (games.length >= 3 ? M.thirdGame : 0) + games.filter(([a, b]) => Math.max(a, b) > pointsToWin).length * M.deuceGame;
+  return raw * (s?.shop?.coach === 'fitness' || s?.shop?.coach === 'elite' ? 0.8 : 1);
+}
+const addRest = (s: CareerState, n: number) => { s.energy = Math.max(0, Math.min(100, s.energy + n)); };
+/** A night's sleep at this event: your house there, or the hotel you booked (plus a nutritionist). */
+export const nightRest = (s: CareerState, ev: TourEvent) =>
+  (s.houses?.includes(ev.host_country) ? CFG.rested.house : CFG.rested.night[hotelOf(s)] ?? 10) + (s.shop?.nutritionist ? 5 : 0);
+export const travelRestCost = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) =>
+  ev.tier === 'CLUB' ? 0 : Math.round((CFG.rested.travel[travelBand(s.currentLocation, ev.host_country)] ?? 8) * (1 - CFG.travelClass[cls].energySaved));
+/** An opponent's Rested going into this round: worked out from the matches the draw gave them (the same every time). */
+export function opponentRested(s: CareerState, ev: TourEvent, round: Round, oppId: string): number {
+  const order = roundsFor(ev.draw_size), played = Math.max(0, order.indexOf(round));
+  const r = rng(hash(s.rngSeed, s.year, ev.id, oppId, 'rest'));
+  let v = 75 + r() * 25;
+  for (let i = 0; i < played; i++) v = Math.min(100, v - (10 + r() * 26) + 10);
+  return Math.round(Math.max(5, v));
+}
 
 export function newCareer(o: { name: string; homeCountry: string; characterId: string; difficulty: Difficulty; seed?: number }): CareerState {
   return {
@@ -118,10 +179,11 @@ export function migrate(raw: unknown): CareerState | null {
   if (s.epoch !== CAREER_EPOCH) return null;
   const out = { ...newCareer({ name: s.name ?? 'Player', homeCountry: s.homeCountry ?? 'GBR', characterId: s.characterId, difficulty: s.difficulty ?? 'relaxed', seed: s.rngSeed }), ...s } as CareerState;
   // 3.9: no more energy. Everyone's fresh, uninjured, flies economy and stays in a 3-star; the physio goes.
-  out.energy = 100; out.injury = null;
-  out.settings = { ...out.settings, travelClass: 'economy', business: false, hotel: 'three' };
+  if (!out.restedSince) out.energy = 100;
+  out.injury = null;
+  if (!out.restedSince) { out.settings = { ...out.settings, travelClass: 'economy', business: false, hotel: 'three' }; out.restedSince = '4.1'; }
   if (out.staff?.physio) out.staff.physio = false;
-  if (out.current) { out.current.travelClass = 'economy'; out.current.business = false; out.current.hotelTier = 'three'; }
+
   return out;
 }
 
@@ -146,10 +208,42 @@ export function energyModifier(energy: number): Modifier {
   return p ? { move: 1 - p, swingWait: 1 + p, timing: 1 - p } : {};
 }
 /** A coach: sharper timing and aim in your career matches. */
-export const coachModifier = (s: CareerState): Modifier => (s.staff?.coach ? { timing: 1.03, aim: 0.97 } : {});
+export const coachModifier = (s: CareerState): Modifier => (s.shop?.coach ? (CFG.coaches[s.shop.coach]?.mod as Modifier) ?? {} : s.staff?.coach ? { timing: 1.03, aim: 0.97 } : {});
+/** 4.1: staff, the racket strings and training camps (camp points work like extra stat points). */
+export function shopModifier(s: CareerState): Modifier {
+  const sh = s.shop ?? {}, c = sh.camps ?? [0, 0, 0, 0, 0], P = CAREER_STATS.perPoint;
+  return {
+    smash: (1 + P.power * c[0]) * (sh.stringing ? 1.02 : 1), clearDepth: 1 + P.power * c[0],
+    move: 1 + P.speed * c[1], swingWait: 1 - P.speed * c[1],
+    netAim: 1 - P.netAim * c[2], netTiming: 1 + P.netTiming * c[2],
+    defenceTiming: 1 + P.defenceTiming * c[3], defenceDepth: 1 - P.defenceDepth * c[3],
+    fatigue: 1 - 0.05 * c[4], timing: sh.psychologist ? 1.02 : 1,
+  };
+}
+/** 4.1: what your staff cost a week (coach and extras). */
+export const staffWages = (s: CareerState) => (s.shop?.coach ? CFG.coaches[s.shop.coach]?.wage ?? 0 : 0)
+  + (['nutritionist', 'psychologist', 'stringing'] as const).reduce((n, k) => n + (s.shop?.[k] ? CFG.extras[k].wage : 0), 0);
+/** The next training camp's price for a stat. */
+export const campCost = (s: CareerState, stat: number) => Math.round(CFG.camp.cost * (1 + (s.shop?.camps?.[stat] ?? 0) * CFG.camp.step) * (s.shop?.base ? 1 - CFG.camp.baseDiscount : 1));
+export const houseCost = (country: string) => Math.round(CFG.house * (CFG.cityCost[COUNTRIES[country]?.region ?? ''] ?? 1));
+export const teamCost = (rank: number | null) => (rank ? CFG.teamCosts.find((b) => rank <= b.rank)?.weekly ?? 0 : 0);
+/** Spend money (false if you can't afford it). */
+export function buy(s: CareerState, label: string, cost: number): boolean {
+  if (s.money < cost) return false;
+  book(s, label, -cost);
+  return true;
+}
+/** A week at a training camp: +1 to a stat. Uses the week. */
+export function trainingCamp(s: CareerState, stat: number, appVersion: string): boolean {
+  const sh = (s.shop ??= {}), c = (sh.camps ??= [0, 0, 0, 0, 0]);
+  if (s.current || c[stat] >= CFG.camp.max || !buy(s, `Training camp (${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][stat]})`, campCost(s, stat))) return false;
+  c[stat]++;
+  advanceWeek(s, 'next', appVersion);
+  return true;
+}
 
 // ── Calendar and entry ──
-export const purseOf = (ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.purse : Math.round(ev.prize_pool_usd * CFG.moneyScale));
+export const purseOf = (ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.purse : Math.round(ev.prize_pool_usd * CFG.moneyScale * (CFG.prizeCut[ev.tier] ?? 1)));
 export const prizeFor = (ev: TourEvent, round: Round) => Math.round(purseOf(ev) * CFG.prizeShare[round]);
 export const travelCost = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) => {
   if (ev.tier === 'CLUB') return 0;
@@ -163,7 +257,7 @@ export const travelEnergy = (s: CareerState, ev: TourEvent, cls: TravelClass = t
 };
 /** A hotel night at this event (Club Opens: you sleep at home). */
 export const hotelCost = (s: CareerState, ev: TourEvent, tier: HotelTier = hotelOf(s)) =>
-  ev.tier === 'CLUB' ? 0 : Math.round(CFG.hotels[tier].perNight * (CFG.cityCost[COUNTRIES[ev.host_country]?.region ?? ''] ?? 1) * (CFG.tierCost[ev.tier] ?? 1));
+  ev.tier === 'CLUB' || s.houses?.includes(ev.host_country) ? 0 : Math.round(CFG.hotels[tier].perNight * (CFG.cityCost[COUNTRIES[ev.host_country]?.region ?? ''] ?? 1) * (CFG.tierCost[ev.tier] ?? 1));
 export const hotelRecover = (ev: TourEvent, tier: HotelTier) => (ev.tier === 'CLUB' ? 2 : CFG.hotels[tier].recover);
 /** Energy you'd use going all the way (a guide for the tournament screen). */
 export const roundEnergy = (s: CareerState, ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.energyPerRound : CFG.energyPerRound) * staminaFactor(characterById(s.characterId));
@@ -238,6 +332,7 @@ export function enter(s: CareerState, ev: TourEvent, w?: World) {
   const travel = qual ? 0 : travelCost(s, ev);
   const cls = travelClassOf(s);
   if (travel) book(s, `Travel to ${ev.name}`, -travel);
+  addRest(s, -travelRestCost(s, ev));
   s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true,
     ...(qual ? { qual: { stage: 1 as const, opps: qualifyingOpponents(s, w!, ev) }, covered: true } : {}) };
 }
@@ -315,13 +410,17 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
 
 /** A match finished: pay the hotel, use energy, and move on (or finish the event). */
 
-export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolean, games: [number, number][], opponentId: string): { finished: boolean; result?: PlayerResult; injured?: number; qualified?: boolean } {
+export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolean, games: [number, number][], opponentId: string, drain = 0): { finished: boolean; result?: PlayerResult; injured?: number; qualified?: boolean } {
   const a = s.current!;
+  // 4.1: the match tires you; nights before your next match bring some back.
+  const dayBefore = roundDay(ev, a.round, hash(s.rngSeed, ev.id), !!a.qual);
+  addRest(s, -drain);
+  const restUntil = (q: boolean) => { const n = Math.max(0, roundDay(ev, a.round, hash(s.rngSeed, ev.id), q) - dayBefore); addRest(s, n * nightRest(s, ev)); };
   // 3.19: qualifying. Win both and you're in the main draw; lose and you're out (with a few ranking points).
   if (a.qual) {
     const stage = a.qual.stage;
     if (won && stage === 1) { a.qual.stage = 2; return { finished: false }; }
-    if (won) { delete a.qual; skipByes(s, w, ev); return { finished: false, qualified: true }; }
+    if (won) { delete a.qual; skipByes(s, w, ev); restUntil(false); return { finished: false, qualified: true }; }
     const pts = Math.round(pointsFor(ev.tier, a.round, ev.draw_size) * CFG.qualifying.lossPoints[stage - 1]);
     const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: a.round, points: pts, prize: 0, costs: 0, opponents: [], scores: [], as: a.as, qual: stage };
     s.history.push(res);
@@ -336,8 +435,8 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
   // 3.9: no energy and no injuries.
   // Lose a semi-final and you play for 3rd place.
   if (a.bronze) return { finished: true, result: finish(s, w, ev, 'SF', false, won ? 3 : 4) };
-  if (!won && a.round === 'SF') { a.bronze = true; return { finished: false }; }
-  if (won && a.round !== 'F') { a.round = nextRound(a.round); skipByes(s, w, ev); return { finished: false }; }
+  if (!won && a.round === 'SF') { a.bronze = true; addRest(s, nightRest(s, ev)); return { finished: false }; }
+  if (won && a.round !== 'F') { a.round = nextRound(a.round); skipByes(s, w, ev); restUntil(false); return { finished: false }; }
   const reached: Round = won ? 'W' : a.round;
   return { finished: true, result: finish(s, w, ev, reached) };
 }
@@ -390,17 +489,26 @@ export function withdraw(s: CareerState, w: World, ev: TourEvent): PlayerResult 
 export type WeekAction = 'next' | 'rest';
 export function advanceWeek(s: CareerState, action: WeekAction, appVersion: string) {
   if (s.current) return;
-  void action; // 3.9: no rest weeks (no energy); a week is a week.
-  s.energy = 100;
+  void action;
+  // 4.1: a week off brings back a lot; the days after an event a little.
+  const playedThisWeek = s.history.some((h) => h.year === s.year && h.week === s.week);
+  addRest(s, playedThisWeek ? CFG.rested.weekAfterEvent : CFG.rested.weekOff);
   // The week's wages and sponsor money.
-  if (s.staff?.coach) book(s, `${CFG.staff.coach.label}’s wages`, -CFG.staff.coach.wage);
+  if (s.staff?.coach && !s.shop?.coach) book(s, `${CFG.staff.coach.label}’s wages`, -CFG.staff.coach.wage);
+  // 4.1: staff wages and team costs (a bigger team as you climb).
+  const wages = staffWages(s);
+  if (wages) book(s, 'Staff wages', -wages);
+  const tc = teamCost(s.bestRankNow ?? null);
+  if (tc) book(s, 'Team costs (travel team)', -tc);
+  // A week off at your training base rests you more.
+  if (s.shop?.base && !s.history.some((h) => h.year === s.year && h.week === s.week)) addRest(s, CFG.base.restPerLevel * s.shop.base.level);
   if (s.sponsor) book(s, `Sponsor: ${s.sponsor.name}`, s.sponsor.weekly);
   if (s.injury && s.injury.weeks > 0) { s.injury.weeks--; if (!s.injury.weeks) s.injury = null; }
   const last = Math.max(...calendar(appVersion, s.year).map((e) => e.week), 1);
   if (s.week >= last || s.week >= 52) {
     // The off-season: fully rested for the new year, sponsors come back with new offers.
     s.recap = s.year; s.year++; s.season = s.year; s.week = 1;
-    s.energy = 100; s.injury = null;
+    s.energy = 100; s.injury = null; // a fresh start every season
     if (s.sponsor && s.sponsor.year < s.year) s.sponsor = null;
     // 3.19: a loan still owed grows a little each new season.
     if (s.loan) s.loan.owed = Math.round(s.loan.owed * (1 + CFG.loan.seasonInterest));

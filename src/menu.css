@@ -1710,3 +1710,66 @@ body:has(#menu:not(.hidden)) #viewbar { display: none; }
 .bc-ticker-t span:nth-child(3n + 2) b { color: #1b9a55; }
 .bc-ticker-t span:nth-child(3n) b { color: #6b3fd6; }
 .bc .board-foot .link:hover { text-decoration-color: var(--bc-gold); }
+
+/* 4.1: the Rested bar on the career hub */
+.c-rest { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; margin-top: 16px; max-width: 560px; }
+.c-rest-k { font: 700 12px/1 var(--text); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+.c-rest-bar { height: 8px; background: rgba(168, 196, 255, 0.16); overflow: hidden; }
+.c-rest-bar i { display: block; height: 100%; width: var(--rest); background: linear-gradient(90deg, #e8112d, #ffb51f 40%, #43d982 75%); background-size: 560px 100%; }
+.c-rest b { font: 700 15px/1 var(--text); }
+.c-rest small { grid-column: 1 / -1; font: 500 13px/1.3 var(--text); color: var(--ink-2); }
+/* 4.1: walk-on looks from the career shop */
+#walkon.wo-theme-gold .wo-side.me { background: linear-gradient(100deg, rgba(212, 160, 23, 0.9), rgba(212, 160, 23, 0.15) 85%); }
+#walkon.wo-theme-fire .wo-side.me { background: linear-gradient(100deg, rgba(255, 90, 0, 0.92), rgba(200, 0, 40, 0.5) 50%, rgba(255, 90, 0, 0.1) 90%); }
+#walkon.wo-theme-ice .wo-side.me { background: linear-gradient(100deg, rgba(120, 220, 255, 0.85), rgba(40, 120, 200, 0.2) 85%); }
+#walkon.wo-theme-royal .wo-side.me { background: linear-gradient(100deg, rgba(110, 40, 200, 0.9), rgba(110, 40, 200, 0.15) 85%); }
+
+/* ══ 4.1: calmer colours: red, blue, white, gold and purple (with shades), no rainbow ══════════════ */
+.bc-head::after { background: linear-gradient(90deg, #e8112d 0 30%, #a8102a 30% 40%, #7a3fd6 40% 60%, #2f63d8 60% 80%, #6aa4ff 80%); }
+.bc .online-btn, .bc .controls-btn { border-color: rgba(255, 255, 255, 0.25); color: #f6f7f9; }
+.bc .online-btn i { background: #6aa4ff; }
+.ltile-tutorial.bc-small { background: linear-gradient(160deg, rgba(47, 123, 255, 0.28), rgba(47, 123, 255, 0.05)); box-shadow: inset 0 -4px 0 #2f7bff; }
+.ltile-tutorial .bc-k, .ltile-tutorial .bc-go { color: #8fb8ff; }
+.ltile-practice.bc-small { background: linear-gradient(160deg, rgba(122, 63, 214, 0.32), rgba(122, 63, 214, 0.06)); box-shadow: inset 0 -4px 0 #7a3fd6; }
+.bc-ranked .bc-num { color: rgba(106, 164, 255, 0.1); }
+.bc-ranked .bc-k { color: #a9c6ff; }
+.bc-ranked .bc-btn.line { box-shadow: inset 0 0 0 2px rgba(169, 198, 255, 0.6); color: #dbe7ff; }
+.bc-exhib .bc-ex-event { color: #7a3fd6; }
+.bc-ticker-t span:nth-child(3n + 2) b { color: #2f63d8; }
+.bc-ticker-t span:nth-child(3n) b { color: #7a3fd6; }
+.bc-small .tip { background: rgba(255, 194, 61, 0.18); color: #ffc23d; }
+
+/* ══ 4.1: the other screens in the broadcast look (stats, social, account, match card) ═════════════ */
+.social-panel, .pass, .matchcard {
+  --card: #0e1424; --card-ink: #f3f6fc; --card-ink-2: #a9b4cc; --card-rule: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, #121a2e, #0a0f1d); color: var(--card-ink);
+  border-radius: 6px;
+}
+.social-panel { border-top: 5px solid #e8112d; }
+.matchcard { border-left: 5px solid #e8112d; border-radius: 0; }
+.pass { border-top: 5px solid #2f7bff; }
+.social-panel h2, .social-panel h3, .mc-head h2, .pass h2, .c-title, .vs-card h3 { font-family: 'Saira Condensed', 'Big Shoulders Display', sans-serif; font-style: italic; font-weight: 900; }
+.mc-head { border-bottom-color: rgba(255, 255, 255, 0.18); }
+.seg button { background: rgba(255, 255, 255, 0.04); color: var(--card-ink); border-color: rgba(255, 255, 255, 0.18); border-radius: 0; }
+.seg button:hover { border-color: rgba(255, 255, 255, 0.6); }
+.seg button.on { background: #e8112d; border-color: #e8112d; color: #fff; }
+.opp-band-name { color: var(--card-ink-2); }
+.opp-note { background: rgba(255, 255, 255, 0.05); color: var(--card-ink); border-left-color: #e8112d; }
+.matchcard input, .pass input, .social-panel input, .social-panel select { background: rgba(255, 255, 255, 0.06); color: var(--card-ink); border-color: rgba(255, 255, 255, 0.2); }
+.c-kicker { color: #ffc23d; }
+.c-hero { border-left: 4px solid #e8112d; border-radius: 0; }
+
+/* ══ 4.1: one button style: slanted filled for the main action, outlined for the rest ═══════════════ */
+.walk, .go.go-primary {
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); border-radius: 0; background: #e8112d; color: #fff;
+  font-family: 'Saira Condensed', 'Big Shoulders Display', sans-serif; font-style: italic; font-weight: 900;
+}
+.walk:hover, .go.go-primary:hover { background: #ff3b4f; }
+.edit, .go { border-radius: 0; font-family: 'Saira Condensed', 'Barlow Semi Condensed', sans-serif; letter-spacing: 0.12em; }
+.social-panel .edit, .social-panel .go, .pass .edit, .pass .go { border-color: rgba(255, 255, 255, 0.4); color: #f3f6fc; }
+
+/* ══ 4.1: wipe transitions between screens, like a TV cut ═══════════════════════════════════════════ */
+#menu:not(.hidden) .board { animation: wipe-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.social:not(.hidden) .social-panel { animation: wipe-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes wipe-in { from { clip-path: polygon(0 0, 0 0, -12% 100%, 0 100%); } to { clip-path: polygon(0 0, 112% 0, 100% 100%, -12% 100%); } }
+@media (prefers-reduced-motion: reduce) { #menu:not(.hidden) .board, .social:not(.hidden) .social-panel { animation: none; } }

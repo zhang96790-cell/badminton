@@ -13,7 +13,7 @@ import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, typ
 import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, money, myRank, newCareer,
-  nextMatch, payFor, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
+  nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
   type NextMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
@@ -146,6 +146,7 @@ export function initCareer(d: CareerDeps) {
     if (!s) { renderNew(); return; }
     if (s.recap !== null) { renderRecap(); return; }
     const r = myRank(s, W());
+    s.bestRankNow = r;
     head.innerHTML = `<p class="hero-kicker">${s.year} · Week ${s.week} · in ${e(countryName(s.currentLocation))}</p><h2>${e(s.name)}</h2>
       <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div>
       <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
@@ -165,7 +166,12 @@ export function initCareer(d: CareerDeps) {
   };
   const fact = (label: string, value: string, warn = false) => `<div class="c-fact${warn ? ' warn' : ''}"><span>${label}</span><b>${value}</b></div>`;
   // 3.9: no energy, so no travel and recovery bar (flights are economy and hotels 3-star).
-  const recover = () => '';
+  /** 4.1: the Rested bar (and what the next trip would cost you). */
+  const recover = (x?: TourEvent | null) => {
+    const r = Math.round(s!.energy), t = restedTier(r);
+    const trip = x && !s!.current ? travelRestCost(s!, x) : 0;
+    return `<div class="c-rest" style="--rest:${r}%"><span class="c-rest-k">Rested</span><div class="c-rest-bar"><i></i></div><b>${r}% · ${t.label}</b>${trip ? `<small>The trip there: −${trip}%</small>` : ''}${t.p ? `<small>Playing ${Math.round(t.p * 100)}% slower and less sharp${t.aim ? ', with less accurate aim' : ''}</small>` : ''}</div>`;
+  };
 
   /** The season at a glance: every event on a 52-week line, your results on the ones you played. */
   function seasonStrip() {
@@ -206,14 +212,15 @@ export function initCareer(d: CareerDeps) {
     } else if (s!.current?.qual) {
       // 3.19: qualifying.
       const ev2 = ev()!, nm = nextMatch(s!, W(), ev2)!;
-      hero = `<p class="c-kicker">Qualifying · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">Qualifying round ${nm.qual} of 2</h3>
+      hero = `<p class="c-kicker">Qualifying · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]} · Tuesday</p><h3 class="c-title">Qualifying round ${nm.qual} of 2</h3>
         ${versus(nm.opponent)}
         <div class="c-facts">${fact('Format', 'One game to 15')}${fact('Win both', 'You’re in the main draw')}${fact('Travel and hotel', 'Paid by the event')}</div>
-        <div class="c-cta"><button class="walk" data-playnext>Play qualifying round ${nm.qual} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-withdraw>Withdraw</button></div>`;
+        <div class="c-cta"><button class="walk" data-playnext>Play qualifying round ${nm.qual} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-withdraw>Withdraw</button></div>${recover()}`;
     } else if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
       const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
-      hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">${a.bronze ? 'Bronze medal match' : ROUND_LABEL[a.round]}</h3>
+      const day = DAY_NAMES[a.bronze ? 6 : roundDay(ev2, a.round, hash(s!.rngSeed, ev2.id))];
+      hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]} · ${day}</p><h3 class="c-title">${a.bronze ? 'Bronze medal match' : ROUND_LABEL[a.round]}</h3>
         ${versus(nm.opponent)}
         <div class="c-facts">${fact('Format', nm.games === 1 ? 'One game to 15' : 'Best of 3 to 15')}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
         <div class="c-cta"><button class="walk" data-playnext>Play ${a.bronze ? 'for 3rd place' : ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
@@ -232,7 +239,8 @@ export function initCareer(d: CareerDeps) {
         <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(hotelCost(s!, x))} a night`)}</div>
         ${c.qual ? `<p class="c-lead">${e(c.why ?? '')}</p>${loanLine()}` : ''}
         <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">${c.qual ? 'Enter qualifying · free' : `Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))}`} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
-          <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>${recover()}`;
+          <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>
+        <p class="c-lead small">The week: qualifying and the round of 32 Tuesday and Wednesday, round of 16 Thursday, quarter-finals Friday, semi-finals Saturday, final Sunday.</p>${recover(x)}`;
     } else if (next) {
       const weeks = next.week - s!.week;
       hero = `<p class="c-kicker">Next event in ${weeks} week${weeks === 1 ? '' : 's'} · ${TIER_LABEL[next.tier]}</p><h3 class="c-title">${e(next.name)}</h3>
@@ -329,6 +337,14 @@ export function initCareer(d: CareerDeps) {
   }
 
   /** Before every career match: who you're about to play. */
+  /** 4.1: the tactical analyst's notes on an opponent (from their stats and style). */
+  function scouting(o: Character): string {
+    const st = o.base_stats ?? o.stats, names = ['power', 'speed', 'net play', 'defence', 'stamina'];
+    const lo = st.indexOf(Math.min(...st)), hi = st.indexOf(Math.max(...st));
+    const side = o.handedness === 'left' ? 'their backhand (your left as you look)' : 'their backhand (your right as you look)';
+    return `Strongest at ${names[hi]}, weakest at ${names[lo]}. Attack ${side}.${lo === 4 ? ' Make the rallies long: they tire.' : lo === 1 ? ' Move them corner to corner.' : lo === 2 ? ' Drop short and make them play at the net.' : lo === 3 ? ' Smash: their defence is the weak spot.' : ' Lift deep: their smash isn’t a big threat.'}`;
+  }
+
   function renderPreMatch() {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
     if (!x || !nm) return;
@@ -341,7 +357,7 @@ export function initCareer(d: CareerDeps) {
       const a = (o.base_stats ?? o.stats)[i], b = (me.base_stats ?? me.stats)[i];
       return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
     }).join('');
-    const lk = eventLook(x.id, x.tier);
+    const lk = eventLook(x.id, x.tier, x.host_country);
     body.innerHTML = `<section class="c-hero c-pre"><p class="c-kicker">${e(x.name)}${lk.poweredBy ? `, powered by ${e(lk.poweredBy.name)}` : ''} · ${roundName(nm)} · ${nm.games === 1 ? 'one game' : 'best of 3'} to 15 · ${e(lk.shuttle.name)} shuttles</p>
       <div class="c-pre-grid">
         <div class="c-pre-who">
@@ -349,6 +365,7 @@ export function initCareer(d: CareerDeps) {
           <span class="ccard" style="--rar:${RARITY[o.rarity].color}"><span class="rar">${RARITY[o.rarity].label}</span> ${e(countryName(o.country))} · ${o.handedness === 'left' ? 'left-handed' : 'right-handed'}</span>
           <div class="c-facts">${fact('World rank', rank)}${fact('Style', style.label)}${fact('Career strength', String(o.career_strength))}${fact('Plays like', `${LEVEL_LABEL[nm.level]} CPU`)}${fact('Kit', kitBrandOf(o.id).name)}</div>
           <p class="c-trait"><b>${e(style.label)}:</b> ${e(style.trait)}</p>
+          ${s!.shop?.coach === 'tactical' || s!.shop?.coach === 'elite' ? `<p class="c-trait"><b>Scouting:</b> ${e(scouting(o))}</p>` : ''}
           ${o.abilities.length ? o.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('') : '<p class="c-lead small">No signature ability.</p>'}
           <p class="c-lead">${e(o.description)}</p>
         </div>
@@ -411,20 +428,63 @@ export function initCareer(d: CareerDeps) {
     return `<p class="c-lead">Borrow to pay your own way on tour. You pay back ${Math.round(L.fee * 100)}% more, ${Math.round(L.repayShare * 100)}% of every prize goes to it, and you can pay it off any time. The better your best world ranking, the more you can borrow (up to ${money(loanLimit(s!))} for you now). One loan at a time.</p>
       <div class="c-opts">${loanOptions(s!).map((a) => `<button class="c-opt" data-loan="${a}"><b>Borrow ${money(a)}</b><span>Pay back ${money(loanOwed(a))}</span></button>`).join('')}</div>`;
   }
-  /** Sponsors and staff (in the Money tab). */
+  /** Sponsors, the shop and the loan (in the Money tab). */
   function teamHtml() {
     const offers = sponsorUpgrade(s!, myRank(s!, W()));
     const sp = s!.sponsor;
-    const staff = (['coach'] as StaffRole[]).map((k) => {
-      const st = CFG.staff[k], on = !!s!.staff?.[k];
-      return `<button class="c-opt${on ? ' on' : ''}" data-staff="${k}"><b>${st.label}${on ? ' (hired)' : ''}</b><span>${money(st.wage)} a week</span><span>${e(st.note)}</span><span>${on ? 'Click to let them go' : 'Click to hire'}</span></button>`;
-    }).join('');
     return `<section class="c-hero"><p class="c-kicker">Sponsor</p>
       ${sp ? `<p class="c-lead"><b>${e(sp.name)}</b> pays you ${money(sp.weekly)} a week and ${money(sp.bonus)} for every title, until the end of ${sp.year}.</p>` : '<p class="c-lead">No sponsor yet. Sponsors come to you once you’re in the world top 200, and better deals open as you climb.</p>'}
       ${offers ? `<p class="c-lead">${sp ? 'A better deal is on offer:' : 'Sponsors want you:'}</p><div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${i}"><b>${e(o.name)}</b><span>${money(o.weekly)} a week</span><span>${money(o.bonus)} a title</span><span>Until the end of ${o.year}</span></button>`).join('')}</div>` : ''}
-      <h3 class="c-title small">Your team</h3><div class="c-opts">${staff}</div>
+      ${shopHtml()}
       <h3 class="c-title small">Tour loan</h3>${loanHtml()}</section>`;
   }
+
+  /** 4.1: the shop: coach, staff, training, a base, houses, travel and hotel, your racket and walk-on. */
+  function shopHtml() {
+    const sh = s!.shop ?? {}, rank = myRank(s!, W());
+    const coach = Object.entries(CFG.coaches).map(([k, c]) => {
+      const on = sh.coach === k;
+      return `<button class="c-opt${on ? ' on' : ''}" data-coach="${k}"><b>${e(c.label)}${on ? ' (hired)' : ''}</b><span>${money(c.wage)} a week</span><span>${e(c.perk)}</span><span>${on ? 'Click to let them go' : 'Click to hire (replaces your coach)'}</span></button>`;
+    }).join('');
+    const extras = Object.entries(CFG.extras).map(([k, c]) => {
+      const on = !!sh[k as 'nutritionist'];
+      return `<button class="c-opt${on ? ' on' : ''}" data-extra="${k}"><b>${e(c.label)}${on ? ' (hired)' : ''}</b><span>${money(c.wage)} a week</span><span>${e(c.perk)}</span></button>`;
+    }).join('');
+    const stats = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'], camps = sh.camps ?? [0, 0, 0, 0, 0];
+    const camp = stats.map((l, i) => `<button class="c-opt" data-camp="${i}" ${camps[i] >= CFG.camp.max || s!.current ? 'disabled' : ''}><b>${l} camp</b><span>${camps[i]} of ${CFG.camp.max} done</span><span>${camps[i] >= CFG.camp.max ? 'Maxed out' : `${money(campCost(s!, i))} · takes the week`}</span></button>`).join('');
+    const base = sh.base;
+    const baseHtml = base
+      ? `<p class="c-lead">Your training base in ${e(base.region)} is level ${base.level}: weeks off rest you ${CFG.base.restPerLevel * base.level}% more, and camps cost ${Math.round(CFG.camp.baseDiscount * 100)}% less.</p>${base.level < 3 ? `<div class="c-cta"><button class="edit" data-base="up">Upgrade to level ${base.level + 1} · ${money(CFG.base.upgrade[base.level - 1])}</button></div>` : ''}`
+      : `<p class="c-lead">A base where you train: weeks off rest you more and training camps cost less.</p><div class="c-cta"><button class="edit" data-base="buy">Build one in ${e(countryName(s!.homeCountry))} · ${money(CFG.base.buy)}</button></div>`;
+    const hosts = [...new Set(W().cal.map((v) => v.host_country))].sort((a, b) => countryName(a).localeCompare(countryName(b)));
+    const houses = hosts.map((c) => {
+      const own = s!.houses?.includes(c);
+      return `<button class="c-opt${own ? ' on' : ''}" data-house="${c}" ${own ? 'disabled' : ''}><b>${e(countryName(c))}</b><span>${own ? 'Yours' : money(houseCost(c))}</span></button>`;
+    }).join('');
+    const cls = travelClassOfUi(), ho = s!.settings.hotel ?? 'three';
+    const travel = (Object.keys(CFG.travelClass) as TravelClass[]).map((k) => `<button class="c-opt${cls === k ? ' on' : ''}" data-class="${k}"><b>${CFG.travelClass[k].label}</b><span>${CFG.travelClass[k].cost}× the fare</span><span>${Math.round(CFG.travelClass[k].energySaved * 100)}% less tiring</span></button>`).join('');
+    const hotels = (Object.keys(CFG.hotels) as HotelTier[]).map((k) => `<button class="c-opt${ho === k ? ' on' : ''}" data-hotel="${k}"><b>${CFG.hotels[k].label}</b><span>${money(CFG.hotels[k].perNight)} a night (more in pricey cities)</span><span>+${CFG.rested.night[k]}% Rested a night</span></button>`).join('');
+    const racket = sh.racket
+      ? `<p class="c-lead">Your custom racket: <b>${e(sh.racket)}</b>.</p>`
+      : `<div class="c-opts">${CFG.rackets.colours.map((c) => `<button class="c-opt" data-racket="${e(c)}"><b>${e(c)}</b><span>${money(CFG.rackets.cost)}</span></button>`).join('')}</div>`;
+    const owned = sh.cosmetics ?? [], eq = sh.equipped?.walkon;
+    const walk = Object.entries(CFG.walkOns).map(([k, w]) => {
+      const have = owned.includes(`walkon:${k}`);
+      return `<button class="c-opt${eq === k ? ' on' : ''}" data-walkon="${k}"><b>${e(w.label)} walk-on</b><span>${have ? (eq === k ? 'Using it' : 'Click to use') : money(w.cost)}</span></button>`;
+    }).join('');
+    const wages = staffWages(s!), tc = teamCost(rank);
+    return `<h3 class="c-title small">Your coach</h3><p class="c-lead small">One coach at a time. Every coach gives you notes after each match.</p><div class="c-opts">${coach}</div>
+      <h3 class="c-title small">Staff</h3><div class="c-opts">${extras}</div>
+      <p class="c-lead small">Staff wages: ${money(wages)} a week.${tc ? ` Team costs at your ranking: ${money(tc)} a week (they grow as you climb).` : ''}</p>
+      <h3 class="c-title small">Training camps</h3><p class="c-lead small">A week away for +1 to a stat, up to ${CFG.camp.max} each. Each camp costs a bit more than the last.</p><div class="c-opts">${camp}</div>
+      <h3 class="c-title small">Training base</h3>${baseHtml}
+      <h3 class="c-title small">Houses</h3><p class="c-lead small">Own a house in a country and you sleep there at its events: no hotel bill, and +${CFG.rested.house}% Rested a night.</p><div class="c-opts">${houses}</div>
+      <h3 class="c-title small">Flights</h3><div class="c-opts">${travel}</div>
+      <h3 class="c-title small">Hotels</h3><div class="c-opts">${hotels}</div>
+      <h3 class="c-title small">Custom racket</h3>${racket}
+      <h3 class="c-title small">Walk-on look</h3><div class="c-opts">${walk}</div>`;
+  }
+  const travelClassOfUi = (): TravelClass => s!.settings.travelClass ?? 'economy';
 
   function renderTrophies() {
     const h = s!.history;
@@ -683,19 +743,39 @@ export function initCareer(d: CareerDeps) {
       path.push({ label: 'Champion', state: 'next' });
     }
     return {
+      theme: s!.shop?.equipped?.walkon || undefined,
       event: x.name, round: roundName(nm),
       me: {
         name: s!.name, line: `World ${mine ? `#${mine}` : 'unranked'} · ${me.name}`,
-        stats: [[mine ? `#${mine}` : '–', 'World rank'], [form ? `form:${form}` : '–', 'Last 5'], [h2h.length ? `${h2hW}–${h2h.length - h2hW}` : '0–0', 'Head to head'], [String(s!.titles), 'Titles']],
+        stats: [[mine ? `#${mine}` : '–', 'World rank'], [form ? `form:${form}` : '–', 'Last 5'], [h2h.length ? `${h2hW}–${h2h.length - h2hW}` : '0–0', 'Head to head'], [`${Math.round(s!.energy)}%`, `Rested · ${restedTier(s!.energy).label}`]],
         move: mySig ? { kicker: 'Your signature move', name: mySig.name, text: SIGNATURES.get(mySig.id)?.text ?? mySig.text } : undefined,
       },
       them: {
         name: o.name, line: `${countryName(o.country)} · ${RARITY[o.rarity].label}`,
-        stats: [[rankOf(o.id), 'World rank'], [String(o.career_strength), 'Strength'], [style.label, 'Style'], [`${LEVEL_LABEL[nm.level]}`, 'Plays like']],
+        stats: [[rankOf(o.id), 'World rank'], [String(o.career_strength), 'Strength'], [style.label, 'Style'], [`${opponentRested(s!, x, a.round, o.id)}%`, `Rested · ${restedTier(opponentRested(s!, x, a.round, o.id)).label}`]],
         move: sig ? { kicker: 'Signature move', name: sig.name, text: SIGNATURES.get(sig.id)?.text ?? sig.text } : { kicker: 'Plays like', name: style.label, text: style.trait },
       },
       path,
     };
+  }
+
+  /** 4.1: your coach's notes after a match (only with a coach). */
+  function coachNotes(g: Game, won: boolean): { title: string; text: string } | null {
+    const k = s!.shop?.coach;
+    if (!k) return null;
+    const me = g.stats.summary(0), them = g.stats.summary(1), hist = g.match.history;
+    const lines: string[] = [];
+    if (me.unforced >= 8) lines.push(`${me.unforced} unforced errors: play safer to the middle when you’re under pressure.`);
+    else if (me.unforced <= 3) lines.push(`Only ${me.unforced} unforced errors. Very solid.`);
+    if (me.winners >= 8) lines.push(`${me.winners} winners: your attacking was excellent.`);
+    else if (me.winners <= 3 && !won) lines.push('Too few winners: look for the smash on anything short.');
+    if (me.smashWinners >= 3) lines.push(`Your smash won ${me.smashWinners} points.`);
+    if (them.winners > me.winners + 4) lines.push('They hit through you too often: recover to the middle sooner.');
+    if (hist.length >= 3) { const [p, q] = hist[2]; lines.push(p > q ? 'Strong finish in the third game.' : 'You faded in the third game.'); }
+    const r = Math.round(s!.energy);
+    if (r < 55) lines.push(`You’re ${r}% rested now. A better hotel, a better seat or a week off would help.`);
+    if (!lines.length) lines.push(won ? 'A clean win. Keep it up.' : 'Close one. Nothing big to fix: keep going.');
+    return { title: `${CFG.coaches[k]?.label ?? 'Coach'}’s notes`, text: lines.slice(0, 3).join(' ') };
   }
 
   async function playNext(resume?: string) {
@@ -711,9 +791,9 @@ export function initCareer(d: CareerDeps) {
       walkOn: resume ? undefined : careerWalkOn(x, nm),
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
-        player: { characterId: a.as, modifiers: [coachModifier(s!)], abilities: true },
-        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true },
-        restrictions: {}, resume, look: eventLook(x.id, x.tier),
+        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy), shopModifier(s!)], abilities: true },
+        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id))] },
+        restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country),
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
       settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },
@@ -725,16 +805,21 @@ export function initCareer(d: CareerDeps) {
       onDone: async (g, retired) => {
         writeLive(null);
         const won = !retired && (g.forfeitWinner ?? (g.match.games[0] > g.match.games[1] ? 0 : 1)) === 0;
-        await finishMatch(x, opp.id, won, g.match.history.map((h) => [h[0], h[1]] as [number, number]));
+        const notes = coachNotes(g, won);
+        await finishMatch(x, opp.id, won, g.match.history.map((h) => [h[0], h[1]] as [number, number]), g.stats.shots.length);
+        if (notes) d.toast(notes.title, notes.text);
       },
     });
   }
 
   /** Record a finished career match and show what it did (ranking, prizes, injuries). */
-  async function finishMatch(x: TourEvent, oppId: string, won: boolean, games: [number, number][]) {
+  async function finishMatch(x: TourEvent, oppId: string, won: boolean, games: [number, number][], shots?: number) {
     if (s!.current) delete s!.current.live;
     const before = myRank(s!, W());
-    const r = recordMatch(s!, W(), x, won, games, oppId);
+    // 4.1: tiredness from this match (its length; a resumed match is estimated from its points).
+    const pts = games.reduce((n, [p, q]) => n + p + q, 0);
+    const drain = matchDrain(shots ?? pts * 7, games, 15, s!);
+    const r = recordMatch(s!, W(), x, won, games, oppId, drain);
     d.saveStats({ career_matches: 1, career_wins: won ? 1 : 0 });
     if (r.finished && r.result) {
       // Club opens aren't titles: nothing goes on your account for them.
@@ -896,6 +981,31 @@ export function initCareer(d: CareerDeps) {
     if (cl) { s.settings.travelClass = cl; s.settings.business = cl === 'business'; await save(); render(); return; }
     const ho = at('[data-hotel]')?.dataset.hotel as HotelTier | undefined;
     if (ho) { s.settings.hotel = ho; if (s.current) s.current.hotelTier = ho; await save(); render(); return; }
+    const co = at('[data-coach]')?.dataset.coach;
+    if (co) { const sh = (s.shop ??= {}); sh.coach = sh.coach === co ? null : co; if (s.staff) s.staff.coach = false; await save(); render(); return; }
+    const ex = at('[data-extra]')?.dataset.extra as 'nutritionist' | 'psychologist' | 'stringing' | undefined;
+    if (ex) { const sh = (s.shop ??= {}); sh[ex] = !sh[ex]; await save(); render(); return; }
+    const cp = at('[data-camp]')?.dataset.camp;
+    if (cp !== undefined) { const i = Number(cp); if (trainingCamp(s, i, d.appVersion)) d.toast('Training camp done', `+1 ${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][i]}. A week has passed.`); else d.toast('Can’t do that camp', 'Not enough money, or you’re in a tournament.'); await save(); render(); return; }
+    const bs = at('[data-base]')?.dataset.base;
+    if (bs) {
+      const sh = (s.shop ??= {});
+      if (bs === 'buy' && !sh.base && buy(s, 'Training base', CFG.base.buy)) sh.base = { region: countryName(s.homeCountry), level: 1 };
+      else if (bs === 'up' && sh.base && sh.base.level < 3 && buy(s, 'Training base upgrade', CFG.base.upgrade[sh.base.level - 1])) sh.base.level++;
+      else d.toast('Not enough money', '');
+      await save(); render(); return;
+    }
+    const hs = at('[data-house]')?.dataset.house;
+    if (hs) { if (confirm(`Buy a house in ${countryName(hs)} for ${money(houseCost(hs))}?`) && buy(s, `House in ${countryName(hs)}`, houseCost(hs))) { (s.houses ??= []).push(hs); d.toast(`Your house in ${countryName(hs)}`, 'Free nights and better rest at events there.'); } await save(); render(); return; }
+    const rk = at('[data-racket]')?.dataset.racket;
+    if (rk) { if (buy(s, 'Custom racket', CFG.rackets.cost)) (s.shop ??= {}).racket = rk; else d.toast('Not enough money', ''); await save(); render(); return; }
+    const wo = at('[data-walkon]')?.dataset.walkon;
+    if (wo) {
+      const sh = (s.shop ??= {}), have = (sh.cosmetics ??= []);
+      if (!have.includes(`walkon:${wo}`)) { if (!buy(s, `${CFG.walkOns[wo].label} walk-on`, CFG.walkOns[wo].cost)) { d.toast('Not enough money', ''); return; } have.push(`walkon:${wo}`); }
+      (sh.equipped ??= {}).walkon = sh.equipped.walkon === wo ? '' : wo;
+      await save(); render(); return;
+    }
     const stf = at('[data-staff]')?.dataset.staff as StaffRole | undefined;
     if (stf) { setStaff(s, stf, !s.staff?.[stf]); await save(); render(); return; }
     const spn = at('[data-sponsor]')?.dataset.sponsor;

@@ -13,6 +13,8 @@ export interface WalkOnSide {
 }
 export interface WalkOnStep { label: string; detail?: string; state: 'won' | 'now' | 'next' }
 export interface WalkOnInfo {
+  /** 4.1: a walk-on look bought in the career shop (gold, fire, ice, royal). */
+  theme?: string;
   event: string;
   round: string;
   me: WalkOnSide;
@@ -49,6 +51,7 @@ export function showWalkOn(info: WalkOnInfo, ms = 3600): Promise<void> {
   document.getElementById('walkon')?.remove();
   const el = document.createElement('div');
   el.id = 'walkon';
+  if (info.theme) el.classList.add(`wo-theme-${info.theme}`);
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-label', `${info.event}: ${info.me.name} against ${info.them.name}`);
   el.style.setProperty('--wo-ms', `${ms}ms`);

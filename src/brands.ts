@@ -5,21 +5,24 @@
 // sponsor in their name (the Ventra China Open, the Solar Sparks Singapore Open).
 
 export type Mark = 'wing' | 'dot' | 'chevron' | 'wave' | 'star' | 'ring' | 'bolt' | 'leaf' | 'drop' | 'peak';
-export interface Brand { id: string; name: string; line: string; bg: string; fg: string; mark: Mark }
+/** country: a home brand there (career: home-country sponsors; boards: local brands at events there). */
+export interface Brand { id: string; name: string; line: string; bg: string; fg: string; mark: Mark; country?: string }
 
-const b = (id: string, name: string, line: string, bg: string, fg: string, mark: Mark): Brand => ({ id, name, line, bg, fg, mark });
+const b = (id: string, name: string, line: string, bg: string, fg: string, mark: Mark, country?: string): Brand => ({ id, name, line, bg, fg, mark, ...(country ? { country } : {}) });
 
-/** Racket and kit makers: players wear one of these (shown on the pre-match screen and their shirts' trim). */
+/** Racket and kit makers (4.1: the owner's list). Players wear one of these; Yonax most, then Liming, then Victer. */
 export const KIT_BRANDS: Brand[] = [
-  b('kestrel', 'KESTREL', 'Rackets', '#101820', '#f2c14e', 'wing'),
-  b('arcwing', 'ARCWING', 'Badminton', '#e8edf2', '#c8102e', 'chevron'),
-  b('featherline', 'Featherline', 'Since 1962', '#0e3b2e', '#e9f5ec', 'leaf'),
-  b('novalite', 'NOVALITE', 'Carbon rackets', '#1a1240', '#7fe0ff', 'star'),
-  b('swiftcourt', 'SwiftCourt', 'Court shoes', '#ff6a2b', '#ffffff', 'bolt'),
-  b('leeming', 'LEEMING', 'Badminton', '#d71920', '#ffffff', 'wing'),
-  b('yonax', 'YONAX', 'Rackets', '#0a3d91', '#ffffff', 'chevron'),
-  b('victer', 'VICTER', 'Badminton', '#0d0d0d', '#e8b923', 'star'),
+  b('yonax', 'YONAX', 'Rackets', '#0a3d91', '#ffffff', 'chevron', 'JPN'),
+  b('liming', 'LIMING', 'Badminton', '#d71920', '#ffffff', 'wing', 'CHN'),
+  b('victer', 'VICTER', 'Badminton', '#0d0d0d', '#e8b923', 'star', 'TPE'),
+  b('mizuna', 'MIZUNA', 'Since 1906', '#001e62', '#ffffff', 'wave', 'JPN'),
+  b('kompoo', 'KOMPOO', 'Rackets', '#ffffff', '#e30613', 'bolt', 'CHN'),
+  b('hundreds', 'HUNDREDS', 'Badminton', '#111111', '#ffffff', 'ring', 'IND'),
 ];
+/** How often players wear each kit brand (same order as KIT_BRANDS). */
+const KIT_WEIGHTS = [40, 22, 18, 8, 6, 6];
+/** Which badminton brand powers a tournament: mostly Yonax, some Victer, Liming rarely. */
+const POWERED_WEIGHTS: [string, number][] = [['yonax', 70], ['victer', 22], ['liming', 8]];
 
 export const SHUTTLE_BRANDS: Brand[] = [
   b('plumecraft', 'PLUMECRAFT', 'Official shuttle', '#f7f4ec', '#24324a', 'drop'),
@@ -27,60 +30,59 @@ export const SHUTTLE_BRANDS: Brand[] = [
   b('aeroplume', 'AEROPLUME', 'Official shuttle', '#e6f4ff', '#004f8c', 'wing'),
 ];
 
-/** Everyone else who buys boards: companies of every kind. */
+/** Everyone else who buys boards (4.1: the owner's list, spellings as given, plus local brands). */
 export const SPONSOR_BRANDS: Brand[] = [
-  // Airlines and travel
-  b('zephyr', 'ZEPHYR AIR', 'Fly further', '#ffffff', '#1f5fbf', 'wing'),
-  b('emirata', 'Emirata', 'Fly better', '#c8102e', '#ffffff', 'wing'),
-  b('cathaypearl', 'Cathay Pearl', 'Airways', '#006564', '#ffffff', 'wing'),
-  b('skyward', 'SKYWARD', 'Airlines', '#002b5c', '#ffcc00', 'chevron'),
-  b('garudasky', 'Garuda Sky', 'Indonesia’s airline', '#0b4f6c', '#9fe2e8', 'wing'),
-  b('bookly', 'Bookly.com', 'Hotels & homes', '#003580', '#ffffff', 'dot'),
-  b('summit', 'SUMMIT', 'Hotels & resorts', '#3b2a1a', '#e8c48a', 'peak'),
+  // Airlines and hotels
+  b('emiratas', 'Emiratas', 'Fly better', '#c8102e', '#ffffff', 'wing', 'UAE'),
+  b('cathaypacifec', 'Cathay Pacifec', 'Move beyond', '#006564', '#ffffff', 'wing', 'HKG'),
+  b('skylineair', 'Skyline Airlines', 'Fly higher', '#002b5c', '#ffcc00', 'chevron'),
+  b('singapura', 'Singapura Airlines', 'A great way to fly', '#1d2c5e', '#f5b335', 'wing', 'SGP'),
+  b('airasio', 'AirAsio', 'Now everyone can fly', '#e4002b', '#ffffff', 'wing', 'MAS'),
+  b('qantaz', 'Qantaz', 'Spirit of Australia', '#e40000', '#ffffff', 'peak', 'AUS'),
+  b('marriot', 'Marriot', 'Hotels', '#3a2b2b', '#e8c48a', 'peak'),
+  b('hillton', 'Hillton', 'Hotels & resorts', '#104c97', '#ffffff', 'chevron'),
   b('coralbay', 'Coral Bay', 'Resorts', '#ff7f6e', '#ffffff', 'wave'),
-  // Banks, cards and insurance
-  b('harborline', 'Harborline Bank', 'Banking', '#0b2a4a', '#ffffff', 'wave'),
-  b('hsbk', 'HSBK', 'The world’s bank', '#ffffff', '#db0011', 'chevron'),
-  b('maybanc', 'Maybanc', 'Humanising banking', '#ffc600', '#111111', 'ring'),
-  b('paystar', 'PayStar', 'Tap to pay', '#1a1f71', '#f7b600', 'star'),
-  b('tidewater', 'TIDEWATER', 'Insurance', '#e9f1f7', '#0d3b66', 'drop'),
-  b('goldenlion', 'Golden Lion', 'Life insurance', '#7a1c1c', '#f2c14e', 'peak'),
+  b('bookly', 'Bookly.com', 'Hotels & homes', '#003580', '#ffffff', 'dot'),
   // Phones, tech and electronics
-  b('pacifica', 'Pacifica Mobile', '5G everywhere', '#7b2cbf', '#ffffff', 'dot'),
-  b('samsong', 'SAMSONG', 'Galaxy of ideas', '#1428a0', '#ffffff', 'ring'),
-  b('hiwave', 'HIWAVE', 'Smartphones', '#cf0a2c', '#ffffff', 'leaf'),
-  b('panasomic', 'Panasomic', 'Electronics', '#ffffff', '#0041c0', 'dot'),
-  b('halo', 'Halo Electronics', 'Screens', '#f2f2f2', '#e63946', 'ring'),
-  b('daikon', 'DAIKON', 'Air conditioning', '#00a0e9', '#ffffff', 'wave'),
-  b('telcosel', 'Telcosel', 'Always connected', '#e4002b', '#ffffff', 'bolt'),
-  b('pixelcloud', 'PixelCloud', 'Cloud storage', '#0f172a', '#38bdf8', 'drop'),
+  b('samsong', 'SAMSONG', 'Galaxy of ideas', '#1428a0', '#ffffff', 'ring', 'KOR'),
+  b('apples', 'Apple’s', 'Think different', '#111111', '#f5f5f7', 'leaf'),
+  b('daikon', 'DAIKON', 'Air conditioning', '#00a0e9', '#ffffff', 'wave', 'JPN'),
+  b('panasomic', 'Panasomic', 'Electronics', '#ffffff', '#0041c0', 'dot', 'JPN'),
+  b('pacificmobile', 'Pacific Mobile', '5G everywhere', '#7b2cbf', '#ffffff', 'dot'),
+  b('telkomsell', 'Telkomsell', 'Indonesia connected', '#e60012', '#ffffff', 'bolt', 'INA'),
+  b('egelectronics', 'EG Electronics', 'Life’s good', '#a50034', '#ffffff', 'ring', 'KOR'),
+  b('relyance', 'Relyance', 'Digital life', '#0f3c7b', '#ffffff', 'drop', 'IND'),
+  // Banks and insurance
+  b('hsbk', 'HSBK', 'The world’s bank', '#ffffff', '#db0011', 'chevron'),
+  b('goldenlion', 'Golden Lion', 'Life insurance', '#7a1c1c', '#f2c14e', 'peak'),
+  b('maybanc', 'Maybanc', 'Humanising banking', '#ffc600', '#111111', 'ring', 'MAS'),
+  b('harbourline', 'Harbourline Bank', 'Banking', '#0b2a4a', '#ffffff', 'wave'),
+  b('krungthai', 'Krungthai Banc', 'Banking for Thailand', '#00a6e6', '#ffffff', 'drop', 'THA'),
+  b('dbx', 'DBX Bank', 'Live more, bank less', '#ff3333', '#ffffff', 'star', 'SGP'),
   // Cars and fuel
-  b('toyoka', 'TOYOKA', 'Let’s go places', '#eb0a1e', '#ffffff', 'ring'),
-  b('orbis', 'ORBIS MOTORS', 'Electric', '#121212', '#e5e5e5', 'ring'),
-  b('hondo', 'HONDO', 'The power of dreams', '#ffffff', '#cc0000', 'chevron'),
-  b('petronex', 'PETRONEX', 'Energy', '#00a19c', '#ffffff', 'drop'),
-  // Drinks and hydration
-  b('lumo', 'LUMO', 'Energy drink', '#c6ff3d', '#111111', 'bolt'),
-  b('redbison', 'Red Bison', 'Gives you horns', '#1e2a78', '#ffcc00', 'bolt'),
-  b('kinetic', 'Kinetic Water', 'Hydration', '#00a6d6', '#ffffff', 'drop'),
-  b('pocara', 'Pocara Sweat', 'Ion supply drink', '#ffffff', '#1c4fa1', 'drop'),
-  b('gatorush', 'GATORUSH', 'Sports drink', '#f47c20', '#111111', 'bolt'),
-  b('avian', 'Avian', 'Natural spring water', '#f4f8fb', '#e2007a', 'peak'),
-  b('fizzco', 'Fizzco Cola', 'Ice cold', '#d00000', '#ffffff', 'wave'),
-  b('monsoon', 'Monsoon Tea', 'Brewed slow', '#1d4d2b', '#f4e3b2', 'leaf'),
-  b('mylo', 'MYLO', 'Chocolate malt', '#0b7a2b', '#ffffff', 'star'),
+  b('toyoka', 'TOYOKA', 'Let’s go places', '#eb0a1e', '#ffffff', 'ring', 'JPN'),
+  b('petronax', 'PETRONAX', 'Energy', '#00a19c', '#ffffff', 'drop', 'MAS'),
+  b('bnw', 'BNW', 'Sheer driving joy', '#1c69d4', '#ffffff', 'ring', 'GER'),
+  b('daihatsoo', 'Daihatsoo', 'Light you up', '#e60012', '#ffffff', 'chevron', 'JPN'),
+  // Drinks
+  b('pocara', 'Pocara Sweat', 'Ion supply drink', '#ffffff', '#1c4fa1', 'drop', 'JPN'),
+  b('avian', 'Avian', 'Natural spring water', '#f4f8fb', '#e2007a', 'peak', 'FRA'),
+  b('pepsi', 'Peps-i', 'Thirsty for more', '#004b93', '#ffffff', 'ring'),
+  b('hundredminus', '100-minus', 'Isotonic drink', '#0055a4', '#ffffff', 'bolt', 'MAS'),
+  b('mylo', 'MYLO', 'Chocolate malt', '#0b7a2b', '#ffffff', 'star', 'MAS'),
   b('beanstreet', 'Bean Street', 'Coffee', '#4b2e1e', '#f3e1c7', 'leaf'),
-  // Food, shopping and delivery
-  b('lotus', 'Lotus Noodles', 'Ready in 3 minutes', '#ffd400', '#c8102e', 'leaf'),
-  b('crunchy', 'Crunchy’s', 'Potato chips', '#e31837', '#ffe600', 'star'),
-  b('grabbit', 'Grabbit', 'Rides & food', '#00b14f', '#ffffff', 'chevron'),
-  b('shopiq', 'Shopiq', 'Shop online', '#ee4d2d', '#ffffff', 'dot'),
-  b('dhx', 'DHX EXPRESS', 'Worldwide delivery', '#ffcc00', '#d40511', 'chevron'),
-  b('northstar', 'Northstar', 'Logistics', '#14213d', '#fca311', 'star'),
-  b('uniqo', 'UNIQO', 'Everyday clothing', '#ff0000', '#ffffff', 'dot'),
+  b('gatorush', 'GATORUSH', 'Sports drink', '#f47c20', '#111111', 'bolt'),
+  b('singha', 'Singh-a Water', 'Pure drinking water', '#c8102e', '#f2d27a', 'drop', 'THA'),
+  b('amula', 'Amula', 'The taste of India', '#e2231a', '#ffffff', 'leaf', 'IND'),
+  // Shopping, food and delivery
   b('rolexa', 'ROLEXA', 'Swiss watches', '#006039', '#d4af37', 'star'),
-  b('freshmart', 'FreshMart', 'Supermarkets', '#2e7d32', '#ffffff', 'leaf'),
-  b('sunblock', 'SunGuard', 'SPF 50 sunscreen', '#ffb703', '#023047', 'ring'),
+  b('uniqo', 'UNIQO', 'Everyday clothing', '#ff0000', '#ffffff', 'dot', 'JPN'),
+  b('grabbit', 'Grabbit', 'Rides & food', '#00b14f', '#ffffff', 'chevron', 'SGP'),
+  b('shoppi', 'Shoppi', 'Shop online', '#ee4d2d', '#ffffff', 'dot'),
+  b('dhx', 'DHX EXPRESS', 'Worldwide delivery', '#ffcc00', '#d40511', 'chevron', 'GER'),
+  b('indomee', 'Indomee', 'Instant noodles', '#e31e24', '#ffd400', 'leaf', 'INA'),
+  b('antar', 'ANTAR', 'Keep moving', '#d71920', '#ffffff', 'bolt', 'CHN'),
+  b('leggo', 'Leggo', 'Build it', '#f6ec36', '#d01012', 'dot', 'DEN'),
 ];
 
 export const ALL_BRANDS = [...KIT_BRANDS, ...SHUTTLE_BRANDS, ...SPONSOR_BRANDS];
@@ -89,10 +91,10 @@ const BY_ID = new Map(ALL_BRANDS.map((x) => [x.id, x]));
 /** Title sponsors: their name goes in front of the tournament's (a brand id, or one of the two image sponsors). */
 const TITLE_SPONSOR: Record<string, string> = {
   china_open: 'Ventra', singapore_open: 'Solar Sparks',
-  malaysia_open: 'petronex', india_open: 'toyoka', indonesia_masters: 'daikon', indonesia_open: 'grabbit',
-  japan_open: 'panasomic', korea_open: 'samsong', hong_kong_open: 'cathaypearl', denmark_open: 'victer',
-  all_england_open: 'yonax', french_open: 'avian', thailand_open: 'redbison', malaysia_masters: 'maybanc',
-  china_masters: 'leeming', australian_open: 'summit', german_open: 'hondo', bwf_world_tour_finals: 'hsbk',
+  malaysia_open: 'petronax', india_open: 'toyoka', indonesia_masters: 'daikon', indonesia_open: 'grabbit',
+  japan_open: 'panasomic', korea_open: 'samsong', hong_kong_open: 'cathaypacifec', denmark_open: 'victer',
+  all_england_open: 'yonax', french_open: 'avian', thailand_open: 'singha', malaysia_masters: 'maybanc',
+  china_masters: 'liming', australian_open: 'qantaz', german_open: 'bnw', bwf_world_tour_finals: 'hsbk',
 };
 const titleBrand = (eventId: string) => BY_ID.get(TITLE_SPONSOR[eventId] ?? '');
 /** A tournament's full name, with its title sponsor in front when it has one. */
@@ -100,7 +102,7 @@ export function sponsoredName(eventId: string, name: string): string {
   const t = TITLE_SPONSOR[eventId];
   if (!t) return name;
   const brand = BY_ID.get(t);
-  const short = brand ? brand.name.replace(/ (Bank|Air|Airways|Motors|Cola|Water|Electronics|Mobile)$/i, '') : t;
+  const short = brand ? brand.name.replace(/ (Bank|Banc|Air|Airways|Airlines|Motors|Cola|Water|Electronics|Mobile)$/i, '') : t;
   // Title-case the all-caps brands so the name reads like a name.
   const nice = short === short.toUpperCase() && short.length > 4 ? short[0] + short.slice(1).toLowerCase() : short;
   return name.startsWith(nice) ? name : `${nice} ${name}`;
@@ -121,44 +123,83 @@ export interface EventLook {
   blazer: string;
   /** The scoreboard's accent colour. */
   accent: string;
+  /** 4.1: the event's sponsors (their boards repeat around the court). */
+  sponsors: Brand[];
+  /** 4.1: the crowd: shirt colours (the host's flag colours mixed in) and how full the stands are. */
+  crowd: string[];
+  density: number;
+}
+
+/** 4.1: flag colours of the host countries, for the crowd's shirts. */
+const FLAG_COLOURS: Record<string, string[]> = {
+  CHN: ['#de2910', '#ffde00'], SGP: ['#ef3340', '#ffffff'], MAS: ['#cc0001', '#010066', '#ffcc00'], IND: ['#ff9933', '#138808', '#ffffff'],
+  INA: ['#ce1126', '#ffffff'], JPN: ['#bc002d', '#ffffff'], KOR: ['#cd2e3a', '#0047a0', '#ffffff'], HKG: ['#de2910', '#ffffff'],
+  DEN: ['#c8102e', '#ffffff'], ENG: ['#ffffff', '#cf081f'], GBR: ['#012169', '#c8102e', '#ffffff'], FRA: ['#0055a4', '#ffffff', '#ef4135'],
+  THA: ['#a51931', '#2d2a4a', '#f4f5f8'], AUS: ['#012169', '#e4002b', '#ffffff'], GER: ['#000000', '#dd0000', '#ffce00'], TPE: ['#fe0000', '#000095'],
+  USA: ['#b22234', '#3c3b6e', '#ffffff'], CAN: ['#d80621', '#ffffff'], VIE: ['#da251d', '#ffff00'], PHI: ['#0038a8', '#ce1126', '#fcd116'],
+  ESP: ['#aa151b', '#f1bf00'], NED: ['#ae1c28', '#21468b', '#ff7f00'], SUI: ['#d52b1e', '#ffffff'], NZL: ['#012169', '#cc142b'],
+  BRA: ['#009c3b', '#ffdf00'], MEX: ['#006847', '#ce1126'], UAE: ['#00732f', '#ff0000', '#000000'], MAC: ['#00785e', '#ffffff'],
+};
+const NEUTRAL_SHIRTS = ['#d8dbe0', '#56636f', '#2b2f36', '#3d6aa8', '#c9a64a', '#9a3d5c', '#4b8a64', '#7b58a0'];
+const DENSITY: Record<string, number> = { CLUB: 0.3, S100: 0.45, S300: 0.55, S500: 0.68, S750: 0.78, S1000: 0.88, WORLDS: 0.9, WTF: 0.92, OLYMPICS: 0.97 };
+function crowdOf(host: string | undefined, tier: string): { crowd: string[]; density: number } {
+  const flag = (host && FLAG_COLOURS[host]) || [];
+  // About half the crowd in the home colours, the rest in anything.
+  const crowd = flag.length ? [...flag, ...flag, ...flag, ...NEUTRAL_SHIRTS.slice(0, 6)] : NEUTRAL_SHIRTS;
+  return { crowd, density: DENSITY[tier] ?? 0.72 };
 }
 
 const h32 = (s: string) => { let x = 2166136261; for (const c of s) x = Math.imul(x ^ c.charCodeAt(0), 16777619); return x >>> 0; };
 const pick = <T,>(a: T[], seed: number) => a[seed % a.length];
 const shuffled = <T extends Brand>(a: T[], id: string) => [...a].sort((x, y) => h32(id + x.id) - h32(id + y.id));
 
-/** 16 boards: the title sponsor, the powered-by brand and the shuttle maker, the rest companies of every kind. */
-function boardsFor(id: string, poweredBy: Brand | null, shuttle: Brand): Brand[] {
+const weighted = (list: [string, number][], seed: number) => {
+  const total = list.reduce((a, [, w]) => a + w, 0);
+  let r = seed % total;
+  for (const [id, w] of list) { if (r < w) return id; r -= w; }
+  return list[0][0];
+};
+
+/**
+ * 4.1: like a real event, a handful of sponsors (about 5): the title sponsor, the badminton brand, the shuttle
+ * maker, local brands from the host country, then others. Their boards repeat around the court.
+ */
+function sponsorsFor(id: string, poweredBy: Brand | null, shuttle: Brand, host?: string): Brand[] {
   const title = titleBrand(id);
-  const keep = [title, poweredBy, shuttle].filter((x): x is Brand => !!x);
-  const rest = shuffled(SPONSOR_BRANDS, id).filter((x) => !keep.includes(x)).slice(0, 16 - keep.length);
-  // Spread the event's own brands out: title sponsor on the far boards, the others down the sides.
-  const out = [...rest];
-  if (title) out.splice(0, 0, title);
-  if (poweredBy) out.splice(6, 0, poweredBy);
-  out.splice(11, 0, shuttle);
-  return out.slice(0, 16);
+  const local = host ? shuffled(SPONSOR_BRANDS.filter((x) => x.country === host), id).slice(0, 2) : [];
+  const keep = [title, poweredBy, ...local, shuttle].filter((x, i, a): x is Brand => !!x && a.indexOf(x) === i);
+  const rest = shuffled(SPONSOR_BRANDS, id).filter((x) => !keep.includes(x) && !x.country).slice(0, Math.max(0, 5 - keep.length));
+  return [...keep, ...rest];
+}
+/** 16 side boards from the event's sponsors, repeated (never the same brand on two boards side by side). */
+function boardsFor(sponsors: Brand[]): Brand[] {
+  const out: Brand[] = [];
+  for (let i = 0; out.length < 16; i++) out.push(sponsors[i % sponsors.length]);
+  return out;
 }
 
 /** Each tournament's look, the same every year. tier: S100 … OLYMPICS or CLUB. */
-export function eventLook(id: string, tier: string): EventLook {
+export function eventLook(id: string, tier: string, host?: string): EventLook {
   const k = h32(id);
   const title = titleBrand(id);
-  const kits = shuffled(KIT_BRANDS, id).filter((x) => x !== title);
   const shuttle = pick(SHUTTLE_BRANDS, k >>> 3);
-  const poweredBy = tier === 'OLYMPICS' || tier === 'WORLDS' ? null : kits[0];
-  const boards = boardsFor(id, poweredBy, shuttle);
-  if (tier === 'OLYMPICS') return { court: 'purple', scoreboard: 'light', poweredBy, boards, shuttle, blazer: '#3b2a6b', accent: '#b69cff' };
-  if (tier === 'WORLDS') return { court: 'worlds', scoreboard: 'classic', poweredBy, boards, shuttle, blazer: '#1b2a4a', accent: '#ffd166' };
-  if (tier === 'WTF') return { court: 'finals', scoreboard: 'broadcast', poweredBy, boards, shuttle, blazer: '#1a1a1a', accent: '#e8c25a' };
-  if (tier === 'CLUB') return { court: 'club', scoreboard: 'minimal', poweredBy, boards, shuttle, blazer: '#3a3f47', accent: '#cfe38a' };
+  // A badminton title sponsor powers its own event (Victer Denmark Open); otherwise mostly Yonax.
+  const poweredBy = tier === 'OLYMPICS' || tier === 'WORLDS' ? null
+    : title && KIT_BRANDS.includes(title) ? title : BY_ID.get(weighted(POWERED_WEIGHTS, k >>> 11)) ?? null;
+  const sponsors = sponsorsFor(id, poweredBy, shuttle, host);
+  const boards = boardsFor(sponsors);
+  const cr = crowdOf(host, tier);
+  if (tier === 'OLYMPICS') return { court: 'purple', scoreboard: 'light', poweredBy, boards, shuttle, blazer: '#3b2a6b', accent: '#b69cff', sponsors, ...cr };
+  if (tier === 'WORLDS') return { court: 'worlds', scoreboard: 'classic', poweredBy, boards, shuttle, blazer: '#1b2a4a', accent: '#ffd166', sponsors, ...cr };
+  if (tier === 'WTF') return { court: 'finals', scoreboard: 'broadcast', poweredBy, boards, shuttle, blazer: '#1a1a1a', accent: '#e8c25a', sponsors, ...cr };
+  if (tier === 'CLUB') return { court: 'club', scoreboard: 'minimal', poweredBy, boards, shuttle, blazer: '#3a3f47', accent: '#cfe38a', sponsors, ...cr };
   const courts = ['green', 'green', 'blue', 'teal', 'crimson', 'blue'];
   const styles: ScoreboardStyle[] = tier === 'S1000' || tier === 'S750' ? ['broadcast', 'broadcast', 'classic'] : tier === 'S500' ? ['broadcast', 'classic', 'minimal'] : ['minimal', 'classic', 'broadcast'];
   const blazers = ['#26344d', '#2b2f36', '#4a1f2a', '#1f3b34'];
   const accents = ['#ffd166', '#7fd1ff', '#ff8fa3', '#9be58a'];
   return {
     court: pick(courts, k), scoreboard: pick(styles, k >>> 5), poweredBy, boards, shuttle,
-    blazer: pick(blazers, k >>> 7), accent: pick(accents, k >>> 9),
+    blazer: pick(blazers, k >>> 7), accent: pick(accents, k >>> 9), sponsors, ...cr,
   };
 }
 
@@ -166,7 +207,7 @@ export function eventLook(id: string, tier: string): EventLook {
 export const DEFAULT_LOOK: EventLook = { ...eventLook('exhibition', 'S500'), court: 'green', scoreboard: 'broadcast', poweredBy: null, blazer: '#26344d', accent: '#ffd166' };
 
 /** A player's racket and kit maker, the same in every match. */
-export const kitBrandOf = (playerId: string) => KIT_BRANDS[h32(`kit:${playerId}`) % KIT_BRANDS.length];
+export const kitBrandOf = (playerId: string) => BY_ID.get(weighted(KIT_BRANDS.map((x, i) => [x.id, KIT_WEIGHTS[i]] as [string, number]), h32(`kit:${playerId}`)))!;
 
 // ── Board artwork: each brand drawn once as a wide banner (mark on the left, name and strapline). ──
 export interface BrandBanner { banner: HTMLCanvasElement; bg: string }

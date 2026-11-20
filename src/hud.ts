@@ -400,31 +400,16 @@ export class Hud {
     const title = (parts[0] ?? game.opponentLabel).toUpperCase();
     const games = m.gamesToWin > 1 ? `Game ${m.gameNumber} of 3` : 'One game';
     const sub = [parts[1], games, `to ${m.format.pointsToWin}`].filter(Boolean).join('  ·  ');
-    const headH = 44, h = headH + rowH * 2 + 8;
-    panel(ctx, x, y, bw, h, 12, light ? 'rgba(246,247,251,0.95)' : 'rgba(9,13,21,0.9)');
-    // Header band, with a strip of the event's accent colour along the top.
-    ctx.fillStyle = light ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
-    ctx.beginPath();
-    ctx.roundRect(x, y, bw, headH - 4, [12, 12, 0, 0]);
-    ctx.fill();
+    // 4.1: like a real TV score bug, it shows less: just the event (or opponent) above the two rows.
+    void sub;
+    const headH = 24, h = headH + rowH * 2 + 8;
+    panel(ctx, x, y, bw, h, 4, light ? 'rgba(246,247,251,0.95)' : 'rgba(9,13,21,0.9)');
     ctx.fillStyle = accent;
-    ctx.beginPath();
-    ctx.roundRect(x + 12, y, bw - 24, 3, [0, 0, 3, 3]);
-    ctx.fill();
+    ctx.fillRect(x, y, 4, h);
     ctx.textAlign = 'left';
-    ctx.fillStyle = ink;
-    ctx.font = font(12, 800);
-    const pres = this.sbText(game).presenter;
-    ctx.fillText(this.fit(title, bw - pad * 2), x + pad, y + 18);
-    if (pres) {
-      const tw = Math.min(ctx.measureText(title).width, bw - pad * 2);
-      ctx.font = font(10, 600);
-      ctx.fillStyle = dim;
-      if (bw - pad * 2 - tw > 90) ctx.fillText(this.fit(pres, bw - pad * 2 - tw - 10), x + pad + tw + 10, y + 18);
-    }
     ctx.fillStyle = dim;
-    ctx.font = font(11, 600);
-    ctx.fillText(this.fit(sub, bw - pad * 2), x + pad, y + 33);
+    ctx.font = font(11, 800);
+    ctx.fillText(this.fit(title, bw - pad * 2), x + pad, y + 16);
 
     // Columns from the right: score box, finished games, then the serve dot and challenges.
     const scoreW = 46, scoreX = x + bw - 12 - scoreW, gameW = 28;

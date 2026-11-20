@@ -460,6 +460,8 @@ export interface AILevel {
   smashPower?: number;
   /** 3.18: drag on its smashes as a share of normal: lower keeps more of the pace all the way to you. */
   smashDrag?: number;
+  /** 4.1: the chance a shot has any random error at all (Impossible: 1 in 1,000; the rest land exactly where aimed). */
+  errorRate?: number;
 }
 
 export const AI: Record<Level, AILevel> = {
@@ -542,10 +544,10 @@ export const AI: Record<Level, AILevel> = {
   // 3.17: Impossible. Meant to be (nearly) unbeatable: anything high from about half court in gets jump-smashed
   // at around 700 km/h, and it gets almost everything back.
   impossible: {
-    reaction: 0.001, speed: 2.6, strength: 1.2, aimNoise: 0, timingError: 0.0002, margin: 0.3, caution: 2.6,
-    decisiveness: 10, anticipation: 0.75, adapt: 1, smash: 3.5, drop: 1.5, net: 1.6, kill: 5, jumpSmash: 1,
-    judgesOut: true, outMargin: 0.002, serveShort: 0.95, serveDelay: 0.25, challengeSkill: 1, reach: 1.0, aggression: 1,
-    mustSmash: 4.8, smashPower: 1.75, smashDrag: 0.55,
+    reaction: 0, speed: 3.0, strength: 1.2, aimNoise: 0, timingError: 0, margin: 0.3, caution: 2.6,
+    decisiveness: 10, anticipation: 0.8, adapt: 1, smash: 3.5, drop: 1.5, net: 1.6, kill: 5, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.002, serveShort: 0.95, serveDelay: 0.25, challengeSkill: 1, reach: 1.3, aggression: 1,
+    mustSmash: 4.8, smashPower: 1.75, smashDrag: 0.55, errorRate: 0.001,
   },
 };
 

@@ -498,7 +498,10 @@ export class AIController implements Controller {
     // A deceptive player disguises drops, net shots and flicks from the net.
     const disguisable = intent === 'soft' || (intent === 'high' && Math.abs(p.contact.y) < SHOTS.nearNet);
     const disguise = disguisable && chance(this.S.deceive ?? 0);
-    const smashBoost = intent === 'fast' && p.contact.z >= SHOTS.overheadHeight ? L.smashPower ?? 1 : 1;
-    return { kind: 'intent', intent, aimX: 0, aimDepth: 0, target, strength: L.strength * smashBoost, disguise };
+    // 4.1: the extra-hard smash only from about half court in (from the back it flew long).
+    const smashBoost = intent === 'fast' && p.contact.z >= SHOTS.overheadHeight && Math.abs(p.contact.y) < (L.mustSmash ?? 99) ? L.smashPower ?? 1 : 1;
+    // 4.1: Impossible: no error on 999 shots in 1,000.
+    const exact = L.errorRate !== undefined && !chance(L.errorRate);
+    return { kind: 'intent', intent, aimX: 0, aimDepth: 0, target, strength: L.strength * smashBoost, disguise, ...(exact ? { exact: true } : {}) };
   }
 }

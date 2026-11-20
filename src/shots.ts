@@ -5,12 +5,14 @@ import { NEUTRAL, type Effective } from '../shared/characters';
 import { netHeightAt, type Rect } from './court';
 import { DEG, clamp, gauss, lerp, table, type Side, type V2, type V3 } from './math';
 import { angleForSpeed, clearNetAngle, fly2d, softShot, speedForAngle } from './solver';
+import { predictPath } from './shuttle';
+import { COURT } from './config';
 
 export type Intent = 'high' | 'fast' | 'soft';
 
 export type ShotRequest =
   /** Keyboard / AI. aimX: -1 left, 0 centre, 1 right (screen). aimDepth: 1 deeper, -1 shorter. target overrides both. */
-  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number; disguise?: boolean; /** 3.10.1: a fast, flat lift or clear (a tap of the high key). */ flat?: boolean }
+  | { kind: 'intent'; intent: Intent; aimX: number; aimDepth: number; target?: V2; strength?: number; power?: number; disguise?: boolean; /** 4.1: no random error at all (the Impossible CPU, most shots). */ exact?: boolean; /** 3.10.1: a fast, flat lift or clear (a tap of the high key). */ flat?: boolean }
   /** Mouse. low (left) = drive → smash, high (right) = drop on a tap, lob when held. power 0..1 from charge. target = cursor. */
   | { kind: 'mouse'; arc: 'low' | 'high'; power: number; target: V2 };
 
@@ -201,6 +203,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (perfect && zone === 'overhead' && kindOf === 'high' ? B.clearAim : 1)
     * (netPlay ? eff.netAim : 1) * eff.aim
     * (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
+  // 4.1: an exact shot (the Impossible CPU) has no random error: it lands where it was aimed.
+  const exact = req.kind === 'intent' && !!req.exact;
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;
   const softClearance = netArea ? SHOTS.netShotClearance * (netPlay ? eff.netClearance : 1) : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;
   const M = SHOTS.softMaxAngle;
@@ -262,7 +266,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   target = clampTarget(target, opp);
   const A = SHOTS.aim;
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
-  const sigma = (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
+  const sigma = exact ? 0 : (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
   target = clampTarget(softenOut(target, { x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor * (defence ? eff.defenceDepth : 1) }), opp, 0.1);
   // 3.10: net shots only stay tight from close in, taken early: from further back, taken low, or deep into a
   // net battle they float higher over the tape (so the other player can attack them).
@@ -272,7 +276,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     + NB.low * Math.min(1, Math.max(0, netHeightAt(c.point.x) - z0) / NB.lowRange)
     + NB.perRun * run) : 0;
   const netNoise = netPlay ? 1 + NB.noisePerRun * run : 1;
-  const clearance = Math.max(-0.1, softClearance + netExtra + (tumbleSoft ? T.softClearance : 0) + gauss() * SHOTS.clearanceNoise * noiseMult * aimScale * netNoise);
+  const clearance = Math.max(exact ? 0.05 : -0.1, softClearance + netExtra + (tumbleSoft ? T.softClearance : 0) + (exact ? 0 : gauss() * SHOTS.clearanceNoise * noiseMult * aimScale * netNoise));
   const g = geometry(c.point, target);
 
   let angle: number, speed: number;
@@ -302,7 +306,18 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
       break;
   }
 
-  speed *= 1 + gauss() * SHOTS.speedNoise * noiseMult;
+  if (!exact) speed *= 1 + gauss() * SHOTS.speedNoise * noiseMult;
+  // 4.1: an exact shot never lands out: if this one would, take pace off (or lift it) until it lands in.
+  if (exact) {
+    const inside = (v: number, a: number) => {
+      const p = predictPath(c.point, toVelocity(g.ux, g.uy, v, a));
+      return !p.netFault && Math.abs(p.landing.x) < COURT.singlesHalfWidth - 0.05 && Math.abs(p.landing.y) < COURT.halfLength - 0.05 && p.landing.y * opp > 0;
+    };
+    for (let k = 0; k < 14 && !inside(speed, angle); k++) {
+      const p = predictPath(c.point, toVelocity(g.ux, g.uy, speed, angle));
+      if (p.netFault) angle += 2 * DEG; else speed *= 0.93;
+    }
+  }
   const rise = fly2d(z0, speed, angle, Infinity).apex - z0;
   const label = classify(shotZone, netArea, angle / DEG, speed, c.airborne, Math.abs(target.y), rise);
   return { velocity: toVelocity(g.ux, g.uy, speed, angle), label, speedKmh: speed * 3.6 };
@@ -349,7 +364,7 @@ export function resolveServe(req: ShotRequest, from: V3, server: Side, box: Rect
     angleDeg = lerp(SERVE.flickAngle, SERVE.highAngle, req.power);
   }
 
-  const sigma = type === 'short' ? SERVE.shortNoise : SERVE.longNoise;
+  const sigma = req.kind === 'intent' && req.exact ? 0 : type === 'short' ? SERVE.shortNoise : SERVE.longNoise;
   target = { x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * 1.3 };
   const g = geometry(from, target);
   const sol = type === 'short'

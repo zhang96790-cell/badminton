@@ -61,13 +61,13 @@ function shade(hex: string, k: number): string {
 
 interface Spectator { p: V3; shirt: string; skin: string; phase: number }
 
-function buildCrowd(): Spectator[] {
-  const R = rng(11);
+function buildCrowd(palette: string[] = C.crowd, density = ARENA.crowdDensity, seed = 11): Spectator[] {
+  const R = rng(seed);
   const skins = ['#e6c3a2', '#c99a74', '#8d5f3e', '#f0d2b6', '#b07d56'];
   const out: Spectator[] = [];
   const add = (x: number, y: number, z: number) => {
-    if (R() > ARENA.crowdDensity) return;
-    out.push({ p: v3(x + (R() - 0.5) * 0.12, y, z), shirt: C.crowd[Math.floor(R() * C.crowd.length)], skin: skins[Math.floor(R() * skins.length)], phase: R() * Math.PI * 2 });
+    if (R() > density) { R(); R(); R(); return; }
+    out.push({ p: v3(x + (R() - 0.5) * 0.12, y, z), shirt: palette[Math.floor(R() * palette.length)], skin: skins[Math.floor(R() * skins.length)], phase: R() * Math.PI * 2 });
   };
   for (let k = 0; k < 6; k++) for (let x = -12.6; x <= 12.6; x += 0.62) add(x, 11.75 + k * 0.85, 1.05 + k * 0.5);
   for (const s of [-1, 1]) for (let k = 0; k < 6; k++) for (let y = -8.6; y <= 13.4; y += 0.62) add(s * (8.05 + k * 0.85), y, 1.05 + k * 0.5);
@@ -80,9 +80,17 @@ export class Renderer {
   /** The tournament's court colours (career), or null for the usual green. */
   courtTheme: import('./config').CourtTheme | null = null;
   /** The tournament's sponsors, officials' blazers and so on (career); the exhibition look otherwise. */
-  look: EventLook = DEFAULT_LOOK;
+  private lookNow: EventLook = DEFAULT_LOOK;
+  /** 4.1: setting the look also re-dresses the crowd (the host's colours, fuller at bigger events). */
+  get look(): EventLook { return this.lookNow; }
+  set look(l: EventLook) {
+    if (l === this.lookNow) return;
+    this.lookNow = l;
+    this.crowd = buildCrowd(l.crowd, l.density, 11);
+    this.liteCrowd = this.crowd.filter((_, i) => i % 3 === 0);
+  }
   private cam!: Camera;
-  private crowd = buildCrowd();
+  private crowd = buildCrowd(DEFAULT_LOOK.crowd, DEFAULT_LOOK.density);
   /** Performance mode: a third of the crowd (standing still), no lighting or glow, no shuttle trail. */
   lite = false;
   private liteCrowd = this.crowd.filter((_, i) => i % 3 === 0);
@@ -98,7 +106,7 @@ export class Renderer {
     bg.addColorStop(1, C.bgBottom);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
-    this.arena(time, game?.cheer ?? 0);
+    this.arena(time, game?.cheer ?? 0, game);
     this.court(!!game?.doublesCourt);
     if (game?.targetZone) this.targetZone(game, time);
     if (!this.lite) this.lights(w, h);
@@ -171,7 +179,7 @@ export class Renderer {
 
   // ── Arena ──────────────────────────────────────────────────────────────────
 
-  private arena(time: number, cheer: number) {
+  private arena(time: number, cheer: number, game: Game | null = null) {
     this.poly([v3(-16, -12), v3(16, -12), v3(16, 19), v3(-16, 19)], C.floor);
     // Stands: far end and both sides, back rows first.
     for (let k = 5; k >= 0; k--) {
@@ -202,43 +210,36 @@ export class Renderer {
       ctx.arc(head.x, head.y, Math.max(0.8, 0.1 * head.s), 0, Math.PI * 2);
       ctx.fill();
     }
-    // Advertising boards behind the far baseline and along the sides.
-    const texts = ARENA.boardTexts;
-    // Career and daily matches: the tournament's name runs across the outer boards (two either side).
-    const title = this.eventTitle;
-    for (let i = 0; i < 6; i++) {
-      const x0 = -7.8 + i * 2.6, color = title && i !== 2 && i !== 3 ? (this.courtTheme?.boards ?? '#0b1f4f') : C.boards[i % C.boards.length];
-      // Sponsors' boards: Solar Sparks and Ventra.
-      const ad = i === 2 ? ads.solar : i === 3 ? ads.ventra : undefined;
-      if (ad && this.cam.forward.y >= 0.5) { this.adBoard(ad, v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
-      // No event name: the event's (or exhibition's) sponsors fill the outer boards.
-      const brand = !title && !ad && this.cam.forward.y >= 0.5 ? this.look.boards[[0, 1, -1, -1, 2, 3][i]] : undefined;
-      if (brand) { this.adBoard(brandBanner(brand), v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
-      this.poly([v3(x0, 9.4, 0), v3(x0 + 2.6, 9.4, 0), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0.85)], color);
-      if (title) continue;
-      this.poly([v3(x0, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.72), v3(x0 + 2.6, 9.4, 0.78), v3(x0, 9.4, 0.78)], 'rgba(255,255,255,0.25)');
-      if (this.cam.forward.y < 0.5) continue; // seen edge-on: skip the text
-      const q = this.cam.project(v3(x0 + 1.3, 9.4, 0.36));
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
-      ctx.font = `800 ${Math.max(6, 0.26 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(texts[i % texts.length], q.x, q.y + 0.12 * q.s);
+    // 4.1: behind the far baseline: Solar Sparks and Ventra on the corner boards, two of the event's sponsors,
+    // and the tournament's own name across the middle two (Skyline Smash for exhibitions).
+    const facing = this.cam.forward.y >= 0.5;
+    const title = this.eventTitle ?? 'Skyline Smash';
+    const sp = this.look.sponsors;
+    for (const i of [0, 1, 4, 5]) {
+      const x0 = -7.8 + i * 2.6;
+      const ad = i === 0 ? ads.solar : i === 5 ? ads.ventra : brandBanner(sp[i === 1 ? 0 : 1 % sp.length] ?? sp[0]);
+      if (facing && ad) { this.adBoard(ad, v3(x0, 9.4, 0.85), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0)); continue; }
+      this.poly([v3(x0, 9.4, 0), v3(x0 + 2.6, 9.4, 0), v3(x0 + 2.6, 9.4, 0.85), v3(x0, 9.4, 0.85)], C.boards[i % C.boards.length]);
     }
-    if (title && this.cam.forward.y >= 0.5) {
-      for (const cx of [-5.2, 5.2]) {
-        const q = this.cam.project(v3(cx, 9.4, 0.36));
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `800 ${Math.max(6, Math.min(0.26, 4.4 / Math.max(8, title.length)) * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+    {
+      const x0 = -7.8 + 2 * 2.6, x1 = x0 + 5.2;
+      this.poly([v3(x0, 9.4, 0), v3(x1, 9.4, 0), v3(x1, 9.4, 0.85), v3(x0, 9.4, 0.85)], this.courtTheme?.boards ?? '#0b1f4f');
+      this.poly([v3(x0, 9.4, 0), v3(x1, 9.4, 0), v3(x1, 9.4, 0.07), v3(x0, 9.4, 0.07)], this.look.accent);
+      if (facing) {
+        const q = this.cam.project(v3(0, 9.4, 0.42));
         ctx.textAlign = 'center';
-        ctx.fillText(title.toUpperCase(), q.x, q.y + 0.06 * q.s);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `800 ${Math.max(6, Math.min(0.34, 5.6 / Math.max(10, title.length)) * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillText(title.toUpperCase(), q.x, q.y + 0.04 * q.s);
         const pr = this.look.poweredBy;
         if (pr) {
-          ctx.fillStyle = 'rgba(255,255,255,0.7)';
-          ctx.font = `700 ${Math.max(5, 0.1 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillStyle = this.look.accent;
+          ctx.font = `700 ${Math.max(5, 0.11 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
           ctx.fillText(`POWERED BY ${pr.name.toUpperCase()}`, q.x, q.y + 0.24 * q.s);
         }
       }
     }
+    if (game && facing) this.backScoreboard(game, title);
     for (const s of [-1, 1]) {
       for (let i = 0; i < 6; i++) {
         const y0 = -9 + i * 3.05;
@@ -247,6 +248,40 @@ export class Renderer {
         const [ya, yb] = s < 0 ? [y0, y0 + 3.05] : [y0 + 3.05, y0];
         this.adBoard(brandBanner(b), v3(s * 6.6, ya, 0.85), v3(s * 6.6, yb, 0.85), v3(s * 6.6, ya, 0));
       }
+    }
+  }
+
+  /** 4.1: the arena's big screen above the far end: the event, both names, games and the score. */
+  private backScoreboard(game: Game, title: string) {
+    const ctx = this.ctx, m = game.match;
+    const x0 = -2.6, x1 = 2.6, y = 10.6, z0 = 1.2, z1 = 2.45;
+    this.poly([v3(x0 - 0.12, y, z0 - 0.12), v3(x1 + 0.12, y, z0 - 0.12), v3(x1 + 0.12, y, z1 + 0.12), v3(x0 - 0.12, y, z1 + 0.12)], '#111418');
+    this.poly([v3(x0, y, z0), v3(x1, y, z0), v3(x1, y, z1), v3(x0, y, z1)], '#05070b');
+    this.poly([v3(x0, y, z1 - 0.32), v3(x1, y, z1 - 0.32), v3(x1, y, z1), v3(x0, y, z1)], this.look.accent);
+    const at = (x: number, z: number) => this.cam.project(v3(x, y, z));
+    const head = at(0, z1 - 0.2);
+    if (head.s < 6) return;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0b0d12';
+    ctx.font = `800 ${Math.max(5, Math.min(0.2, 4 / Math.max(12, title.length)) * head.s)}px ui-sans-serif, system-ui, sans-serif`;
+    ctx.fillText(title.toUpperCase(), head.x, head.y + 0.06 * head.s);
+    const name = (i: 0 | 1) => (game.doubles ? (i === 0 ? 'HOME PAIR' : 'AWAY PAIR') : game.players[i].name.toUpperCase());
+    for (const i of [0, 1] as const) {
+      const z = z1 - 0.62 - i * 0.42;
+      const n = at(x0 + 0.2, z), gm = at(x1 - 1.05, z), pt = at(x1 - 0.35, z);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = m.server === i ? '#ffffff' : '#c9cfdb';
+      ctx.font = `700 ${Math.max(5, 0.22 * n.s)}px ui-sans-serif, system-ui, sans-serif`;
+      let label = name(i);
+      while (label.length > 4 && ctx.measureText(label).width > (gm.x - n.x) - 0.3 * n.s) label = label.slice(0, -1);
+      ctx.fillText(label, n.x, n.y + 0.08 * n.s);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#8e97a8';
+      ctx.font = `800 ${Math.max(5, 0.24 * gm.s)}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillText(String(m.games[i]), gm.x, gm.y + 0.08 * gm.s);
+      ctx.fillStyle = '#ffd23f';
+      ctx.font = `800 ${Math.max(6, 0.3 * pt.s)}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillText(String(m.scores[i]), pt.x, pt.y + 0.1 * pt.s);
     }
   }
 

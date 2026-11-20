@@ -108,6 +108,8 @@ export class Game {
   state: GameState = 'serve';
   paused = false;
   rallyHits = 0;
+  /** 4.3: smashes each player has hit this rally. */
+  rallySmashes = [0, 0, 0, 0];
   longestRally = 0;
   callout: Callout | null = null;
   banner: Banner | null = null;
@@ -584,6 +586,7 @@ export class Game {
     // Online, the server waits a moment after each point so the receiver is ready.
     this.timer = this.online ? RULES.onlineServeWait : 0.35;
     this.rallyHits = 0;
+    this.rallySmashes = [0, 0, 0, 0];
     this.landing = null;
     this.serveBox = null;
     this.predicted = null;
@@ -820,10 +823,16 @@ export class Game {
         }
         const aimScale = this.isHuman(i) ? SHOTS.aimModes[this.settings.aim] : ctrl instanceof AIController ? ctrl.aimScaleFor(req, c.point.z) : 1;
         c.netRun = this.netRun;
+        c.vsSmash = /smash/i.test(this.lastShotLabel) && sh.lastHitter !== p.side;
         // 3.18: the Impossible CPU's smashes keep their pace (less drag for this flight only).
         const lowDrag = cpu && req.kind === 'intent' && req.intent === 'fast' && c.point.z >= SHOTS.overheadHeight && Math.abs(c.point.y) < 4.8 ? ctrl.smashDrag : 1;
         setDragScale(lowDrag);
-        let shot = resolveShot(req, c, aimScale, this.isHuman(i), p.eff);
+        // 4.3: each smash after the first in a rally is a little slower (you tire of smashing every shot).
+        const overheadHard = req.kind === 'intent' ? req.intent === 'fast' : mouseShotKind(req.arc, req.power) === 'smash';
+        const sm = overheadHard && c.point.z >= SHOTS.overheadHeight && Math.abs(c.point.y) >= SHOTS.nearNet ? this.rallySmashes[i] ?? 0 : 0;
+        const SF = SHOTS.smashFatigue, effHere = sm ? { ...p.eff, smash: p.eff.smash * Math.max(SF.minPower, 1 - SF.perSmash * sm) } : p.eff;
+        let shot = resolveShot(req, c, aimScale, this.isHuman(i), effHere);
+        if (/smash/i.test(shot.label)) this.rallySmashes[i] = (this.rallySmashes[i] ?? 0) + 1;
         p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)
         // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.
         let sigCtx: ShotCtx | null = null, sigFired: SigDef[] = [], deceived = false;
@@ -857,6 +866,9 @@ export class Game {
         }
         p.onHit(c.point);
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
+        if (/smash/i.test(shot.label)) p.recoverT = /Jump/.test(shot.label) ? SHOTS.smashRecovery.jumpTime : SHOTS.smashRecovery.time;
+        // 4.3: a perfect drop is disguised (no landing marker at first) for people too.
+        if (this.isHuman(i) && c.timing >= 1 && /drop/i.test(shot.label) && c.point.z >= SHOTS.overheadHeight) this.disguiseT = 0.35;
         p.timingFlash = { kind: Math.abs(c.timingError) <= SWING.perfectTolerance ? 'perfect' : c.timingError > 0 ? 'early' : 'late', t: 0 };
         if (this.session && i === 0) this.session.onHit(this, { label: shot.label, timing: p.timingFlash.kind, airborne: c.airborne });
         for (const q of this.players) if (q.side !== p.side) q.splitStep();
@@ -958,6 +970,8 @@ export class Game {
       const inCourt = crossed && (sh.isServe ? isIn(land, this.serveBox!) : isIn(land, halfRect(-hitter as Side, this.doublesCourt)));
       this.landing = { p: land, call: hIdx === 0 ? (inCourt ? 'IN' : 'OUT') : null, t: 0 };
       this.rallyHits = 0;
+      this.rallySmashes = [0, 0, 0, 0];
+    this.rallySmashes = [0, 0, 0, 0];
       this.idle();
       this.session.onLand(this, { p: land, hitter: hIdx, label: this.lastShot?.label ?? '', isServe: sh.isServe, inCourt, depth: Math.abs(land.y) });
       return;
@@ -1733,6 +1747,8 @@ export class Game {
       for (const p of this.players) { p.frozen = false; p.serving = null; }
       this.recorder.reset();
       this.rallyHits = 0;
+      this.rallySmashes = [0, 0, 0, 0];
+    this.rallySmashes = [0, 0, 0, 0];
     }
     // Mid-rally, this screen's shuttle has drifted from where they really hit it: draw it gliding
     // onto the true path rather than jumping (the physics uses the true path straight away).

@@ -5,6 +5,16 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.3: A more all-round game (21 Nov 2026)
+
+- Real net kills. A hard shot from close to the net, above the tape, now goes steeply down into the middle of the court instead of flying flat to the back like a drive. Only just above the tape it’s a net tap: short and downward. (Where kills can be hit from hasn’t changed.)
+- No more smashing every shot. After a smash you’re off balance for a moment (longer after a jump smash, which no longer gives you a burst of speed), and every smash after the first in a rally is a little slower.
+- Good defence pays. A perfectly timed block, lift or drive against a smash is much more accurate, and blocks stay tight to the net.
+- Better drops: a perfectly timed drop lands shorter and hides its landing marker for a moment. A perfect cross-court drop is a slice drop.
+- The attacking clear: tap the high key on an overhead for a fast, flat clear that catches an opponent standing too far forward.
+- Spinning net shots are now very hard to play back over the net: lift them instead.
+- The CPU mixes it up much more: more clears and drops to move you around before it attacks, and fewer smashes. Blocks clear the net a bit more safely too. In testing, rallies got longer and points are won with many more kinds of shot.
+
 ## 4.2.2: Colourful events, names on shirts (21 Nov 2026)
 
 - Every event’s sponsors now come in different colours, so no tournament looks all one colour (the Canada Open was all blue and white). Yonax is green, like its logo.

@@ -178,12 +178,13 @@ export const SHOTS = {
    * A perfectly timed drop lands shorter (depth × perfectDrop).
    */
   // powerDeepMax: Power (characters) can push a clear only this deep, so it never aims at the baseline.
-  backCourt: { clearDeep: 6.2, powerDeepMax: 6.3, clearAim: 0.75, deepFrom: 5.6, deepPower: 0.88, deepNoise: 1.3, smashBonus: 1.03, perfectDrop: 0.8 },
+  backCourt: { clearDeep: 6.2, powerDeepMax: 6.3, clearAim: 0.75, deepFrom: 5.6, deepPower: 0.88, deepNoise: 1.3, smashBonus: 1.03, perfectDrop: 0.7 },
   /**
    * Tumbling: only a perfectly timed net shot that crosses within margin (m) of the tape tumbles. Netting it
    * back or hitting it hard usually fails (lower clearance, more error, less power); lifting it is the way out.
    */
-  tumble: { margin: 0.02, softClearance: -0.1, softNoise: 2.5, fastPower: 0.6, fastNoise: 2 },
+  // 4.3: a spinning (tumbling) net shot is very hard to play back over the net: lift it.
+  tumble: { margin: 0.02, softClearance: -0.26, softNoise: 4, fastPower: 0.55, fastNoise: 2.4 },
   /** A hard overhead taken while the shuttle is still rising (faster upward than this, m/s) is only a drive, at this power. */
   rising: { speed: 0.4, power: 0.8 },
   /** Lift protection: nobody can touch a lift for this long after it leaves the racket (game seconds). */
@@ -193,6 +194,19 @@ export const SHOTS = {
    * (less than minAbove, m) they're a weaker push.
    */
   netKill: { power: 0.62, minAbove: 0.25, lowPower: 0.5 },
+  /**
+   * 4.3: where kills go (the thresholds above are unchanged): steeply down into the mid court, not flat to the
+   * back. depth: metres past the net for a kill well above the tape; tap: for one only just above it (a net tap).
+   */
+  killAim: { depth: [2.2, 3.4] as [number, number], tap: [1.4, 2.2] as [number, number], noise: 0.7 },
+  /** 4.3: after a smash you're off balance for a moment (longer after a jump smash): moving at this share of speed. */
+  smashRecovery: { time: 0.26, jumpTime: 0.4, speed: 0.6 },
+  /** 4.3: every smash after the first in a rally is this much slower (down to minPower). */
+  smashFatigue: { perSmash: 0.05, minPower: 0.82 },
+  /** 4.3: a perfectly timed block, lift or drive against a smash: this much less aim error, and blocks stay tight. */
+  perfectDefence: { noise: 0.5, clearance: 0.6 },
+  /** 4.3: an attacking clear (a tap of the high key, or a short hold in mouse mode, from overhead): this much flatter. */
+  attackClearDeg: 14,
   /** Hard shots from within netDriveWithin (m) of the net and below the tape lose this much pace (pushes from further back don't). */
   netDrivePower: 0.95,
   netDriveWithin: 1.0,
@@ -227,7 +241,7 @@ export const SHOTS = {
   // 3.12.5: a jump smash keeps most of its pace from the back (jumpPower), a standing one doesn't (power); every
   // smash is `all` faster; and smashes from the back are less accurate (aim error × up to `noise` at `to`).
   deepSmash: { from: 4.5, to: 6.4, power: 0.8, jumpPower: 0.94, all: 1.04, noise: 1.3 },
-  blockClearance: 0.2,
+  blockClearance: 0.26, // 4.3: was 0.2 (too many blocks went into the net, ending rallies early)
   /** Soft shots can't float: highest launch angle (deg) by contact zone. Aim too tight and they land deeper instead. */
   softMaxAngle: { overhead: 12, mid: 30, low: 45, net: 80 },
   softSpeedCap: 34,

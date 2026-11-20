@@ -5,6 +5,20 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.3',
+    title: 'A more all-round game',
+    date: '21 Nov 2026',
+    changes: [
+      "Real net kills. A hard shot from close to the net, above the tape, now goes steeply down into the middle of the court instead of flying flat to the back like a drive. Only just above the tape it’s a net tap: short and downward. (Where kills can be hit from hasn’t changed.)",
+      "No more smashing every shot. After a smash you’re off balance for a moment (longer after a jump smash, which no longer gives you a burst of speed), and every smash after the first in a rally is a little slower.",
+      "Good defence pays. A perfectly timed block, lift or drive against a smash is much more accurate, and blocks stay tight to the net.",
+      "Better drops: a perfectly timed drop lands shorter and hides its landing marker for a moment. A perfect cross-court drop is a slice drop.",
+      "The attacking clear: tap the high key on an overhead for a fast, flat clear that catches an opponent standing too far forward.",
+      "Spinning net shots are now very hard to play back over the net: lift them instead.",
+      "The CPU mixes it up much more: more clears and drops to move you around before it attacks, and fewer smashes. Blocks clear the net a bit more safely too. In testing, rallies got longer and points are won with many more kinds of shot.",
+    ],
+  },
+  {
     version: '4.2.2',
     title: 'Colourful events, names on shirts',
     date: '21 Nov 2026',

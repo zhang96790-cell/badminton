@@ -81,6 +81,8 @@ export class Player implements PlayerView {
   swing: { t: number; req: ShotRequest } | null = null;
   frozen = false;
   speedMult = 1;
+  /** 4.3: off balance after a smash (seconds left). */
+  recoverT = 0;
   /** Extra reach on top of PLAYER.reach (human players get a little more). */
   extraReach = 0;
   /** The current swing was started by swing assist. */
@@ -202,7 +204,8 @@ export class Player implements PlayerView {
       if (this.z <= 0) {
         this.z = 0;
         this.vz = 0;
-        if (this.jumpSmashed) { this.boost = PLAYER.jumpSmashBoostTime; this.landLag = 0; this.jumpSmashed = false; }
+        // 4.3: no more speed burst after a jump smash: a smash leaves you off balance for a moment instead.
+        if (this.jumpSmashed) { this.landLag = PLAYER.landingLag; this.jumpSmashed = false; }
         else this.landLag = PLAYER.landingLag;
       }
     }
@@ -212,6 +215,7 @@ export class Player implements PlayerView {
     let max = PLAYER.maxSpeed * this.speedMult * (1 - this.fade) * (Math.abs(this.pos.y) < STAT_JOBS.netMoveWithin ? this.eff.netMove : 1);
     if (this.swing) max *= PLAYER.swingMoveFactor;
     if (this.landLag > 0) max *= 0.5;
+    if (this.recoverT > 0) { max *= SHOTS.smashRecovery.speed; this.recoverT = Math.max(0, this.recoverT - dt); }
     if (this.lunge < PLAYER.lungeTime) max *= PLAYER.lungeRecoverySpeed;
     if (this.boost > 0) max *= PLAYER.jumpSmashBoostSpeed;
     const boosted = this.split > PLAYER.splitStepTime && this.split < PLAYER.splitStepTime + PLAYER.splitBoostTime;

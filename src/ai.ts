@@ -53,6 +53,8 @@ export function loadMemory(): Memory | null {
 const ADAPT: Style[] = ['allround', 'net', 'defender'];
 
 /** 3.7.5: how much more often every CPU blocks a smash to the net (and lifts it less). */
+/** 4.3: how much the CPU mixes up its overheads (tuned with sims for longer, more varied rallies). */
+const CPU_VARIETY = { smash: 0.55, drop: 1.3, clear: 1.35 };
 const CPU_BLOCK = 1.8;
 
 export class AIController implements Controller {
@@ -417,8 +419,10 @@ export class AIController implements Controller {
         // 3.9.2: attack more: smash from the back court too, clear less (real singles players smash about
         // 1 overhead in 3; before this it was about 1 in 7).
         fast = L.smash * S.smash * (shortLift ? 2.0 : 1.0);
-        soft = L.drop * S.drop * (oppDeep ? 1.25 : 0.75);
-        high = S.clear * (oppForward ? 1.4 : 0.5);
+        // 4.3: more clears and drops to move you about before the kill (it was mostly smashes).
+        soft = L.drop * S.drop * (oppDeep ? 1.5 : 1.0) * CPU_VARIETY.drop;
+        high = S.clear * (oppForward ? 1.6 : 0.85) * CPU_VARIETY.clear;
+        fast *= CPU_VARIETY.smash;
         // 3.7.2: nobody clears a short lift away more often than they attack it (even the defensive styles).
         if (shortLift) fast = Math.max(fast, high * 1.05, soft);
       }

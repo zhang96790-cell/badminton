@@ -41,6 +41,8 @@ export interface Contact {
   rising?: boolean;
   /** The incoming shuttle is a tumbling net shot (hard to net back or attack). */
   tumbling?: boolean;
+  /** 4.3: the incoming shot was a smash (a perfectly timed reply to it is a controlled counter). */
+  vsSmash?: boolean;
 }
 
 /** Overhead from the top of a jump, timed inside the tight perfect-jump window. */
@@ -203,10 +205,14 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     * (perfect && zone === 'overhead' && kindOf === 'high' ? B.clearAim : 1)
     * (netPlay ? eff.netAim : 1) * eff.aim
     * (handNoise * (stretched ? SHOTS.stretchNoise : 1)) / Math.pow(c.timing, 1.3);
+  // 4.3: a perfectly timed reply to a smash is a controlled counter; kills are aimed tighter.
+  const counter = !!c.vsSmash && perfect && zone !== 'overhead';
+  const noiseAdj = (counter ? SHOTS.perfectDefence.noise : 1) * (netKill ? SHOTS.killAim.noise : 1);
   // 4.1: an exact shot (the Impossible CPU) has no random error: it lands where it was aimed.
   const exact = req.kind === 'intent' && !!req.exact;
   const vMax = table(SHOTS.maxSpeedByHeight, z0) * power;
-  const softClearance = netArea ? SHOTS.netShotClearance * (netPlay ? eff.netClearance : 1) : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance;
+  const softClearance = (netArea ? SHOTS.netShotClearance * (netPlay ? eff.netClearance : 1) : zone === 'overhead' ? SHOTS.dropClearance : SHOTS.blockClearance)
+    * (c.vsSmash && perfect && zone !== 'overhead' && kindOf === 'soft' ? SHOTS.perfectDefence.clearance : 1);
   const M = SHOTS.softMaxAngle;
   const softMax = (zone === 'overhead' ? M.overhead : netArea ? M.net : zone === 'mid' ? M.mid : M.low) * DEG;
   const opp = -c.side;
@@ -221,7 +227,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     target = req.target ?? intentTarget(req.intent, c.point, c.side, req.aimX, req.aimDepth);
     if (req.intent === 'high') {
       const base = zone === 'overhead' ? SHOTS.clearAngle : zone === 'mid' ? SHOTS.midHighAngle : SHOTS.liftAngle;
-      const angle = base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0) - (req.flat ? SHOTS.flatLiftDeg : 0);
+      const angle = base + (req.aimDepth > 0 ? -6 : req.aimDepth < 0 ? 8 : 0) - (req.flat ? (zone === 'overhead' ? SHOTS.attackClearDeg : SHOTS.flatLiftDeg) : 0);
       plan = { type: 'angle', angle: zone !== 'overhead' && netArea ? Math.max(angle, SHOTS.netLiftAngle) : angle };
     } else if (req.intent === 'fast') {
       // Keyboard K: a tap is full normal power; holding it adds a little extra.
@@ -248,6 +254,12 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
       };
     }
   }
+  // 4.3: a kill goes steeply down into the mid court (a net tap, just above the tape, lands shorter).
+  if (netKill) {
+    const [a, b] = lowKill ? SHOTS.killAim.tap : SHOTS.killAim.depth;
+    const deeper = req.kind === 'intent' ? (req.aimDepth > 0 ? 1 : req.aimDepth < 0 ? 0 : 0.5) : 0.5;
+    target = { x: target.x, y: opp * (a + (b - a) * deeper) };
+  }
   const full = SHOTS.maxSpeedByHeight[SHOTS.maxSpeedByHeight.length - 1][1];
   pace = plan.type === 'angle' ? 0.45 : plan.type === 'speed' ? plan.speed / full : 0.12;
 
@@ -266,7 +278,7 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   target = clampTarget(target, opp);
   const A = SHOTS.aim;
   const dist = Math.hypot(target.x - c.point.x, target.y - c.point.y);
-  const sigma = exact ? 0 : (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale;
+  const sigma = exact ? 0 : (A.base + A.perMetre * dist + A.perPower * Math.pow(pace, 1.5)) * noiseMult * aimScale * noiseAdj;
   target = clampTarget(softenOut(target, { x: target.x + gauss() * sigma, y: target.y + gauss() * sigma * A.depthFactor * (defence ? eff.defenceDepth : 1) }), opp, 0.1);
   // 3.10: net shots only stay tight from close in, taken early: from further back, taken low, or deep into a
   // net battle they float higher over the tape (so the other player can attack them).
@@ -319,7 +331,11 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
     }
   }
   const rise = fly2d(z0, speed, angle, Infinity).apex - z0;
-  const label = classify(shotZone, netArea, angle / DEG, speed, c.airborne, Math.abs(target.y), rise);
+  let label = classify(shotZone, netArea, angle / DEG, speed, c.airborne, Math.abs(target.y), rise);
+  // 4.3: name the new shots for what they are.
+  if (netKill && angle < 0) label = lowKill ? 'Net tap' : 'Net kill';
+  else if (zone === 'overhead' && kindOf === 'high' && req.kind === 'intent' && req.flat) label = 'Attacking clear';
+  else if (zone === 'overhead' && kindOf === 'soft' && perfect && Math.sign(target.x) !== Math.sign(c.point.x) && Math.abs(target.x) > 0.6 && !netArea) label = 'Slice drop';
   return { velocity: toVelocity(g.ux, g.uy, speed, angle), label, speedKmh: speed * 3.6 };
 }
 

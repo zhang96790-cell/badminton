@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.1',
+    title: 'One sponsor until the new career',
+    date: '21 Nov 2026',
+    changes: [
+      "The three sponsor slots (kit deal, main and money sponsor) are on hold until the new career mode: you have one sponsor again, the same as before 4.4. Any kit or money sponsor signed in 4.4 has been dropped. The separate Sponsors, Shop and Money pages stay.",
+    ],
+  },
+  {
     version: '4.4',
     title: 'Sponsors, profile and feedback',
     date: '21 Nov 2026',

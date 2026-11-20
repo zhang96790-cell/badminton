@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.4.1: One sponsor until the new career (21 Nov 2026)
+
+- The three sponsor slots (kit deal, main and money sponsor) are on hold until the new career mode: you have one sponsor again, the same as before 4.4. Any kit or money sponsor signed in 4.4 has been dropped. The separate Sponsors, Shop and Money pages stay.
+
 ## 4.4: Sponsors, profile and feedback (21 Nov 2026)
 
 - Up to three sponsors in career: a kit deal with a badminton brand (some money, a bonus for every final, and their name on your shirt), a main sponsor that’s a perk brand (little money, one perk: cheaper flights, free hotels, cheaper loans, win bonuses, or 35% off tournament costs), and a money sponsor (the most pay, no perk).

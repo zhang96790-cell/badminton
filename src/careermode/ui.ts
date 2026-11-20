@@ -12,7 +12,7 @@ import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, signSponsor, sponsorIn, type SponsorSlot, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, money, myRank, newCareer,
   nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
   type NextMatch,
 } from './state';
@@ -434,30 +434,22 @@ export function initCareer(d: CareerDeps) {
     return `<p class="c-lead">Borrow to pay your own way on tour. You pay back ${Math.round(L.fee * 100)}% more, ${Math.round(L.repayShare * 100)}% of every prize goes to it, and you can pay it off any time. The better your best world ranking, the more you can borrow (up to ${money(loanLimit(s!))} for you now). One loan at a time.</p>
       <div class="c-opts">${loanOptions(s!).map((a) => `<button class="c-opt" data-loan="${a}"><b>Borrow ${money(a)}</b><span>Pay back ${money(loanOwed(a))}</span></button>`).join('')}</div>`;
   }
-  /** 4.4: the Sponsors page: your kit deal, main (perk) sponsor and money sponsor, and offers for each. */
+  /** The Sponsors page: your sponsor and any offers (one sponsor; more slots come with the new career). */
   function renderSponsors() {
-    const rank = myRank(s!, W());
-    const terms = (o: NonNullable<CareerState['sponsor']>) => [
+    const rank = myRank(s!, W()), offers = sponsorUpgrade(s!, rank, d.appVersion), sp = s!.sponsor;
+    const terms = (o: NonNullable<typeof sp>) => [
       `${money(o.weekly)} a week`, `${money(o.bonus)} a title`,
-      o.finalBonus ? `${money(o.finalBonus)} for every final, and their kit on your player` : '',
-      o.perk ? `${perkText(o.perk)}${o.winBonus ? ` (${money(o.winBonus)})` : ''}` : o.slot === 'kit' ? '' : 'No perk: pays the most',
+      o.perk ? `${perkText(o.perk)}${o.winBonus ? ` (${money(o.winBonus)})` : ''}` : 'No perk: pays the most',
       o.home ? `Home brand: double pay in weeks you play in ${countryName(o.home)}` : '',
       o.request ? `Wants you at the ${o.request.name}: ${money(o.request.enter)} to play, ${money(o.request.deep)} for the quarter-finals` : '',
     ].filter(Boolean);
-    const slots: [SponsorSlot, string, string][] = [
-      ['kit', 'Kit deal', 'A badminton brand. Some money, a bonus for every final, and their name on your shirt.'],
-      ['main', 'Main sponsor', 'A perk brand: little money, but cheaper flights, free hotels, cheaper loans, win bonuses or cheaper tournaments.'],
-      ['cash', 'Money sponsor', 'Pays the most, with no perk.'],
-    ];
-    const html = slots.map(([slot, title, about]) => {
-      const cur = sponsorIn(s!, slot), offers = sponsorUpgrade(s!, rank, d.appVersion, slot), req = cur?.request;
-      return `<h3 class="c-title small">${title}</h3><p class="c-lead small">${about}</p>
-        ${cur ? `<p class="c-lead"><b>${e(cur.name)}</b> until the end of ${cur.year}: ${terms(cur).map(e).join(' · ')}.</p>
-          ${req ? `<p class="c-lead small">Their event: ${e(req.name)}. ${req.paid ? 'Done: quarter-finals bonus paid.' : req.entered ? 'Entered (bonus paid). Reach the quarter-finals for the big one.' : 'Not played yet.'}</p>` : ''}`
-          : `<p class="c-lead small">${rank ? 'None yet.' : 'Sponsors come to you once you’re in the world top 200.'}</p>`}
-        ${offers ? `<div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${slot}:${i}"><b>${e(o.name)}</b>${terms(o).map((t) => `<span>${e(t)}</span>`).join('')}</button>`).join('')}</div>` : ''}`;
-    }).join('');
-    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Sponsors</p><p class="c-lead">Up to three: a kit deal, a main sponsor with a perk, and a money sponsor. Deals run to the end of the season, and better ones come as you climb.</p>${html}</section>`;
+    const req = sp?.request;
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Sponsor</p>
+      ${sp ? `<p class="c-lead"><b>${e(sp.name)}</b> until the end of ${sp.year}: ${terms(sp).map(e).join(' · ')}.</p>
+        ${req ? `<p class="c-lead small">Their event: ${e(req.name)}. ${req.paid ? 'Done: quarter-finals bonus paid.' : req.entered ? 'Entered (bonus paid). Reach the quarter-finals for the big one.' : 'Not played yet.'}</p>` : ''}`
+        : `<p class="c-lead">${rank ? 'No sponsor yet.' : 'No sponsor yet. Sponsors come to you once you’re in the world top 200, and better deals open as you climb.'}</p>`}
+      ${offers ? `<p class="c-lead">${sp ? 'A better deal is on offer:' : 'Sponsors want you:'}</p><div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${i}"><b>${e(o.name)}</b>${terms(o).map((t) => `<span>${e(t)}</span>`).join('')}</button>`).join('')}</div>` : ''}
+    </section>`;
   }
   /** 4.4: the Shop page. */
   function renderShop() {
@@ -830,7 +822,7 @@ export function initCareer(d: CareerDeps) {
       walkOn: resume ? undefined : careerWalkOn(x, nm),
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
-        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy), shopModifier(s!)], abilities: true, kitBrand: s!.kitSponsor?.brandId },
+        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy), shopModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id))] },
         restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country), // 4.2.1: the boards are the event's own (local) sponsors, never yours
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
@@ -1053,7 +1045,7 @@ export function initCareer(d: CareerDeps) {
     const stf = at('[data-staff]')?.dataset.staff as StaffRole | undefined;
     if (stf) { setStaff(s, stf, !s.staff?.[stf]); await save(); render(); return; }
     const spn = at('[data-sponsor]')?.dataset.sponsor;
-    if (spn !== undefined) { const [slot, idx] = spn.split(':') as [SponsorSlot, string]; const offers = sponsorUpgrade(s, myRank(s, W()), d.appVersion, slot); const o = offers?.[Number(idx)]; if (o) { signSponsor(s, o); d.toast(`Signed with ${o.name}`, `${money(o.weekly)} a week and ${money(o.bonus)} a title.`); await save(); render(); } return; }
+    if (spn !== undefined) { const offers = sponsorUpgrade(s, myRank(s, W()), d.appVersion); const o = offers?.[Number(spn)]; if (o) { s.sponsor = o; d.toast(`Signed with ${o.name}`, `${money(o.weekly)} a week and ${money(o.bonus)} a title.`); await save(); render(); } return; }
     if (at('[data-retire]')) {
       if (!confirm('Retire? This career goes into the Hall of Fame and you start a new one. Players you recruited stay on your account.')) return;
       retiredHall = retire(s); s = null; render(); return;

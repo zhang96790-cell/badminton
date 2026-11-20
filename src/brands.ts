@@ -96,8 +96,8 @@ const PERKS: Record<SponsorPerk, string[]> = {
   hotels: ['marriot', 'hillton', 'coralbay', 'bookly'],
   loans: ['hsbk', 'maybanc', 'harbourline', 'krungthai', 'dbx', 'goldenlion'],
   wins: ['pocara', 'avian', 'pepsi', 'hundredminus', 'mylo', 'beanstreet', 'gatorush', 'singha', 'amula'],
-  // 4.4: delivery and shopping brands pay part of your tournament costs.
-  entry: ['grabbit', 'dhx', 'shoppi', 'uniqo'],
+  // 4.4: the 'entry' perk (35% off tournament costs) waits for the new career's sponsor slots.
+  entry: [],
 };
 export const perkOf = (brandId: string): SponsorPerk | null => (Object.keys(PERKS) as SponsorPerk[]).find((k) => PERKS[k].includes(brandId)) ?? null;
 export const PERK_TEXT: Record<SponsorPerk, string> = {

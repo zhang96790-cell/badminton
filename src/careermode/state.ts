@@ -1,7 +1,7 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
 import { CAREER as CAREER_STATS, characterById, type Character, type Modifier } from '../../shared/characters';
-import { KIT_BRANDS, PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
+import { PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
 import { COUNTRIES, World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
@@ -199,6 +199,8 @@ export function migrate(raw: unknown): CareerState | null {
   if (s.epoch !== CAREER_EPOCH) return null;
   const out = { ...newCareer({ name: s.name ?? 'Player', homeCountry: s.homeCountry ?? 'GBR', characterId: s.characterId, difficulty: s.difficulty ?? 'relaxed', seed: s.rngSeed }), ...s } as CareerState;
   // 3.9: no more energy. Everyone's fresh, uninjured, flies economy and stays in a 3-star; the physio goes.
+  // 4.4.1: the extra sponsor slots are gone again until the new career.
+  out.kitSponsor = null; out.cashSponsor = null;
   if (!out.restedSince) out.energy = 100;
   out.injury = null;
   if (!out.restedSince) { out.settings = { ...out.settings, travelClass: 'economy', business: false, hotel: 'three' }; out.restedSince = '4.1'; }
@@ -566,44 +568,39 @@ export function signSponsor(s: CareerState, o: Sponsor) {
   if (o.slot === 'kit') s.kitSponsor = o; else if (o.slot === 'cash') s.cashSponsor = o; else s.sponsor = o;
 }
 
+/** 4.4.1: one sponsor again (the kit / main / money slots wait for the new career). */
 /**
- * 4.4: sponsor offers at this ranking, from the game's real brands, for three slots. A kit deal from a badminton
- * brand (some pay, a bonus every final, their kit on your player); a main sponsor that's a perk brand (little
- * money, one perk); and a money sponsor (the most pay, no perk). Brands from your country pay double in weeks
- * you play at home. Main and money sponsors ask you to play one event. Null if unranked.
+ * 4.2: sponsors who'd sign you at this ranking, from the game's real brands. Up to three offers: a big company
+ * paying the most, a brand with a perk (airline, hotel, bank, drinks) paying less, and a brand from your own
+ * country that pays double in weeks you play at home. Each asks you to play one event this season. Null if unranked.
  */
-export function sponsorOffers(s: CareerState, rank: number | null, appVersion = '4.4', slot: SponsorSlot = 'main'): Sponsor[] | null {
+export function sponsorOffers(s: CareerState, rank: number | null, appVersion = '4.2'): Sponsor[] | null {
   if (!rank) return null;
   const band = CFG.sponsorBands.find((b) => rank <= b.rank);
   if (!band) return null;
-  const r = rng(hash(s.rngSeed, s.year, band.rank, 'sponsor', slot));
+  const r = rng(hash(s.rngSeed, s.year, band.rank, 'sponsor'));
   const mix = <T,>(a: T[]) => [...a].sort(() => r() - 0.5);
+  const home = mix(SPONSOR_BRANDS.filter((b) => b.country === s.homeCountry));
+  const cash = mix(SPONSOR_BRANDS.filter((b) => !perkOf(b.id) && b.country !== s.homeCountry));
+  const perk = mix(SPONSOR_BRANDS.filter((b) => perkOf(b.id) && b.country !== s.homeCountry));
   const upcoming = calendar(appVersion, s.year).filter((v) => v.week > s.week && !CFG.closedTiers.includes(v.tier));
   const request = (brandId: string, weekly: number): Sponsor['request'] => {
     const theirs = upcoming.filter((v) => eventLook(v.id, v.tier, v.host_country).sponsors.some((b) => b.id === brandId) || v.host_country === SPONSOR_BRANDS.find((b) => b.id === brandId)?.country);
     const pickFrom = theirs.length ? theirs : upcoming.filter((v) => v.tier === 'S100' || v.tier === 'S300');
     const v = pickFrom[Math.floor(r() * pickFrom.length)];
-    return v ? { eventId: v.id, name: v.name, enter: Math.max(150, weekly * 3), deep: Math.max(300, weekly * 6) } : null;
+    return v ? { eventId: v.id, name: v.name, enter: weekly * 3, deep: weekly * 6 } : null;
   };
-  const make = (b: { id: string; name: string; country?: string } | undefined, wk: number, bo: number, extra: Partial<Sponsor>, ask = true): Sponsor | null => {
+  const make = (b: (typeof SPONSOR_BRANDS)[number] | undefined, wk: number, bo: number, extra: Partial<Sponsor>): Sponsor | null => {
     if (!b) return null;
     const weekly = Math.round(band.weekly * wk);
-    return { name: b.name, brandId: b.id, weekly, bonus: Math.round(band.bonus * bo), band: band.rank, year: s.year, slot, request: ask ? request(b.id, weekly) : null,
-      ...(b.country === s.homeCountry ? { home: s.homeCountry } : {}), ...extra };
+    return { name: b.name, brandId: b.id, weekly, bonus: Math.round(band.bonus * bo), band: band.rank, year: s.year, request: request(b.id, weekly), ...extra };
   };
-  if (slot === 'kit') {
-    const kits = mix(KIT_BRANDS);
-    return kits.slice(0, 2).map((b) => make(b, 0.5, 0.6, { perk: null, finalBonus: Math.round(band.bonus * 0.5) }, false)).filter((x): x is Sponsor => !!x);
-  }
-  if (slot === 'cash') {
-    const cash = mix(SPONSOR_BRANDS.filter((b) => !perkOf(b.id)));
-    const home = cash.find((b) => b.country === s.homeCountry), other = cash.find((b) => b.country !== s.homeCountry);
-    return [make(other, 1.25, 0.6, { perk: null }), make(home, 1.1, 0.6, { perk: null })].filter((x): x is Sponsor => !!x);
-  }
-  const perks = mix(SPONSOR_BRANDS.filter((b) => perkOf(b.id)));
-  const seen = new Set<string>();
-  const picks = perks.filter((b) => { const p = perkOf(b.id)!; if (seen.has(p)) return false; seen.add(p); return true; }).slice(0, 3);
-  return picks.map((b) => { const pk = perkOf(b.id); return make(b, 0.35, 0.3, { perk: pk, ...(pk === 'wins' ? { winBonus: Math.round(band.bonus * 0.15) } : {}) }); }).filter((x): x is Sponsor => !!x);
+  const p = perk[0], pk = p ? perkOf(p.id) : null;
+  return [
+    make(cash[0], CFG.sponsorSteady.weekly, CFG.sponsorSteady.bonus, { perk: null }),
+    make(p, 0.6, 0.6, { perk: pk, ...(pk === 'wins' ? { winBonus: Math.round(band.bonus * 0.15) } : {}) }),
+    make(home[0], 0.9, 1, { home: s.homeCountry, perk: perkOf(home[0]?.id ?? '') }),
+  ].filter((x): x is Sponsor => !!x);
 }
 export const perkText = (p: SponsorPerk | null | undefined) => (p ? PERK_TEXT[p] : '');
 /** 3.14.3: a deal signed before the sponsor cut drops to the new rates for its band (keeping its steady or bonus style). */
@@ -619,9 +616,9 @@ export function rescaleSponsor(s: CareerState): boolean {
   return true;
 }
 /** A better sponsor deal is on offer (you're in a better ranking band than your sponsor's). */
-export const sponsorUpgrade = (s: CareerState, rank: number | null, appVersion?: string, slot: SponsorSlot = 'main') => {
-  const offers = sponsorOffers(s, rank, appVersion, slot), cur = sponsorIn(s, slot);
-  return offers?.length && (!cur || offers[0].band < cur.band || cur.year < s.year) ? offers : null;
+export const sponsorUpgrade = (s: CareerState, rank: number | null, appVersion?: string) => {
+  const offers = sponsorOffers(s, rank, appVersion);
+  return offers?.length && (!s.sponsor || offers[0].band < s.sponsor.band || s.sponsor.year < s.year) ? offers : null;
 };
 
 export function setStaff(s: CareerState, role: StaffRole, on: boolean) { (s.staff ??= {})[role] = on; }

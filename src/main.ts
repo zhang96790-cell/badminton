@@ -1906,6 +1906,25 @@ addEventListener('keydown', (e) => { if (e.code === 'Escape' && !game && modal.c
 /** Menu values are strings; settings hold numbers and booleans. */
 const parse = (v: string): string | number | boolean => (v === 'true' ? true : v === 'false' ? false : /^\d+$/.test(v) ? Number(v) : v);
 
+/** 3.17: one line on each CPU level, shown under the opponent ladder. */
+const OPP_NOTE: Record<Level, string> = {
+  beginner: 'Slow and soft. Keeps the rally going while you learn.',
+  easy: 'Gentle, and makes plenty of mistakes.',
+  medium: 'A steady club player.',
+  hard: 'Quick and accurate, and punishes short lifts.',
+  expert: 'Rarely misses and starts reading your patterns.',
+  pro: 'Tour level: fast around the court and attacks a lot.',
+  elite: 'Sharper, quicker and harder to get past than Pro.',
+  world: 'Gets almost everything back.',
+  legend: 'The toughest of the classic levels.',
+  titan: 'Above Legend. Aggressive: smashes and kills anything that’s up.',
+  phantom: 'Faster and safer than Titan, and more aggressive.',
+  immortal: 'Hardly ever gives you a free point.',
+  apex: 'Close to the limit. Every part of its game is sharper.',
+  ultimate: 'The strongest CPU you can still beat.',
+  impossible: 'Jump-smashes every high shuttle from about half court in, at around 700 km/h. Not meant to be beaten.',
+};
+
 function syncMenu() {
   document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
     const group = seg.dataset.group as keyof Settings;
@@ -1913,6 +1932,12 @@ function syncMenu() {
   });
   // What makes the chosen CPU style different.
   document.getElementById('styleTrait')!.textContent = STYLES[settings.style].trait;
+  // 3.17: what the chosen opponent is like.
+  const oppNote = document.getElementById('oppNote')!;
+  const o = settings.opponent;
+  oppNote.innerHTML = o === 'human' ? '<b>2 players.</b> Share the keyboard: P1 on WASD, P2 on the arrows.'
+    : `<b>${LEVEL_LABEL[o]}.</b> ${OPP_NOTE[o]}`;
+  oppNote.classList.toggle('danger', o === 'impossible');
   // Swing assist only works against a Beginner or Easy CPU.
   const assistOk = settings.opponent === 'beginner' || settings.opponent === 'easy';
   document.querySelectorAll<HTMLButtonElement>('.seg[data-group="swingAssist"] button').forEach((b) => b.classList.toggle('disabled', !assistOk));

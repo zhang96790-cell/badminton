@@ -152,23 +152,19 @@
           </div>
           <div class="field">
             <h3>Opponent</h3>
-            <div class="seg" data-group="opponent">
-              <button data-value="beginner">Beginner</button>
-              <button data-value="easy">Easy</button>
-              <button data-value="medium">Medium</button>
-              <button data-value="hard">Hard</button>
-              <button data-value="expert">Expert</button>
-              <button data-value="pro">Pro</button>
-              <button data-value="elite">Elite</button>
-              <button data-value="world">World Class</button>
-              <button data-value="legend">Legend</button>
-              <button data-value="titan">Titan</button>
-              <button data-value="phantom">Phantom</button>
-              <button data-value="immortal">Immortal</button>
-              <button data-value="apex">Apex</button>
-              <button data-value="ultimate">Ultimate</button>
-              <button data-value="human">2 players</button>
+            <div class="seg opp-ladder" data-group="opponent">
+              <div class="opp-band"><span class="opp-band-name">Learning</span>
+                <div class="opp-row"><button data-value="beginner">Beginner</button><button data-value="easy">Easy</button><button data-value="medium">Medium</button></div></div>
+              <div class="opp-band"><span class="opp-band-name">Club to tour</span>
+                <div class="opp-row"><button data-value="hard">Hard</button><button data-value="expert">Expert</button><button data-value="pro">Pro</button><button data-value="elite">Elite</button></div></div>
+              <div class="opp-band"><span class="opp-band-name">World stage</span>
+                <div class="opp-row"><button data-value="world">World Class</button><button data-value="legend">Legend</button></div></div>
+              <div class="opp-band"><span class="opp-band-name">Beyond Legend</span>
+                <div class="opp-row five"><button data-value="titan">Titan</button><button data-value="phantom">Phantom</button><button data-value="immortal">Immortal</button><button data-value="apex">Apex</button><button data-value="ultimate">Ultimate</button></div></div>
+              <div class="opp-band opp-extra">
+                <div class="opp-row"><button data-value="impossible" class="opp-impossible">Impossible</button><button data-value="human" class="opp-human">2 players · one keyboard</button></div></div>
             </div>
+            <p class="opp-note" id="oppNote"></p>
           </div>
           <div class="field" id="styleRow">
             <h3>CPU style</h3>

@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.17: Impossible, a better opponent picker (20 Nov 2026)
+
+- New CPU level: Impossible. It jump-smashes every high shuttle from about half court in, at around 700 km/h, and gets almost everything back. Beat it for the new achievement, The impossible.
+- A cleaner opponent picker. The CPU levels are grouped into Learning, Club to tour, World stage and Beyond Legend, with Impossible and 2 players at the bottom, and a line under them tells you what the chosen level is like. The match card is a bit wider too.
+- CPU players (opponents and your doubles partner) no longer touch the net. Right on top of the net they play a soft tap instead of a hard shot. The rule for you is unchanged.
+- Fixed: after a 2-player match, the controls bar at the bottom of an online match showed the 2-player keys (C, V, B) instead of yours.
+
 ## 3.16: Five new top CPU levels (20 Nov 2026)
 
 - Five new CPU levels above Legend: Titan, Phantom, Immortal, Apex and Ultimate. Each one moves faster, reacts sooner, hits harder and places the shuttle more safely than the one before.

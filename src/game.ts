@@ -795,7 +795,11 @@ export class Game {
           req = { ...req, aimX: corner ? side : (side * SHOTS.autoAimLateral) / SHOTS.aimLateral };
         }
         const incomingKmh = Math.hypot(sh.vel.x, sh.vel.y, sh.vel.z) * 3.6;
-        if (c.rising && Math.abs(c.point.y) < RULES.overNet) {
+        // 3.17: CPU players never commit a net fault. Right on top of the net they play a soft tap instead of a
+        // hard shot, and they take a rising shuttle there cleanly. The rules for people are unchanged.
+        const cpu = ctrl instanceof AIController;
+        if (cpu && req.kind === 'intent' && this.touchesNet(p, req, c)) req = { ...req, intent: 'soft', strength: 1 };
+        if (!cpu && c.rising && Math.abs(c.point.y) < RULES.overNet) {
           // Still climbing, right by the net: you'd have to reach over to it. Fault; it drops dead.
           p.onHit(c.point);
           sh.vel = { x: 0, y: 0, z: -1.5 };

@@ -29,6 +29,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'beat_pro', name: 'Turning pro', desc: 'Beat a Pro CPU', done: beat('pro') },
   { id: 'beat_world', name: 'World class', desc: 'Beat a World Class CPU', done: beat('world') },
   { id: 'beat_legend', name: 'Legend slayer', desc: 'Beat a Legend CPU', done: beat('legend') },
+  { id: 'beat_impossible', name: 'The impossible', desc: 'Beat the Impossible CPU', done: beat('impossible') },
   { id: 'beat_ultimate', name: 'Untouchable', desc: 'Beat an Ultimate CPU', done: beat('ultimate') },
   { id: 'rocket', name: 'Rocket', desc: 'Smash at 300 km/h or faster', done: (c) => (c.max_smash ?? 0) >= 300 },
   { id: 'metronome', name: 'Metronome', desc: '100 perfectly timed hits', done: (c) => (c.perfect_hits ?? 0) >= 100 },

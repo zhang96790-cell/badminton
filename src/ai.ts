@@ -405,6 +405,8 @@ export class AIController implements Controller {
     const sh = this.game.shuttle;
     const counter = S.counter ?? CPU_BLOCK;
     const vsSmash = sh.lastHitter === -this.me.side && /smash/i.test(this.game.lastShotLabel);
+    // 3.17: Impossible smashes every high shuttle from about half court in.
+    if (L.mustSmash && c.z >= SHOTS.overheadHeight && dNet < L.mustSmash && !sh.tumbling) return 'fast';
     if (c.z >= SHOTS.overheadHeight) {
       if (dNet < 2.6) { fast = 3 * L.kill * S.kill; soft = 0.8; high = 0.1; }
       else {
@@ -494,6 +496,7 @@ export class AIController implements Controller {
     // A deceptive player disguises drops, net shots and flicks from the net.
     const disguisable = intent === 'soft' || (intent === 'high' && Math.abs(p.contact.y) < SHOTS.nearNet);
     const disguise = disguisable && chance(this.S.deceive ?? 0);
-    return { kind: 'intent', intent, aimX: 0, aimDepth: 0, target, strength: L.strength, disguise };
+    const smashBoost = intent === 'fast' && p.contact.z >= SHOTS.overheadHeight ? L.smashPower ?? 1 : 1;
+    return { kind: 'intent', intent, aimX: 0, aimDepth: 0, target, strength: L.strength * smashBoost, disguise };
   }
 }

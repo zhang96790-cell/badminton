@@ -411,10 +411,10 @@ export const REPLAY = {
 };
 
 export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert' | 'pro' | 'elite' | 'world' | 'legend'
-  | 'titan' | 'phantom' | 'immortal' | 'apex' | 'ultimate';
+  | 'titan' | 'phantom' | 'immortal' | 'apex' | 'ultimate' | 'impossible';
 /** How each CPU level is shown. */
 export const LEVEL_LABEL: Record<Level, string> = { beginner: 'Beginner', easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', pro: 'Pro', elite: 'Elite', world: 'World Class', legend: 'Legend',
-  titan: 'Titan', phantom: 'Phantom', immortal: 'Immortal', apex: 'Apex', ultimate: 'Ultimate' };
+  titan: 'Titan', phantom: 'Phantom', immortal: 'Immortal', apex: 'Apex', ultimate: 'Ultimate', impossible: 'Impossible' };
 
 export interface AILevel {
   /** Seconds before reacting to a shot. */
@@ -454,6 +454,10 @@ export interface AILevel {
    * follows its smash in for the kill.
    */
   aggression?: number;
+  /** 3.17: always smashes a high shuttle taken this close to the net (m) or closer. */
+  mustSmash?: number;
+  /** 3.17: extra power on its smashes only (Impossible: about 700 km/h jump smashes). */
+  smashPower?: number;
 }
 
 export const AI: Record<Level, AILevel> = {
@@ -532,6 +536,14 @@ export const AI: Record<Level, AILevel> = {
     reaction: 0.002, speed: 2.2, strength: 1.18, aimNoise: 0, timingError: 0.0004, margin: 0.24, caution: 2.1,
     decisiveness: 10, anticipation: 0.7, adapt: 1, smash: 3.0, drop: 1.5, net: 1.6, kill: 5, jumpSmash: 1,
     judgesOut: true, outMargin: 0.003, serveShort: 0.95, serveDelay: 0.28, challengeSkill: 1, reach: 0.8, aggression: 1,
+  },
+  // 3.17: Impossible. Meant to be (nearly) unbeatable: anything high from about half court in gets jump-smashed
+  // at around 700 km/h, and it gets almost everything back.
+  impossible: {
+    reaction: 0.001, speed: 2.6, strength: 1.2, aimNoise: 0, timingError: 0.0002, margin: 0.3, caution: 2.6,
+    decisiveness: 10, anticipation: 0.75, adapt: 1, smash: 3.5, drop: 1.5, net: 1.6, kill: 5, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.002, serveShort: 0.95, serveDelay: 0.25, challengeSkill: 1, reach: 1.0, aggression: 1,
+    mustSmash: 4.8, smashPower: 1.55,
   },
 };
 

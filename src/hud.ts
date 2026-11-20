@@ -910,7 +910,8 @@ export class Hud {
   }
 
   private controlsHint(game: Game): string {
-    const vsAI = game.settings.opponent !== 'human';
+    // One player on this keyboard: against a CPU or online (3.17: online used to show the 2-player keys).
+    const vsAI = game.settings.opponent !== 'human' || !!game.online;
     const hybrid = game.settings.p1Control === 'hybrid';
     const K = game.p1Keys, n = (c: string[]) => keyLabel(c[0] ?? '');
     const move = [K.up, K.left, K.down, K.right].map(n).join('');

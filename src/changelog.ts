@@ -5,6 +5,18 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.2',
+    title: 'Real sponsors and the broadcast finish',
+    date: '20 Nov 2026',
+    changes: [
+      "Career sponsors are now real brands from the game. Up to three offers at a time: a big company that pays the most, a brand with a perk that pays less (airlines: flights half price; hotels: hotels paid; banks: much cheaper tour loans; drinks: a bonus for every match you win), and a brand from your own country that pays double in weeks you play an event at home.",
+      "Sponsor requests: every sponsor asks you to play one event this season (often one they sponsor). You get a bonus for entering it and a bigger one for reaching the quarter-finals.",
+      "Your sponsor’s boards go up around the court in your career matches.",
+      "The end-of-match screen has the broadcast look: a red Full time tag, big italic results and square score rows.",
+      "The career screens match the new look too: red tab underlines, slanted italic headings, gold numbers, and sharper option cards.",
+    ],
+  },
+  {
     version: '4.1',
     title: 'Rested bar, career shop and new arenas',
     date: '20 Nov 2026',

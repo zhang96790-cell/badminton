@@ -1,6 +1,7 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
 import { CAREER as CAREER_STATS, characterById, type Character, type Modifier } from '../../shared/characters';
+import { PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
 import { COUNTRIES, World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
@@ -99,7 +100,18 @@ export interface CareerState {
 /** Bump to restart everyone's career the next time they open it. */
 export const CAREER_EPOCH = '3.3.1';
 
-export interface Sponsor { name: string; weekly: number; bonus: number; band: number; year: number }
+export interface Sponsor {
+  name: string; weekly: number; bonus: number; band: number; year: number;
+  /** 4.2: the brand (src/brands.ts), its perk, a home-country deal, and this season's request. */
+  brandId?: string;
+  perk?: SponsorPerk | null;
+  /** Bonus for every match you win (drinks brands). */
+  winBonus?: number;
+  /** A brand from your country: double weekly pay in weeks you play an event at home. */
+  home?: string;
+  /** "Play our event": a bonus for entering it and a bigger one for reaching the quarter-finals. */
+  request?: { eventId: string; name: string; enter: number; deep: number; entered?: boolean; paid?: boolean } | null;
+}
 /** 4.1: the shop. coach: the coach tier you employ; the rest are on/off or levels. */
 export interface Shop {
   coach?: string | null;
@@ -248,7 +260,7 @@ export const prizeFor = (ev: TourEvent, round: Round) => Math.round(purseOf(ev) 
 export const travelCost = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) => {
   if (ev.tier === 'CLUB') return 0;
   const base = CFG.travel[travelBand(s.currentLocation, ev.host_country)];
-  return Math.round(base * CFG.travelClass[cls].cost * (CFG.tierCost[ev.tier] ?? 1));
+  return Math.round(base * CFG.travelClass[cls].cost * (CFG.tierCost[ev.tier] ?? 1) * (s.sponsor?.perk === 'flights' ? 0.5 : 1));
 };
 export const travelEnergy = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) => {
   if (ev.tier === 'CLUB') return 0;
@@ -257,7 +269,7 @@ export const travelEnergy = (s: CareerState, ev: TourEvent, cls: TravelClass = t
 };
 /** A hotel night at this event (Club Opens: you sleep at home). */
 export const hotelCost = (s: CareerState, ev: TourEvent, tier: HotelTier = hotelOf(s)) =>
-  ev.tier === 'CLUB' || s.houses?.includes(ev.host_country) ? 0 : Math.round(CFG.hotels[tier].perNight * (CFG.cityCost[COUNTRIES[ev.host_country]?.region ?? ''] ?? 1) * (CFG.tierCost[ev.tier] ?? 1));
+  ev.tier === 'CLUB' || s.houses?.includes(ev.host_country) || s.sponsor?.perk === 'hotels' ? 0 : Math.round(CFG.hotels[tier].perNight * (CFG.cityCost[COUNTRIES[ev.host_country]?.region ?? ''] ?? 1) * (CFG.tierCost[ev.tier] ?? 1));
 export const hotelRecover = (ev: TourEvent, tier: HotelTier) => (ev.tier === 'CLUB' ? 2 : CFG.hotels[tier].recover);
 /** Energy you'd use going all the way (a guide for the tournament screen). */
 export const roundEnergy = (s: CareerState, ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.energyPerRound : CFG.energyPerRound) * staminaFactor(characterById(s.characterId));
@@ -290,10 +302,10 @@ export const needsQualifying = (s: CareerState, ev: TourEvent) =>
 /** The most you can borrow, by your best world ranking. */
 export const loanLimit = (s: CareerState) => (CFG.loan.limitByRank.find((b) => (s.bestRank ?? 999) <= b.rank) ?? CFG.loan.limitByRank[CFG.loan.limitByRank.length - 1]).max;
 export const loanOptions = (s: CareerState) => (s.loan ? [] : CFG.loan.amounts.filter((a) => a <= loanLimit(s)));
-export const loanOwed = (amount: number) => Math.round(amount * (1 + CFG.loan.fee));
+export const loanOwed = (amount: number, s?: CareerState) => Math.round(amount * (1 + CFG.loan.fee * (s?.sponsor?.perk === 'loans' ? 1 / 3 : 1)));
 export function takeLoan(s: CareerState, amount: number): boolean {
   if (s.loan || !loanOptions(s).includes(amount)) return false;
-  s.loan = { owed: loanOwed(amount), borrowed: amount };
+  s.loan = { owed: loanOwed(amount, s), borrowed: amount };
   book(s, 'Tour loan', amount);
   return true;
 }
@@ -333,6 +345,9 @@ export function enter(s: CareerState, ev: TourEvent, w?: World) {
   const cls = travelClassOf(s);
   if (travel) book(s, `Travel to ${ev.name}`, -travel);
   addRest(s, -travelRestCost(s, ev));
+  // 4.2: your sponsor asked you to play this one.
+  const rq = s.sponsor?.request;
+  if (rq && rq.eventId === ev.id && !rq.entered) { rq.entered = true; book(s, `${s.sponsor!.name}: thanks for playing the ${ev.name}`, rq.enter); }
   s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true,
     ...(qual ? { qual: { stage: 1 as const, opps: qualifyingOpponents(s, w!, ev) }, covered: true } : {}) };
 }
@@ -415,6 +430,7 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
   // 4.1: the match tires you; nights before your next match bring some back.
   const dayBefore = roundDay(ev, a.round, hash(s.rngSeed, ev.id), !!a.qual);
   addRest(s, -drain);
+  if (won && s.sponsor?.perk === 'wins' && s.sponsor.winBonus) book(s, `Win bonus: ${s.sponsor.name}`, s.sponsor.winBonus);
   const restUntil = (q: boolean) => { const n = Math.max(0, roundDay(ev, a.round, hash(s.rngSeed, ev.id), q) - dayBefore); addRest(s, n * nightRest(s, ev)); };
   // 3.19: qualifying. Win both and you're in the main draw; lose and you're out (with a few ranking points).
   if (a.qual) {
@@ -447,6 +463,9 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
   // 3rd place pays a little more than 4th (the semi-final prize plus CFG.bronzeBonus).
   const prize = noReward ? 0 : Math.round(prizeFor(ev, reached) * (place === 3 ? 1 + CFG.bronzeBonus : 1));
   if (prize) book(s, `Prize money: ${ev.name}`, prize);
+  // 4.2: the sponsor's event: a bonus for reaching the quarter-finals or better.
+  const rq = s.sponsor?.request;
+  if (rq && rq.eventId === ev.id && !rq.paid && !noReward && ['QF', 'SF', 'F', 'W'].includes(reached)) { rq.paid = true; book(s, `${s.sponsor!.name}: quarter-finals or better at their event`, rq.deep); }
   // 3.19: part of every prize pays off a loan.
   if (prize && s.loan) repayLoan(s, Math.ceil(prize * CFG.loan.repayShare));
   const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, scores: a.scores, as: a.as, ...(place ? { place } : {}) };
@@ -503,6 +522,9 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
   // A week off at your training base rests you more.
   if (s.shop?.base && !s.history.some((h) => h.year === s.year && h.week === s.week)) addRest(s, CFG.base.restPerLevel * s.shop.base.level);
   if (s.sponsor) book(s, `Sponsor: ${s.sponsor.name}`, s.sponsor.weekly);
+  // 4.2: a home-country sponsor pays double in weeks you play an event at home.
+  const playedHome = s.history.some((h) => h.year === s.year && h.week === s.week && findEvent(s, h.tournamentId, appVersion)?.host_country === s.homeCountry);
+  if (s.sponsor?.home && playedHome) book(s, `Home event bonus: ${s.sponsor.name}`, s.sponsor.weekly);
   if (s.injury && s.injury.weeks > 0) { s.injury.weeks--; if (!s.injury.weeks) s.injury = null; }
   const last = Math.max(...calendar(appVersion, s.year).map((e) => e.week), 1);
   if (s.week >= last || s.week >= 52) {
@@ -511,23 +533,45 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
     s.energy = 100; s.injury = null; // a fresh start every season
     if (s.sponsor && s.sponsor.year < s.year) s.sponsor = null;
     // 3.19: a loan still owed grows a little each new season.
-    if (s.loan) s.loan.owed = Math.round(s.loan.owed * (1 + CFG.loan.seasonInterest));
+    if (s.loan && s.sponsor?.perk !== 'loans') s.loan.owed = Math.round(s.loan.owed * (1 + CFG.loan.seasonInterest));
   }
   else s.week++;
 }
 
-/** Sponsors who'd pay you at this ranking (two offers: steady pay, or bigger title bonuses). Null if unranked. */
-export function sponsorOffers(s: CareerState, rank: number | null): Sponsor[] | null {
+/**
+ * 4.2: sponsors who'd sign you at this ranking, from the game's real brands. Up to three offers: a big company
+ * paying the most, a brand with a perk (airline, hotel, bank, drinks) paying less, and a brand from your own
+ * country that pays double in weeks you play at home. Each asks you to play one event this season. Null if unranked.
+ */
+export function sponsorOffers(s: CareerState, rank: number | null, appVersion = '4.2'): Sponsor[] | null {
   if (!rank) return null;
   const band = CFG.sponsorBands.find((b) => rank <= b.rank);
   if (!band) return null;
   const r = rng(hash(s.rngSeed, s.year, band.rank, 'sponsor'));
-  const names = [...CFG.sponsorNames].sort(() => r() - 0.5);
+  const mix = <T,>(a: T[]) => [...a].sort(() => r() - 0.5);
+  const home = mix(SPONSOR_BRANDS.filter((b) => b.country === s.homeCountry));
+  const cash = mix(SPONSOR_BRANDS.filter((b) => !perkOf(b.id) && b.country !== s.homeCountry));
+  const perk = mix(SPONSOR_BRANDS.filter((b) => perkOf(b.id) && b.country !== s.homeCountry));
+  const upcoming = calendar(appVersion, s.year).filter((v) => v.week > s.week && !CFG.closedTiers.includes(v.tier));
+  const request = (brandId: string, weekly: number): Sponsor['request'] => {
+    const theirs = upcoming.filter((v) => eventLook(v.id, v.tier, v.host_country).sponsors.some((b) => b.id === brandId) || v.host_country === SPONSOR_BRANDS.find((b) => b.id === brandId)?.country);
+    const pickFrom = theirs.length ? theirs : upcoming.filter((v) => v.tier === 'S100' || v.tier === 'S300');
+    const v = pickFrom[Math.floor(r() * pickFrom.length)];
+    return v ? { eventId: v.id, name: v.name, enter: weekly * 3, deep: weekly * 6 } : null;
+  };
+  const make = (b: (typeof SPONSOR_BRANDS)[number] | undefined, wk: number, bo: number, extra: Partial<Sponsor>): Sponsor | null => {
+    if (!b) return null;
+    const weekly = Math.round(band.weekly * wk);
+    return { name: b.name, brandId: b.id, weekly, bonus: Math.round(band.bonus * bo), band: band.rank, year: s.year, request: request(b.id, weekly), ...extra };
+  };
+  const p = perk[0], pk = p ? perkOf(p.id) : null;
   return [
-    { name: names[0], weekly: Math.round(band.weekly * CFG.sponsorSteady.weekly), bonus: Math.round(band.bonus * CFG.sponsorSteady.bonus), band: band.rank, year: s.year },
-    { name: names[1], weekly: Math.round(band.weekly * CFG.sponsorBonusy.weekly), bonus: Math.round(band.bonus * CFG.sponsorBonusy.bonus), band: band.rank, year: s.year },
-  ];
+    make(cash[0], CFG.sponsorSteady.weekly, CFG.sponsorSteady.bonus, { perk: null }),
+    make(p, 0.6, 0.6, { perk: pk, ...(pk === 'wins' ? { winBonus: Math.round(band.bonus * 0.15) } : {}) }),
+    make(home[0], 0.9, 1, { home: s.homeCountry, perk: perkOf(home[0]?.id ?? '') }),
+  ].filter((x): x is Sponsor => !!x);
 }
+export const perkText = (p: SponsorPerk | null | undefined) => (p ? PERK_TEXT[p] : '');
 /** 3.14.3: a deal signed before the sponsor cut drops to the new rates for its band (keeping its steady or bonus style). */
 export function rescaleSponsor(s: CareerState): boolean {
   const sp = s.sponsor;
@@ -541,8 +585,8 @@ export function rescaleSponsor(s: CareerState): boolean {
   return true;
 }
 /** A better sponsor deal is on offer (you're in a better ranking band than your sponsor's). */
-export const sponsorUpgrade = (s: CareerState, rank: number | null) => {
-  const offers = sponsorOffers(s, rank);
+export const sponsorUpgrade = (s: CareerState, rank: number | null, appVersion?: string) => {
+  const offers = sponsorOffers(s, rank, appVersion);
   return offers && (!s.sponsor || offers[0].band < s.sponsor.band || s.sponsor.year < s.year) ? offers : null;
 };
 

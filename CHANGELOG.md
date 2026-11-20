@@ -5,6 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.2: Real sponsors and the broadcast finish (20 Nov 2026)
+
+- Career sponsors are now real brands from the game. Up to three offers at a time: a big company that pays the most, a brand with a perk that pays less (airlines: flights half price; hotels: hotels paid; banks: much cheaper tour loans; drinks: a bonus for every match you win), and a brand from your own country that pays double in weeks you play an event at home.
+- Sponsor requests: every sponsor asks you to play one event this season (often one they sponsor). You get a bonus for entering it and a bigger one for reaching the quarter-finals.
+- Your sponsor’s boards go up around the court in your career matches.
+- The end-of-match screen has the broadcast look: a red Full time tag, big italic results and square score rows.
+- The career screens match the new look too: red tab underlines, slanted italic headings, gold numbers, and sharper option cards.
+
 ## 4.1: Rested bar, career shop and new arenas (20 Nov 2026)
 
 - New brands. Kit: Yonax (by far the most players), Liming, Victer, Mizuna, Kompoo and Hundreds. Companies: Emiratas, Cathay Pacifec, Skyline Airlines, Singapura Airlines, Marriot, Hillton, Samsong, Apple’s, BNW, Peps-i, 100-minus and more, plus local brands like Indomee, AirAsio, Singh-a Water, Amula, DBX Bank and Qantaz. Tournaments are mostly powered by Yonax, sometimes Victer, rarely Liming.

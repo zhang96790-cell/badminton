@@ -9,6 +9,8 @@ import type { PlayerSummary } from './stats';
 
 const C = VISUAL.colors;
 const font = (px: number, weight = 600) => `${weight} ${px}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
+/** 4.2: the broadcast type (italic condensed), for the end-of-match screen. */
+const bfont = (px: number, weight = 800) => `italic ${weight} ${px}px "Saira Condensed", "Big Shoulders Display", sans-serif`;
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, width: number): string[] {
   const out: string[] = [];
@@ -651,16 +653,18 @@ export class Hud {
     ctx.fillRect(0, 0, w, h);
     const pw = Math.min(900, w - 32), ph = Math.min(h - 32, 620);
     const x = (w - pw) / 2, y = (h - ph) / 2;
-    panel(ctx, x, y, pw, ph, 18, 'rgba(10,15,24,0.96)');
+    // 4.2: the broadcast look: square edges, a slanted red "Full time" tag, italic condensed type.
+    panel(ctx, x, y, pw, ph, 3, 'rgba(10,15,24,0.97)');
     ctx.fillStyle = winner.color;
-    ctx.fillRect(x, y, pw, 5);
-
+    ctx.fillRect(x, y, 6, ph);
+    ctx.fillStyle = '#e8112d';
+    ctx.beginPath(); ctx.moveTo(x + 22, y + 14); ctx.lineTo(x + 172, y + 14); ctx.lineTo(x + 162, y + 44); ctx.lineTo(x + 22, y + 44); ctx.closePath(); ctx.fill();
     ctx.textAlign = 'left';
-    ctx.fillStyle = C.hudDim;
-    ctx.font = font(12, 800);
-    ctx.fillText('MATCH RESULT', x + 28, y + 36);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = bfont(20, 900);
+    ctx.fillText('FULL TIME', x + 34, y + 37);
     ctx.fillStyle = winner.color;
-    ctx.font = font(30, 900);
+    ctx.font = bfont(34, 900);
     // Two players on one keyboard are P1 and P2; otherwise player 0 is you.
     const shared = game.settings.opponent === 'human' && !game.online;
     const won = wi === 0 && !shared ? (game.doubles ? 'You and your partner win!' : 'You win!') : `${winner.name} win${game.doubles ? '' : 's'}`;
@@ -706,12 +710,12 @@ export class Hud {
     const tx = x + 28, ty = y + (rated ? 112 : 96);
     [p1, p2].forEach((p, i) => {
       const ry = ty + i * 40;
-      panel(ctx, tx, ry, pw - 56, 34, 8, 'rgba(255,255,255,0.04)');
+      panel(ctx, tx, ry, pw - 56, 34, 2, i === wi ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)');
       ctx.fillStyle = p.color;
       ctx.fillRect(tx, ry, 5, 34);
       ctx.textAlign = 'left';
       ctx.fillStyle = C.hud;
-      ctx.font = font(17, i === wi ? 800 : 600);
+      ctx.font = bfont(20, i === wi ? 900 : 700);
       ctx.fillText(p.name, tx + 18, ry + 23);
       m.history.forEach((g, gi) => {
         ctx.textAlign = 'center';
@@ -721,8 +725,8 @@ export class Hud {
       });
       ctx.textAlign = 'right';
       ctx.fillStyle = i === wi ? winner.color : C.hudDim;
-      ctx.font = font(22, 900);
-      ctx.fillText(String(m.games[i]), tx + pw - 76, ry + 25);
+      ctx.font = bfont(26, 900);
+      ctx.fillText(String(m.games[i]), tx + pw - 76, ry + 26);
     });
 
     // Stats comparison

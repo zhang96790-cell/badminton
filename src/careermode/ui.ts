@@ -7,12 +7,12 @@ import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
 import type { WalkOnInfo, WalkOnStep } from '../walkon';
 import type { MatchSetup } from '../setup';
 import { Match } from '../rules';
-import { eventLook, kitBrandOf } from '../brands';
+import { eventLook, kitBrandOf, withSponsor } from '../brands';
 import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, money, myRank, newCareer,
   nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
   type NextMatch,
 } from './state';
@@ -430,11 +430,21 @@ export function initCareer(d: CareerDeps) {
   }
   /** Sponsors, the shop and the loan (in the Money tab). */
   function teamHtml() {
-    const offers = sponsorUpgrade(s!, myRank(s!, W()));
+    const offers = sponsorUpgrade(s!, myRank(s!, W()), d.appVersion);
     const sp = s!.sponsor;
+    /** 4.2: what a deal gives: money, its perk, a home bonus and the event it wants you at. */
+    const terms = (o: NonNullable<typeof sp>) => [
+      `${money(o.weekly)} a week`, `${money(o.bonus)} a title`,
+      o.perk ? `${perkText(o.perk)}${o.winBonus ? ` (${money(o.winBonus)})` : ''}` : 'No perk: pays the most',
+      o.home ? `Home brand: double pay in weeks you play in ${countryName(o.home)}` : '',
+      o.request ? `Wants you at the ${o.request.name}: ${money(o.request.enter)} to play, ${money(o.request.deep)} for the quarter-finals` : '',
+    ].filter(Boolean);
+    const req = sp?.request;
     return `<section class="c-hero"><p class="c-kicker">Sponsor</p>
-      ${sp ? `<p class="c-lead"><b>${e(sp.name)}</b> pays you ${money(sp.weekly)} a week and ${money(sp.bonus)} for every title, until the end of ${sp.year}.</p>` : '<p class="c-lead">No sponsor yet. Sponsors come to you once you’re in the world top 200, and better deals open as you climb.</p>'}
-      ${offers ? `<p class="c-lead">${sp ? 'A better deal is on offer:' : 'Sponsors want you:'}</p><div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${i}"><b>${e(o.name)}</b><span>${money(o.weekly)} a week</span><span>${money(o.bonus)} a title</span><span>Until the end of ${o.year}</span></button>`).join('')}</div>` : ''}
+      ${sp ? `<p class="c-lead"><b>${e(sp.name)}</b> until the end of ${sp.year}: ${terms(sp).map(e).join(' · ')}.</p>
+        ${req ? `<p class="c-lead small">Their event: ${e(req.name)}. ${req.paid ? 'Done: quarter-finals bonus paid.' : req.entered ? 'Entered (bonus paid). Reach the quarter-finals for the big one.' : 'Not played yet.'}</p>` : ''}`
+        : '<p class="c-lead">No sponsor yet. Sponsors come to you once you’re in the world top 200, and better deals open as you climb.</p>'}
+      ${offers ? `<p class="c-lead">${sp ? 'A better deal is on offer:' : 'Sponsors want you:'}</p><div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${i}"><b>${e(o.name)}</b>${terms(o).map((t) => `<span>${e(t)}</span>`).join('')}</button>`).join('')}</div>` : ''}
       ${shopHtml()}
       <h3 class="c-title small">Tour loan</h3>${loanHtml()}</section>`;
   }
@@ -793,7 +803,7 @@ export function initCareer(d: CareerDeps) {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
         player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy), shopModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id))] },
-        restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country),
+        restrictions: {}, resume, look: withSponsor(eventLook(x.id, x.tier, x.host_country), s!.sponsor?.brandId),
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
       settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },
@@ -908,7 +918,7 @@ export function initCareer(d: CareerDeps) {
     { target: '.c-listbtn', title: 'All tournaments', text: 'The full calendar as a list: dates, level, players, host, prize and whether you can enter.' },
     { target: '[data-ctab="ranking"]', title: 'World ranking', text: 'Your best 10 results in the last 52 weeks count. It decides your seeding and which events you can enter.' },
     { target: '[data-ctab="squad"]', title: 'Your squad', text: 'Everyone starts as a Common player with no signature ability. Finish in the top 3 of a Super 100, 300 or 500 (or win any bigger event) to recruit a player from its draw. Better places and bigger events give better odds of rarer players.' },
-    { target: '[data-ctab="ledger"]', title: 'Money, sponsors and staff', text: 'Every cost and prize. Sponsors pay you weekly once you’re in the top 200, and you can hire a coach for weekly wages.' },
+    { target: '[data-ctab="ledger"]', title: 'Money, sponsors and the shop', text: 'Every cost and prize, your sponsor (real brands: some pay the most, some give perks like cheaper flights, home brands pay double at home events), and the shop: coaches, staff, training camps, houses, flights and hotels.' },
     { target: '[data-ctab="daily"]', title: 'Daily challenge', text: 'One challenge a day for everyone, against a strong player with a handicap or two. Win it for rating points.' },
     { target: '[data-ctab="trophies"]', title: 'Trophies', text: 'Your titles, medals and milestones. After your first season you can retire into the Hall of Fame and start again.' },
     { target: '[data-ctab="settings"]', title: 'Starting again', text: 'Settings has Restart career. Note: in 3.3.1 everyone’s career was reset, so if an old career is gone, that’s why. Players you recruited are still on your account.' },
@@ -1009,7 +1019,7 @@ export function initCareer(d: CareerDeps) {
     const stf = at('[data-staff]')?.dataset.staff as StaffRole | undefined;
     if (stf) { setStaff(s, stf, !s.staff?.[stf]); await save(); render(); return; }
     const spn = at('[data-sponsor]')?.dataset.sponsor;
-    if (spn !== undefined) { const offers = sponsorUpgrade(s, myRank(s, W())); if (offers) { s.sponsor = offers[Number(spn)]; d.toast(`Signed with ${s.sponsor.name}`, `${money(s.sponsor.weekly)} a week and ${money(s.sponsor.bonus)} a title.`); await save(); render(); } return; }
+    if (spn !== undefined) { const offers = sponsorUpgrade(s, myRank(s, W()), d.appVersion); if (offers) { s.sponsor = offers[Number(spn)]; d.toast(`Signed with ${s.sponsor.name}`, `${money(s.sponsor.weekly)} a week and ${money(s.sponsor.bonus)} a title.`); await save(); render(); } return; }
     if (at('[data-retire]')) {
       if (!confirm('Retire? This career goes into the Hall of Fame and you start a new one. Players you recruited stay on your account.')) return;
       retiredHall = retire(s); s = null; render(); return;

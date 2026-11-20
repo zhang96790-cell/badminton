@@ -87,6 +87,23 @@ export const SPONSOR_BRANDS: Brand[] = [
 
 export const ALL_BRANDS = [...KIT_BRANDS, ...SHUTTLE_BRANDS, ...SPONSOR_BRANDS];
 const BY_ID = new Map(ALL_BRANDS.map((x) => [x.id, x]));
+export const brandById = (id: string | undefined) => (id ? BY_ID.get(id) : undefined);
+
+/** 4.2: what a career sponsor gives besides money (airlines, hotels, banks, drinks), or nothing (they pay the most). */
+export type SponsorPerk = 'flights' | 'hotels' | 'loans' | 'wins';
+const PERKS: Record<SponsorPerk, string[]> = {
+  flights: ['emiratas', 'cathaypacifec', 'skylineair', 'singapura', 'airasio', 'qantaz'],
+  hotels: ['marriot', 'hillton', 'coralbay', 'bookly'],
+  loans: ['hsbk', 'maybanc', 'harbourline', 'krungthai', 'dbx', 'goldenlion'],
+  wins: ['pocara', 'avian', 'pepsi', 'hundredminus', 'mylo', 'beanstreet', 'gatorush', 'singha', 'amula'],
+};
+export const perkOf = (brandId: string): SponsorPerk | null => (Object.keys(PERKS) as SponsorPerk[]).find((k) => PERKS[k].includes(brandId)) ?? null;
+export const PERK_TEXT: Record<SponsorPerk, string> = {
+  flights: 'Flights half price',
+  hotels: 'Hotels paid for',
+  loans: 'Cheaper tour loans (a third of the fee, no yearly interest)',
+  wins: 'A bonus for every match you win',
+};
 
 /** Title sponsors: their name goes in front of the tournament's (a brand id, or one of the two image sponsors). */
 const TITLE_SPONSOR: Record<string, string> = {
@@ -201,6 +218,14 @@ export function eventLook(id: string, tier: string, host?: string): EventLook {
     court: pick(courts, k), scoreboard: pick(styles, k >>> 5), poweredBy, boards, shuttle,
     blazer: pick(blazers, k >>> 7), accent: pick(accents, k >>> 9), sponsors, ...cr,
   };
+}
+
+/** 4.2: your sponsor's boards go up around the court in your career matches. */
+export function withSponsor(look: EventLook, brandId: string | undefined): EventLook {
+  const brand = brandById(brandId);
+  if (!brand || look.sponsors.includes(brand)) return look;
+  const sponsors = [brand, ...look.sponsors].slice(0, 6);
+  return { ...look, sponsors, boards: boardsFor(sponsors) };
 }
 
 /** Exhibition matches (CPU, practice, online): the usual green court and its own mix of boards. */

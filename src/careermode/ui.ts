@@ -7,7 +7,7 @@ import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
 import type { WalkOnInfo, WalkOnStep } from '../walkon';
 import type { MatchSetup } from '../setup';
 import { Match } from '../rules';
-import { eventLook, kitBrandOf, withSponsor } from '../brands';
+import { eventLook, kitBrandOf } from '../brands';
 import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
@@ -803,7 +803,7 @@ export function initCareer(d: CareerDeps) {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
         player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy), shopModifier(s!)], abilities: true },
         opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id))] },
-        restrictions: {}, resume, look: withSponsor(eventLook(x.id, x.tier, x.host_country), s!.sponsor?.brandId),
+        restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country), // 4.2.1: the boards are the event's own (local) sponsors, never yours
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
       settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },

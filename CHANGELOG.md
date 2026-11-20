@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.2.1: Court boards stay local (21 Nov 2026)
+
+- Your sponsor’s boards no longer go up at your matches: the boards around the court are always the tournament’s own sponsors, including its local brands.
+
 ## 4.2: Real sponsors and the broadcast finish (20 Nov 2026)
 
 - Career sponsors are now real brands from the game. Up to three offers at a time: a big company that pays the most, a brand with a perk that pays less (airlines: flights half price; hotels: hotels paid; banks: much cheaper tour loans; drinks: a bonus for every match you win), and a brand from your own country that pays double in weeks you play an event at home.

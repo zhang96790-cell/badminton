@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.2.1',
+    title: 'Court boards stay local',
+    date: '21 Nov 2026',
+    changes: [
+      "Your sponsor’s boards no longer go up at your matches: the boards around the court are always the tournament’s own sponsors, including its local brands.",
+    ],
+  },
+  {
     version: '4.2',
     title: 'Real sponsors and the broadcast finish',
     date: '20 Nov 2026',

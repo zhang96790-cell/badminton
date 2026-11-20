@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.19',
+    title: 'Qualifying rounds and tour loans',
+    date: '20 Nov 2026',
+    changes: [
+      "Qualifying rounds replace the Local Club Open. Can’t afford an event? You can still enter it through qualifying, for free: two one-game matches against lower-level players. Win both and you’re in the main draw, with your travel and hotel paid by the event. Lose and you still get some ranking points (a quarter of the first-round points in round 1, half in round 2).",
+      "Tour loans. Borrow $1,500 to $25,000 to pay your own way (the better your best world ranking, the more you can borrow). You pay back 15% more, 40% of every prize goes to it automatically, and you can pay it off any time in the Money tab. Anything still owed grows 10% each new season. One loan at a time.",
+      "You’re no longer sent to the Local Club Open when you’re low on money.",
+    ],
+  },
+  {
     version: '3.18',
     title: 'New home page, faster Impossible smashes',
     date: '20 Nov 2026',

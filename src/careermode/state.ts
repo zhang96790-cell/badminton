@@ -30,6 +30,10 @@ export interface Active {
   bronze?: boolean;
   /** A match left part-way (Save and leave): its score, so it carries on from any computer. */
   live?: LiveMatch;
+  /** 3.19: going through qualifying: the round you're on and your two opponents. Gone once you're through. */
+  qual?: { stage: 1 | 2; opps: [string, string] };
+  /** 3.19: came through qualifying: the event pays your travel and hotel. */
+  covered?: boolean;
 }
 
 /** A career match in progress: which match, and the score at the last serve (Match.snapshot()). */
@@ -67,6 +71,8 @@ export interface CareerState {
   sponsorRescaled?: boolean;
   sponsor?: Sponsor | null;
   sponsorOffers?: Sponsor[] | null;
+  /** 3.19: a tour loan you're paying back. */
+  loan?: { owed: number; borrowed: number } | null;
   /** Milestones reached (ids), for the trophy cabinet. */
   milestones?: string[];
   /** Careers you've retired (kept when you start again). */
@@ -162,12 +168,11 @@ export const hotelRecover = (ev: TourEvent, tier: HotelTier) => (ev.tier === 'CL
 /** Energy you'd use going all the way (a guide for the tournament screen). */
 export const roundEnergy = (s: CareerState, ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.energyPerRound : CFG.energyPerRound) * staminaFactor(characterById(s.characterId));
 
-export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean; why?: string } {
+export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean; why?: string; qual?: boolean } {
   if (s.current) return { ok: false, why: 'Finish your current tournament first.' };
   if (s.injury && s.injury.weeks > 0) return { ok: false, why: `You’re injured: ${s.injury.weeks} more week${s.injury.weeks === 1 ? '' : 's'} of rest.` };
   if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
   if (CFG.closedTiers.includes(ev.tier)) return { ok: false, why: 'Super 500 events and above are locked for now. They open once more players are added.' };
-  if (s.money < CFG.tourMinMoney) return { ok: false, why: `You need at least ${money(CFG.tourMinMoney)} to go on tour. Win it back at the Local Club Open.` };
   const gate = (CFG.gates as Record<string, { finalIn?: string; rankAtMost: number } | undefined>)[ev.tier];
   if (gate && !unlocked(s, ev.tier)) {
     const r = myRank(s, w);
@@ -178,9 +183,34 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
         : `The ${name} need a world ranking of ${gate.rankAtMost} or better.` };
     }
   }
-  const cost = travelCost(s, ev) + hotelCost(s, ev);
-  if (s.money < cost) return { ok: false, why: `You need ${money(cost)} for travel and your first hotel night.` };
+  // 3.19: short of money? You can still play it: through qualifying (free, and the event pays if you get through).
+  if (needsQualifying(s, ev)) return { ok: true, qual: true, why: `You can’t afford the ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, so you’d go through qualifying: win two matches and the event pays your travel and hotel.` };
   return { ok: true };
+}
+
+/** 3.19: not enough money to go on tour to this event (or below the tour minimum): qualifying instead. */
+export const needsQualifying = (s: CareerState, ev: TourEvent) =>
+  ev.tier !== 'CLUB' && (s.money < CFG.tourMinMoney || s.money < travelCost(s, ev) + hotelCost(s, ev));
+
+// ── 3.19: tour loans ──
+/** The most you can borrow, by your best world ranking. */
+export const loanLimit = (s: CareerState) => (CFG.loan.limitByRank.find((b) => (s.bestRank ?? 999) <= b.rank) ?? CFG.loan.limitByRank[CFG.loan.limitByRank.length - 1]).max;
+export const loanOptions = (s: CareerState) => (s.loan ? [] : CFG.loan.amounts.filter((a) => a <= loanLimit(s)));
+export const loanOwed = (amount: number) => Math.round(amount * (1 + CFG.loan.fee));
+export function takeLoan(s: CareerState, amount: number): boolean {
+  if (s.loan || !loanOptions(s).includes(amount)) return false;
+  s.loan = { owed: loanOwed(amount), borrowed: amount };
+  book(s, 'Tour loan', amount);
+  return true;
+}
+/** Pay back as much as you can (or all of it). */
+export function repayLoan(s: CareerState, amount?: number) {
+  if (!s.loan) return;
+  const pay = Math.max(0, Math.min(s.loan.owed, Math.max(0, s.money), amount ?? Infinity));
+  if (!pay) return;
+  book(s, 'Loan repayment', -pay);
+  s.loan.owed -= pay;
+  if (s.loan.owed <= 0) s.loan = null;
 }
 
 /** Levels you've opened by reaching a final at the level below (Super 300 from 3.0 saves too). */
@@ -192,14 +222,8 @@ export const eventsThisWeek = (s: CareerState, appVersion: string) =>
 /** This week's event, if there is one (the first enterable of them). */
 export const eventThisWeek = (s: CareerState, appVersion: string) => eventsThisWeek(s, appVersion)[0] ?? null;
 
-/** Nothing you can afford for the rest of the season: offer the free Local Club Open. */
-export function softLocked(s: CareerState, w: World): boolean {
-  if (s.current) return false;
-  if (s.money < CFG.tourMinMoney) return true; // 3.9.1: low on money, Club Opens only
-  const upcoming = w.cal.filter((e) => e.week >= s.week);
-  const cheapest = Math.min(...(upcoming.length ? upcoming : w.cal).map((e) => travelCost(s, e, 'economy') + hotelCost(s, e, 'hostel')));
-  return s.money < cheapest;
-}
+/** 3.19: the Local Club Open is no longer forced on you when money runs out (qualifying and loans replace it). */
+export function softLocked(_s: CareerState, _w: World): boolean { return false; }
 
 export function clubEvent(s: CareerState): TourEvent {
   return { id: `club_open_${s.year}_${s.week}`, name: 'Local Club Open', tier: 'CLUB', host_country: s.currentLocation, city: null, order: 0, week: s.week, draw_size: 16, prize_pool_usd: 0, sponsor: null, released_in: '3.0', enabled: true };
@@ -208,11 +232,23 @@ export function clubEvent(s: CareerState): TourEvent {
 export const findEvent = (s: CareerState, id: string, appVersion: string): TourEvent | null =>
   id.startsWith('club_open_') ? clubEvent(s) : calendar(appVersion, s.year).find((e) => e.id === id) ?? null;
 
-export function enter(s: CareerState, ev: TourEvent) {
-  const travel = travelCost(s, ev);
+export function enter(s: CareerState, ev: TourEvent, w?: World) {
+  // 3.19: can't afford it: qualifying (free; the event pays travel and hotel if you get through).
+  const qual = !!w && needsQualifying(s, ev);
+  const travel = qual ? 0 : travelCost(s, ev);
   const cls = travelClassOf(s);
   if (travel) book(s, `Travel to ${ev.name}`, -travel);
-  s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true };
+  s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true,
+    ...(qual ? { qual: { stage: 1 as const, opps: qualifyingOpponents(s, w!, ev) }, covered: true } : {}) };
+}
+
+/** Two qualifying opponents: lower-level players for this event (drawn like a Super 100 field). */
+function qualifyingOpponents(s: CareerState, w: World, ev: TourEvent): [string, string] {
+  const p = w.plan({ ...ev, id: `${ev.id}~qual`, tier: 'S100', draw_size: 16 }, s.year, s.characterId);
+  const pool = p.slots.filter((x) => x !== YOU && x !== 'bye');
+  const r = rng(hash(s.rngSeed, s.year, ev.id, 'qual'));
+  const a = pool.splice(Math.floor(r() * pool.length), 1)[0], b = pool[Math.floor(r() * pool.length)];
+  return [a, b];
 }
 
 /**
@@ -246,12 +282,17 @@ export function currentPlan(s: CareerState, w: World, ev: TourEvent) {
   return w.plan(ev.tier === 'CLUB' ? { ...ev, tier: 'S100' } : ev, s.year, s.current!.as);
 }
 
-export interface NextMatch { opponent: Character; opponentId: string; round: Round; level: Level; games: 1 | 3; points: 15 | 21; bronze?: boolean }
+export interface NextMatch { opponent: Character; opponentId: string; round: Round; level: Level; games: 1 | 3; points: 15 | 21; bronze?: boolean; /** 3.19: a qualifying round (1 or 2). */ qual?: 1 | 2 }
 
 /** Who you play next: the bracket with you winning so far. */
 export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | null {
   const a = s.current;
   if (!a) return null;
+  if (a.qual) {
+    const q = characterById(a.qual.opps[a.qual.stage - 1]);
+    const level = cpuLevelFor(q.rarity, hash(s.rngSeed, s.year, ev.id, 'qual', a.qual.stage, 'level'), ev.tier);
+    return { opponent: q, opponentId: q.id, round: a.round, level, games: 1, points: 15, qual: a.qual.stage };
+  }
   const p = currentPlan(s, w, ev);
   const order = roundsFor(p.slots.length);
   const ri = order.indexOf(a.round);
@@ -274,12 +315,24 @@ export function nextMatch(s: CareerState, w: World, ev: TourEvent): NextMatch | 
 
 /** A match finished: pay the hotel, use energy, and move on (or finish the event). */
 
-export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolean, games: [number, number][], opponentId: string): { finished: boolean; result?: PlayerResult; injured?: number } {
+export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolean, games: [number, number][], opponentId: string): { finished: boolean; result?: PlayerResult; injured?: number; qualified?: boolean } {
   const a = s.current!;
+  // 3.19: qualifying. Win both and you're in the main draw; lose and you're out (with a few ranking points).
+  if (a.qual) {
+    const stage = a.qual.stage;
+    if (won && stage === 1) { a.qual.stage = 2; return { finished: false }; }
+    if (won) { delete a.qual; skipByes(s, w, ev); return { finished: false, qualified: true }; }
+    const pts = Math.round(pointsFor(ev.tier, a.round, ev.draw_size) * CFG.qualifying.lossPoints[stage - 1]);
+    const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: a.round, points: pts, prize: 0, costs: 0, opponents: [], scores: [], as: a.as, qual: stage };
+    s.history.push(res);
+    s.currentLocation = ev.host_country;
+    s.current = null;
+    return { finished: true, result: res };
+  }
   a.opponents.push(opponentId);
   a.scores.push(games);
   const tier = a.hotelTier ?? hotelOf(s);
-  if (ev.tier !== 'CLUB') { const c = hotelCost(s, ev, tier); a.hotel += c; book(s, `Hotel: ${CFG.hotels[tier].label} (${ev.name})`, -c); }
+  if (ev.tier !== 'CLUB' && !a.covered) { const c = hotelCost(s, ev, tier); a.hotel += c; book(s, `Hotel: ${CFG.hotels[tier].label} (${ev.name})`, -c); }
   // 3.9: no energy and no injuries.
   // Lose a semi-final and you play for 3rd place.
   if (a.bronze) return { finished: true, result: finish(s, w, ev, 'SF', false, won ? 3 : 4) };
@@ -295,6 +348,8 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
   // 3rd place pays a little more than 4th (the semi-final prize plus CFG.bronzeBonus).
   const prize = noReward ? 0 : Math.round(prizeFor(ev, reached) * (place === 3 ? 1 + CFG.bronzeBonus : 1));
   if (prize) book(s, `Prize money: ${ev.name}`, prize);
+  // 3.19: part of every prize pays off a loan.
+  if (prize && s.loan) repayLoan(s, Math.ceil(prize * CFG.loan.repayShare));
   const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, scores: a.scores, as: a.as, ...(place ? { place } : {}) };
   s.history.push(res);
   if (ev.tier !== 'CLUB') s.currentLocation = ev.host_country;
@@ -320,6 +375,13 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
 
 /** Retire from the event you're in (counts as losing your next round, with no prize for it). */
 export function withdraw(s: CareerState, w: World, ev: TourEvent): PlayerResult {
+  // 3.19: pulling out of qualifying: out in that qualifying round, nothing earned.
+  const q = s.current!.qual;
+  if (q) {
+    const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: s.current!.round, points: 0, prize: 0, costs: 0, opponents: [], scores: [], as: s.current!.as, qual: q.stage };
+    s.history.push(res); s.current = null;
+    return res;
+  }
   // Withdrawing before playing anyone earns nothing; later, you keep what the round you leave in pays.
   return finish(s, w, ev, s.current!.round, !s.current!.opponents.length, s.current!.bronze ? 4 : undefined);
 }
@@ -340,6 +402,8 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
     s.recap = s.year; s.year++; s.season = s.year; s.week = 1;
     s.energy = 100; s.injury = null;
     if (s.sponsor && s.sponsor.year < s.year) s.sponsor = null;
+    // 3.19: a loan still owed grows a little each new season.
+    if (s.loan) s.loan.owed = Math.round(s.loan.owed * (1 + CFG.loan.seasonInterest));
   }
   else s.week++;
 }

@@ -93,6 +93,19 @@ export const CAREER_CFG = {
   tierCost: { S100: 1, S300: 1.15, S500: 1.35, S750: 1.65, S1000: 2, WTF: 2.2, WORLDS: 2, OLYMPICS: 2.2 } as Record<string, number>,
   /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
   tourMinMoney: 1500,
+  /**
+   * 3.19: can't afford an event? Go through qualifying instead: two one-game matches against lower-level
+   * players, free, with travel and hotel paid by the event if you get through. Losing still earns a share of the
+   * first-round ranking points (round 1 loss, round 2 loss).
+   */
+  qualifying: { rounds: 2, lossPoints: [0.25, 0.5] as [number, number] },
+  /**
+   * 3.19: a tour loan. Borrow once at a time; you owe it back plus the fee. A share of every prize goes to it
+   * automatically, you can pay it off any time, and anything still owed grows by seasonInterest each new season.
+   * How much you can borrow depends on your best world ranking.
+   */
+  loan: { fee: 0.15, repayShare: 0.4, seasonInterest: 0.1, amounts: [1500, 3000, 6000, 12000, 25000],
+    limitByRank: [{ rank: 20, max: 25000 }, { rank: 50, max: 12000 }, { rank: 100, max: 6000 }, { rank: 999, max: 3000 }] },
 
   // ── Entry ──
   /**

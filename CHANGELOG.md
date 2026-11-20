@@ -5,6 +5,12 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.19: Qualifying rounds and tour loans (20 Nov 2026)
+
+- Qualifying rounds replace the Local Club Open. Can’t afford an event? You can still enter it through qualifying, for free: two one-game matches against lower-level players. Win both and you’re in the main draw, with your travel and hotel paid by the event. Lose and you still get some ranking points (a quarter of the first-round points in round 1, half in round 2).
+- Tour loans. Borrow $1,500 to $25,000 to pay your own way (the better your best world ranking, the more you can borrow). You pay back 15% more, 40% of every prize goes to it automatically, and you can pay it off any time in the Money tab. Anything still owed grows 10% each new season. One loan at a time.
+- You’re no longer sent to the Local Club Open when you’re low on money.
+
 ## 3.18: New home page, faster Impossible smashes (20 Nov 2026)
 
 - New home page. Career and Ranked are now the two big panels at the top. Career shows your best world ranking, title points and record. Ranked shows your rating, your tier and how far you are from the next one. A match against the CPU is a smaller row below, and the Tutorial and Drills sit along the bottom.

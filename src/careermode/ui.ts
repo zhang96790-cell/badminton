@@ -11,7 +11,7 @@ import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
@@ -169,7 +169,7 @@ export function initCareer(d: CareerDeps) {
   function seasonStrip() {
     const marks = W().cal.map((v) => {
       const h = s!.history.find((x) => x.year === s!.year && x.tournamentId === v.id);
-      const res = h ? (h.round === 'W' ? '🏆' : h.round === 'F' ? 'F' : h.round === 'SF' ? 'SF' : h.round === 'QF' ? 'QF' : '·') : '';
+      const res = h ? (h.qual ? 'Q' : h.round === 'W' ? '🏆' : h.round === 'F' ? 'F' : h.round === 'SF' ? 'SF' : h.round === 'QF' ? 'QF' : '·') : '';
       const now = v.week === s!.week, past = v.week < s!.week;
       return `<button class="c-mark ${v.tier.toLowerCase()}${now ? ' now' : ''}${past ? ' past' : ''}" style="left:${((v.week - 1) / 51) * 100}%" data-detail="${v.id}" title="${e(v.name)} · week ${v.week}${h ? ` · you: ${resultName(h)}` : ''}"><i></i>${res ? `<em>${res}</em>` : ''}</button>`;
     }).join('');
@@ -178,6 +178,13 @@ export function initCareer(d: CareerDeps) {
         <button class="c-listbtn" data-list>All tournaments</button></div></div>`;
   }
 
+  /** 3.19: a short offer of a tour loan, under an event you can only reach through qualifying. */
+  function loanLine() {
+    const opts = loanOptions(s!);
+    if (s!.loan) return `<p class="c-lead small">You owe ${money(s!.loan.owed)} on your tour loan.</p>`;
+    if (!opts.length) return '';
+    return `<p class="c-lead small">Or take a tour loan and pay your own way: ${opts.map((a) => `<button class="linkish" data-loan="${a}">borrow ${money(a)}</button>`).join(' · ')} (you pay back ${Math.round(CFG.loan.fee * 100)}% more).</p>`;
+  }
   /** An event you're allowed into (you may still need to save up for it). */
   const reachable = (v: TourEvent) => { const c = canEnter(s!, v, W()); return c.ok || !!c.why?.startsWith('You need'); };
   /** Two events in one week: which one the hub shows. */
@@ -194,6 +201,13 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">Injured</p><h3 class="c-title">${s!.injury.weeks} week${s!.injury.weeks === 1 ? '' : 's'} out</h3>
         <p class="c-lead">You can’t enter events until it heals; each week counts down.</p>
         <div class="c-cta"><button class="walk" data-week="next">Next week ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
+    } else if (s!.current?.qual) {
+      // 3.19: qualifying.
+      const ev2 = ev()!, nm = nextMatch(s!, W(), ev2)!;
+      hero = `<p class="c-kicker">Qualifying · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]}</p><h3 class="c-title">Qualifying round ${nm.qual} of 2</h3>
+        ${versus(nm.opponent)}
+        <div class="c-facts">${fact('Format', 'One game to 15')}${fact('Win both', 'You’re in the main draw')}${fact('Travel and hotel', 'Paid by the event')}</div>
+        <div class="c-cta"><button class="walk" data-playnext>Play qualifying round ${nm.qual} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-withdraw>Withdraw</button></div>`;
     } else if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
       const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
@@ -214,7 +228,8 @@ export function initCareer(d: CareerDeps) {
         <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players</p>
         ${also.length ? `<p class="c-also">Also this week (you can play one): ${also.map((v) => `<button class="linkish" data-pickev="${v.id}">${e(v.name)} · ${TIER_LABEL[v.tier]}</button>`).join(' ')}</p>` : ''}
         <div class="c-facts">${fact('Win it', `${money(prizeFor(x, 'W'))} · ${pointsFor(x.tier, 'W', x.draw_size)} pts`)}${fact(`Travel (${travelBand(s!.currentLocation, x.host_country)})`, money(travelCost(s!, x)))}${fact('Hotel', `${money(hotelCost(s!, x))} a night`)}</div>
-        <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
+        ${c.qual ? `<p class="c-lead">${e(c.why ?? '')}</p>${loanLine()}` : ''}
+        <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">${c.qual ? 'Enter qualifying · free' : `Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))}`} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
           <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>${recover()}`;
     } else if (next) {
       const weeks = next.week - s!.week;
@@ -293,7 +308,7 @@ export function initCareer(d: CareerDeps) {
       const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
       const c = canEnter(s!, v, W());
       const status = h ? `You: ${resultName(h)}` : v.week < s!.week ? 'Done' : s!.current?.eventId === v.id ? 'Playing now'
-        : c.ok ? (v.week === s!.week ? 'Enter now' : 'Open') : c.why?.startsWith('You need') ? 'Open (save up)' : 'Locked';
+        : c.ok ? (c.qual ? 'Qualifying' : v.week === s!.week ? 'Enter now' : 'Open') : c.why?.startsWith('You need') ? 'Open (save up)' : 'Locked';
       return `<tr class="${v.week === s!.week ? 'me' : ''}${v.week < s!.week && !h ? ' past' : ''}" data-detail="${v.id}" title="${e(c.ok || h ? '' : c.why ?? '')}">
         <td>${e(v.dates ?? `week ${v.week}`)}</td><td><b>${e(v.name)}</b></td><td><span class="c-tier ${v.tier.toLowerCase()}">${TIER_LABEL[v.tier]}</span></td>
         <td>${v.draw_size}</td><td>${e(v.city ? `${v.city}, ` : '')}${e(countryName(v.host_country))}</td><td>${money(prizeFor(v, 'W'))}</td><td>${status}</td></tr>`;
@@ -386,6 +401,14 @@ export function initCareer(d: CareerDeps) {
       <div class="c-squad">${mine.map((c) => `<button class="${c.id === s!.characterId ? 'on' : ''}" data-pick="${c.id}" ${s!.current ? 'disabled' : ''}>${card(c, `<span class="sub">career strength ${c.career_strength}${c.abilities.length ? ` · ${c.abilities.map((ab) => `★ ${e(ab.name)}`).join(', ')}` : ''}</span>`)}</button>`).join('') || '<p>No players yet.</p>'}</div></div>`;
   }
 
+  /** 3.19: borrow, see what you owe, pay it back. */
+  function loanHtml() {
+    const L = CFG.loan, ln = s!.loan;
+    if (ln) return `<p class="c-lead">You owe <b>${money(ln.owed)}</b> (you borrowed ${money(ln.borrowed)}). ${Math.round(L.repayShare * 100)}% of every prize goes to it, and what’s left grows ${Math.round(L.seasonInterest * 100)}% each new season.</p>
+      <div class="c-cta"><button class="edit" data-repay ${s!.money > 0 ? '' : 'disabled'}>Pay ${money(Math.min(ln.owed, Math.max(0, s!.money)))} now</button></div>`;
+    return `<p class="c-lead">Borrow to pay your own way on tour. You pay back ${Math.round(L.fee * 100)}% more, ${Math.round(L.repayShare * 100)}% of every prize goes to it, and you can pay it off any time. The better your best world ranking, the more you can borrow (up to ${money(loanLimit(s!))} for you now). One loan at a time.</p>
+      <div class="c-opts">${loanOptions(s!).map((a) => `<button class="c-opt" data-loan="${a}"><b>Borrow ${money(a)}</b><span>Pay back ${money(loanOwed(a))}</span></button>`).join('')}</div>`;
+  }
   /** Sponsors and staff (in the Money tab). */
   function teamHtml() {
     const offers = sponsorUpgrade(s!, myRank(s!, W()));
@@ -397,7 +420,8 @@ export function initCareer(d: CareerDeps) {
     return `<section class="c-hero"><p class="c-kicker">Sponsor</p>
       ${sp ? `<p class="c-lead"><b>${e(sp.name)}</b> pays you ${money(sp.weekly)} a week and ${money(sp.bonus)} for every title, until the end of ${sp.year}.</p>` : '<p class="c-lead">No sponsor yet. Sponsors come to you once you’re in the world top 200, and better deals open as you climb.</p>'}
       ${offers ? `<p class="c-lead">${sp ? 'A better deal is on offer:' : 'Sponsors want you:'}</p><div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${i}"><b>${e(o.name)}</b><span>${money(o.weekly)} a week</span><span>${money(o.bonus)} a title</span><span>Until the end of ${o.year}</span></button>`).join('')}</div>` : ''}
-      <h3 class="c-title small">Your team</h3><div class="c-opts">${staff}</div></section>`;
+      <h3 class="c-title small">Your team</h3><div class="c-opts">${staff}</div>
+      <h3 class="c-title small">Tour loan</h3>${loanHtml()}</section>`;
   }
 
   function renderTrophies() {
@@ -620,8 +644,8 @@ export function initCareer(d: CareerDeps) {
     return true;
   }
 
-  const roundName = (nm: { round: Round; bronze?: boolean }) => (nm.bronze ? 'Bronze medal match' : ROUND_LABEL[nm.round]);
-  const resultName = (h: { round: Round; place?: 3 | 4 }) => (h.place === 3 ? '3rd place' : h.place === 4 ? '4th place' : ROUND_LABEL[h.round]);
+  const roundName = (nm: { round: Round; bronze?: boolean; qual?: 1 | 2 }) => (nm.qual ? `Qualifying round ${nm.qual}` : nm.bronze ? 'Bronze medal match' : ROUND_LABEL[nm.round]);
+  const resultName = (h: { round: Round; place?: 3 | 4; qual?: 1 | 2 }) => (h.qual ? `Qualifying round ${h.qual}` : h.place === 3 ? '3rd place' : h.place === 4 ? '4th place' : ROUND_LABEL[h.round]);
 
   async function playNext(resume?: string) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
@@ -672,6 +696,13 @@ export function initCareer(d: CareerDeps) {
     if (r.injured) d.toast(`Injured: out for ${r.injured} weeks`, 'You played too tired. Rest up: you can’t enter events until it heals.');
     for (const m of newMilestones(s!)) d.toast(`Milestone: ${m.label}`, 'See it in Trophies.');
     await save();
+    if (r.qualified) d.toast(`Through to the ${x.name}!`, 'You came through qualifying. The event pays your travel and hotel from here.');
+    else if (!r.finished && s!.current?.qual) d.toast('Qualifying round 1 won', 'One more win and you’re in the main draw.');
+    if (r.finished && r.result?.qual) {
+      d.toast(`Out in qualifying at the ${x.name}`, `${r.result.points} ranking points${after ? ` · world ranking ${after}` : ''}`);
+      render();
+      return;
+    }
     if (r.finished && r.result) {
       d.toast(r.result.round === 'W' ? `You won the ${x.name}!` : r.result.place ? `${r.result.place === 3 ? '3rd' : '4th'} place at the ${x.name}` : `Out in the ${ROUND_LABEL[r.result.round].toLowerCase()}`, `${r.result.points} ranking points · ${money(r.result.prize)} prize${after ? ` · world ranking ${after}${before && before !== after ? ` (was ${before})` : ''}` : ''}`);
     }
@@ -792,9 +823,12 @@ export function initCareer(d: CareerDeps) {
       const x = findEvent(s, en, d.appVersion);
       if (!x || !canEnter(s, x, W()).ok) return;
       if (s.pendingRecruitOffer) { const m = await d.loadAccount(); await m.offerChoose(s.pendingRecruitOffer.id, null); s.pendingRecruitOffer = null; }
-      enter(s, x); skipByes(s, W(), x); await save(); render(); return;
+      enter(s, x, W()); if (!s.current?.qual) skipByes(s, W(), x); await save(); render(); return;
     }
     if (at('[data-club]')) { enter(s, clubEvent(s)); await save(); render(); return; }
+    const ln = at('[data-loan]')?.dataset.loan;
+    if (ln) { const amt = Number(ln); if (confirm(`Borrow ${money(amt)}? You’ll owe ${money(loanOwed(amt))}, and ${Math.round(CFG.loan.repayShare * 100)}% of every prize goes to paying it back.`) && takeLoan(s, amt)) { d.toast(`Borrowed ${money(amt)}`, `You owe ${money(loanOwed(amt))}.`); await save(); render(); } return; }
+    if (at('[data-repay]')) { repayLoan(s); d.toast(s.loan ? `You still owe ${money(s.loan.owed)}` : 'Loan paid off', ''); await save(); render(); return; }
     const pe = at('[data-pickev]')?.dataset.pickev;
     if (pe) { pickedEv = pe; renderHub(); return; }
     if (at('[data-list]')) { renderList(); return; }

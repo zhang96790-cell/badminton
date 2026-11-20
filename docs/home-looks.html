@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home Looks Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800;900&family=Chakra+Petch:wght@500;600;700&family=Archivo+Black&family=Archivo:wght@500;600;800&family=Inter+Tight:wght@400;500;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0b0f1a; --ink: #eef2fa; --ink-2: #9aa6c0; }
+* { box-sizing: border-box; margin: 0; }
+body { background: #0b0f1a; color: var(--ink); font: 500 15px/1.4 'Inter Tight', system-ui, sans-serif; padding: 20px 16px 60px; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+.top { max-width: 1280px; margin: 0 auto 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.top h1 { font: 800 20px/1 'Inter Tight', sans-serif; margin-right: auto; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button { padding: 9px 14px; border: 1px solid #2a3350; border-radius: 6px; color: var(--ink-2); font-weight: 600; }
+.tabs button.on { background: var(--ink); color: #0b0f1a; border-color: var(--ink); }
+.blurb { max-width: 1280px; margin: 0 auto 14px; color: var(--ink-2); }
+.blurb b { color: var(--ink); }
+.pair { max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }
+.cap { font: 700 11px/1 'Inter Tight', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-2); margin: 6px 0 8px; }
+.frame { position: relative; width: 100%; aspect-ratio: 16 / 9.4; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.5); container-type: inline-size; }
+.look { display: none; } .look.on { display: block; }
+/* Sizes inside a frame scale with its width: 1cqw = 1% of the frame. */
+
+/* ═══════════ A. BROADCAST ═══════════ */
+.A { --red: #e8112d; --white: #f6f7f9; font-family: 'Saira Condensed', sans-serif; color: var(--white);
+  background: radial-gradient(ellipse 80% 60% at 70% 30%, #1d2a4a 0%, #0a0f1d 70%), #0a0f1d; }
+.A .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 3.2cqw, rgba(255,255,255,0.025) 3.2cqw 3.3cqw); }
+.A .inner { position: absolute; inset: 2.2cqw; display: grid; grid-template-rows: auto 1fr auto; gap: 1.6cqw; }
+.A .bar { display: flex; align-items: center; gap: 1.2cqw; }
+.A .logo { display: flex; align-items: center; height: 4cqw; padding: 0 1.4cqw 0 1cqw; background: var(--red); clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%); font: 900 2.2cqw/1 'Saira Condensed', sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+.A .live { padding: .5cqw .9cqw; background: #fff; color: #0a0f1d; font: 800 1cqw/1 'Saira Condensed', sans-serif; letter-spacing: .14em; }
+.A .bar .sp { flex: 1; }
+.A .chip { padding: .7cqw 1.1cqw; border: 1px solid rgba(255,255,255,.25); font: 700 1.05cqw/1 'Saira Condensed', sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.A .grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 1.6cqw; min-height: 0; }
+.A .panel { position: relative; padding: 2cqw 2.2cqw; background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); border-left: .45cqw solid var(--red); display: flex; flex-direction: column; }
+.A .panel.blue { border-left-color: #2f7bff; }
+.A .k { font: 800 1.05cqw/1 'Saira Condensed', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.A h2 { font: 900 5.6cqw/.86 'Saira Condensed', sans-serif; text-transform: uppercase; font-style: italic; margin: .8cqw 0 .6cqw; }
+.A p { font: 500 1.35cqw/1.3 'Saira Condensed', sans-serif; color: rgba(255,255,255,.75); }
+.A .stats { display: flex; gap: 2.4cqw; margin: auto 0 1.4cqw; }
+.A .stats b { display: block; font: 900 3.4cqw/1 'Saira Condensed', sans-serif; font-style: italic; }
+.A .stats span { font: 700 .9cqw/1 'Saira Condensed', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.A .btn { display: inline-flex; align-items: center; justify-content: center; height: 4.2cqw; padding: 0 2.4cqw; background: var(--red); font: 900 1.8cqw/1 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.A .btn.w { background: #fff; color: #0a0f1d; }
+.A .btn.o { background: transparent; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); clip-path: none; font-size: 1.3cqw; height: 4.2cqw; }
+.A .row { display: flex; gap: .8cqw; }
+.A .lower { display: grid; grid-template-columns: auto 1fr auto auto; align-items: stretch; background: #fff; color: #0a0f1d; }
+.A .lower .tag { display: grid; place-items: center; padding: 0 1.6cqw; background: var(--red); color: #fff; font: 900 1.2cqw/1 'Saira Condensed', sans-serif; letter-spacing: .12em; }
+.A .lower .who { padding: 1cqw 1.6cqw; font: 900 2.4cqw/1 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; }
+.A .lower .who small { display: block; font: 600 1.05cqw/1.2 'Saira Condensed', sans-serif; font-style: normal; color: #4a5470; text-transform: none; margin-top: .3cqw; }
+.A .lower button { padding: 0 2cqw; font: 800 1.2cqw/1 'Saira Condensed', sans-serif; letter-spacing: .12em; border-left: 1px solid #d5d9e3; }
+.A .lower button.go { background: #0a0f1d; color: #fff; }
+.A .learn { display: flex; gap: 2.2cqw; font: 700 1.05cqw/1 'Saira Condensed', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+/* A loading */
+.A .load { position: absolute; inset: 0; display: grid; grid-template-rows: 1fr auto; }
+.A .vsrow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.A .card { height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 0 5cqw; }
+.A .card.l { background: linear-gradient(100deg, rgba(232,17,45,.55), transparent 80%); clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%); }
+.A .card.r { text-align: right; background: linear-gradient(260deg, rgba(47,123,255,.55), transparent 80%); clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%); }
+.A .card b { font: 900 6.4cqw/.85 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; }
+.A .card span { font: 700 1.4cqw/1.3 'Saira Condensed', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.75); margin-top: 1cqw; }
+.A .vsbig { font: 900 5cqw/1 'Saira Condensed', sans-serif; font-style: italic; color: #fff; text-shadow: 0 0 2cqw rgba(232,17,45,.8); }
+.A .slate { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2cqw; padding: 1.6cqw 2.4cqw; background: #fff; color: #0a0f1d; }
+.A .slate b { font: 900 1.9cqw/1 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; }
+.A .prog { height: .6cqw; background: #e3e6ee; } .A .prog i { display: block; width: 64%; height: 100%; background: var(--red); }
+
+/* ═══════════ B. NIGHT COURT ═══════════ */
+.B { --line: #7dffb2; --glow: 0 0 1cqw rgba(125,255,178,.55); font-family: 'Chakra Petch', sans-serif; color: #e9fff2;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, #0f3a2c, #04110d 75%); }
+.B .court { position: absolute; inset: 3cqw 4cqw; border: .25cqw solid var(--line); box-shadow: var(--glow), inset var(--glow); }
+.B .court::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; border-left: .35cqw dashed rgba(233,255,242,.75); }
+.B .court::after { content: ''; position: absolute; top: 50%; left: 0; right: 0; border-top: .18cqw solid rgba(125,255,178,.45); }
+.B .zone { position: absolute; display: flex; flex-direction: column; padding: 2cqw; }
+.B .z1 { left: 0; top: 0; width: 50%; height: 50%; }
+.B .z2 { right: 0; top: 0; width: 50%; height: 50%; align-items: flex-end; text-align: right; }
+.B .z3 { left: 0; bottom: 0; width: 50%; height: 50%; justify-content: flex-end; }
+.B .z4 { right: 0; bottom: 0; width: 50%; height: 50%; justify-content: flex-end; align-items: flex-end; text-align: right; }
+.B .k { font: 600 1cqw/1 'Chakra Petch', sans-serif; letter-spacing: .24em; text-transform: uppercase; color: var(--line); text-shadow: var(--glow); }
+.B h2 { font: 700 4.4cqw/.95 'Chakra Petch', sans-serif; text-transform: uppercase; margin: .8cqw 0 .6cqw; }
+.B p { font: 500 1.25cqw/1.35 'Chakra Petch', sans-serif; color: rgba(233,255,242,.7); max-width: 30cqw; }
+.B .n { display: flex; gap: 2cqw; margin: 1.2cqw 0; }
+.B .n b { display: block; font: 700 2.6cqw/1 'Chakra Petch', sans-serif; color: var(--line); text-shadow: var(--glow); }
+.B .n span { font: 600 .8cqw/1 'Chakra Petch', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(233,255,242,.55); }
+.B .btn { margin-top: .6cqw; height: 3.8cqw; padding: 0 2cqw; border: .2cqw solid var(--line); color: var(--line); font: 700 1.3cqw/1 'Chakra Petch', sans-serif; letter-spacing: .16em; text-transform: uppercase; box-shadow: var(--glow); }
+.B .btn.f { background: var(--line); color: #04110d; }
+.B .net { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: .6cqw; padding: 1.4cqw 2cqw; background: #04110d; border: .2cqw solid rgba(233,255,242,.6); }
+.B .net b { font: 700 2.2cqw/1 'Chakra Petch', sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+.B .net span { font: 600 .9cqw/1 'Chakra Petch', sans-serif; letter-spacing: .2em; color: var(--line); }
+.B .hdr { position: absolute; left: 4cqw; right: 4cqw; top: .8cqw; display: flex; justify-content: space-between; font: 600 1cqw/1 'Chakra Petch', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(233,255,242,.6); }
+/* B loading */
+.B .arc { position: absolute; inset: 0; }
+.B .arc svg { width: 100%; height: 100%; }
+.B .lt { position: absolute; left: 0; right: 0; bottom: 8cqw; text-align: center; }
+.B .lt b { font: 700 3.4cqw/1 'Chakra Petch', sans-serif; text-transform: uppercase; }
+.B .lt p { margin: .8cqw auto 0; max-width: none; }
+
+/* ═══════════ C. TOURNAMENT POSTER ═══════════ */
+.C { --paper: #f1ead9; --red: #d7261e; --ink: #151313; font-family: 'Archivo', sans-serif; color: var(--ink);
+  background: var(--paper); }
+.C .grain { position: absolute; inset: 0; opacity: .5; background-image: radial-gradient(rgba(0,0,0,.08) .5px, transparent .6px); background-size: .5cqw .5cqw; }
+.C .inner { position: absolute; inset: 2.4cqw; display: grid; grid-template-columns: 1.2fr 1fr; grid-template-rows: auto 1fr auto; gap: 1.6cqw 2.4cqw; }
+.C .hd { grid-column: 1 / -1; display: flex; align-items: flex-end; justify-content: space-between; border-bottom: .35cqw solid var(--ink); padding-bottom: 1cqw; }
+.C .hd b { font: 400 4.6cqw/.85 'Archivo Black', 'Arial Black', sans-serif; text-transform: uppercase; letter-spacing: -.01em; }
+.C .hd span { font: 800 1.1cqw/1.2 'Archivo', sans-serif; letter-spacing: .14em; text-transform: uppercase; text-align: right; }
+.C .big { display: flex; flex-direction: column; background: var(--red); color: var(--paper); padding: 2.4cqw; position: relative; overflow: hidden; }
+.C .big .shuttle { position: absolute; right: -3cqw; bottom: -4cqw; width: 26cqw; opacity: .22; }
+.C .k { font: 800 1cqw/1 'Archivo', sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+.C h2 { font: 400 7cqw/.82 'Archivo Black', 'Arial Black', sans-serif; text-transform: uppercase; margin: 1cqw 0; letter-spacing: -.02em; }
+.C .big p { font: 600 1.4cqw/1.3 'Archivo', sans-serif; max-width: 34cqw; }
+.C .nums { display: flex; gap: 2.6cqw; margin-top: auto; }
+.C .nums b { display: block; font: 400 3.6cqw/1 'Archivo Black', 'Arial Black', sans-serif; }
+.C .nums span { font: 800 .85cqw/1 'Archivo', sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+.C .btn { height: 4cqw; padding: 0 2.2cqw; background: var(--ink); color: var(--paper); font: 400 1.5cqw/1 'Archivo Black', 'Arial Black', sans-serif; text-transform: uppercase; }
+.C .btn.p { background: var(--paper); color: var(--red); }
+.C .col { display: grid; grid-template-rows: auto 1fr; gap: 1.6cqw; }
+.C .box { border: .3cqw solid var(--ink); padding: 1.8cqw; display: flex; flex-direction: column; }
+.C .box h3 { font: 400 3.2cqw/.9 'Archivo Black', 'Arial Black', sans-serif; text-transform: uppercase; margin: .6cqw 0; }
+.C .box p { font: 600 1.2cqw/1.3 'Archivo', sans-serif; }
+.C .rate { display: flex; align-items: baseline; gap: 1cqw; margin: 1cqw 0; }
+.C .rate b { font: 400 4.2cqw/1 'Archivo Black', 'Arial Black', sans-serif; }
+.C .rate span { font: 800 1cqw/1 'Archivo', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--red); }
+.C .ft { grid-column: 1 / -1; display: grid; grid-template-columns: 1.6fr 1fr 1fr; border-top: .35cqw solid var(--ink); }
+.C .ft > div { padding: 1.2cqw 1.4cqw 0 0; }
+.C .ft b { display: block; font: 400 1.8cqw/1 'Archivo Black', 'Arial Black', sans-serif; text-transform: uppercase; }
+.C .ft span { font: 600 1.05cqw/1.3 'Archivo', sans-serif; }
+/* C loading */
+.C .bracket { position: absolute; inset: 3cqw; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 3cqw; }
+.C .side b { display: block; font: 400 7.6cqw/.82 'Archivo Black', 'Arial Black', sans-serif; text-transform: uppercase; }
+.C .side span { font: 800 1.2cqw/1.4 'Archivo', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.C .side.r { text-align: right; color: var(--red); }
+.C .v { width: 9cqw; height: 9cqw; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font: 400 3cqw/1 'Archivo Black', 'Arial Black', sans-serif; }
+.C .ticket { position: absolute; left: 3cqw; right: 3cqw; bottom: 3cqw; display: flex; justify-content: space-between; align-items: center; padding: 1.2cqw 1.6cqw; border: .3cqw dashed var(--ink); font: 800 1.2cqw/1 'Archivo', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.C .ticket i { flex: 1; height: .5cqw; margin: 0 2cqw; background: linear-gradient(90deg, var(--red) 58%, rgba(0,0,0,.12) 58%); }
+.C .topline { position: absolute; left: 3cqw; right: 3cqw; top: 3cqw; display: flex; justify-content: space-between; border-bottom: .35cqw solid var(--ink); padding-bottom: 1cqw; font: 800 1.2cqw/1 'Archivo', sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+
+/* ═══════════ D. ATHLETE APP ═══════════ */
+.D { --lime: #c6ff3d; --dark: #0f1115; --card: #ffffff; --soft: #f1f3f6; font-family: 'Inter Tight', sans-serif; color: var(--dark); background: var(--soft); }
+.D .inner { position: absolute; inset: 0; display: grid; grid-template-columns: 17cqw 1fr; }
+.D .side { background: var(--dark); color: #fff; padding: 2.4cqw 1.8cqw; display: flex; flex-direction: column; gap: 1.2cqw; }
+.D .side b.logo { font: 900 1.9cqw/.95 'Inter Tight', sans-serif; letter-spacing: -.02em; margin-bottom: 1.6cqw; }
+.D .side a { font: 600 1.15cqw/1 'Inter Tight', sans-serif; color: rgba(255,255,255,.6); padding: .8cqw 1cqw; border-radius: .6cqw; }
+.D .side a.on { background: rgba(198,255,61,.14); color: var(--lime); }
+.D .side .me { margin-top: auto; display: flex; align-items: center; gap: .8cqw; font: 600 1cqw/1.2 'Inter Tight', sans-serif; }
+.D .side .me i { width: 2.6cqw; height: 2.6cqw; border-radius: 50%; background: var(--lime); }
+.D .main { padding: 2.4cqw; display: grid; grid-template-rows: auto 1fr auto; gap: 1.6cqw; }
+.D .hello { display: flex; justify-content: space-between; align-items: flex-end; }
+.D .hello h1 { font: 800 2.8cqw/1 'Inter Tight', sans-serif; letter-spacing: -.03em; }
+.D .hello span { font: 500 1.1cqw/1 'Inter Tight', sans-serif; color: #6b7280; }
+.D .cards { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1.6cqw; }
+.D .c { background: var(--card); border-radius: 1.4cqw; padding: 2cqw; display: flex; flex-direction: column; box-shadow: 0 .4cqw 1.6cqw rgba(15,17,21,.06); }
+.D .c.dark { background: var(--dark); color: #fff; }
+.D .k { font: 600 1cqw/1 'Inter Tight', sans-serif; color: #6b7280; }
+.D .c.dark .k { color: rgba(255,255,255,.55); }
+.D h2 { font: 800 3cqw/1 'Inter Tight', sans-serif; letter-spacing: -.03em; margin: .6cqw 0 1.4cqw; }
+.D .metric { display: flex; gap: 1.2cqw; margin-bottom: 1.6cqw; }
+.D .metric div { flex: 1; padding: 1.1cqw; border-radius: 1cqw; background: var(--soft); }
+.D .c.dark .metric div { background: rgba(255,255,255,.07); }
+.D .metric b { display: block; font: 800 2.4cqw/1 'Inter Tight', sans-serif; letter-spacing: -.03em; }
+.D .metric span { font: 500 .9cqw/1 'Inter Tight', sans-serif; color: #6b7280; }
+.D .c.dark .metric span { color: rgba(255,255,255,.55); }
+.D .ring { width: 9cqw; height: 9cqw; border-radius: 50%; background: conic-gradient(var(--lime) 0 62%, rgba(255,255,255,.12) 62%); display: grid; place-items: center; margin-bottom: 1.4cqw; }
+.D .ring div { width: 7cqw; height: 7cqw; border-radius: 50%; background: var(--dark); display: grid; place-items: center; text-align: center; }
+.D .ring b { font: 800 2cqw/1 'Inter Tight', sans-serif; display: block; }
+.D .ring span { font: 500 .8cqw/1 'Inter Tight', sans-serif; color: rgba(255,255,255,.6); }
+.D .btn { margin-top: auto; height: 4cqw; border-radius: 99cqw; background: var(--dark); color: #fff; font: 700 1.3cqw/1 'Inter Tight', sans-serif; }
+.D .c.dark .btn { background: var(--lime); color: var(--dark); }
+.D .strip { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 1.6cqw; }
+.D .strip > div { background: var(--card); border-radius: 1.2cqw; padding: 1.3cqw 1.6cqw; display: flex; align-items: center; justify-content: space-between; }
+.D .strip b { font: 700 1.3cqw/1.2 'Inter Tight', sans-serif; }
+.D .strip span { display: block; font: 500 .95cqw/1.3 'Inter Tight', sans-serif; color: #6b7280; }
+.D .strip i { width: 2.6cqw; height: 2.6cqw; border-radius: 50%; background: var(--soft); display: grid; place-items: center; font-style: normal; font-weight: 800; }
+/* D loading */
+.D .ld { position: absolute; inset: 0; display: grid; place-items: center; background: var(--dark); color: #fff; }
+.D .ld .wrap { display: grid; justify-items: center; gap: 2cqw; }
+.D .ld .ppl { display: flex; align-items: center; gap: 4cqw; }
+.D .ld .p { display: grid; justify-items: center; gap: .8cqw; }
+.D .ld .av { width: 9cqw; height: 9cqw; border-radius: 50%; background: #23262d; display: grid; place-items: center; font: 800 3cqw/1 'Inter Tight', sans-serif; }
+.D .ld .p.me .av { background: var(--lime); color: var(--dark); }
+.D .ld .p b { font: 700 1.6cqw/1 'Inter Tight', sans-serif; }
+.D .ld .p span { font: 500 1cqw/1 'Inter Tight', sans-serif; color: rgba(255,255,255,.55); }
+.D .ld .vs { font: 800 1.4cqw/1 'Inter Tight', sans-serif; color: rgba(255,255,255,.4); }
+.D .ld .bar { width: 36cqw; height: .6cqw; border-radius: 99cqw; background: rgba(255,255,255,.1); overflow: hidden; }
+.D .ld .bar i { display: block; width: 70%; height: 100%; background: var(--lime); }
+.D .ld .tip { font: 500 1.15cqw/1.4 'Inter Tight', sans-serif; color: rgba(255,255,255,.65); }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Skyline Smash: four new looks</h1>
+  <div class="tabs" id="tabs">
+    <button data-l="A" class="on">A · Broadcast</button>
+    <button data-l="B">B · Night court</button>
+    <button data-l="C">C · Tournament poster</button>
+    <button data-l="D">D · Athlete app</button>
+  </div>
+</div>
+
+<!-- A -->
+<section class="look on" data-look="A">
+  <p class="blurb"><b>Broadcast.</b> Like the TV coverage of a big final: slanted red bars, italic condensed type, a white "lower third" for your CPU match. Feels live and high-energy. The loading screen is a head-to-head split like a TV walk-on.</p>
+  <div class="pair">
+    <div><p class="cap">Home</p>
+    <div class="frame A"><div class="stripes"></div><div class="inner">
+      <div class="bar"><span class="logo">Skyline Smash</span><span class="live">● Live</span><span class="sp"></span><span class="chip">214 online</span><span class="chip">Social</span><span class="chip">kento_momota_fan · 1123</span></div>
+      <div class="grid">
+        <div class="panel"><p class="k">Career · season 2027 · week 14</p><h2>Career<br>mode</h2><p>Travel the tour, win prize money, climb the world ranking.</p>
+          <div class="stats"><div><b>#87</b><span>World rank</span></div><div><b>58</b><span>Title points</span></div><div><b>41–22</b><span>Record</span></div></div>
+          <div class="row"><button class="btn">Play career</button><button class="btn o">Daily challenge</button></div></div>
+        <div class="panel blue"><p class="k">Ranked · pure skill</p><h2>Play<br>online</h2><p>Someone near your rating. Both play the Club Player.</p>
+          <div class="stats"><div><b>1123</b><span>Regional</span></div><div><b>27 to go</b><span>National</span></div></div>
+          <div class="row"><button class="btn w">Quick match</button><button class="btn o">Room</button></div></div>
+      </div>
+      <div>
+        <div class="lower"><span class="tag">EXHIBITION</span><div class="who">You v CPU Legend<small>Singles · best of 3 to 15 · all-rounder</small></div><button>Match card</button><button class="go">Walk on ▸</button></div>
+        <div class="learn" style="margin-top:1.2cqw"><span>Tutorial · start here</span><span>Drills</span><span>How to play</span><span style="margin-left:auto">What's new v3.18</span></div>
+      </div>
+    </div></div></div>
+    <div><p class="cap">Loading screen</p>
+    <div class="frame A"><div class="load">
+      <div class="vsrow"><div class="card l"><b>Kento<br>fan</b><span>World #87 · 1123</span></div><span class="vsbig">VS</span><div class="card r"><b>Lin<br>Kaiwen</b><span>World #12 · Attacker</span></div></div>
+      <div class="slate"><b>Ventra China Open</b><div class="prog"><i></i></div><b>Quarter-final · Court 1</b></div>
+    </div></div></div>
+  </div>
+</section>
+
+<!-- B -->
+<section class="look" data-look="B">
+  <p class="blurb"><b>Night court.</b> The menu is the court itself, seen from above under floodlights, with glowing lines. Each corner of the court is a mode, and the net in the middle is your next match. Calm, atmospheric, very "game". The loading screen traces a shuttle's flight over the net.</p>
+  <div class="pair">
+    <div><p class="cap">Home</p>
+    <div class="frame B"><div class="hdr"><span>Skyline Smash</span><span>214 online · kento_momota_fan · 1123</span></div>
+      <div class="court">
+        <div class="zone z1"><p class="k">Back court · career</p><h2>Career</h2><div class="n"><div><b>#87</b><span>Rank</span></div><div><b>58</b><span>Title pts</span></div><div><b>41–22</b><span>Record</span></div></div><button class="btn f">Play career</button></div>
+        <div class="zone z2"><p class="k">Ranked · pure skill</p><h2>Online</h2><div class="n"><div><b>1123</b><span>Regional</span></div><div><b>27</b><span>To National</span></div></div><button class="btn f">Quick match</button></div>
+        <div class="zone z3"><p class="k">Warm-up</p><h2 style="font-size:2.6cqw">Tutorial · Drills</h2><p>Lessons with the coach, and drills for every shot.</p></div>
+        <div class="zone z4"><p class="k">Exhibition</p><h2 style="font-size:2.6cqw">You v CPU Legend</h2><p>Best of 3 to 15 · all-rounder</p><button class="btn">Walk on</button></div>
+        <div class="net"><span>NEXT ON COURT</span><b>Daily challenge</b></div>
+      </div>
+    </div></div>
+    <div><p class="cap">Loading screen</p>
+    <div class="frame B"><div class="court" style="opacity:.55"></div>
+      <div class="arc"><svg viewBox="0 0 100 59" preserveAspectRatio="none"><path d="M10 48 Q50 -6 90 44" fill="none" stroke="#7dffb2" stroke-width=".5" stroke-dasharray="1.4 1.2"/><circle cx="66" cy="13.5" r="1.3" fill="#e9fff2"/><circle cx="66" cy="13.5" r="3" fill="none" stroke="#7dffb2" stroke-width=".25" opacity=".6"/></svg></div>
+      <div class="lt"><b>Ventra China Open · QF</b><p>Lin Kaiwen serves first · tip: hold right-click for a deep lob</p></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- C -->
+<section class="look" data-look="C">
+  <p class="blurb"><b>Tournament poster.</b> Like a printed poster for a famous old championship: cream paper, huge black and red type, solid blocks. Bold and classic, and very different from other games. The loading screen is a match-day poster with a ticket stub as the progress bar.</p>
+  <div class="pair">
+    <div><p class="cap">Home</p>
+    <div class="frame C"><div class="grain"></div><div class="inner">
+      <div class="hd"><b>Skyline<br>Smash</b><span>Season 2027 · week 14<br>kento_momota_fan · 1123</span></div>
+      <div class="big"><svg class="shuttle" viewBox="0 0 48 48"><circle cx="24" cy="38" r="6.5" fill="#f1ead9"/><path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0" stroke="#f1ead9" stroke-width="2" fill="none"/></svg>
+        <p class="k">The tour awaits</p><h2>Career<br>mode</h2><p>Travel the tour, win prize money and climb the world ranking.</p>
+        <div class="nums"><div><b>#87</b><span>World rank</span></div><div><b>58</b><span>Title points</span></div><div><b>41–22</b><span>Record</span></div></div>
+        <div style="margin-top:1.6cqw; display:flex; gap:1cqw"><button class="btn p">Play career</button><button class="btn">Daily challenge</button></div></div>
+      <div class="col">
+        <div class="box"><p class="k">Ranked · pure skill</p><h3>Play online</h3><div class="rate"><b>1123</b><span>Regional · 27 to National</span></div><div style="display:flex; gap:.8cqw"><button class="btn">Quick match</button><button class="btn" style="background:transparent;color:#151313;box-shadow:inset 0 0 0 .25cqw #151313">Room</button></div></div>
+        <div class="box"><p class="k">Exhibition</p><h3 style="font-size:2.4cqw">You v CPU Legend</h3><p>Best of 3 to 15 · all-rounder</p><button class="btn" style="margin-top:auto; align-self:flex-start">Walk on</button></div>
+      </div>
+      <div class="ft"><div><b>Tutorial</b><span>Start here: 16 short lessons</span></div><div><b>Drills</b><span>Every shot</span></div><div><b>What's new</b><span>v3.18</span></div></div>
+    </div></div></div>
+    <div><p class="cap">Loading screen</p>
+    <div class="frame C"><div class="grain"></div>
+      <div class="topline"><span>Ventra China Open</span><span>Quarter-final · Court 1</span></div>
+      <div class="bracket"><div class="side"><b>Kento<br>fan</b><span>World #87</span></div><div class="v">v</div><div class="side r"><b>Lin<br>Kaiwen</b><span>World #12</span></div></div>
+      <div class="ticket"><span>Admit one</span><i></i><span>Doors open</span></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- D -->
+<section class="look" data-look="D">
+  <p class="blurb"><b>Athlete app.</b> Clean and modern, like a premium sports or training app: a dark sidebar, white rounded cards, one lime accent, big numbers and a progress ring for your rank. The easiest to read. The loading screen is a calm matchup with a tip.</p>
+  <div class="pair">
+    <div><p class="cap">Home</p>
+    <div class="frame D"><div class="inner">
+      <nav class="side"><b class="logo">Skyline<br>Smash</b><a class="on">Home</a><a>Career</a><a>Ranked</a><a>Exhibition</a><a>Learn</a><a>Social</a><div class="me"><i></i><div>kento_momota_fan<br><span style="opacity:.6">Regional · 1123</span></div></div></nav>
+      <div class="main">
+        <div class="hello"><h1>Good evening, Kento</h1><span>Season 2027 · week 14 · 214 online</span></div>
+        <div class="cards">
+          <div class="c"><p class="k">Career</p><h2>World no. 87</h2><div class="metric"><div><b>58</b><span>Title points</span></div><div><b>41–22</b><span>Record</span></div><div><b>$41k</b><span>Bank</span></div></div><button class="btn">Continue career</button></div>
+          <div class="c dark"><p class="k">Ranked · pure skill</p><h2>1123</h2><div class="ring"><div><b>62%</b><span>to National</span></div></div><button class="btn">Quick match</button></div>
+        </div>
+        <div class="strip"><div><div><b>You v CPU Legend</b><span>Exhibition · best of 3 to 15</span></div><i>▸</i></div><div><div><b>Tutorial</b><span>Start here</span></div><i>▸</i></div><div><div><b>Drills</b><span>Every shot</span></div><i>▸</i></div></div>
+      </div>
+    </div></div></div>
+    <div><p class="cap">Loading screen</p>
+    <div class="frame D"><div class="ld"><div class="wrap">
+      <div class="ppl"><div class="p me"><div class="av">K</div><b>kento_momota_fan</b><span>World #87</span></div><span class="vs">VS</span><div class="p"><div class="av">LK</div><b>Lin Kaiwen</b><span>World #12 · Attacker</span></div></div>
+      <div class="bar"><i></i></div>
+      <p class="tip">Ventra China Open · Quarter-final &nbsp;·&nbsp; Tip: a jump smash at the top of your jump is 15% faster</p>
+    </div></div></div></div>
+  </div>
+</section>
+
+<script>
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.look').forEach((s) => s.classList.toggle('on', s.dataset.look === b.dataset.l));
+});
+</script>
+</body>
+</html>

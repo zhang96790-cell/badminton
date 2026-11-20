@@ -490,7 +490,8 @@ export function initCareer(d: CareerDeps) {
     const hosts = [...new Set(W().cal.map((v) => v.host_country))].sort((a, b) => countryName(a).localeCompare(countryName(b)));
     const houses = hosts.map((c) => {
       const own = s!.houses?.includes(c);
-      return `<button class="c-opt${own ? ' on' : ''}" data-house="${c}" ${own ? 'disabled' : ''}><b>${e(countryName(c))}</b><span>${own ? 'Yours' : money(houseCost(c))}</span></button>`;
+      const n = W().cal.filter((v) => v.host_country === c).length;
+      return `<button class="c-opt${own ? ' on' : ''}" data-house="${c}" ${own ? 'disabled' : ''}><b>${e(countryName(c))}</b><span>${own ? 'Yours' : money(houseCost(c, W().cal))}</span><span>${n} event${n === 1 ? '' : 's'} a season</span></button>`;
     }).join('');
     const cls = travelClassOfUi(), ho = s!.settings.hotel ?? 'three';
     const travel = (Object.keys(CFG.travelClass) as TravelClass[]).map((k) => `<button class="c-opt${cls === k ? ' on' : ''}" data-class="${k}"><b>${nw(`class:${k}`)}${CFG.travelClass[k].label}</b><span>${CFG.travelClass[k].cost}× the fare</span><span>${Math.round(CFG.travelClass[k].energySaved * 100)}% less tiring</span></button>`).join('');
@@ -1032,7 +1033,7 @@ export function initCareer(d: CareerDeps) {
       await save(); render(); return;
     }
     const hs = at('[data-house]')?.dataset.house;
-    if (hs) { if (confirm(`Buy a house in ${countryName(hs)} for ${money(houseCost(hs))}?`) && buy(s, `House in ${countryName(hs)}`, houseCost(hs))) { (s.houses ??= []).push(hs); d.toast(`Your house in ${countryName(hs)}`, 'Free nights and better rest at events there.'); } await save(); render(); return; }
+    if (hs) { if (confirm(`Buy a house in ${countryName(hs)} for ${money(houseCost(hs, W().cal))}?`) && buy(s, `House in ${countryName(hs)}`, houseCost(hs, W().cal))) { (s.houses ??= []).push(hs); d.toast(`Your house in ${countryName(hs)}`, 'Free nights and better rest at events there.'); } await save(); render(); return; }
     const rk = at('[data-racket]')?.dataset.racket;
     if (rk) { if (buy(s, 'Custom racket', CFG.rackets.cost)) (s.shop ??= {}).racket = rk; else d.toast('Not enough money', ''); await save(); render(); return; }
     const wo = at('[data-walkon]')?.dataset.walkon;

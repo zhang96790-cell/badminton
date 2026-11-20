@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.4.2: House prices by country (21 Nov 2026)
+
+- House prices now depend on how many tournaments a country hosts each season and how pricey it is to live there. China (4 events) is the dearest at $84,000, Singapore $74,000, France and Japan $65,500; Indonesia and Malaysia, with lots of events but cheaper homes, are $40,500 and $36,000; Vietnam and the Philippines are the cheapest at $10,500. The shop shows how many events each country has.
+
 ## 4.4.1: One sponsor until the new career (21 Nov 2026)
 
 - The three sponsor slots (kit deal, main and money sponsor) are on hold until the new career mode: you have one sponsor again, the same as before 4.4. Any kit or money sponsor signed in 4.4 has been dropped. The separate Sponsors, Shop and Money pages stay.

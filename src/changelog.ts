@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.2',
+    title: 'House prices by country',
+    date: '21 Nov 2026',
+    changes: [
+      "House prices now depend on how many tournaments a country hosts each season and how pricey it is to live there. China (4 events) is the dearest at $84,000, Singapore $74,000, France and Japan $65,500; Indonesia and Malaysia, with lots of events but cheaper homes, are $40,500 and $36,000; Vietnam and the Philippines are the cheapest at $10,500. The shop shows how many events each country has.",
+    ],
+  },
+  {
     version: '4.4.1',
     title: 'One sponsor until the new career',
     date: '21 Nov 2026',

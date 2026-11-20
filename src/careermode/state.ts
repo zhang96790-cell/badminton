@@ -247,7 +247,12 @@ export const staffWages = (s: CareerState) => (s.shop?.coach ? CFG.coaches[s.sho
   + (['nutritionist', 'psychologist', 'stringing'] as const).reduce((n, k) => n + (s.shop?.[k] ? CFG.extras[k].wage : 0), 0);
 /** The next training camp's price for a stat. */
 export const campCost = (s: CareerState, stat: number) => Math.round(CFG.camp.cost * (1 + (s.shop?.camps?.[stat] ?? 0) * CFG.camp.step) * (s.shop?.base ? 1 - CFG.camp.baseDiscount : 1));
-export const houseCost = (country: string) => Math.round(CFG.house * (CFG.cityCost[COUNTRIES[country]?.region ?? ''] ?? 1));
+/** 4.4.2: dearer where more tournaments are held (and in pricey cities), cheaper where there's only one. */
+export const houseCost = (country: string, cal: TourEvent[]) => {
+  const events = Math.max(1, cal.filter((v) => v.host_country === country).length);
+  const raw = CFG.house * (CFG.cityCost[COUNTRIES[country]?.region ?? ''] ?? 1) * (0.2 + CFG.housePerEvent * events) * (CFG.houseMarket[country] ?? 1);
+  return Math.round(raw / 500) * 500;
+};
 export const teamCost = (rank: number | null) => (rank ? CFG.teamCosts.find((b) => rank <= b.rank)?.weekly ?? 0 : 0);
 /** Spend money (false if you can't afford it). */
 export function buy(s: CareerState, label: string, cost: number): boolean {

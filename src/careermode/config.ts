@@ -119,7 +119,13 @@ export const CAREER_CFG = {
   /** 4.1: a training base: weeks off rest you more (+10 a level) and camps cost 30% less. */
   base: { buy: 25000, upgrade: [15000, 30000], restPerLevel: 10 },
   /** 4.1: a house in a country: free nights and +25% Rested a night at events there. Price × the city's cost. */
-  house: 40000,
+  house: 30000,
+  /** 4.4.2: house prices: × the region's cost × (0.2 + 0.6 × events there a season) × the local property market. */
+  housePerEvent: 0.6,
+  houseMarket: {
+    SGP: 2.2, HKG: 2.0, SUI: 1.8, MAC: 1.5, ENG: 1.5, JPN: 1.3, USA: 1.3, DEN: 1.2, AUS: 1.2, FRA: 1.2, GER: 1.1, KOR: 1.1, CAN: 1.1,
+    TPE: 1.0, CHN: 0.9, FIN: 0.9, MAS: 0.75, THA: 0.7, INA: 0.65, IND: 0.6, VIE: 0.55, PHI: 0.55,
+  } as Record<string, number>,
   /** 4.1: walk-on looks (cosmetic). */
   walkOns: { gold: { label: 'Gold', cost: 2500 }, fire: { label: 'Fire', cost: 2500 }, ice: { label: 'Ice', cost: 2500 }, royal: { label: 'Royal purple', cost: 4000 } } as Record<string, { label: string; cost: number }>,
   /**

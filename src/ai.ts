@@ -262,6 +262,9 @@ export class AIController implements Controller {
     // Attacker: follow the smash in to kill the reply. Net player: stay on top of the net after a net shot or push.
     if (this.lastKind === 'smash' && this.S.followUp) depth -= this.S.followUp;
     if ((this.lastKind === 'net' || this.lastKind === 'push') && this.S.rush) depth -= this.S.rush;
+    // 3.16: the aggressive top levels chase their own smash in to kill the reply.
+    const ag = this.L.aggression ?? 0;
+    if (ag && this.lastKind === 'smash') depth -= ag * 0.6;
     let x = 0;
     const n = this.oppLandings.length;
     if (this.L.anticipation > 0 && n >= 3) {
@@ -271,7 +274,7 @@ export class AIController implements Controller {
       x = mx * this.L.anticipation;
       depth += (my - 3.5) * this.L.anticipation;
     }
-    return { x: clamp(x, -1, 1), y: this.me.side * clamp(depth, this.S.followUp || this.S.rush ? 1.9 : 2.6, 4.4) };
+    return { x: clamp(x, -1, 1), y: this.me.side * clamp(depth, this.S.followUp || this.S.rush || ag ? 1.9 : 2.6, 4.4) };
   }
 
   /** Is our pair attacking (front and back) or defending (side by side)? */
@@ -434,6 +437,13 @@ export class AIController implements Controller {
     if (doubles) { high *= 0.55; fast *= 1.3; }
     // A tumbling net shot can't be netted back or attacked: lift it.
     if (this.game.shuttle.tumbling) { high *= 4; soft *= 0.15; fast *= 0.3; }
+    // 3.16: the aggressive top levels go for the finish on anything up (smash and kill more, clear less), and
+    // keep low balls down with net shots instead of lifting, so the rally ends sooner.
+    const ag = L.aggression ?? 0;
+    if (ag && !this.game.shuttle.tumbling) {
+      if (c.z >= SHOTS.overheadHeight || (dNet < SHOTS.nearNet && c.z > netHeightAt(c.x) + 0.1)) { fast *= 1 + ag; high /= 1 + ag; }
+      else { soft *= 1 + ag * 0.5; high /= 1 + ag * 0.5; }
+    }
     // 3.9.2: the top levels still prefer their best shot, but keep a mix (above 3.5 they only ever smashed and blocked).
     const k = Math.min(L.decisiveness, 3.5);
     return weightedPick<Intent>(['high', 'fast', 'soft'], [high ** k, fast ** k, soft ** k]);

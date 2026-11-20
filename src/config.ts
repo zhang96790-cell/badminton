@@ -410,9 +410,11 @@ export const REPLAY = {
   autoCooldown: 5,
 };
 
-export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert' | 'pro' | 'elite' | 'world' | 'legend';
+export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert' | 'pro' | 'elite' | 'world' | 'legend'
+  | 'titan' | 'phantom' | 'immortal' | 'apex' | 'ultimate';
 /** How each CPU level is shown. */
-export const LEVEL_LABEL: Record<Level, string> = { beginner: 'Beginner', easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', pro: 'Pro', elite: 'Elite', world: 'World Class', legend: 'Legend' };
+export const LEVEL_LABEL: Record<Level, string> = { beginner: 'Beginner', easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', pro: 'Pro', elite: 'Elite', world: 'World Class', legend: 'Legend',
+  titan: 'Titan', phantom: 'Phantom', immortal: 'Immortal', apex: 'Apex', ultimate: 'Ultimate' };
 
 export interface AILevel {
   /** Seconds before reacting to a shot. */
@@ -447,6 +449,11 @@ export interface AILevel {
   challengeSkill: number;
   /** Extra reach (m), for the levels above Expert (people get +0.1 m). */
   reach?: number;
+  /**
+   * 3.16: how hard it hunts the short rally (0–1). Attacks more and lifts less, waits further up the court and
+   * follows its smash in for the kill.
+   */
+  aggression?: number;
 }
 
 export const AI: Record<Level, AILevel> = {
@@ -497,6 +504,34 @@ export const AI: Record<Level, AILevel> = {
     reaction: 0.04, speed: 1.22, strength: 1.08, aimNoise: 0, timingError: 0.003, margin: 0.16, caution: 1.5,
     decisiveness: 5, anticipation: 0.6, adapt: 1, smash: 1.6, drop: 1.3, net: 1.3, kill: 2.3, jumpSmash: 1,
     judgesOut: true, outMargin: 0.01, serveShort: 0.9, serveDelay: 0.5, challengeSkill: 1, reach: 0.16,
+  },
+  // 3.16: five levels above Legend (not in career). Faster, sharper and harder-hitting at each step, and
+  // aggressive: they go for the finish on anything up and keep low balls down instead of lifting. What makes
+  // them win is fewer errors: they keep a safer margin inside the lines at each step (sims: riskier aim lost).
+  titan: {
+    reaction: 0.008, speed: 1.8, strength: 1.1, aimNoise: 0, timingError: 0.001, margin: 0.18, caution: 1.6,
+    decisiveness: 8.5, anticipation: 0.62, adapt: 1, smash: 2.2, drop: 1.4, net: 1.4, kill: 3.4, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.007, serveShort: 0.95, serveDelay: 0.35, challengeSkill: 1, reach: 0.6, aggression: 0.5,
+  },
+  phantom: {
+    reaction: 0.006, speed: 1.9, strength: 1.12, aimNoise: 0, timingError: 0.0008, margin: 0.19, caution: 1.75,
+    decisiveness: 9, anticipation: 0.64, adapt: 1, smash: 2.4, drop: 1.4, net: 1.45, kill: 3.8, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.006, serveShort: 0.95, serveDelay: 0.33, challengeSkill: 1, reach: 0.65, aggression: 0.6,
+  },
+  immortal: {
+    reaction: 0.004, speed: 2.0, strength: 1.14, aimNoise: 0, timingError: 0.0006, margin: 0.21, caution: 1.9,
+    decisiveness: 9.5, anticipation: 0.66, adapt: 1, smash: 2.6, drop: 1.45, net: 1.5, kill: 4.2, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.005, serveShort: 0.95, serveDelay: 0.3, challengeSkill: 1, reach: 0.7, aggression: 0.7,
+  },
+  apex: {
+    reaction: 0.003, speed: 2.1, strength: 1.16, aimNoise: 0, timingError: 0.0005, margin: 0.22, caution: 2.0,
+    decisiveness: 10, anticipation: 0.68, adapt: 1, smash: 2.8, drop: 1.45, net: 1.55, kill: 4.6, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.004, serveShort: 0.95, serveDelay: 0.3, challengeSkill: 1, reach: 0.75, aggression: 0.85,
+  },
+  ultimate: {
+    reaction: 0.002, speed: 2.2, strength: 1.18, aimNoise: 0, timingError: 0.0004, margin: 0.24, caution: 2.1,
+    decisiveness: 10, anticipation: 0.7, adapt: 1, smash: 3.0, drop: 1.5, net: 1.6, kill: 5, jumpSmash: 1,
+    judgesOut: true, outMargin: 0.003, serveShort: 0.95, serveDelay: 0.28, challengeSkill: 1, reach: 0.8, aggression: 1,
   },
 };
 

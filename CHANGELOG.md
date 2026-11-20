@@ -5,6 +5,13 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 3.16: Five new top CPU levels (20 Nov 2026)
+
+- Five new CPU levels above Legend: Titan, Phantom, Immortal, Apex and Ultimate. Each one moves faster, reacts sooner, hits harder and places the shuttle more safely than the one before.
+- They play aggressively: they smash and kill anything that's up, follow their smash in to the net, and keep low shuttles down with net shots instead of lifting.
+- They're hard to beat because they rarely give you a free point: very few shots go out or into the net. Ultimate beat Legend 15 games out of 16 in testing.
+- New achievement: Untouchable, for beating an Ultimate CPU. The new levels are for normal matches only, not career mode.
+
 ## 3.15: Ranked is pure skill (20 Nov 2026)
 
 - Ranked is now pure skill. Both players always play the Club Player, so no one has better stats than anyone else and the result comes down to how you play.

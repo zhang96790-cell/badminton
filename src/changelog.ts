@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '3.16',
+    title: 'Five new top CPU levels',
+    date: '20 Nov 2026',
+    changes: [
+      "Five new CPU levels above Legend: Titan, Phantom, Immortal, Apex and Ultimate. Each one moves faster, reacts sooner, hits harder and places the shuttle more safely than the one before.",
+      "They play aggressively: they smash and kill anything that's up, follow their smash in to the net, and keep low shuttles down with net shots instead of lifting.",
+      "They're hard to beat because they rarely give you a free point: very few shots go out or into the net. Ultimate beat Legend 15 games out of 16 in testing.",
+      "New achievement: Untouchable, for beating an Ultimate CPU. The new levels are for normal matches only, not career mode.",
+    ],
+  },
+  {
     version: '3.15',
     title: 'Ranked is pure skill',
     date: '20 Nov 2026',

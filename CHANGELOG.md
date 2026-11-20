@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.0.1: More colour, nothing covering What’s new (20 Nov 2026)
+
+- Fixed: on the home page, the View and Fullscreen buttons covered What’s new. They now hide while you’re on the home page, and Fullscreen is a link in the footer (they’re still there in a match).
+- More colour on the home page: red and blue glows behind the board, a rainbow stripe under the header, gold numbers and buttons for Career, teal for Ranked, green for the Tutorial, purple for Drills and the level strip, and coloured header buttons.
+
 ## 4.0: The broadcast look and the walk-on (20 Nov 2026)
 
 - A new look. The home page is now a dark TV-broadcast board that fills almost the whole screen, with slanted red and blue panels and big italic type. Career (red) and Ranked (blue) are the two big boxes, the CPU match is a white box below them, and the Tutorial and Drills sit beside it.

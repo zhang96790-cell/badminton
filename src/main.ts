@@ -108,6 +108,10 @@ function toggleFullscreen() {
 }
 viewBtn.addEventListener('click', () => { toggleView(); viewBtn.blur(); });
 fsBtn.addEventListener('click', () => { toggleFullscreen(); fsBtn.blur(); });
+// 4.0.1: on the home page the View/Fullscreen bar hides (it covered What's new); this footer link does the same job.
+const fsLink = document.getElementById('fsLink') as HTMLButtonElement;
+fsLink.addEventListener('click', () => { toggleFullscreen(); fsLink.blur(); });
+document.addEventListener('fullscreenchange', () => { fsLink.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen'; });
 document.addEventListener('fullscreenchange', () => { syncViewbar(); resize(); });
 
 function resize() {
@@ -1113,7 +1117,7 @@ const tour = new Tour([
   { target: '.social-panel', title: 'Your stats', text: 'Every finished match adds up: fastest smash, longest rally, win streaks, aces, perfect jumps and more. The tabs along the top have your friends, the top 50 and your ranked history.', before: () => openSocial('overview') },
   { target: '#accountBtn', title: 'Your account', text: 'Log in or sign up with a username and passcode to keep your stats and settings on any computer, play ranked and add friends. Once you’re in, it shows your rating.', before: closeSocial },
   { target: '.board-foot', title: 'Help and updates', text: 'How to play lists every shot and key, Take the tour brings you back here, and What’s new shows every update (with a NEW badge when there’s one you haven’t seen).' },
-  { target: '#viewbar', title: 'View and fullscreen', text: 'Switch between the close and broadcast camera, and go fullscreen (or press F in a match).' },
+  { target: '#fsLink', title: 'Fullscreen and camera', text: 'Go fullscreen from here (or press F in a match). In a match, the buttons at the bottom right switch between the close and broadcast camera.' },
   { target: '#start', title: 'Ready?', text: 'That’s everything. Start a career, play someone online, or press Walk on to play the CPU.' },
 ], () => { closeSocial(); closeDrawers(); document.getElementById('tourBtn')?.focus(); });
 /** Taking the tour (from the footer or the welcome card) counts as having seen it. */

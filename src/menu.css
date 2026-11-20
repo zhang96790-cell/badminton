@@ -1672,3 +1672,41 @@ table.shots td { padding: 7px 6px; border-bottom: 1px solid var(--card-rule); co
 @keyframes wo-load { to { width: 100%; } }
 .wo-tip { font: 600 15px/1.3 'Barlow Semi Condensed', sans-serif; color: #4a5470; }
 @media (prefers-reduced-motion: reduce) { #walkon *, #walkon { animation-duration: 0.01ms !important; animation-delay: 0s !important; } .wo-bar i { width: 100%; } }
+
+/* 4.0.1: the View/Fullscreen bar hides on the home page (it covered What's new); the footer has a Fullscreen link. */
+body:has(#menu:not(.hidden)) #viewbar { display: none; }
+
+/* 4.0.1: more colour on the broadcast board. */
+.board.bc { --bc-gold: #ffc23d; --bc-green: #34d67b; --bc-purple: #a46bff; --bc-teal: #22d3c5;
+  background:
+    radial-gradient(ellipse 45% 55% at 8% 30%, rgba(232, 17, 45, 0.22), transparent 70%),
+    radial-gradient(ellipse 45% 55% at 92% 25%, rgba(47, 123, 255, 0.24), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 70% 100%, rgba(164, 107, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 70% 60% at 75% 20%, #1d2a4a 0%, var(--bc-dark) 70%), var(--bc-dark); }
+.bc-head::after { content: ''; position: absolute; left: 28px; right: 28px; bottom: -10px; height: 4px;
+  background: linear-gradient(90deg, var(--bc-red) 0 25%, var(--bc-gold) 25% 45%, var(--bc-green) 45% 60%, var(--bc-teal) 60% 75%, var(--bc-blue) 75% 90%, var(--bc-purple) 90%); }
+.bc .social-btn { border-color: var(--bc-gold); color: var(--bc-gold); }
+.bc .online-btn { border-color: rgba(52, 214, 123, 0.6); color: var(--bc-green); }
+.bc .controls-btn { border-color: rgba(34, 211, 197, 0.55); color: var(--bc-teal); }
+.bc-career { background: linear-gradient(150deg, rgba(232, 17, 45, 0.5), rgba(120, 10, 40, 0.18) 60%, rgba(255, 255, 255, 0.02)); }
+.bc-ranked { background: linear-gradient(150deg, rgba(47, 123, 255, 0.5), rgba(20, 40, 120, 0.2) 60%, rgba(255, 255, 255, 0.02)); }
+.bc-career .bc-num { color: rgba(255, 194, 61, 0.1); }
+.bc-ranked .bc-num { color: rgba(34, 211, 197, 0.1); }
+.bc-career .bc-stats b { color: var(--bc-gold); }
+.bc-career .bc-stats span { color: rgba(255, 220, 160, 0.75); }
+.bc-career .bc-btn.line { box-shadow: inset 0 0 0 2px var(--bc-gold); color: var(--bc-gold); }
+.bc-career .bc-btn:not(.line) { background: var(--bc-gold); color: #2a1600; }
+.bc-ranked .bc-btn.line { box-shadow: inset 0 0 0 2px rgba(34, 211, 197, 0.7); color: #bff7f1; }
+.bc-ranked .bc-k { color: #9fe9e2; }
+.bc-exhib { box-shadow: 0 -4px 0 var(--bc-red) inset; }
+.bc-exhib .bc-ex-event { color: var(--bc-purple); }
+.bc-lv-track button.on { background: linear-gradient(90deg, var(--bc-purple), var(--bc-blue)); }
+.ltile-tutorial.bc-small { background: linear-gradient(160deg, rgba(52, 214, 123, 0.28), rgba(52, 214, 123, 0.05)); box-shadow: inset 0 -4px 0 var(--bc-green); }
+.ltile-tutorial .bc-k, .ltile-tutorial .bc-go { color: var(--bc-green); }
+.ltile-practice.bc-small { background: linear-gradient(160deg, rgba(164, 107, 255, 0.3), rgba(164, 107, 255, 0.05)); box-shadow: inset 0 -4px 0 var(--bc-purple); }
+.ltile-practice .bc-k, .ltile-practice .bc-go { color: #c8a6ff; }
+.bc-ticker-k { background: linear-gradient(90deg, var(--bc-purple), var(--bc-blue)); }
+.bc-ticker-t span:nth-child(3n + 1) b { color: var(--bc-red); }
+.bc-ticker-t span:nth-child(3n + 2) b { color: #1b9a55; }
+.bc-ticker-t span:nth-child(3n) b { color: #6b3fd6; }
+.bc .board-foot .link:hover { text-decoration-color: var(--bc-gold); }

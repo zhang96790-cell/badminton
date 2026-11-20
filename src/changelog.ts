@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.0.1',
+    title: 'More colour, nothing covering What’s new',
+    date: '20 Nov 2026',
+    changes: [
+      "Fixed: on the home page, the View and Fullscreen buttons covered What’s new. They now hide while you’re on the home page, and Fullscreen is a link in the footer (they’re still there in a match).",
+      "More colour on the home page: red and blue glows behind the board, a rainbow stripe under the header, gold numbers and buttons for Career, teal for Ranked, green for the Tutorial, purple for Drills and the level strip, and coloured header buttons.",
+    ],
+  },
+  {
     version: '4.0',
     title: 'The broadcast look and the walk-on',
     date: '20 Nov 2026',

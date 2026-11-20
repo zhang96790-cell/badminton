@@ -26,6 +26,7 @@ Amber is the only warm colour and marks what to do next. Don't spread it to seco
 - Self-hosted via @fontsource. Import paths have no `.css` extension (the package's export map adds it).
 
 ## Layout
+- 4.0 home: the Broadcast board (`.board.bc`, src/menu.css 4.0 section). Dark navy-black, slanted red logo slab, white LIVE chip, Saira Condensed italic headlines. Five boxes: Career (red accent, big), Ranked (blue accent, big), Exhibition (white lower third with a red sideways tag and the scrollable level strip, medium), Tutorial and Drills (small, dark). A white ticker runs above the footer. The walk-on (src/walkon.ts) uses the same look.
 - 3.18 home: Career and Ranked are the two big panels at the top (Career lit, amber Play career; Ranked with a white Quick match and your rating, tier and progress bar). The CPU match is a smaller Exhibition row below, and Tutorial and Drills sit in a strip along the bottom. The old five court rows are gone.
 - Desktop: a board centred over the arena. Header (shuttle mark and wordmark on the left, Order of play and date on the right),
   column heads, three court rows (`84px 188px 1fr auto`), keyboard-notice slot, then a footer with shortcuts and links.

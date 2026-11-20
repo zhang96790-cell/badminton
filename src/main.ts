@@ -3,6 +3,9 @@ import '@fontsource/big-shoulders-display/800';
 import '@fontsource/barlow-semi-condensed/500';
 import '@fontsource/barlow-semi-condensed/600';
 import '@fontsource/barlow-semi-condensed/700';
+import '@fontsource/saira-condensed/latin-700.css';
+import '@fontsource/saira-condensed/latin-800.css';
+import '@fontsource/saira-condensed/latin-900.css';
 import './menu.css';
 import { Sound } from './audio';
 import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
@@ -19,6 +22,7 @@ import { DEFAULT_LOOK } from './brands';
 import { openPlayerCard } from './playercard';
 import { titleChips, titleSummary } from './titles';
 import { COURT_THEMES, LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
+import { showWalkOn, type WalkOnInfo } from './walkon';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
 import { Hud } from './hud';
@@ -1095,9 +1099,9 @@ try {
 
 // ── Tour of the start screen ─────────────────────────────────────────────────
 const tour = new Tour([
-  { target: '.hero-career', title: 'Career', text: 'Career mode: travel the tour, earn prize money, climb the world ranking and recruit players. Your best ranking, title points and record show here. The daily challenge is here too (log in first).', before: () => { closeDrawers(); closeSocial(); } },
-  { target: '.hero-ranked', title: 'Ranked and online', text: 'Quick match finds someone near your rating for a ranked game (log in first). Your rating and tier show here. Create room gives you a code to send a friend, and Join takes you into theirs.' },
-  { target: '.exhib', title: 'A match against the CPU', text: 'An exhibition match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play, and Match card to change the level and format.' },
+  { target: '.bc-career', title: 'Career', text: 'Career mode: travel the tour, earn prize money, climb the world ranking and recruit players. Your best ranking, title points and record show here. The daily challenge is here too (log in first).', before: () => { closeDrawers(); closeSocial(); } },
+  { target: '.bc-ranked', title: 'Ranked and online', text: 'Quick match finds someone near your rating for a ranked game (log in first). Your rating and tier show here. Create room gives you a code to send a friend, and Join takes you into theirs.' },
+  { target: '.bc-exhib', title: 'A match against the CPU', text: 'An exhibition match against the CPU: who you’re playing and the scoring. Press Walk on (or Enter) to play, and Match card to change the level and format.' },
   { target: '#controlsBtn', title: 'Your controls', text: 'How you play: keyboard and mouse, keys with a trackpad, or keyboard only. Click it any time to switch.' },
   { target: '#matchcard', title: 'Match card', text: 'Match card opens this: singles or doubles, the CPU’s level and style, your doubles partner, 1 or 3 games to 15 or 21, and how accurate shots are.', before: () => openDrawer('card') },
   { target: '.ltile-tutorial', title: 'Tutorial', text: 'New to the game? The tutorial is short lessons with a coach feeding you shuttles, from moving to jump smashes and doubles.', before: closeDrawers },
@@ -1951,6 +1955,57 @@ const OPP_NOTE: Record<Level, string> = {
   impossible: 'Jump-smashes every high shuttle from about half court in, at around 700 km/h. Not meant to be beaten.',
 };
 
+/** 4.0: every CPU level, easiest first (the order of the home page's level strip). */
+const LEVEL_ORDER: Level[] = ['beginner', 'easy', 'medium', 'hard', 'expert', 'pro', 'elite', 'world', 'legend', 'titan', 'phantom', 'immortal', 'apex', 'ultimate', 'impossible'];
+const levelTrack = document.getElementById('levelTrack')!;
+levelTrack.innerHTML = LEVEL_ORDER.map((l) => `<button type="button" data-level="${l}" class="${l === 'impossible' ? 'imp' : ''}">${LEVEL_LABEL[l]}</button>`).join('');
+/** Pick a level the same way the match card does (so everything else follows). */
+function pickLevel(l: Level) { document.querySelector<HTMLButtonElement>(`.seg[data-group="opponent"] [data-value="${l}"]`)?.click(); }
+function stepLevel(d: number) {
+  const i = LEVEL_ORDER.indexOf(settings.opponent as Level);
+  const next = LEVEL_ORDER[Math.max(0, Math.min(LEVEL_ORDER.length - 1, (i < 0 ? 2 : i) + d))];
+  if (next !== settings.opponent) pickLevel(next);
+}
+/** Slide the strip so the chosen level sits in the middle. */
+function syncLevelStrip() {
+  const btns = Array.from(levelTrack.querySelectorAll<HTMLButtonElement>('button'));
+  btns.forEach((b) => b.classList.toggle('on', b.dataset.level === settings.opponent));
+  const on = btns.find((b) => b.classList.contains('on'));
+  const win = levelTrack.parentElement!;
+  const x = on ? on.offsetLeft + on.offsetWidth / 2 - win.clientWidth / 2 : 0;
+  levelTrack.style.transform = `translateX(${-Math.max(0, Math.min(x, levelTrack.scrollWidth - win.clientWidth))}px)`;
+}
+const levelPick = document.getElementById('levelPick')!;
+levelPick.addEventListener('click', (e) => {
+  const t = e.target as HTMLElement;
+  const lv = t.closest<HTMLElement>('[data-level]')?.dataset.level as Level | undefined;
+  if (lv) { pickLevel(lv); return; }
+  const d = t.closest<HTMLElement>('[data-lv]')?.dataset.lv;
+  if (d) stepLevel(Number(d));
+});
+// Scroll over the strip (or the whole CPU box) to step through the levels.
+let wheelAcc = 0;
+document.querySelector<HTMLElement>('.bc-exhib')!.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  if (Math.abs(wheelAcc) >= 60) { stepLevel(Math.sign(wheelAcc)); wheelAcc = 0; }
+}, { passive: false });
+window.addEventListener('resize', () => syncLevelStrip());
+
+/** 4.0: the ticker along the bottom of the home page: the latest update and some tips. */
+{
+  const items = [
+    `<b>New</b>${CHANGELOG[0].title} (v${CHANGELOG[0].version})`,
+    '<b>Tip</b>Scroll over the exhibition box to change the CPU level',
+    '<b>Tip</b>A jump smash at the top of your jump is about 15% faster',
+    '<b>Ranked</b>Everyone plays the Club Player: it’s pure skill',
+    '<b>Career</b>Short of money? Enter through qualifying, or take a tour loan',
+    '<b>Tip</b>Press H to challenge a line call, R to watch a replay',
+    '<b>Impossible</b>Smashes at around 700 km/h. Good luck',
+  ].map((t) => `<span>${t}</span>`).join('');
+  document.getElementById('tickerText')!.innerHTML = items + items; // twice, so it loops without a gap
+}
+
 function syncMenu() {
   document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
     const group = seg.dataset.group as keyof Settings;
@@ -1970,6 +2025,7 @@ function syncMenu() {
   document.getElementById('assistHelp')!.textContent = assistOk
     ? 'Gets lifts, drops and clears back if you don’t swing. Smashes still need you. Every assisted shot is tagged ASSIST.'
     : 'Only against a Beginner or Easy CPU. Pick one of those to use it.';
+  syncLevelStrip();
 }
 
 document.querySelectorAll<HTMLElement>('.seg[data-group]').forEach((seg) => {
@@ -2006,7 +2062,37 @@ syncTutorialHint();
 const touchOnly = matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches;
 document.getElementById('touchNote')!.classList.toggle('hidden', !touchOnly);
 
-function startMatch(mode: Mode = 'match') {
+/** 4.0: the walk-on for a match against the CPU: you, the CPU level and its style. */
+function exhibitionWalkOn(): WalkOnInfo {
+  const i = LEVEL_ORDER.indexOf(settings.opponent as Level), lv = settings.opponent as Level, st = STYLES[settings.style];
+  const f = RULES.formats[settings.points], doubles = settings.event === 'doubles';
+  const g = (k: string) => career[k] ?? 0, played = g('matches');
+  const me = account?.username ?? (settings.playerName?.trim() || 'You');
+  return {
+    event: 'Exhibition', round: `${doubles ? 'Doubles' : 'Singles'} · ${settings.games === 1 ? '1 game' : 'Best of 3'} to ${f.pointsToWin}`,
+    me: {
+      name: me, line: `${characterById(myCharacter()).name}${myRating ? ` · rating ${myRating.rating}` : ''}`,
+      stats: [[played ? `${g('wins')}–${played - g('wins')}` : '–', 'Your record'], [g('max_smash') ? `${Math.round(g('max_smash'))} km/h` : '–', 'Fastest smash'],
+        [g('max_rally') ? String(g('max_rally')) : '–', 'Longest rally'], [g('aces') ? String(g('aces')) : '0', 'Aces']],
+    },
+    them: {
+      name: `CPU ${LEVEL_LABEL[lv]}${doubles ? ' pair' : ''}`, line: `Level ${i + 1} of ${LEVEL_ORDER.length} · ${st.label}`,
+      stats: [[`${i + 1}/${LEVEL_ORDER.length}`, 'Level'], [st.label, 'Style']],
+      move: lv === 'impossible' ? { kicker: 'Warning', name: 'Impossible', text: OPP_NOTE.impossible } : { kicker: 'Plays like', name: st.label, text: st.trait },
+    },
+  };
+}
+let walkingOn = false;
+
+async function startMatch(mode: Mode = 'match') {
+  if (walkingOn) return;
+  // 4.0: a walk-on before a match against the CPU (not 2 players, practice or the tutorial).
+  if (mode === 'match' && settings.opponent !== 'human') {
+    walkingOn = true;
+    closeDrawers();
+    menu.classList.add('hidden');
+    try { await showWalkOn(exhibitionWalkOn()); } finally { walkingOn = false; }
+  }
   sound.init();
   voice.enabled = settings.voice;
   voice.unlock();
@@ -2245,7 +2331,14 @@ const careerUi = initCareer({
   account: () => account ?? (import.meta.env.DEV && devFake?.fakeOn() ? devFake.fakeAccount : null),
   loadAccount: async () => (import.meta.env.DEV && !account && devFake?.fakeOn() ? ({ ...(await loadAccount()), ...devFake.fakeModule() } as Awaited<ReturnType<typeof loadAccount>>) : loadAccount()),
   owned: async () => { if (import.meta.env.DEV && !account && devFake?.fakeOn()) return devFake.fakeOwned(); await refreshOwned(); return ownedIds; },
-  play: (o) => {
+  play: async (o) => {
+    if (o.walkOn) {
+      if (walkingOn) return;
+      walkingOn = true;
+      closeDrawers();
+      menu.classList.add('hidden');
+      try { await showWalkOn(o.walkOn); } finally { walkingOn = false; }
+    }
     sound.init();
     voice.enabled = settings.voice;
     voice.unlock();

@@ -25,17 +25,18 @@
     </div>
 
     <div id="menu">
-      <main class="board" aria-labelledby="wordmark">
-        <header class="board-head">
-          <div class="mark">
+      <main class="board bc" aria-labelledby="wordmark">
+        <div class="bc-stripes" aria-hidden="true"></div>
+        <header class="bc-head">
+          <div class="bc-logo">
             <svg class="shuttle" viewBox="0 0 48 48" aria-hidden="true">
               <circle cx="24" cy="38" r="6.5" />
               <path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0M12.5 17c4.5-1.6 18.5-1.6 23 0" />
             </svg>
-            <h1 id="wordmark">Skyline<br />Smash</h1>
+            <h1 id="wordmark">Skyline Smash</h1>
           </div>
-          <div class="head-meta">
-            <div class="head-pills">
+          <span class="bc-live"><i></i>Live<span id="today"></span></span>
+          <div class="head-pills">
               <button id="controlsBtn" class="account-btn controls-btn" aria-haspopup="dialog" title="Change how you play">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2" /><path d="M6 10h1M9 10h1M12 10h1M15 10h1M18 10h1M7 14h10" /></svg>
                 <span id="controlsLabel">Keyboard + mouse</span>
@@ -50,64 +51,66 @@
               </span>
               <button id="accountBtn" class="account-btn" aria-haspopup="dialog"><i></i><span id="accountLabel">Log in</span></button>
             </div>
-            <p class="oop">Order of play</p>
-            <p id="today" class="today"></p>
-          </div>
         </header>
 
-        <div class="home">
-          <div class="heroes">
-            <section class="hero hero-career" aria-label="Career">
-              <p class="h-kick"><span class="status"><i></i>Your career</span></p>
-              <h2 class="h-title">Career mode</h2>
-              <p class="sub" id="careerSub">Travel the tour, win prize money, climb the world ranking and recruit players</p>
-              <div class="h-stats" id="careerStats"></div>
-              <div class="h-actions">
-                <button id="careerOpen" class="walk">
-                  Play career
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
-                </button>
-                <button id="dailyOpen" class="edit">Daily challenge</button>
-              </div>
-            </section>
-
-            <section class="hero hero-ranked" aria-label="Ranked and online">
-              <p class="h-kick">Ranked · pure skill</p>
-              <h2 class="h-title">Play online</h2>
-              <p class="sub" id="rankedSub">Quick match finds someone near your rating. Both of you play the Club Player.</p>
-              <div class="h-rank" id="rankedLine"></div>
-              <div class="h-actions">
-                <button id="quickMatch" class="walk walk-ink">Quick match</button>
-                <div class="act-pair"><button id="createRoom" class="edit">Create room</button><button id="joinRoom" class="edit">Join</button></div>
-              </div>
-            </section>
-          </div>
-
-          <section class="exhib" aria-label="A match against the CPU">
-            <p class="ex-kick">Exhibition<span id="eventLabel">Singles</span></p>
-            <div class="ex-match">
-              <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
-              <p class="sub" id="tag">Best of 3 games to 15</p>
-            </div>
-            <div class="ex-act">
-              <button id="start" class="go go-arrow">Walk on <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
-              <button id="cardBtn" class="edit" aria-controls="matchcard" aria-expanded="false">Match card</button>
+        <div class="bc-grid">
+          <section class="bc-box bc-career" aria-label="Career">
+            <span class="bc-num" aria-hidden="true">01</span>
+            <p class="bc-k"><span class="status"><i></i>Your career</span></p>
+            <h2 class="bc-title">Career<br />mode</h2>
+            <p class="bc-lead" id="careerSub">Travel the tour, win prize money, climb the world ranking and recruit players</p>
+            <div class="bc-stats" id="careerStats"></div>
+            <div class="bc-actions">
+              <button id="careerOpen" class="bc-btn">Play career <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
+              <button id="dailyOpen" class="bc-btn line">Daily challenge</button>
             </div>
           </section>
 
-          <nav class="strip" aria-label="Learn">
-            <button id="tutorial" class="ltile ltile-tutorial">
-              <span class="tile-k">Warm-up</span>
-              <b>Tutorial <span id="newHint" class="tip">Start here</span></b>
-              <span class="tile-s">16 short lessons with the coach, about 6 minutes</span>
-            </button>
-            <button id="practice" class="ltile ltile-practice">
-              <span class="tile-k">Practice</span>
-              <b>Drills</b>
-              <span class="tile-s">Smash, net play, drives, defence and doubles</span>
-            </button>
-          </nav>
+          <section class="bc-box bc-ranked" aria-label="Ranked and online">
+            <span class="bc-num" aria-hidden="true">02</span>
+            <p class="bc-k">Ranked · pure skill</p>
+            <h2 class="bc-title">Play<br />online</h2>
+            <p class="bc-lead" id="rankedSub">Quick match finds someone near your rating. Both of you play the Club Player.</p>
+            <div class="h-rank" id="rankedLine"></div>
+            <div class="bc-actions">
+              <button id="quickMatch" class="bc-btn">Quick match <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
+              <button id="createRoom" class="bc-btn line">Create room</button><button id="joinRoom" class="bc-btn line">Join</button>
+            </div>
+          </section>
+
+          <section class="bc-box bc-exhib" aria-label="A match against the CPU">
+            <span class="bc-tag">Exhibition</span>
+            <div class="bc-ex-main">
+              <p class="bc-ex-event" id="eventLabel">Singles</p>
+              <p class="vs"><span id="meName">You</span> <span class="v">v</span> <span id="oppName" class="opp">CPU Medium</span></p>
+              <p class="sub" id="tag">Best of 3 games to 15</p>
+            </div>
+            <div class="bc-ex-act">
+              <button id="cardBtn" class="bc-btn line dark" aria-controls="matchcard" aria-expanded="false">Match card</button>
+              <button id="start" class="bc-btn dark">Walk on <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button>
+            </div>
+            <div class="bc-level" id="levelPick" title="Scroll (or use the arrows) to change the CPU level">
+              <button type="button" class="bc-lv-arrow" data-lv="-1" aria-label="Easier CPU">‹</button>
+              <div class="bc-lv-window"><div class="bc-lv-track" id="levelTrack"></div></div>
+              <button type="button" class="bc-lv-arrow" data-lv="1" aria-label="Harder CPU">›</button>
+            </div>
+          </section>
+
+          <button id="tutorial" class="bc-box bc-small ltile-tutorial">
+            <span class="bc-k">Warm-up</span>
+            <b>Tutorial <span id="newHint" class="tip">Start here</span></b>
+            <span class="bc-s">16 short lessons with the coach, about 6 minutes</span>
+            <span class="bc-go" aria-hidden="true">▸</span>
+          </button>
+          <button id="practice" class="bc-box bc-small ltile-practice">
+            <span class="bc-k">Practice</span>
+            <b>Drills</b>
+            <span class="bc-s">Smash, net play, drives, defence and doubles</span>
+            <span class="bc-go" aria-hidden="true">▸</span>
+          </button>
         </div>
+
+        <div class="bc-ticker" aria-hidden="true"><span class="bc-ticker-k">Tips</span><div class="bc-ticker-w"><div class="bc-ticker-t" id="tickerText"></div></div></div>
 
         <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>
 

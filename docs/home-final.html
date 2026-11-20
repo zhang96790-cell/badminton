@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broadcast Poster Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800;900&family=Archivo+Black&family=Archivo:wght@500;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f1ead9; --paper-2: #e6dcc4; --ink: #151313;
+  --red: #d7261e; --red-deep: #a8150f;
+  --navy: #14244f; --navy-2: #22397a;
+  --gold: #f2b01e;
+  --cond: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  --black: 'Archivo Black', 'Arial Black', sans-serif;
+  --text: 'Archivo', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: #0c0d10; color: #eee; font: 500 15px/1.4 var(--text); padding: 20px 16px 60px; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+.top { max-width: 1320px; margin: 0 auto 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.top h1 { font: 800 20px/1 var(--text); margin-right: auto; }
+.tabs { display: flex; gap: 6px; }
+.tabs button { padding: 9px 14px; border: 1px solid #333; border-radius: 6px; color: #aaa; font-weight: 600; }
+.tabs button.on { background: #eee; color: #111; border-color: #eee; }
+.note { max-width: 1320px; margin: 0 auto 14px; color: #aaa; }
+.note b { color: #eee; }
+.frame { max-width: 1320px; margin: 0 auto; position: relative; aspect-ratio: 16 / 9.6; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.6); container-type: inline-size; display: none; }
+.frame.on { display: block; }
+
+/* paper + broadcast stripes */
+.paper { position: absolute; inset: 0; background: var(--paper); color: var(--ink); font-family: var(--text); }
+.paper::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(0,0,0,.07) .5px, transparent .6px); background-size: .45cqw .45cqw; }
+.paper::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 3cqw, rgba(21,19,19,.025) 3cqw 3.15cqw); pointer-events: none; }
+
+.home { color: var(--ink); position: absolute; inset: 1.8cqw; display: grid; grid-template-rows: auto 1fr auto; gap: 1.3cqw; z-index: 1; }
+
+/* header: broadcast slab on a poster rule */
+.hd { display: flex; align-items: center; gap: 1.1cqw; padding-bottom: 1cqw; border-bottom: .35cqw solid var(--ink); }
+.logo { display: flex; align-items: center; gap: .9cqw; height: 4.4cqw; padding: 0 2.2cqw 0 1.2cqw; background: var(--ink); color: var(--paper); clip-path: polygon(0 0, 100% 0, 93% 100%, 0 100%); }
+.logo svg { width: 2.6cqw; height: 2.6cqw; }
+.logo b { font: 400 2.3cqw/.85 var(--black); text-transform: uppercase; letter-spacing: -.01em; }
+.live { display: inline-flex; align-items: center; gap: .5cqw; padding: .55cqw .9cqw; background: var(--red); color: #fff; font: 800 1cqw/1 var(--cond); letter-spacing: .16em; }
+.live i { width: .6cqw; height: .6cqw; border-radius: 50%; background: #fff; }
+.hd .sp { flex: 1; }
+.pill { padding: .65cqw 1.1cqw; border: .18cqw solid var(--ink); font: 800 1.05cqw/1 var(--cond); letter-spacing: .14em; text-transform: uppercase; }
+.pill.me { background: var(--ink); color: var(--paper); }
+.pill.me span { color: var(--gold); }
+
+/* the five boxes: 2 big, 1 medium, 2 small */
+.boxes { display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: 1fr auto; gap: 1.3cqw; min-height: 0; }
+.box { position: relative; overflow: hidden; display: flex; flex-direction: column; padding: 2cqw 2.2cqw; }
+.big { grid-row: 1; grid-column: span 6; }
+.k { font: 800 1.05cqw/1 var(--cond); letter-spacing: .2em; text-transform: uppercase; }
+h2 { font: 900 6.2cqw/.8 var(--cond); font-style: italic; text-transform: uppercase; margin: 1cqw 0 .8cqw; letter-spacing: -.005em; }
+.box p.lead { font: 600 1.25cqw/1.3 var(--text); max-width: 34cqw; }
+.nums { display: flex; gap: 2.6cqw; margin: auto 0 1.6cqw; }
+.nums b { display: block; font: 400 3.6cqw/1 var(--black); }
+.nums span { display: block; margin-top: .35cqw; font: 800 .85cqw/1 var(--cond); letter-spacing: .18em; text-transform: uppercase; opacity: .8; }
+.row { display: flex; gap: .8cqw; }
+.btn { height: 4.4cqw; padding: 0 2.6cqw; display: inline-flex; align-items: center; gap: 1cqw; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+  font: 900 1.9cqw/1 var(--cond); font-style: italic; text-transform: uppercase; letter-spacing: .01em; }
+.btn.line { clip-path: none; height: 4.4cqw; padding: 0 1.6cqw; font: 800 1.15cqw/1 var(--cond); font-style: normal; letter-spacing: .14em; }
+
+/* colour 1: red (Career) */
+.career { background: var(--red); color: var(--paper); }
+.career .shuttle { position: absolute; right: -2.5cqw; bottom: -3.5cqw; width: 22cqw; opacity: .16; }
+.career .btn { background: var(--paper); color: var(--red); }
+.career .btn.line { background: transparent; color: var(--paper); box-shadow: inset 0 0 0 .2cqw var(--paper); }
+.career .k { color: rgba(241,234,217,.85); }
+
+/* colour 2: navy (Ranked) */
+.ranked { background: var(--navy); color: var(--paper); }
+.ranked::after { content: ''; position: absolute; top: 0; right: 0; width: 34%; height: 100%; background: linear-gradient(115deg, transparent 0 30%, rgba(255,255,255,.05) 30% 60%, transparent 60%); }
+.ranked .k { color: rgba(241,234,217,.75); }
+.ranked .tier { display: grid; grid-template-columns: auto 1fr; align-items: end; column-gap: 1.4cqw; margin: auto 0 1.6cqw; }
+.ranked .tier b { grid-row: span 2; font: 400 6cqw/.82 var(--black); }
+.ranked .tier .nm { font: 800 1.2cqw/1 var(--cond); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+.ranked .tier .bar { height: .55cqw; background: rgba(241,234,217,.18); } .ranked .tier .bar i { display: block; width: 62%; height: 100%; background: var(--gold); }
+.ranked .tier small { grid-column: 2; font: 600 1cqw/1.2 var(--text); color: rgba(241,234,217,.7); }
+.ranked .btn { background: var(--gold); color: var(--ink); }
+.ranked .btn.line { background: transparent; color: var(--paper); box-shadow: inset 0 0 0 .2cqw rgba(241,234,217,.6); }
+
+/* colour 3: paper with ink (Exhibition, medium) + ink (small) */
+.exhib { grid-row: 2; grid-column: span 6; background: var(--paper-2); border: .3cqw solid var(--ink); flex-direction: row; align-items: center; gap: 1.6cqw; padding: 1.5cqw 1.8cqw; }
+.exhib .tag { align-self: stretch; display: grid; place-items: center; padding: 0 1.2cqw; background: var(--ink); color: var(--paper); font: 800 1cqw/1.1 var(--cond); letter-spacing: .16em; writing-mode: vertical-rl; transform: rotate(180deg); }
+.exhib .who { flex: 1; }
+.exhib .who b { display: block; white-space: nowrap; font: 900 2.5cqw/.9 var(--cond); font-style: italic; text-transform: uppercase; }
+.exhib .who b em { font-style: italic; color: var(--red); }
+.exhib .who span { display: block; margin-top: .5cqw; font: 600 1.05cqw/1.25 var(--text); color: #4b453a; }
+.exhib .btn { background: var(--ink); color: var(--paper); font-size: 1.6cqw; height: 4cqw; padding: 0 2cqw; }
+.exhib .btn.line { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 .2cqw var(--ink); font-size: 1.05cqw; height: 4cqw; padding: 0 1.2cqw; white-space: nowrap; }
+.exhib .btn { white-space: nowrap; }
+.small { grid-row: 2; grid-column: span 3; background: var(--ink); color: var(--paper); padding: 1.4cqw 1.6cqw; justify-content: space-between; }
+.small .k { color: var(--gold); }
+.small b { font: 900 2.5cqw/.9 var(--cond); font-style: italic; text-transform: uppercase; margin-top: .5cqw; }
+.small span.s { font: 600 1cqw/1.25 var(--text); color: rgba(241,234,217,.7); }
+.small .go { position: absolute; right: 1.4cqw; bottom: 1.2cqw; font: 900 2cqw/1 var(--cond); color: var(--gold); }
+.small .badge { display: inline-block; margin-left: .6cqw; padding: .3cqw .6cqw; background: var(--red); color: #fff; font: 800 .8cqw/1 var(--cond); letter-spacing: .14em; vertical-align: .5cqw; font-style: normal; }
+
+.ft { display: flex; gap: 2.2cqw; align-items: center; padding-top: .9cqw; border-top: .35cqw solid var(--ink); font: 800 1.05cqw/1 var(--cond); letter-spacing: .16em; text-transform: uppercase; }
+.ft .sp { flex: 1; }
+.ft .new { background: var(--red); color: #fff; padding: .25cqw .5cqw; margin-left: .4cqw; }
+
+/* ── loading screen ── */
+.load { color: var(--ink); position: absolute; inset: 0; z-index: 1; display: grid; grid-template-rows: auto 1fr auto; padding: 2.4cqw; gap: 1.6cqw; }
+.ld-top { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: .35cqw solid var(--ink); padding-bottom: 1cqw; }
+.ld-top b { font: 400 3.2cqw/.9 var(--black); text-transform: uppercase; }
+.ld-top span { font: 800 1.2cqw/1.3 var(--cond); letter-spacing: .16em; text-transform: uppercase; text-align: right; }
+.vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; }
+.side { display: flex; flex-direction: column; justify-content: center; padding: 0 4cqw; }
+.side.me { background: var(--red); color: var(--paper); clip-path: polygon(0 0, 100% 0, 90% 100%, 0 100%); }
+.side.them { background: var(--navy); color: var(--paper); text-align: right; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0 100%); }
+.side small { font: 800 1.2cqw/1 var(--cond); letter-spacing: .2em; text-transform: uppercase; opacity: .85; }
+.side b { font: 900 7.4cqw/.8 var(--cond); font-style: italic; text-transform: uppercase; margin: 1.2cqw 0 1cqw; }
+.side span { font: 700 1.3cqw/1.3 var(--text); }
+.vmark { display: grid; place-items: center; width: 10cqw; margin: 0 -3cqw; z-index: 2; }
+.vmark i { width: 9cqw; height: 9cqw; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font: 900 3.6cqw/1 var(--cond); font-style: italic; box-shadow: 0 0 0 .5cqw var(--paper); }
+.ticket { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2cqw; padding: 1.2cqw 1.6cqw; border: .3cqw dashed var(--ink); font: 800 1.15cqw/1 var(--cond); letter-spacing: .16em; text-transform: uppercase; }
+.ticket .bar { height: .7cqw; background: rgba(21,19,19,.12); } .ticket .bar i { display: block; width: 64%; height: 100%; background: linear-gradient(90deg, var(--red), var(--navy)); }
+.tip { font: 600 1.15cqw/1.3 var(--text); color: #4b453a; margin-top: .8cqw; text-align: center; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Skyline Smash: Broadcast × Poster</h1>
+  <div class="tabs" id="tabs"><button data-f="home" class="on">Home</button><button data-f="load">Loading screen</button></div>
+</div>
+<p class="note"><b>Mockup, not live.</b> Poster paper, black rules and heavy type, with Broadcast's slanted italic headlines and angled buttons. Five boxes: Career and Ranked big, the CPU match medium, Tutorial and Drills small. Three colours: <b style="color:#ff5a4f">red</b> for Career, <b style="color:#8fa6ff">navy</b> for Ranked, <b>black on paper</b> for the rest, with gold for highlights.</p>
+
+<div class="frame on" data-frame="home"><div class="paper"></div>
+  <div class="home">
+    <header class="hd">
+      <span class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="38" r="6.5" fill="#f2b01e"/><path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0M12.5 17c4.5-1.6 18.5-1.6 23 0" stroke="#f1ead9" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg><b>Skyline<br>Smash</b></span>
+      <span class="live"><i></i>LIVE · 214 ONLINE</span>
+      <span class="sp"></span>
+      <span class="pill">Keys + trackpad</span><span class="pill">Social</span><span class="pill me">kento_momota_fan · <span>1123</span></span>
+    </header>
+
+    <div class="boxes">
+      <section class="box big career">
+        <svg class="shuttle" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="38" r="6.5" fill="#f1ead9"/><path d="M18.5 34.5 9 7M29.5 34.5 39 7M21.5 33 19 6M26.5 33 29 6M9 7c5-2.6 25-2.6 30 0M12.5 17c4.5-1.6 18.5-1.6 23 0" stroke="#f1ead9" stroke-width="2" fill="none"/></svg>
+        <p class="k">Career · season 2027 · week 14</p>
+        <h2>Career<br>mode</h2>
+        <p class="lead">Travel the tour, win prize money, climb the world ranking and recruit players.</p>
+        <div class="nums"><div><b>#87</b><span>Best world rank</span></div><div><b>58</b><span>Title points</span></div><div><b>41–22</b><span>Record</span></div></div>
+        <div class="row"><button class="btn">Play career ▸</button><button class="btn line">Daily challenge</button></div>
+      </section>
+
+      <section class="box big ranked">
+        <p class="k">Ranked · pure skill</p>
+        <h2>Play<br>online</h2>
+        <p class="lead">Quick match finds someone near your rating. Both of you play the Club Player.</p>
+        <div class="tier"><b>1123</b><span class="nm">Regional · 18–11</span><span class="bar"><i></i></span><small>27 to National</small></div>
+        <div class="row"><button class="btn">Quick match ▸</button><button class="btn line">Create room</button><button class="btn line">Join</button></div>
+      </section>
+
+      <section class="box exhib">
+        <span class="tag">EXHIBITION</span>
+        <div class="who"><b>You v <em>CPU Legend</em></b><span>Singles · best of 3 to 15 · all-rounder</span></div>
+        <button class="btn line">Match card</button><button class="btn">Walk on ▸</button>
+      </section>
+
+      <section class="box small"><p class="k">Warm-up</p><b>Tutorial<span class="badge">START HERE</span></b><span class="s">16 short lessons, about 6 minutes</span><span class="go">▸</span></section>
+      <section class="box small"><p class="k">Practice</p><b>Drills</b><span class="s">Smash, net play, drives, defence</span><span class="go">▸</span></section>
+    </div>
+
+    <footer class="ft"><span>How to play</span><span>Take the tour</span><span>Assists &amp; controls</span><span class="sp"></span><span>What's new <span class="new">v3.19</span></span></footer>
+  </div>
+</div>
+
+<div class="frame" data-frame="load"><div class="paper"></div>
+  <div class="load">
+    <div class="ld-top"><b>Ventra China Open</b><span>Quarter-final · Court 1<br>Powered by Leeming</span></div>
+    <div class="vs">
+      <div class="side me"><small>World #87 · 1123</small><b>Kento<br>fan</b><span>Right-handed · all-rounder</span></div>
+      <div class="vmark"><i>VS</i></div>
+      <div class="side them"><small>World #12 · seed 3</small><b>Lin<br>Kaiwen</b><span>Attacker · jump-smashes whenever it can</span></div>
+    </div>
+    <div>
+      <div class="ticket"><span>Admit one · QF</span><span class="bar"><i></i></span><span>Walking on…</span></div>
+      <p class="tip">Tip: a jump smash timed at the top of your jump is 15% faster.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.frame').forEach((f) => f.classList.toggle('on', f.dataset.frame === b.dataset.f));
+});
+</script>
+</body>
+</html>

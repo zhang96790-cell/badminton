@@ -5,6 +5,14 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.0: The broadcast look and the walk-on (20 Nov 2026)
+
+- A new look. The home page is now a dark TV-broadcast board that fills almost the whole screen, with slanted red and blue panels and big italic type. Career (red) and Ranked (blue) are the two big boxes, the CPU match is a white box below them, and the Tutorial and Drills sit beside it.
+- Change the CPU level right on the home page: scroll over the exhibition box, use the arrows, or click a level in the strip.
+- A walk-on before every career and CPU match. Your half and your opponent’s slam in from the sides with a VS between you, then both players’ numbers: world rank, your last 5 results, your head-to-head, titles, strength and style.
+- The walk-on shows your opponent’s signature move (or how the CPU plays), and in a tournament, your road so far: each round you’ve won with its score, this round lit up, and the rounds still to come. Press Space or click to skip it.
+- A ticker along the bottom of the home page with the latest update and some tips.
+
 ## 3.19: Qualifying rounds and tour loans (20 Nov 2026)
 
 - Qualifying rounds replace the Local Club Open. Can’t afford an event? You can still enter it through qualifying, for free: two one-game matches against lower-level players. Win both and you’re in the main draw, with your travel and hotel paid by the event. Lose and you still get some ranking points (a quarter of the first-round points in round 1, half in round 2).

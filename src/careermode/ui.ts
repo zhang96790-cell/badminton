@@ -4,6 +4,7 @@ import { DEFAULT_CHARACTER, RARITY, characterById, rosterFor, type Character } f
 import type { Game } from '../game';
 import type { Settings } from '../game';
 import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
+import type { WalkOnInfo, WalkOnStep } from '../walkon';
 import type { MatchSetup } from '../setup';
 import { Match } from '../rules';
 import { eventLook, kitBrandOf } from '../brands';
@@ -13,6 +14,7 @@ import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, money, myRank, newCareer,
   nextMatch, payFor, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
+  type NextMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
 import { SIGNATURES } from './signatures';
@@ -27,7 +29,7 @@ export interface CareerDeps {
   /** Owned players (refreshed from the account). */
   owned: () => Promise<Set<string>>;
   /** Play a match, then call onDone with the finished (or retired) game. */
-  play: (o: { setup: MatchSetup; settings: Partial<Settings>; onDone: (g: Game, retired: boolean) => void; onLeave?: () => void }) => void;
+  play: (o: { setup: MatchSetup; settings: Partial<Settings>; onDone: (g: Game, retired: boolean) => void; onLeave?: () => void; walkOn?: WalkOnInfo }) => void;
   toast: (title: string, sub: string) => void;
   openAccount: (why: string) => void;
   saveStats: (delta: Record<string, number>) => void;
@@ -647,6 +649,55 @@ export function initCareer(d: CareerDeps) {
   const roundName = (nm: { round: Round; bronze?: boolean; qual?: 1 | 2 }) => (nm.qual ? `Qualifying round ${nm.qual}` : nm.bronze ? 'Bronze medal match' : ROUND_LABEL[nm.round]);
   const resultName = (h: { round: Round; place?: 3 | 4; qual?: 1 | 2 }) => (h.qual ? `Qualifying round ${h.qual}` : h.place === 3 ? '3rd place' : h.place === 4 ? '4th place' : ROUND_LABEL[h.round]);
 
+  /** 4.0: the walk-on for a career match: both players' numbers, their signature move, and your road to this round. */
+  function careerWalkOn(x: TourEvent, nm: NextMatch): WalkOnInfo {
+    const a = s!.current!, o = nm.opponent, me = characterById(a.as);
+    const rankList = W().rankingAt(absWeek(s!.year, s!.week));
+    const rankOf = (id: string) => { const i = rankList.findIndex((r) => r.id === id); return i >= 0 && rankList[i].pts > 0 ? `#${i + 1}` : '–'; };
+    const mine = myRank(s!, W());
+    // Every career match you've played, oldest first: [opponent, won].
+    const played: [string, boolean][] = [];
+    const add = (opps: string[] | undefined, scores: [number, number][][] | undefined) => (opps ?? []).forEach((id, i) => {
+      const g = scores?.[i] ?? [];
+      played.push([id, g.filter(([p, q]) => p > q).length > g.filter(([p, q]) => q > p).length]);
+    });
+    for (const h of s!.history) add(h.opponents, h.scores);
+    add(a.opponents, a.scores);
+    const form = played.slice(-5).map(([, w]) => (w ? 'W' : 'L')).join('');
+    const h2h = played.filter(([id]) => id === o.id), h2hW = h2h.filter(([, w]) => w).length;
+    const sig = o.abilities[0];
+    const style = STYLES[STYLE_AI[o.style]];
+    const mySig = me.abilities[0];
+    // The road: qualifying, or the main-draw rounds with this one lit.
+    let path: WalkOnStep[];
+    if (nm.qual) path = [1, 2].map((q) => ({ label: `Qualifying ${q}`, state: q < nm.qual! ? 'won' : q === nm.qual ? 'now' : 'next' } as WalkOnStep)).concat([{ label: 'Main draw', state: 'next' }]);
+    else {
+      const order = roundsFor(x.draw_size);
+      path = order.map((r, i): WalkOnStep => {
+        if (i < a.opponents.length) {
+          const sc = a.scores[i]?.map(([p, q]) => `${p}–${q}`).join(', ');
+          return { label: ROUND_LABEL[r], detail: `${characterById(a.opponents[i]).name.split(' ').pop()} ${sc ?? ''}`.trim(), state: 'won' };
+        }
+        return { label: a.bronze && r === 'F' ? 'Bronze match' : ROUND_LABEL[r], state: r === a.round && !a.bronze ? 'now' : a.bronze && r === 'F' ? 'now' : 'next' };
+      });
+      path.push({ label: 'Champion', state: 'next' });
+    }
+    return {
+      event: x.name, round: roundName(nm),
+      me: {
+        name: s!.name, line: `World ${mine ? `#${mine}` : 'unranked'} · ${me.name}`,
+        stats: [[mine ? `#${mine}` : '–', 'World rank'], [form ? `form:${form}` : '–', 'Last 5'], [h2h.length ? `${h2hW}–${h2h.length - h2hW}` : '0–0', 'Head to head'], [String(s!.titles), 'Titles']],
+        move: mySig ? { kicker: 'Your signature move', name: mySig.name, text: SIGNATURES.get(mySig.id)?.text ?? mySig.text } : undefined,
+      },
+      them: {
+        name: o.name, line: `${countryName(o.country)} · ${RARITY[o.rarity].label}`,
+        stats: [[rankOf(o.id), 'World rank'], [String(o.career_strength), 'Strength'], [style.label, 'Style'], [`${LEVEL_LABEL[nm.level]}`, 'Plays like']],
+        move: sig ? { kicker: 'Signature move', name: sig.name, text: SIGNATURES.get(sig.id)?.text ?? sig.text } : { kicker: 'Plays like', name: style.label, text: style.trait },
+      },
+      path,
+    };
+  }
+
   async function playNext(resume?: string) {
     const x = ev(), nm = x && nextMatch(s!, W(), x);
     if (!x || !nm || busy) return;
@@ -657,6 +708,7 @@ export function initCareer(d: CareerDeps) {
     const live: LiveMatch = { eventId: a.eventId, round: nm.round, opp: opp.id, snap: '', rally: false };
     close();
     d.play({
+      walkOn: resume ? undefined : careerWalkOn(x, nm),
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
         player: { characterId: a.as, modifiers: [coachModifier(s!)], abilities: true },

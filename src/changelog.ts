@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.6',
+    title: 'Cheaper camps at your base',
+    date: '21 Nov 2026',
+    changes: [
+      "A training base now also makes training camps 70% cheaper (on top of +1 per camp for each base level).",
+    ],
+  },
+  {
     version: '4.4.5',
     title: 'Tired legs, not slow legs',
     date: '21 Nov 2026',

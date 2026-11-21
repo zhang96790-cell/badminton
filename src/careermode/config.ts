@@ -120,7 +120,7 @@ export const CAREER_CFG = {
    * 4.4.3: training camps: a week and money for +3 to a stat (at most 5 camps per stat). Each one costs more.
    * A training base adds +1 more to every camp per base level (so +4, +5 or +6), instead of the old discount.
    */
-  camp: { cost: 3000, step: 0.5, max: 5, points: 3, basePerLevel: 1, staminaPerPoint: 0.03 },
+  camp: { cost: 3000, step: 0.5, max: 5, points: 3, basePerLevel: 1, staminaPerPoint: 0.03, baseDiscount: 0.7 },
   /** 4.1: a training base: weeks off rest you more (+10 a level) and camps give more (+1 a level). */
   base: { buy: 25000, upgrade: [15000, 30000], restPerLevel: 10 },
   /** 4.1: a house in a country: free nights and +25% Rested a night at events there. Price × the city's cost. */

@@ -260,7 +260,7 @@ export function shopModifier(s: CareerState): Modifier {
 export const staffWages = (s: CareerState) => (s.shop?.coach ? CFG.coaches[s.shop.coach]?.wage ?? 0 : 0)
   + (['nutritionist', 'psychologist', 'stringing'] as const).reduce((n, k) => n + (s.shop?.[k] ? CFG.extras[k].wage : 0), 0);
 /** The next training camp's price for a stat. */
-export const campCost = (s: CareerState, stat: number) => Math.round(CFG.camp.cost * (1 + (s.shop?.camps?.[stat] ?? 0) * CFG.camp.step));
+export const campCost = (s: CareerState, stat: number) => Math.round(CFG.camp.cost * (1 + (s.shop?.camps?.[stat] ?? 0) * CFG.camp.step) * (s.shop?.base ? 1 - CFG.camp.baseDiscount : 1));
 /** 4.4.3: stat points the next camp gives (+3, and +1 more per training base level). */
 export const campGain = (s: CareerState) => CFG.camp.points + (s.shop?.base ? s.shop.base.level * CFG.camp.basePerLevel : 0);
 /** 4.4.2: dearer where more tournaments are held (and in pricey cities), cheaper where there's only one. */

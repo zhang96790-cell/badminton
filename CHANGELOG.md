@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.4.5: Tired legs, not slow legs (21 Nov 2026)
+
+- Being tired barely slows you down any more (at most about 3%, even running on empty). It shows in your timing and aim instead.
+
 ## 4.4.4: Fresher in the big matches (21 Nov 2026)
 
 - Being tired at tournaments is much softer. Shots tire you half as much, and nights recover more (hostel +8%, 3-star +16%, 4-star +22%, 5-star +30%). Normal matches now leave you about as rested as before them; only long three-game battles wear you down over a week.

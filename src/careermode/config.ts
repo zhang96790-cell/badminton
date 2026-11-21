@@ -150,7 +150,7 @@ export const CAREER_CFG = {
       { min: 0, label: 'Running on empty', p: 0.14, aim: 0.09 },
     ],
     /** 4.4.4: how a tier's penalty splits: movement gets this share, timing and aim more. */
-    effect: { move: 0.5, timing: 1.3, aim: 1.2 },
+    effect: { move: 0.2, timing: 1.3, aim: 1.2 }, // 4.4.5: movement much less (was 0.5)
     /** 4.4.4: adrenaline: being tired hurts this much in a semi-final (×) and final / bronze match (×). */
     adrenaline: { SF: 0.5, F: 0 },
     match: { base: 3, per10Shots: 0.5, thirdGame: 6, deuceGame: 2 },

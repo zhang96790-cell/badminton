@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.5',
+    title: 'Tired legs, not slow legs',
+    date: '21 Nov 2026',
+    changes: [
+      "Being tired barely slows you down any more (at most about 3%, even running on empty). It shows in your timing and aim instead.",
+    ],
+  },
+  {
     version: '4.4.4',
     title: 'Fresher in the big matches',
     date: '21 Nov 2026',

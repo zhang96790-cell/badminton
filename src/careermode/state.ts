@@ -127,8 +127,10 @@ export interface Shop {
   racket?: string | null;
   /** Training base: region and level. */
   base?: { region: string; level: number } | null;
-  /** Stat points gained at training camps: [Power, Speed, Net, Defence, Stamina]. */
+  /** Training camps done per stat: [Power, Speed, Net, Defence, Stamina]. */
   camps?: [number, number, number, number, number];
+  /** 4.4.3: stat points those camps gave (each camp +3, more with a training base). Older saves: 3 per camp. */
+  campPts?: [number, number, number, number, number];
   cosmetics?: string[];
   equipped?: Record<string, string>;
 }
@@ -233,20 +235,22 @@ export function energyModifier(energy: number): Modifier {
 export const coachModifier = (s: CareerState): Modifier => (s.shop?.coach ? (CFG.coaches[s.shop.coach]?.mod as Modifier) ?? {} : s.staff?.coach ? { timing: 1.03, aim: 0.97 } : {});
 /** 4.1: staff, the racket strings and training camps (camp points work like extra stat points). */
 export function shopModifier(s: CareerState): Modifier {
-  const sh = s.shop ?? {}, c = sh.camps ?? [0, 0, 0, 0, 0], P = CAREER_STATS.perPoint;
+  const sh = s.shop ?? {}, c = sh.campPts ?? (sh.camps ?? [0, 0, 0, 0, 0]).map((n) => n * CFG.camp.points), P = CAREER_STATS.perPoint;
   return {
     smash: (1 + P.power * c[0]) * (sh.stringing ? 1.02 : 1), clearDepth: 1 + P.power * c[0],
     move: 1 + P.speed * c[1], swingWait: 1 - P.speed * c[1],
     netAim: 1 - P.netAim * c[2], netTiming: 1 + P.netTiming * c[2],
     defenceTiming: 1 + P.defenceTiming * c[3], defenceDepth: 1 - P.defenceDepth * c[3],
-    fatigue: 1 - 0.05 * c[4], timing: sh.psychologist ? 1.02 : 1,
+    fatigue: 1 - CFG.camp.staminaPerPoint * c[4], timing: sh.psychologist ? 1.02 : 1,
   };
 }
 /** 4.1: what your staff cost a week (coach and extras). */
 export const staffWages = (s: CareerState) => (s.shop?.coach ? CFG.coaches[s.shop.coach]?.wage ?? 0 : 0)
   + (['nutritionist', 'psychologist', 'stringing'] as const).reduce((n, k) => n + (s.shop?.[k] ? CFG.extras[k].wage : 0), 0);
 /** The next training camp's price for a stat. */
-export const campCost = (s: CareerState, stat: number) => Math.round(CFG.camp.cost * (1 + (s.shop?.camps?.[stat] ?? 0) * CFG.camp.step) * (s.shop?.base ? 1 - CFG.camp.baseDiscount : 1));
+export const campCost = (s: CareerState, stat: number) => Math.round(CFG.camp.cost * (1 + (s.shop?.camps?.[stat] ?? 0) * CFG.camp.step));
+/** 4.4.3: stat points the next camp gives (+3, and +1 more per training base level). */
+export const campGain = (s: CareerState) => CFG.camp.points + (s.shop?.base ? s.shop.base.level * CFG.camp.basePerLevel : 0);
 /** 4.4.2: dearer where more tournaments are held (and in pricey cities), cheaper where there's only one. */
 export const houseCost = (country: string, cal: TourEvent[]) => {
   const events = Math.max(1, cal.filter((v) => v.host_country === country).length);
@@ -264,6 +268,8 @@ export function buy(s: CareerState, label: string, cost: number): boolean {
 export function trainingCamp(s: CareerState, stat: number, appVersion: string): boolean {
   const sh = (s.shop ??= {}), c = (sh.camps ??= [0, 0, 0, 0, 0]);
   if (s.current || c[stat] >= CFG.camp.max || !buy(s, `Training camp (${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][stat]})`, campCost(s, stat))) return false;
+  const pts = (sh.campPts ??= c.map((n) => n * CFG.camp.points) as [number, number, number, number, number]);
+  pts[stat] += campGain(s);
   c[stat]++;
   advanceWeek(s, 'next', appVersion);
   return true;

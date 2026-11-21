@@ -5,6 +5,16 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.3',
+    title: 'Custom rackets fixed, stronger training camps',
+    date: '21 Nov 2026',
+    changes: [
+      "Fixed: a custom racket bought in the career shop never showed. Your racket now has your colour in every career match (gold, red, blue, neon green or purple).",
+      "Training camps are much stronger: each camp gives +3 to the stat instead of +1 (camps you’ve already done count as +3 each too).",
+      "A training base now makes camps better instead of cheaper: +1 more per camp for each base level (so +4, +5 or +6). It still rests you more in weeks off.",
+    ],
+  },
+  {
     version: '4.4.2',
     title: 'House prices by country',
     date: '21 Nov 2026',

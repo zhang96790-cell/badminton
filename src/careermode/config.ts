@@ -114,9 +114,14 @@ export const CAREER_CFG = {
   } as Record<string, { label: string; wage: number; perk: string }>,
   /** 4.1: a custom racket in your colours (once). */
   rackets: { cost: 6000, colours: ['Gold', 'Black and red', 'White and blue', 'Neon green', 'Purple'] },
-  /** 4.1: training camps: a week and money for +1 to a stat (at most 5 per stat). Each one costs more. */
-  camp: { cost: 3000, step: 0.5, max: 5, baseDiscount: 0.3 },
-  /** 4.1: a training base: weeks off rest you more (+10 a level) and camps cost 30% less. */
+  /** 4.4.3: the frame colour each custom racket is drawn in. */
+  racketHex: { Gold: '#f2c230', 'Black and red': '#e01b2f', 'White and blue': '#3d7bff', 'Neon green': '#39ff14', Purple: '#9b4dff' } as Record<string, string>,
+  /**
+   * 4.4.3: training camps: a week and money for +3 to a stat (at most 5 camps per stat). Each one costs more.
+   * A training base adds +1 more to every camp per base level (so +4, +5 or +6), instead of the old discount.
+   */
+  camp: { cost: 3000, step: 0.5, max: 5, points: 3, basePerLevel: 1, staminaPerPoint: 0.03 },
+  /** 4.1: a training base: weeks off rest you more (+10 a level) and camps give more (+1 a level). */
   base: { buy: 25000, upgrade: [15000, 30000], restPerLevel: 10 },
   /** 4.1: a house in a country: free nights and +25% Rested a night at events there. Price × the city's cost. */
   house: 30000,

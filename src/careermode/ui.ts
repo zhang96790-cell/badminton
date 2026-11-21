@@ -13,7 +13,7 @@ import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, typ
 import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, money, myRank, newCareer,
-  nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
+  nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, campGain, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
   type NextMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
@@ -481,12 +481,12 @@ export function initCareer(d: CareerDeps) {
       const on = !!sh[k as 'nutritionist'];
       return `<button class="c-opt${on ? ' on' : ''}" data-extra="${k}"><b>${nw(`extra:${k}`)}${e(c.label)}${on ? ' (hired)' : ''}</b><span>${money(c.wage)} a week</span><span>${e(c.perk)}</span></button>`;
     }).join('');
-    const stats = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'], camps = sh.camps ?? [0, 0, 0, 0, 0];
-    const camp = stats.map((l, i) => `<button class="c-opt" data-camp="${i}" ${camps[i] >= CFG.camp.max || s!.current ? 'disabled' : ''}><b>${l} camp</b><span>${camps[i]} of ${CFG.camp.max} done</span><span>${camps[i] >= CFG.camp.max ? 'Maxed out' : `${money(campCost(s!, i))} · takes the week`}</span></button>`).join('');
+    const stats = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'], camps = sh.camps ?? [0, 0, 0, 0, 0], pts = sh.campPts ?? camps.map((n) => n * CFG.camp.points);
+    const camp = stats.map((l, i) => `<button class="c-opt" data-camp="${i}" ${camps[i] >= CFG.camp.max || s!.current ? 'disabled' : ''}><b>${l} camp</b><span>${camps[i]} of ${CFG.camp.max} done · +${pts[i]} so far</span><span>${camps[i] >= CFG.camp.max ? '' : `Next: +${campGain(s!)} ${l}`}</span><span>${camps[i] >= CFG.camp.max ? 'Maxed out' : `${money(campCost(s!, i))} · takes the week`}</span></button>`).join('');
     const base = sh.base;
     const baseHtml = base
-      ? `<p class="c-lead">Your training base in ${e(base.region)} is level ${base.level}: weeks off rest you ${CFG.base.restPerLevel * base.level}% more, and camps cost ${Math.round(CFG.camp.baseDiscount * 100)}% less.</p>${base.level < 3 ? `<div class="c-cta"><button class="edit" data-base="up">Upgrade to level ${base.level + 1} · ${money(CFG.base.upgrade[base.level - 1])}</button></div>` : ''}`
-      : `<p class="c-lead">A base where you train: weeks off rest you more and training camps cost less.</p><div class="c-cta"><button class="edit" data-base="buy">Build one in ${e(countryName(s!.homeCountry))} · ${money(CFG.base.buy)}</button></div>`;
+      ? `<p class="c-lead">Your training base in ${e(base.region)} is level ${base.level}: weeks off rest you ${CFG.base.restPerLevel * base.level}% more, and every training camp gives +${base.level * CFG.camp.basePerLevel} more.</p>${base.level < 3 ? `<div class="c-cta"><button class="edit" data-base="up">Upgrade to level ${base.level + 1} · ${money(CFG.base.upgrade[base.level - 1])}</button></div>` : ''}`
+      : `<p class="c-lead">A base where you train: weeks off rest you more and every training camp gives +1 more per base level.</p><div class="c-cta"><button class="edit" data-base="buy">Build one in ${e(countryName(s!.homeCountry))} · ${money(CFG.base.buy)}</button></div>`;
     const hosts = [...new Set(W().cal.map((v) => v.host_country))].sort((a, b) => countryName(a).localeCompare(countryName(b)));
     const houses = hosts.map((c) => {
       const own = s!.houses?.includes(c);
@@ -497,7 +497,7 @@ export function initCareer(d: CareerDeps) {
     const travel = (Object.keys(CFG.travelClass) as TravelClass[]).map((k) => `<button class="c-opt${cls === k ? ' on' : ''}" data-class="${k}"><b>${nw(`class:${k}`)}${CFG.travelClass[k].label}</b><span>${CFG.travelClass[k].cost}× the fare</span><span>${Math.round(CFG.travelClass[k].energySaved * 100)}% less tiring</span></button>`).join('');
     const hotels = (Object.keys(CFG.hotels) as HotelTier[]).map((k) => `<button class="c-opt${ho === k ? ' on' : ''}" data-hotel="${k}"><b>${nw(`hotel:${k}`)}${CFG.hotels[k].label}</b><span>${money(CFG.hotels[k].perNight)} a night (more in pricey cities)</span><span>+${CFG.rested.night[k]}% Rested a night</span></button>`).join('');
     const racket = sh.racket
-      ? `<p class="c-lead">Your custom racket: <b>${e(sh.racket)}</b>.</p>`
+      ? `<p class="c-lead">Your custom racket: <b style="color:${CFG.racketHex[sh.racket] ?? 'inherit'}">${e(sh.racket)}</b>. You use it in every career match.</p>`
       : `<div class="c-opts">${CFG.rackets.colours.map((c) => `<button class="c-opt" data-racket="${e(c)}"><b>${e(c)}</b><span>${money(CFG.rackets.cost)}</span></button>`).join('')}</div>`;
     const owned = sh.cosmetics ?? [], eq = sh.equipped?.walkon;
     const walk = Object.entries(CFG.walkOns).map(([k, w]) => {
@@ -508,7 +508,7 @@ export function initCareer(d: CareerDeps) {
     return `<h3 class="c-title small">Your coach</h3><p class="c-lead small">One coach at a time. Every coach gives you notes after each match.</p><div class="c-opts">${coach}</div>
       <h3 class="c-title small">Staff</h3><div class="c-opts">${extras}</div>
       <p class="c-lead small">Staff wages: ${money(wages)} a week.${tc ? ` Team costs at your ranking: ${money(tc)} a week (they grow as you climb).` : ''}</p>
-      <h3 class="c-title small">${nw('camp')}Training camps</h3><p class="c-lead small">A week away for +1 to a stat, up to ${CFG.camp.max} each. Each camp costs a bit more than the last.</p><div class="c-opts">${camp}</div>
+      <h3 class="c-title small">${nw('camp')}Training camps</h3><p class="c-lead small">A week away for +${CFG.camp.points} to a stat (more with a training base), up to ${CFG.camp.max} camps each. Each camp costs a bit more than the last.</p><div class="c-opts">${camp}</div>
       <h3 class="c-title small">${nw('base')}Training base</h3>${baseHtml}
       <h3 class="c-title small">${nw('house')}Houses</h3><p class="c-lead small">Own a house in a country and you sleep there at its events: no hotel bill, and +${CFG.rested.house}% Rested a night.</p><div class="c-opts">${houses}</div>
       <h3 class="c-title small">Flights</h3><div class="c-opts">${travel}</div>
@@ -828,7 +828,7 @@ export function initCareer(d: CareerDeps) {
         restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country), // 4.2.1: the boards are the event's own (local) sponsors, never yours
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
-      settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles' },
+      settings: { opponent: nm.level, style: STYLE_AI[opp.style], games: nm.games, points: nm.points, event: 'singles', ...(s!.shop?.racket ? { racket: CFG.racketHex[s!.shop.racket] } : {}) },
       onLeave: async () => {
         // Saved to your account too, so it carries on from another computer. Career stays shut until you resume.
         if (live.snap) { s!.current!.live = { ...live }; await save(); }
@@ -1023,7 +1023,7 @@ export function initCareer(d: CareerDeps) {
     const ex = at('[data-extra]')?.dataset.extra as 'nutritionist' | 'psychologist' | 'stringing' | undefined;
     if (ex) { const sh = (s.shop ??= {}); sh[ex] = !sh[ex]; await save(); render(); return; }
     const cp = at('[data-camp]')?.dataset.camp;
-    if (cp !== undefined) { const i = Number(cp); if (trainingCamp(s, i, d.appVersion)) d.toast('Training camp done', `+1 ${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][i]}. A week has passed.`); else d.toast('Can’t do that camp', 'Not enough money, or you’re in a tournament.'); await save(); render(); return; }
+    if (cp !== undefined) { const i = Number(cp), campGainBefore = campGain(s); if (trainingCamp(s, i, d.appVersion)) d.toast('Training camp done', `+${campGainBefore} ${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][i]}. A week has passed.`); else d.toast('Can’t do that camp', 'Not enough money, or you’re in a tournament.'); await save(); render(); return; }
     const bs = at('[data-base]')?.dataset.base;
     if (bs) {
       const sh = (s.shop ??= {});

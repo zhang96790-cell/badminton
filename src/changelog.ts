@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.7',
+    title: 'Small events pay for the trip',
+    date: '21 Nov 2026',
+    changes: [
+      "Fixed: travelling to small events cost more than you could win there (a long-haul flight was $1,000 and winning a Super 100 paid $893). Flights are now less than half the price (long-haul $450, regional $220, at home $80), and Super 100, 300 and 500 events pay more (×1.8, ×1.6 and ×1.3). Winning a Super 100 now pays about $1,600, and a Super 300 about $3,000.",
+    ],
+  },
+  {
     version: '4.4.6',
     title: 'Cheaper camps at your base',
     date: '21 Nov 2026',

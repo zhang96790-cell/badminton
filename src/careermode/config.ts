@@ -22,7 +22,8 @@ export const CAREER_CFG = {
   prizeShare: { W: 0.058, F: 0.044, SF: 0.035, QF: 0.028, R16: 0.014, R32: 0.007, R64: 0.004 } as Record<Round, number>,
 
   // ── Travel, hotels, recovery (3.3: "Hard": energy is scarce and recovering costs real money) ──
-  travel: { domestic: 180, regional: 480, intercontinental: 1000 },
+  // 4.4.7: flights were out of scale with the (game-sized) prize money: a long-haul trip cost more than winning a Super 100.
+  travel: { domestic: 80, regional: 220, intercontinental: 450 },
   /** Travel classes: price × economy, and the share of the travel energy they save. */
   travelClass: {
     economy: { label: 'Economy', cost: 1, energySaved: 0 },
@@ -95,7 +96,8 @@ export const CAREER_CFG = {
   /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
   tourMinMoney: 1500,
   /** 4.1: the big events pay less (prizes there grew much faster than costs). Purse × this. */
-  prizeCut: { S750: 0.65, S1000: 0.62, WORLDS: 0.62, WTF: 0.6, OLYMPICS: 0.6 } as Record<string, number>,
+  // 4.4.7: the small events pay more, so going deep at a Super 100 or 300 pays for the trip.
+  prizeCut: { S100: 1.8, S300: 1.6, S500: 1.3, S750: 0.65, S1000: 0.62, WORLDS: 0.62, WTF: 0.6, OLYMPICS: 0.6 } as Record<string, number>,
   /** 4.1: your team grows as you climb: weekly costs by world ranking. */
   teamCosts: [{ rank: 10, weekly: 900 }, { rank: 20, weekly: 600 }, { rank: 50, weekly: 350 }, { rank: 100, weekly: 180 }],
   /** 4.1: coaches. One at a time; each has its own perk (and gives you notes after every match). */

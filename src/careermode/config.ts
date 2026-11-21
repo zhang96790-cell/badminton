@@ -139,18 +139,23 @@ export const CAREER_CFG = {
    * you playing, it just makes you slower and less sharp, more so the lower you go.
    */
   rested: {
+    // 4.4.4: nothing below 60% happens until you're under it; then mostly timing and aim (movement a little).
     tiers: [
-      { min: 85, label: 'Fresh', p: 0, aim: 0 },
-      { min: 70, label: 'Good', p: 0.01, aim: 0 },
-      { min: 55, label: 'Tired', p: 0.03, aim: 0 },
-      { min: 40, label: 'Weary', p: 0.05, aim: 0.02 },
-      { min: 25, label: 'Exhausted', p: 0.08, aim: 0.04 },
-      { min: 10, label: 'Drained', p: 0.11, aim: 0.06 },
+      { min: 80, label: 'Fresh', p: 0, aim: 0 },
+      { min: 60, label: 'Good', p: 0, aim: 0 },
+      { min: 45, label: 'Tired', p: 0.03, aim: 0 },
+      { min: 30, label: 'Weary', p: 0.05, aim: 0.02 },
+      { min: 18, label: 'Exhausted', p: 0.08, aim: 0.04 },
+      { min: 8, label: 'Drained', p: 0.11, aim: 0.06 },
       { min: 0, label: 'Running on empty', p: 0.14, aim: 0.09 },
     ],
-    match: { base: 3, per10Shots: 1, thirdGame: 6, deuceGame: 2 },
+    /** 4.4.4: how a tier's penalty splits: movement gets this share, timing and aim more. */
+    effect: { move: 0.5, timing: 1.3, aim: 1.2 },
+    /** 4.4.4: adrenaline: being tired hurts this much in a semi-final (×) and final / bronze match (×). */
+    adrenaline: { SF: 0.5, F: 0 },
+    match: { base: 3, per10Shots: 0.5, thirdGame: 6, deuceGame: 2 },
     travel: { domestic: 3, regional: 8, intercontinental: 15 } as Record<string, number>,
-    night: { hostel: 5, three: 10, four: 14, five: 20 } as Record<string, number>,
+    night: { hostel: 8, three: 16, four: 22, five: 30 } as Record<string, number>,
     /** A night in your own house (an event in a country where you own one). */
     house: 25,
     weekOff: 35,

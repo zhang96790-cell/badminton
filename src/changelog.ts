@@ -5,6 +5,17 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.4',
+    title: 'Fresher in the big matches',
+    date: '21 Nov 2026',
+    changes: [
+      "Being tired at tournaments is much softer. Shots tire you half as much, and nights recover more (hostel +8%, 3-star +16%, 4-star +22%, 5-star +30%). Normal matches now leave you about as rested as before them; only long three-game battles wear you down over a week.",
+      "Nothing happens until you drop below 60% Rested. Below that, being tired mostly throws off your timing and aim, and slows you down only a little.",
+      "Adrenaline: being tired counts half as much in a semi-final and not at all in a final or bronze match.",
+      "Opponents get tired exactly the way you do, from the length of the matches they played to reach you.",
+    ],
+  },
+  {
     version: '4.4.3',
     title: 'Custom rackets fixed, stronger training camps',
     date: '21 Nov 2026',

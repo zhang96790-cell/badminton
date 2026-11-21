@@ -156,10 +156,15 @@ export function roundDay(ev: TourEvent, round: Round, seed: number, qual = false
   return Math.max(1, day);
 }
 export const restedTier = (r: number) => CFG.rested.tiers.find((t) => r >= t.min) ?? CFG.rested.tiers[CFG.rested.tiers.length - 1];
-/** How a Rested level plays: slower feet, a later swing, a smaller timing window, and lower down a bit less aim. */
-export function restedModifier(r: number): Modifier {
-  const t = restedTier(r);
-  return t.p ? { move: 1 - t.p, swingWait: 1 + t.p, timing: 1 - t.p, ...(t.aim ? { aim: 1 + t.aim } : {}) } : {};
+/**
+ * How a Rested level plays (4.4.4): mostly a smaller timing window and less accurate aim, and a little slower.
+ * round: adrenaline makes tiredness count half in a semi-final and not at all in a final or bronze match.
+ */
+export function restedModifier(r: number, round?: Round | 'bronze'): Modifier {
+  const t = restedTier(r), E = CFG.rested.effect, A = CFG.rested.adrenaline;
+  const k = round === 'F' || round === 'bronze' ? A.F : round === 'SF' ? A.SF : 1;
+  const p = t.p * k, aim = (t.p * E.aim + t.aim) * k;
+  return p || aim ? { move: 1 - p * E.move, swingWait: 1 + p * E.move, timing: 1 - p * E.timing, ...(aim ? { aim: 1 + aim } : {}) } : {};
 }
 /** What one match takes out of you: its length (shots), a third game and long deuce games. */
 export function matchDrain(shots: number, games: [number, number][], pointsToWin: number, s?: CareerState): number {
@@ -173,12 +178,19 @@ export const nightRest = (s: CareerState, ev: TourEvent) =>
   (s.houses?.includes(ev.host_country) ? CFG.rested.house : CFG.rested.night[hotelOf(s)] ?? 10) + (s.shop?.nutritionist ? 5 : 0);
 export const travelRestCost = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) =>
   ev.tier === 'CLUB' ? 0 : Math.round((CFG.rested.travel[travelBand(s.currentLocation, ev.host_country)] ?? 8) * (1 - CFG.travelClass[cls].energySaved));
-/** An opponent's Rested going into this round: worked out from the matches the draw gave them (the same every time). */
+/**
+ * An opponent's Rested going into this round (4.4.4): worked out exactly like yours, from the matches the draw
+ * gave them (each one a believable length, the same every time) and a 3-star night between rounds.
+ */
 export function opponentRested(s: CareerState, ev: TourEvent, round: Round, oppId: string): number {
   const order = roundsFor(ev.draw_size), played = Math.max(0, order.indexOf(round));
   const r = rng(hash(s.rngSeed, s.year, ev.id, oppId, 'rest'));
-  let v = 75 + r() * 25;
-  for (let i = 0; i < played; i++) v = Math.min(100, v - (10 + r() * 26) + 10);
+  let v = 85 + r() * 15; // how fresh they arrive (their own travel and earlier weeks)
+  for (let i = 0; i < played; i++) {
+    const three = r() < 0.35, shots = 90 + r() * (three ? 200 : 110);
+    const games: [number, number][] = three ? [[15, 12], [12, 15], [15, 13]] : [[15, 11], [15, 12]];
+    v = Math.min(100, Math.max(0, v - matchDrain(shots, games, 15)) + CFG.rested.night.three);
+  }
   return Math.round(Math.max(5, v));
 }
 

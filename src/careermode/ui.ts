@@ -176,7 +176,7 @@ export function initCareer(d: CareerDeps) {
   const recover = (x?: TourEvent | null) => {
     const r = Math.round(s!.energy), t = restedTier(r);
     const trip = x && !s!.current ? travelRestCost(s!, x) : 0;
-    return `<div class="c-rest" style="--rest:${r}%"><span class="c-rest-k">Rested</span><div class="c-rest-bar"><i></i></div><b>${r}% · ${t.label}</b>${trip ? `<small>The trip there: −${trip}%</small>` : ''}${t.p ? `<small>Playing ${Math.round(t.p * 100)}% slower and less sharp${t.aim ? ', with less accurate aim' : ''}</small>` : ''}</div>`;
+    return `<div class="c-rest" style="--rest:${r}%"><span class="c-rest-k">Rested</span><div class="c-rest-bar"><i></i></div><b>${r}% · ${t.label}</b>${trip ? `<small>The trip there: −${trip}%</small>` : ''}${t.p ? `<small>Your timing and aim are off (−${Math.round(t.p * CFG.rested.effect.timing * 100)}%) and you’re a little slower (−${Math.round(t.p * CFG.rested.effect.move * 100)}%). Adrenaline halves it in a semi-final and cancels it in a final.</small>` : ''}</div>`;
   };
 
   /** The season at a glance: every event on a 52-week line, your results on the ones you played. */
@@ -823,8 +823,8 @@ export function initCareer(d: CareerDeps) {
       walkOn: resume ? undefined : careerWalkOn(x, nm),
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
-        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy), shopModifier(s!)], abilities: true },
-        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id))] },
+        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy, a.bronze ? 'bronze' : nm.qual ? undefined : a.round), shopModifier(s!)], abilities: true },
+        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id), a.bronze ? 'bronze' : nm.qual ? undefined : a.round)] },
         restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country), // 4.2.1: the boards are the event's own (local) sponsors, never yours
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },

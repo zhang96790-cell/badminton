@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.9',
+    title: 'Colour back, clearer buttons',
+    date: '23 Nov 2026',
+    changes: [
+      "The home page colours are back (red for Career, blue for Online, blue and purple tiles) without the clutter, and every button is easier to spot: bigger main buttons, filled second buttons with bright borders, a red Walk on, round start buttons on the Tutorial and Drills tiles, and a white Log in.",
+    ],
+  },
+  {
     version: '4.4.8',
     title: 'A calmer home page',
     date: '23 Nov 2026',

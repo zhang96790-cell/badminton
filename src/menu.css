@@ -1888,3 +1888,43 @@ body:has(#menu:not(.hidden)) #viewbar { display: none; }
 .bc-small .bc-go { bottom: auto; top: 50%; transform: translateY(-50%); }
 .bc-small:hover .bc-go { transform: translate(4px, -50%); }
 .bc-grid { padding-top: 22px; padding-bottom: 22px; }
+
+/* ══ 4.4.9: colour back in, and buttons that are obviously buttons ════════════════════════════════ */
+.board.bc { background:
+  radial-gradient(ellipse 45% 55% at 8% 35%, rgba(232, 17, 45, 0.24), transparent 70%),
+  radial-gradient(ellipse 45% 55% at 92% 30%, rgba(47, 123, 255, 0.26), transparent 70%),
+  radial-gradient(ellipse 50% 40% at 70% 100%, rgba(122, 63, 214, 0.18), transparent 70%),
+  radial-gradient(ellipse 70% 60% at 70% 0%, #17223d 0%, #0a0f1d 65%), #0a0f1d; }
+.bc-career::before, .bc-ranked::before { opacity: 1; }
+.bc-career { background: linear-gradient(150deg, rgba(232, 17, 45, 0.55), rgba(120, 10, 40, 0.2) 60%, rgba(255, 255, 255, 0.02)); }
+.bc-ranked { background: linear-gradient(150deg, rgba(47, 123, 255, 0.55), rgba(20, 40, 120, 0.22) 60%, rgba(255, 255, 255, 0.02)); }
+.bc-head { border-bottom: 3px solid; border-image: linear-gradient(90deg, #e8112d, #7a3fd6 50%, #2f7bff) 1; }
+
+/* Main buttons: big, bright, with a lift on hover. */
+.bc-actions { gap: 12px; }
+.bc-btn { height: 62px; padding: 0 34px; font-size: 27px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); }
+.bc-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.bc-career .bc-btn:not(.line) { background: #ffc23d; color: #241300; }
+.bc-ranked .bc-btn:not(.line) { background: #ffffff; color: #0a0f1d; }
+/* Second buttons: filled glass with a bright border, so they read as buttons too. */
+.bc-btn.line { height: 62px; padding: 0 20px; font-size: 16px; background: rgba(255, 255, 255, 0.12); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.75); color: #fff; }
+.bc-btn.line:hover { background: rgba(255, 255, 255, 0.22); box-shadow: inset 0 0 0 2px #fff; }
+.bc-career .bc-btn.line { box-shadow: inset 0 0 0 2px #ffc23d; color: #ffd76e; background: rgba(255, 194, 61, 0.12); }
+.bc-career .bc-btn.line:hover { background: rgba(255, 194, 61, 0.24); }
+
+/* CPU match: a red Walk on you can't miss. */
+.bc-exhib .bc-btn:not(.line) { height: 52px; padding: 0 26px; font-size: 22px; background: #e8112d; color: #fff; }
+.bc-exhib .bc-btn.line { height: 52px; background: #fff; color: #0a0f1d; box-shadow: inset 0 0 0 2px #0a0f1d; font-size: 14px; }
+.bc-exhib .bc-btn.line:hover { background: #eef1f7; }
+
+/* Tutorial and Drills: coloured tiles with a clear "start" arrow button. */
+.ltile-tutorial.bc-small { background: linear-gradient(135deg, rgba(47, 123, 255, 0.45), rgba(47, 123, 255, 0.12)) !important; border-top: 0; }
+.ltile-practice.bc-small { background: linear-gradient(135deg, rgba(122, 63, 214, 0.5), rgba(122, 63, 214, 0.14)) !important; border-top: 0; }
+.bc-small { transition: transform 0.15s, filter 0.15s; }
+.bc-small:hover { transform: translateY(-2px); filter: brightness(1.12); }
+.bc-small .bc-go { right: 18px; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: #fff; color: #0a0f1d !important; font-size: 22px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); }
+.bc-small .bc-k { color: rgba(255, 255, 255, 0.8) !important; }
+
+/* Header: Log in stands out. */
+.bc #accountBtn:not(.in) { background: #fff; color: #0a0f1d; border-color: #fff; }
+.bc #accountBtn:not(.in) i { background: #e8112d; }

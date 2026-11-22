@@ -11,7 +11,7 @@ import { Sound } from './audio';
 import { Camera, REPLAY_CAMS, VIEWS, broadcastCamera, reverseCamera, setView, sideCamera, type ReplayCam } from './camera';
 import { ZONE_NAMES, loadMemory } from './ai';
 import { drawHeat, loadSessions, recordHeat, type ShotKind } from './heatmap';
-import { DEFAULT_CHARACTER, RARITY, ROSTER_HASH, characterById, rosterFor, statTotal } from '../shared/characters';
+import { DEFAULT_CHARACTER, RARITY, ROSTER_HASH, characterById, rosterFor, statNames, statTotal } from '../shared/characters';
 import { drawPentagon } from './pentagon';
 import { defaultSetup, type MatchSetup } from './setup';
 import { ACHIEVEMENTS, achievementDelta, checkAchievements, loadUnlocked, type Achievement } from './achievements';
@@ -39,6 +39,12 @@ import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } fr
 import { Renderer, type Scene } from './render';
 import { Voice } from './voice';
 import { startGate } from './gate';
+import { setEdition, getEdition } from '../shared/characters';
+
+// ── 5.0 test area: a tab that entered the hidden v5 area runs as v5 (checked against the account below). ──
+const V5_KEY = 'badminton.v5';
+try { if (sessionStorage.getItem(V5_KEY) === '1') setEdition(5); } catch { /* storage blocked */ }
+if (getEdition() === 5) document.body.classList.add('v5');
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -464,6 +470,7 @@ function openAccount(note?: string) {
 /** Add a finished match to your career: on your account if you're logged in, otherwise on this computer. */
 function recordCareer(g: Game) {
   if (g.mode !== 'match' && g.mode !== 'online') return;
+  if (getEdition() === 5) return; // 5.0 test area: no account stats, achievements or analytics from test matches
   logEvent('finish', g.online ? 'online' : g.setup.mode, levelOf(g), g);
   recordHeat(g);
   const delta = careerDelta(g, career);
@@ -643,7 +650,8 @@ const countryName = (code: string) => {
 
 /** Players out in this version of the game (later ones stay hidden). */
 const VISIBLE = rosterFor(CHANGELOG[0].version);
-const STAT_LABELS = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'];
+/** 5.0: the names follow the edition (v5: Reach and Accuracy). */
+const statLabels = () => statNames();
 const pf = { q: '', rarity: '', style: '', country: '', hand: '', owned: '', sort: 'rarity' };
 let pList: typeof VISIBLE = VISIBLE;
 /** Card size for the grid (it only draws the rows on screen, so 400+ players stay smooth). */
@@ -712,7 +720,7 @@ function renderPlayerDetail() {
   const c = characterById(selectedPlayer), r = RARITY[c.rarity], use = canUse(c.id);
   const wins = career[`char_wins_${c.id}`] ?? 0, losses = career[`char_losses_${c.id}`] ?? 0;
   const cmp = comparePlayer && comparePlayer !== c.id ? characterById(comparePlayer) : null;
-  const rowsHtml = STAT_LABELS.map((l, i) => {
+  const rowsHtml = statLabels().map((l, i) => {
     const d = cmp ? c.stats[i] - cmp.stats[i] : 0;
     return `<tr><td>${l}</td><td><b>${c.stats[i]}</b></td>${cmp ? `<td>${cmp.stats[i]}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : ''}${d || '='}</td>` : ''}</tr>`;
   }).join('');
@@ -1765,7 +1773,7 @@ function rankedVsCard(seat: RosterSeat, mine: boolean, rating: number | undefine
 function vsCard(seat: RosterSeat, mine: boolean, other: RosterSeat | null) {
   const c = characterById(seat.character ?? DEFAULT_CHARACTER), r = RARITY[c.rarity];
   const o = other ? characterById(other.character ?? DEFAULT_CHARACTER) : null;
-  const rows = STAT_LABELS.map((l, i) => {
+  const rows = statLabels().map((l, i) => {
     const d = o ? c.stats[i] - o.stats[i] : 0;
     return `<tr><td>${l}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${c.stats[i]}</td></tr>`;
   }).join('');
@@ -2468,7 +2476,7 @@ let careerLeave: (() => void) | null = null;
 let devFake: typeof import('./careermode/devfake') | null = null;
 if (import.meta.env.DEV) void import('./careermode/devfake').then((m) => { devFake = m; });
 const careerUi = initCareer({
-  appVersion: CHANGELOG[0].version,
+  get appVersion() { return getEdition() === 5 ? '5.0' : CHANGELOG[0].version; },
   account: () => account ?? (import.meta.env.DEV && devFake?.fakeOn() ? devFake.fakeAccount : null),
   loadAccount: async () => (import.meta.env.DEV && !account && devFake?.fakeOn() ? ({ ...(await loadAccount()), ...devFake.fakeModule() } as Awaited<ReturnType<typeof loadAccount>>) : loadAccount()),
   owned: async () => { if (import.meta.env.DEV && !account && devFake?.fakeOn()) return devFake.fakeOwned(); await refreshOwned(); return ownedIds; },
@@ -2499,7 +2507,8 @@ const careerUi = initCareer({
   },
   toast,
   openAccount,
-  saveStats: (delta) => saveCareer(delta),
+  // 5.0: the v5 test area never touches account stats or leaderboards.
+  saveStats: (delta) => { if (getEdition() !== 5) saveCareer(delta); },
   esc: hubEsc,
 });
 function leaveCareerMatch() {
@@ -2604,3 +2613,50 @@ errlogBtn.addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(text); copied = true; } catch { /* clipboard blocked */ }
   if (confirm(`${copied ? 'Copied to the clipboard: paste it into a message to us.' : 'Copy this and send it to us:'}\n\n${text.slice(0, 1500)}\n\nClear the log now?`)) { clearLog(); syncErrlog(); }
 });
+
+
+// ── 5.0: the hidden test area. A faint dot in the footer asks for the test code (logged in only). ──
+const labModal = document.getElementById('labModal')!, labBody = document.getElementById('labBody')!;
+function enterV5(on: boolean) {
+  try { if (on) sessionStorage.setItem(V5_KEY, '1'); else sessionStorage.removeItem(V5_KEY); } catch { /* storage blocked */ }
+  location.reload();
+}
+async function openLab() {
+  labModal.classList.remove('hidden');
+  if (!account) { labBody.innerHTML = '<p>Log in first: the test area is for a few accounts.</p>'; return; }
+  labBody.innerHTML = '<p class="sub">Checking…</p>';
+  const st = await (await loadAccount()).v5Status();
+  if (!st) { labBody.innerHTML = '<p>The test area isn’t set up yet.</p>'; return; }
+  if (st.tester || st.open) {
+    labBody.innerHTML = getEdition() === 5
+      ? '<p>You’re in the v5 test area. Career and matches here use the v5 rules, roster and a separate v5 career.</p><div class="fb-actions"><button type="button" class="edit" data-lab="leave">Leave the test area</button></div>'
+      : '<p>You’re a v5 tester. Your normal career isn’t touched: v5 has its own.</p><div class="fb-actions"><button type="button" class="primary walk" data-lab="enter">Enter v5</button></div>';
+    return;
+  }
+  labBody.innerHTML = '<p>Enter the test code.</p><input id="labCode" class="mc-search" autocomplete="off" spellcheck="false" placeholder="Code"><p id="labMsg" class="pass-msg"></p><div class="fb-actions"><button type="button" class="primary walk" data-lab="code">Unlock</button></div>';
+  (document.getElementById('labCode') as HTMLInputElement).focus();
+}
+document.getElementById('labDot')!.addEventListener('click', () => void openLab());
+labModal.addEventListener('click', async (e) => {
+  const t = e.target as HTMLElement;
+  if (t === labModal || t.closest('[data-labclose]')) { labModal.classList.add('hidden'); return; }
+  const a = t.closest<HTMLElement>('[data-lab]')?.dataset.lab;
+  if (a === 'enter') enterV5(true);
+  if (a === 'leave') enterV5(false);
+  if (a === 'code') {
+    const code = (document.getElementById('labCode') as HTMLInputElement).value.trim();
+    const ok = code && await (await loadAccount()).v5Redeem(code);
+    if (ok) { toast('Welcome, tester', 'You can now enter v5.'); void openLab(); }
+    else document.getElementById('labMsg')!.textContent = 'That code didn’t work (a few tries an hour).';
+  }
+});
+document.getElementById('v5Leave')?.addEventListener('click', () => enterV5(false));
+// A v5 tab checks the account is still allowed (a tester, or v5 open to all); if not, back to normal.
+if (getEdition() === 5) {
+  const check = async () => {
+    if (!account) return;
+    const st = await (await loadAccount()).v5Status();
+    if (st && !st.tester && !st.open) enterV5(false);
+  };
+  window.setTimeout(() => void check(), 4000);
+}

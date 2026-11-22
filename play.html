@@ -115,6 +115,7 @@
         <p id="touchNote" class="notice">This game needs a keyboard, ideally with a mouse or trackpad. It’s best on a laptop or desktop.</p>
 
         <footer class="board-foot">
+          <button id="labDot" class="lab-dot" type="button" aria-label="Test area" title="">·</button>
           <div class="foot-links">
             <button id="howBtn" class="link">How to play</button>
             <button id="tourBtn" class="link">Take the tour <span id="tourBadge" class="tour-badge" hidden>New? Start here</span></button>
@@ -140,6 +141,11 @@
       <div id="shortcuts" class="fb-modal hidden" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
         <div class="pass sc-pass"><h2>Keyboard shortcuts</h2><div id="shortcutList"></div><p class="sub">Press ? or Esc to close.</p></div>
       </div>
+
+      <div id="labModal" class="fb-modal hidden" role="dialog" aria-modal="true" aria-labelledby="labTitle">
+        <div class="pass fb-pass"><h2 id="labTitle">Test area</h2><div id="labBody"></div><div class="fb-actions"><button type="button" class="edit" data-labclose>Close</button></div></div>
+      </div>
+      <div id="v5Banner" class="v5-banner"><b>v5 TEST</b> Career and matches use the v5 rules, roster and a separate career. <button type="button" id="v5Leave">Leave</button></div>
 
       <aside id="matchcard" class="matchcard" aria-label="Match card" aria-hidden="true">
         <header class="mc-head">

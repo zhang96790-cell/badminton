@@ -1,6 +1,6 @@
 // Career mode screens: hub, events, bracket, ranking, squad, ledger, recruiting, season recap and the daily
 // challenge. Plain HTML inside the #career panel (same look as Social). Matches are played by main.ts.
-import { DEFAULT_CHARACTER, RARITY, characterById, rosterFor, type Character } from '../../shared/characters';
+import { DEFAULT_CHARACTER, RARITY, characterById, getEdition, statNames, rosterFor, type Character } from '../../shared/characters';
 import type { Game } from '../game';
 import type { Settings } from '../game';
 import { LEVEL_LABEL, RULES, STYLES, type Style } from '../config';
@@ -12,7 +12,7 @@ import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, money, myRank, newCareer,
+  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, money, myRank, newCareer, semiFreshStart, migrate,
   nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, campGain, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
   type NextMatch,
 } from './state';
@@ -98,7 +98,7 @@ export function initCareer(d: CareerDeps) {
     }
     body.innerHTML = '<p class="sub">Loading your career…</p>';
     const m = await d.loadAccount();
-    saves = new CareerSaves(m, acc.id);
+    saves = new CareerSaves(m, acc.id, getEdition() === 5 ? 'v5' : 'v4');
     const l = await saves.load();
     s = l.state;
     fresh();
@@ -112,7 +112,7 @@ export function initCareer(d: CareerDeps) {
     if (s && repairCurrent(s, W(), d.appVersion)) await save();
     // 3.14: titles from before then get their tier on your account once (they already count as titles).
     // 3.14.1: club opens aren't titles, so take any already counted off this career's total.
-    if (s) { const n = s.history.filter((h) => h.round === 'W' && h.tier !== 'CLUB').length; if (s.titles !== n) { s.titles = n; await save(); } }
+    if (s) { const n = s.history.filter((h) => h.round === 'W' && h.tier !== 'CLUB' && !h.legacy).length; if (s.titles !== n) { s.titles = n; await save(); } }
     // Club wins still go in as ct_club, only so the account can take them off its old title count.
     if (s && !s.titleTiersSynced) {
       const delta: Record<string, number> = {};
@@ -359,7 +359,7 @@ export function initCareer(d: CareerDeps) {
     const ri = rankList.findIndex((r) => r.id === o.id);
     const rank = ri >= 0 && rankList[ri].pts > 0 ? `#${ri + 1}` : 'Unranked';
     const style = STYLES[STYLE_AI[o.style]];
-    const rows = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'].map((l, i) => {
+    const rows = statNames().map((l, i) => {
       const a = (o.base_stats ?? o.stats)[i], b = (me.base_stats ?? me.stats)[i];
       return `<tr><td>${l}</td><td><b>${a}</b></td><td>${b}</td><td class="${a > b ? 'down' : a < b ? 'up' : ''}">${a > b ? `+${a - b} them` : a < b ? `+${b - a} you` : 'even'}</td></tr>`;
     }).join('');
@@ -481,7 +481,7 @@ export function initCareer(d: CareerDeps) {
       const on = !!sh[k as 'nutritionist'];
       return `<button class="c-opt${on ? ' on' : ''}" data-extra="${k}"><b>${nw(`extra:${k}`)}${e(c.label)}${on ? ' (hired)' : ''}</b><span>${money(c.wage)} a week</span><span>${e(c.perk)}</span></button>`;
     }).join('');
-    const stats = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'], camps = sh.camps ?? [0, 0, 0, 0, 0], pts = sh.campPts ?? camps.map((n) => n * CFG.camp.points);
+    const stats = statNames(), camps = sh.camps ?? [0, 0, 0, 0, 0], pts = sh.campPts ?? camps.map((n) => n * CFG.camp.points);
     const camp = stats.map((l, i) => `<button class="c-opt" data-camp="${i}" ${camps[i] >= CFG.camp.max || s!.current ? 'disabled' : ''}><b>${l} camp</b><span>${camps[i]} of ${CFG.camp.max} done · +${pts[i]} so far</span><span>${camps[i] >= CFG.camp.max ? '' : `Next: +${campGain(s!)} ${l}`}</span><span>${camps[i] >= CFG.camp.max ? 'Maxed out' : `${money(campCost(s!, i))} · takes the week`}</span></button>`).join('');
     const base = sh.base;
     const baseHtml = base
@@ -520,7 +520,7 @@ export function initCareer(d: CareerDeps) {
 
   function renderTrophies() {
     const h = s!.history;
-    const titles = h.filter((x) => x.round === 'W' && x.tier !== 'CLUB');
+    const titles = h.filter((x) => x.round === 'W' && x.tier !== 'CLUB' && !x.legacy);
     const byTier = new Map<string, number>();
     for (const t of titles) byTier.set(t.tier, (byTier.get(t.tier) ?? 0) + 1);
     const medals = h.map((x) => ({ x, m: medalOf(x) })).filter((y) => y.m);
@@ -561,6 +561,7 @@ export function initCareer(d: CareerDeps) {
     const countries = [...new Set(released.map((c) => c.country))].filter((c) => COUNTRIES[c]).sort((a, b) => countryName(a).localeCompare(countryName(b)));
     body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
       <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
+      ${getEdition() === 5 ? `<div class="c-hero"><p class="c-kicker">v5 semi-fresh start</p><p class="c-lead">Bring your current career into v5: you keep your recruited players, your world ranking and up to ${money(CFG.v5MoneyCap)}. Titles, sponsors, the shop and houses start fresh. Your normal career isn’t changed.</p><div class="c-cta"><button class="walk" data-carry>Bring my career over</button></div><p class="c-lead small">Or start a brand-new career below.</p></div>` : ''}
       <h3>Choose your player</h3><p class="sub">Everyone starts as a Common player with no signature ability. Finish in the top 3 (or win the bigger events) to recruit stronger ones.</p>
       <div id="cStarters" class="c-squad"></div>
       <div class="c-actions"><button class="primary" id="cBegin" disabled>Start career</button></div></div>`;
@@ -978,6 +979,11 @@ export function initCareer(d: CareerDeps) {
       const st = at('[data-starter]');
       if (st) { starter = { id: st.dataset.starter!, free: st.dataset.free === '1' }; body.querySelectorAll('[data-starter]').forEach((b) => b.classList.toggle('on', b === st)); ($('cBegin') as HTMLButtonElement).disabled = false; return; }
       if (t.id === 'cBegin') { void begin(); }
+      if (t.closest('[data-carry]')) {
+        const m = await d.loadAccount(), old = migrate(await m.career5Seed());
+        if (!old) { d.toast('No career to bring over', 'Start a new one below instead.'); return; }
+        s = semiFreshStart(old); fresh(); await save(); render(); d.toast('Career brought over', `Your squad, ranking and ${money(s.money)} are in v5.`); return;
+      }
       return;
     }
     if (busy) return;
@@ -1023,7 +1029,7 @@ export function initCareer(d: CareerDeps) {
     const ex = at('[data-extra]')?.dataset.extra as 'nutritionist' | 'psychologist' | 'stringing' | undefined;
     if (ex) { const sh = (s.shop ??= {}); sh[ex] = !sh[ex]; await save(); render(); return; }
     const cp = at('[data-camp]')?.dataset.camp;
-    if (cp !== undefined) { const i = Number(cp), campGainBefore = campGain(s); if (trainingCamp(s, i, d.appVersion)) d.toast('Training camp done', `+${campGainBefore} ${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][i]}. A week has passed.`); else d.toast('Can’t do that camp', 'Not enough money, or you’re in a tournament.'); await save(); render(); return; }
+    if (cp !== undefined) { const i = Number(cp), campGainBefore = campGain(s); if (trainingCamp(s, i, d.appVersion)) d.toast('Training camp done', `+${campGainBefore} ${statNames()[i]}. A week has passed.`); else d.toast('Can’t do that camp', 'Not enough money, or you’re in a tournament.'); await save(); render(); return; }
     const bs = at('[data-base]')?.dataset.base;
     if (bs) {
       const sh = (s.shop ??= {});

@@ -2,9 +2,22 @@
 // every stat being exactly today's player. The roster lives in src/roster/roster.json (the owner fills it
 // in; see docs/roster-guide.md). Shared by the game and the room server.
 import roster from '../src/roster/roster.json';
+import rosterV5 from '../src/roster/roster-v5.json';
 import rosterConfig from '../src/roster/roster-config.json';
 
-export const STAT_NAMES = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'] as const;
+export const STAT_NAMES_V4 = ['Power', 'Speed', 'Net', 'Defence', 'Stamina'] as const;
+/** 5.0: the new five (same slots: Defence's became Reach, Stamina's became Accuracy). */
+export const STAT_NAMES_V5 = ['Power', 'Speed', 'Net', 'Reach', 'Accuracy'] as const;
+
+// ── 5.0 test area: the game runs as v4 for everyone; inside the hidden v5 test area it switches to v5
+// (the v5 roster and what the new stats do). Flipped on for everyone at the official launch.
+let edition: 4 | 5 = 4;
+export const getEdition = () => edition;
+export function setEdition(e: 4 | 5) { edition = e; }
+/** The stat names in play right now. */
+export const statNames = (): readonly string[] => (edition === 5 ? STAT_NAMES_V5 : STAT_NAMES_V4);
+/** Kept for older callers: today's names. */
+export const STAT_NAMES = STAT_NAMES_V4;
 export type Stats = [power: number, speed: number, net: number, defence: number, stamina: number];
 
 export const RARITIES = ['common', 'rare', 'super_rare', 'epic', 'elite', 'mythic', 'legendary', 'champion'] as const;
@@ -62,8 +75,12 @@ export const DEFAULT_CHARACTER = 'default_player';
 export const ROSTER: Character[] = (roster.characters as Character[]).filter((c) => c.enabled);
 
 const BY_ID = new Map(ROSTER.map((c) => [c.id, c]));
+/** 5.0: the v5 roster (new stats, the top-tier players). Only used while the edition is 5. */
+export const ROSTER_V5: Character[] = (rosterV5.characters as Character[]).filter((c) => c.enabled);
+const BY_ID_V5 = new Map(ROSTER_V5.map((c) => [c.id, c]));
 export function characterById(id: string | null | undefined): Character {
-  return (id && BY_ID.get(id)) || BY_ID.get(DEFAULT_CHARACTER)!;
+  const m = edition === 5 ? BY_ID_V5 : BY_ID;
+  return (id && m.get(id)) || m.get(DEFAULT_CHARACTER)!;
 }
 
 /** Compare versions part by part ("3.10" is after "3.9"): negative if a is older. */
@@ -75,7 +92,7 @@ export function compareVersions(a: string, b: string): number {
 /** Out in this version of the game (players for later versions stay hidden). */
 export const releasedIn = (c: Character, appVersion: string) => compareVersions(c.released_in, appVersion) <= 0;
 /** Everyone available in this version of the game. */
-export const rosterFor = (appVersion: string) => ROSTER.filter((c) => releasedIn(c, appVersion));
+export const rosterFor = (appVersion: string) => (edition === 5 ? ROSTER_V5.filter((c) => releasedIn(c, '5.0')) : ROSTER.filter((c) => releasedIn(c, appVersion)));
 
 /** A short fingerprint of the roster, so two pages with different rosters can tell (part of the version check). */
 export const ROSTER_HASH = (() => {
@@ -168,6 +185,9 @@ export const CAREER = {
   smash: [0.95, 1.1] as [number, number],
 };
 
+/** 5.0: Accuracy's aim change per point (ranked, career), and how much Reach's extra reach counts in career. */
+export const V5_STATS = { acc: 0.01, accCareer: 0.016, reachCareer: 1.5 };
+
 export const careerMult = (c: Character) => 1 + ((c.career_strength - 100) / 100) * CAREER.k;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -183,7 +203,10 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
   const lim = career ? CAREER.clamp : 0.1;
   const [smLo, smHi] = career ? CAREER.smash : [0.95, 1.08];
   const src = career ? (c.base_stats ?? c.stats).map((v) => v * careerMult(c)) : c.stats;
-  const [p, sp0, n, d, st] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  const [p, sp0, n, d, st0] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  // 5.0: slot 3 is Reach (Defence's jobs, plus extra reach in career too), slot 4 is Accuracy (aim on every
+  // shot; Stamina's tiring is gone: the Rested bar and coaches do that now).
+  const v5 = edition === 5, acc = v5 ? st0 : 0, st = v5 ? 0 : st0;
   // 4.1: diminishing returns on Speed above 30: each point past it counts half.
   const sp = sp0 <= 10 ? sp0 : 10 + (sp0 - 10) * 0.5;
   const J = STAT_JOBS;
@@ -196,10 +219,10 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
     netTiming: 1 + P.netTiming * n,
     defenceTiming: 1 + P.defenceTiming * d,
     defenceDepth: 1 - P.defenceDepth * d,
-    timing: 1, aim: 1,
+    timing: 1, aim: v5 ? 1 - (career ? V5_STATS.accCareer : V5_STATS.acc) * acc : 1,
     shotSpeed: career ? 1 : 1 + J.drivePerPower * p,
     netClearance: career ? 1 : 1 - J.netClearancePerNet * n,
-    defReach: career ? 0 : J.defReachPerDefence * d,
+    defReach: career && !v5 ? 0 : J.defReachPerDefence * d * (v5 && career ? V5_STATS.reachCareer : 1),
     // 3.9: career has no energy any more, so Stamina works there through tiring too.
     fatigue: 1 - J.fatiguePerStamina * st,
     heavy: career ? 1 : 1 + J.heavyPerPower * p,

@@ -231,3 +231,16 @@ export interface Analytics {
 export const adminAnalytics = () => rpc<Analytics>('admin_analytics');
 /** Share of players (%) with each achievement, by id. */
 export const achievementRarity = () => rpc<Record<string, number>>('achievement_rarity');
+
+// ── 5.0 test area (supabase/5.0-test-area.sql) ──
+export const v5Status = () => rpc<{ tester: boolean; open: boolean }>('v5_status');
+export const v5Redeem = (code: string) => rpc<boolean>('v5_redeem', { p_code: code });
+export async function career5Get(): Promise<CareerSave | null> {
+  const { data, error } = await supabase.rpc('career5_get');
+  if (error) throw new Error(error.message);
+  return (data as CareerSave | null) ?? null;
+}
+export const career5Put = (expectedRev: number, dataVersion: number, state: unknown) => rpc<CareerPut>('career5_put', { p_expected_rev: expectedRev, p_data_version: dataVersion, p_state: state });
+/** Your normal career, read once to seed the v5 semi-fresh start. */
+export const career5Seed = () => rpc<unknown>('career5_seed');
+export const adminV5Testers = () => rpc<{ username: string; added_at: string; has_career: boolean }[]>('admin_v5_testers');

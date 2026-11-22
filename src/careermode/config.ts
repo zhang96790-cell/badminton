@@ -95,6 +95,8 @@ export const CAREER_CFG = {
   tierCost: { S100: 1, S300: 1.15, S500: 1.35, S750: 1.65, S1000: 2, WTF: 2.2, WORLDS: 2, OLYMPICS: 2.2 } as Record<string, number>,
   /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
   tourMinMoney: 1500,
+  /** 5.0: the semi-fresh start keeps at most this much money. */
+  v5MoneyCap: 25000,
   /** 4.1: the big events pay less (prizes there grew much faster than costs). Purse × this. */
   // 4.4.7: the small events pay more, so going deep at a Super 100 or 300 pays for the trip.
   prizeCut: { S100: 1.8, S300: 1.6, S500: 1.3, S750: 0.65, S1000: 0.62, WORLDS: 0.62, WTF: 0.6, OLYMPICS: 0.6 } as Record<string, number>,

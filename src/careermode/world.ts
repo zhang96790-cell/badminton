@@ -4,7 +4,7 @@ import tournamentsData from '../../data/tournaments.json';
 import { sponsoredName } from '../brands';
 import regionsData from '../../data/country_regions.json';
 import yearsData from '../../data/calendar_years.json';
-import { RARITY, ROSTER, compareVersions, type Character, type Rarity } from '../../shared/characters';
+import { RARITY, ROSTER, ROSTER_V5, compareVersions, getEdition, type Character, type Rarity } from '../../shared/characters';
 import { CAREER_CFG as CFG, LEVELS, type Round, type Tier } from './config';
 import type { Level } from '../config';
 
@@ -72,7 +72,8 @@ export const YOU = 'you';
  * NPCs: every enabled player except the Club Player, including ones not released yet (stars play the big
  * events). Releases only decide who you can recruit and use. `appVersion` is kept for the call sites.
  */
-export const npcPool = (_appVersion: string) => ROSTER.filter((c) => c.id !== 'default_player');
+/** 5.0: the v5 test area draws from the v5 roster (with the top-tier players). */
+export const npcPool = (_appVersion: string) => (getEdition() === 5 ? ROSTER_V5 : ROSTER).filter((c) => c.id !== 'default_player');
 
 /** A character's strength for the result simulator: career strength plus a fixed personal form. */
 const STRENGTH = new Map<string, number>();
@@ -194,7 +195,7 @@ export function pointsFor(tier: string, round: Round, drawSize: number): number 
   return t[drawSize <= 16 && round === 'R16' ? 'R32' : round] ?? 0;
 }
 
-export interface PlayerResult { tournamentId: string; year: number; week: number; tier: string; round: Round; points: number; prize: number; costs: number; opponents?: string[]; /** Your games in each round you played ([yours, theirs]). */ scores?: [number, number][][]; /** Who you played as (left out of that draw). */ as: string; /** Lost in the semis: 3 won the bronze match, 4 lost it. */ place?: 3 | 4; /** 3.19: lost in qualifying (round 1 or 2). */ qual?: 1 | 2 }
+export interface PlayerResult { tournamentId: string; year: number; week: number; tier: string; round: Round; points: number; prize: number; costs: number; opponents?: string[]; /** Your games in each round you played ([yours, theirs]). */ scores?: [number, number][][]; /** Who you played as (left out of that draw). */ as: string; /** Lost in the semis: 3 won the bronze match, 4 lost it. */ place?: 3 | 4; /** 3.19: lost in qualifying (round 1 or 2). */ qual?: 1 | 2; /** 5.0: from before the semi-fresh start: counts for ranking, not as a title. */ legacy?: boolean }
 
 /** Everyone's ranking results: id → list of (absolute week, points). */
 export type Results = Map<string, { at: number; pts: number; ev: string }[]>;

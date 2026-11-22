@@ -1928,3 +1928,12 @@ body:has(#menu:not(.hidden)) #viewbar { display: none; }
 /* Header: Log in stands out. */
 .bc #accountBtn:not(.in) { background: #fff; color: #0a0f1d; border-color: #fff; }
 .bc #accountBtn:not(.in) i { background: #e8112d; }
+
+/* 5.0 test area */
+.lab-dot { width: 18px; height: 18px; padding: 0; border: 0; background: transparent; color: rgba(255, 255, 255, 0.18); font: 900 18px/1 var(--text); cursor: pointer; }
+.lab-dot:hover { color: rgba(255, 255, 255, 0.5); }
+.v5-banner { display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 40; align-items: center; gap: 10px;
+  padding: 6px 12px; background: #e8112d; color: #fff; font: 600 13px/1.2 var(--text); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); }
+.v5-banner b { font: 900 15px/1 'Saira Condensed', sans-serif; font-style: italic; letter-spacing: 0.04em; }
+.v5-banner button { border: 1px solid rgba(255, 255, 255, 0.7); background: transparent; color: #fff; padding: 3px 8px; font: 700 11px/1 var(--text); text-transform: uppercase; cursor: pointer; }
+body.v5 .v5-banner { display: flex; }

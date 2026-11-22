@@ -1,5 +1,5 @@
 // The five-stat pentagon (radar) chart for player cards, drawn on a canvas.
-import { STAT_NAMES, type Stats } from '../shared/characters';
+import { statNames, type Stats } from '../shared/characters';
 
 /** Draw stats (10–35 each) as a filled pentagon; `compare` is drawn as an outline on top. */
 export function drawPentagon(canvas: HTMLCanvasElement, stats: Stats, color: string, compare?: { stats: Stats; color: string }) {
@@ -44,7 +44,7 @@ export function drawPentagon(canvas: HTMLCanvasElement, stats: Stats, color: str
   ctx.fillStyle = '#5b6474';
   ctx.font = '700 10px ui-sans-serif, system-ui, sans-serif';
   ctx.textAlign = 'center';
-  STAT_NAMES.forEach((name, i) => {
+  statNames().forEach((name, i) => {
     const p = at(i, R + 14);
     ctx.fillText(`${name.toUpperCase()} ${stats[i]}${compare ? ` / ${compare.stats[i]}` : ''}`, p.x, p.y + 3);
   });

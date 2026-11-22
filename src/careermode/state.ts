@@ -1,6 +1,6 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
-import { CAREER as CAREER_STATS, characterById, type Character, type Modifier } from '../../shared/characters';
+import { CAREER as CAREER_STATS, characterById, getEdition, statNames, type Character, type Modifier } from '../../shared/characters';
 import { PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
 import { COUNTRIES, World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
@@ -279,7 +279,7 @@ export function buy(s: CareerState, label: string, cost: number): boolean {
 /** A week at a training camp: +1 to a stat. Uses the week. */
 export function trainingCamp(s: CareerState, stat: number, appVersion: string): boolean {
   const sh = (s.shop ??= {}), c = (sh.camps ??= [0, 0, 0, 0, 0]);
-  if (s.current || c[stat] >= CFG.camp.max || !buy(s, `Training camp (${['Power', 'Speed', 'Net', 'Defence', 'Stamina'][stat]})`, campCost(s, stat))) return false;
+  if (s.current || c[stat] >= CFG.camp.max || !buy(s, `Training camp (${statNames()[stat]})`, campCost(s, stat))) return false;
   const pts = (sh.campPts ??= c.map((n) => n * CFG.camp.points) as [number, number, number, number, number]);
   pts[stat] += campGain(s);
   c[stat]++;
@@ -311,7 +311,7 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
   if (s.current) return { ok: false, why: 'Finish your current tournament first.' };
   if (s.injury && s.injury.weeks > 0) return { ok: false, why: `You’re injured: ${s.injury.weeks} more week${s.injury.weeks === 1 ? '' : 's'} of rest.` };
   if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
-  if (CFG.closedTiers.includes(ev.tier)) return { ok: false, why: 'Super 500 events and above are locked for now. They open once more players are added.' };
+  if (getEdition() !== 5 && CFG.closedTiers.includes(ev.tier)) return { ok: false, why: 'Super 500 events and above are locked for now. They open once more players are added.' };
   const gate = (CFG.gates as Record<string, { finalIn?: string; rankAtMost: number } | undefined>)[ev.tier];
   if (gate && !unlocked(s, ev.tier)) {
     const r = myRank(s, w);
@@ -716,3 +716,19 @@ export function myRank(s: CareerState, w: World, at = absWeek(s.year, s.week)): 
 }
 
 export const money = (n: number) => `${n < 0 ? '−' : ''}$${Math.abs(Math.round(n)).toLocaleString('en-US')}`;
+
+/**
+ * 5.0 semi-fresh start: your career carried into v5. Keeps your squad, player, name, home, ranking (old results
+ * stay in the history for ranking points, marked as legacy so they aren't titles) and up to $25,000. Titles,
+ * sponsors, the shop, houses, the loan and milestones start fresh.
+ */
+export function semiFreshStart(old: CareerState): CareerState {
+  return {
+    ...old,
+    history: old.history.map((h) => ({ ...h, legacy: true })),
+    titles: 0, money: Math.min(old.money, CFG.v5MoneyCap),
+    sponsor: null, sponsorOffers: null, kitSponsor: null, cashSponsor: null, shop: {}, houses: [], loan: null,
+    milestones: [], current: null, pendingRecruitOffer: null, offerDue: null, ledger: [], recap: null,
+    titleTiersSynced: true, sponsorRescaled: true, energy: 100, restedSince: '5.0',
+  };
+}

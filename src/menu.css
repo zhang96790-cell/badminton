@@ -1869,3 +1869,22 @@ body:has(#menu:not(.hidden)) #viewbar { display: none; }
 .social-panel .tile b { color: #ffc23d; }
 .social-panel .tile span, .social-panel .tile em { color: #a9b4cc; }
 .social-panel .tile.ach.on { border-color: #ffc23d !important; background: rgba(255, 194, 61, 0.08) !important; }
+
+/* ══ 4.4.8: a calmer home page: fewer layers, same layout and buttons ══════════════════════════════ */
+.board.bc { background: radial-gradient(ellipse 70% 60% at 70% 0%, #17223d 0%, #0a0f1d 65%), #0a0f1d; }
+.bc-stripes, .bc-num, .bc-ticker, .bc-lead, .bc-s, .bc-head::after { display: none !important; }
+.bc-box::after { content: none; }
+.bc-head { padding-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.bc-live { background: transparent; color: rgba(255, 255, 255, 0.7); padding-left: 0; }
+.bc-live #today { color: rgba(255, 255, 255, 0.55); border-left-color: rgba(255, 255, 255, 0.2); }
+.bc .head-pills .account-btn { border-color: rgba(255, 255, 255, 0.16); color: rgba(255, 255, 255, 0.85); }
+.bc-career, .bc-ranked { min-height: 300px; background: rgba(255, 255, 255, 0.035); }
+.bc-career::before, .bc-ranked::before { opacity: 0.45; }
+.bc-title { font-size: 60px; margin: 10px 0 0; }
+.bc-stats, .bc .h-rank { margin-top: auto; }
+.bc-small { justify-content: center; background: rgba(255, 255, 255, 0.035) !important; box-shadow: none !important; border-top: 3px solid rgba(255, 255, 255, 0.12); }
+.ltile-tutorial.bc-small { border-top-color: #2f7bff; }
+.ltile-practice.bc-small { border-top-color: #7a3fd6; }
+.bc-small .bc-go { bottom: auto; top: 50%; transform: translateY(-50%); }
+.bc-small:hover .bc-go { transform: translate(4px, -50%); }
+.bc-grid { padding-top: 22px; padding-bottom: 22px; }

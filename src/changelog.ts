@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.8',
+    title: 'A calmer home page',
+    date: '23 Nov 2026',
+    changes: [
+      "A calmer home page: the scrolling tips bar, the background stripes and glows, the big 01 and 02 numbers and the extra descriptions are gone, and the boxes are flatter. Everything you can click is still in the same place.",
+    ],
+  },
+  {
     version: '4.4.7',
     title: 'Small events pay for the trip',
     date: '21 Nov 2026',

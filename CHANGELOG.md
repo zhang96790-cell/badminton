@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.4.8: A calmer home page (23 Nov 2026)
+
+- A calmer home page: the scrolling tips bar, the background stripes and glows, the big 01 and 02 numbers and the extra descriptions are gone, and the boxes are flatter. Everything you can click is still in the same place.
+
 ## 4.4.7: Small events pay for the trip (21 Nov 2026)
 
 - Fixed: travelling to small events cost more than you could win there (a long-haul flight was $1,000 and winning a Super 100 paid $893). Flights are now less than half the price (long-haul $450, regional $220, at home $80), and Super 100, 300 and 500 events pay more (×1.8, ×1.6 and ×1.3). Winning a Super 100 now pays about $1,600, and a Super 300 about $3,000.

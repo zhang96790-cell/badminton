@@ -1,5 +1,6 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
+import { LAST_STAND_BELOW } from './signatures';
 import { CAREER as CAREER_STATS, characterById, getEdition, statNames, type Character, type Modifier } from '../../shared/characters';
 import { KIT_BRANDS, PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
@@ -174,9 +175,10 @@ export const restedTier = (r: number) => CFG.rested.tiers.find((t) => r >= t.min
  * How a Rested level plays (4.4.4): mostly a smaller timing window and less accurate aim, and a little slower.
  * round: adrenaline makes tiredness count half in a semi-final and not at all in a final or bronze match.
  */
-export function restedModifier(r: number, round?: Round | 'bronze'): Modifier {
+export function restedModifier(r: number, round?: Round | 'bronze', lastStand = false): Modifier {
   const t = restedTier(r), E = CFG.rested.effect, A = CFG.rested.adrenaline;
-  const k = round === 'F' || round === 'bronze' ? A.F : round === 'SF' ? A.SF : 1;
+  // 5.0 Last Stand: below 30% Rested, the penalty is halved.
+  const k = (round === 'F' || round === 'bronze' ? A.F : round === 'SF' ? A.SF : 1) * (lastStand && r < LAST_STAND_BELOW ? 0.5 : 1);
   const p = t.p * k, aim = (t.p * E.aim + t.aim) * k;
   return p || aim ? { move: 1 - p * E.move, swingWait: 1 + p * E.move, timing: 1 - p * E.timing, ...(aim ? { aim: 1 + aim } : {}) } : {};
 }

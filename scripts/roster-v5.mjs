@@ -33,7 +33,7 @@ const BY_STYLE = {
 };
 /** The Ultra that grows out of a player's current signature (same idea, much stronger, narrower). */
 const ULTRA_OF = { smash: 'sky_hammer', shotSpeed: 'lightning_counter', nextAttack: 'killer_instinct', oppMove: 'killer_instinct', move: 'second_wind', swingWait: 'second_wind',
-  netAim: 'silk_web', netTiming: 'silk_web', deceive: 'phantom_veil', aim: 'precision_strike', oppSmash: 'iron_curtain', oppNextSmash: 'iron_curtain', defenceDepth: 'iron_curtain', energyUse: 'second_wind' };
+  netAim: 'silk_web', netTiming: 'silk_web', deceive: 'phantom_veil', aim: 'precision_strike', oppSmash: 'iron_curtain', oppNextSmash: 'iron_curtain', defenceDepth: 'iron_curtain', energyUse: 'second_wind', restedHalf: 'second_wind' };
 const ULTRA_STYLE = { attacker: 'killer_instinct', 'all-rounder': 'precision_strike', defender: 'iron_curtain', 'defensive wall': 'iron_curtain',
   'net player': 'silk_web', deceptive: 'phantom_veil', 'fast retriever': 'second_wind' };
 const hash = (s) => { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };

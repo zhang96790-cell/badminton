@@ -29,6 +29,9 @@ import { Shuttle, predictPath, setDragScale, stepFlight, type PathSample } from 
 import { MatchStats } from './stats';
 import type { Speaker } from './voice';
 
+/** 5.0: how long a signature wrong-foots the opponent (s), by its tier. */
+const WRONG_FOOT: Record<string, number> = { S: 0.2, SS: 0.3, SSS: 0.45 };
+
 export interface Settings {
   /** Doubles is you and a CPU partner against a CPU pair. */
   event: 'singles' | 'doubles';
@@ -221,7 +224,9 @@ export class Game {
   /** 5.0: the Champions' Ultra Signatures in this match. */
   ultras: Ultras | null = null;
   /** The last ability that fired, for the screen. */
-  abilityPop: { text: string; mine: boolean; t: number } | null = null;
+  abilityPop: { text: string; mine: boolean; t: number; ultra?: boolean } | null = null;
+  /** 5.0: how much heavier this flight's smash is than usual (a smash boost past the smash limit). */
+  private shotHeavy = 1;
   private statMode: 'ranked' | 'career' = 'ranked';
   /** The characters whose stats each side plays with (the HUD shows them too). */
   statChars: (Character | null)[] = [null, null];
@@ -346,6 +351,7 @@ export class Game {
       this.sigs = Signatures.forCharacters([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null], (i) => this.teamOf(i));
       const ul = new Ultras([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null]);
       if (ul.any) { this.ultras = ul; this.heavyOf = this.heavyOf.map((h, k) => h * ul.heavy(k)); }
+      this.players.forEach((p, k) => { p.sigNetTiming = this.sigs!.netTiming(k); });
     }
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
@@ -688,7 +694,7 @@ export class Game {
     const smashIn = this.shuttle.inFlight && /smash/i.test(this.lastShotLabel);
     for (const p of this.players) {
       p.vsSmash = smashIn && this.shuttle.lastHitter === -p.side;
-      p.smashHeavy = p.vsSmash ? Math.max(...this.players.map((q, j) => (q.side === this.shuttle.lastHitter ? this.heavyOf[j] : 1))) : 1;
+      p.smashHeavy = p.vsSmash ? Math.max(...this.players.map((q, j) => (q.side === this.shuttle.lastHitter ? this.heavyOf[j] : 1))) * this.shotHeavy : 1;
     }
     this.players.forEach((p, i) => {
       if (first && cmds[i].shot) p.startSwing(cmds[i].shot!, false, this.isHuman(i));
@@ -852,7 +858,7 @@ export class Game {
         if (/smash/i.test(shot.label)) this.rallySmashes[i] = (this.rallySmashes[i] ?? 0) + 1;
         p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)
         // Signature abilities: boosts for this shot (played again with them), and a chance to wrong-foot.
-        let sigCtx: ShotCtx | null = null, sigFired: SigDef[] = [], deceived = false;
+        let sigCtx: ShotCtx | null = null, sigFired: SigDef[] = [], deceived = false, shotHeavyNext = 1;
         const sigBefore = this.sigs?.last ?? null;
         if (this.sigs && i < 2) {
           sigCtx = { kind: shotKind(shot.label), perfect: c.timing >= 1, incomingKmh, lunged: c.stretch > SHOTS.stretchStart, early: this.flightT < 0.6,
@@ -863,17 +869,20 @@ export class Game {
           // 5.0: a Champion's Ultra works on top, past the usual limits.
           if (this.ultras?.of(i)) effShot = this.ultras.shotEff(i, sigCtx.kind, c.hand, c.point.z >= SHOTS.overheadHeight, effShot);
           if (effShot !== effHere) shot = resolveShot(req, c, aimScale, this.isHuman(i), effShot);
+          shotHeavyNext = Math.max(1, effShot.heavy / (effHere.heavy || 1));
           deceived = boost.deceive > 0 && Math.random() < boost.deceive;
           sigFired = boost.fired;
         }
         // 5.0 Ultra (Denmark's Pride): a defence of Axelsen's smash that isn't perfectly timed is usually weak.
         const prideVs = this.ultras && c.vsSmash ? this.players.findIndex((q, j) => q.side === sh.lastHitter && this.ultras!.of(j) === 'denmark_s_pride') : -1;
-        const prideHit = prideVs >= 0 && c.timing < 1;
+        // A CPU's timing is nearly always perfect, so against Axelsen it only counts as perfect some of the time.
+        const prideHit = prideVs >= 0 && (c.timing < 1 || (!this.isHuman(i) && Math.random() > ULTRA.denmark.cpuPerfect));
         if (prideHit && Math.random() < ULTRA.denmark.weakChance) {
           const k = ULTRA.denmark.weakScale;
           shot = { ...shot, velocity: { x: shot.velocity.x * k, y: shot.velocity.y * k, z: Math.max(shot.velocity.z, 2.5) } };
         }
         sh.launch(c.point, shot.velocity, p.side, false);
+        this.shotHeavy = /smash/i.test(shot.label) ? shotHeavyNext : 1;
         this.predict();
         const uKind = shotKind(shot.label);
         if (this.ultras?.of(i) === 'great_wall' && uKind === 'lift') {
@@ -894,22 +903,28 @@ export class Game {
           // Disguised: no landing marker for the whole flight, and the other side steps the wrong way.
           if (req.kind === 'intent' && req.disguise) shot.label = `${shot.label} (disguised)`;
           this.disguiseT = Infinity;
-          for (const q of this.players) if (q.side !== p.side) q.wrongFoot(SHOTS.disguise.wrongFoot);
+          // 5.0: a signature wrong-foots harder the higher its tier, and you can see it happen.
+          const dec = deceived ? sigFired.find((d) => d.effect === 'deceive') : undefined;
+          const freeze = dec ? WRONG_FOOT[dec.tier] ?? 0.2 : 0;
+          for (const q of this.players) if (q.side !== p.side) {
+            if (freeze) { q.stumble(freeze); this.shout(q, 'WRONG-FOOTED!', 0.9); } else q.wrongFoot(SHOTS.disguise.wrongFoot);
+          }
           if (!deceived) this.abilityPop = { text: 'Disguised shot', mine: this.teamOf(i) === 0, t: 0 };
         }
         if (this.sigs && sigCtx) {
           this.sigs.afterShot(i, sigCtx, sigFired, deceived);
           this.refreshEff(0); this.refreshEff(1);
           const f = this.sigs.last;
-          if (f && f !== sigBefore) this.abilityPop = { text: f.def.name, mine: this.teamOf(f.player) === 0, t: 0 };
+          // An Ultra's badge isn't covered by an S/SS/SSS one for its first second.
+          if (f && f !== sigBefore && !(this.abilityPop?.ultra && this.abilityPop.t < 1)) this.abilityPop = { text: f.def.name, mine: this.teamOf(f.player) === 0, t: 0 };
         }
         p.onHit(c.point);
         if (this.ultras) {
           const say = this.ultras.afterShot(i, uKind, tumbleForced);
           p.ultraReach = this.ultras.liftReach(i, uKind);
           if (this.ultras.of(i) === 'fastest_of_all_time') this.refreshEff(i);
-          if (say) this.abilityPop = { text: say, mine: this.teamOf(i) === 0, t: 0 };
-          if (prideHit) { p.wrongFoot(ULTRA.denmark.stun); this.abilityPop = { text: "Denmark's Pride", mine: this.teamOf(prideVs) === 0, t: 0 }; }
+          if (say) this.abilityPop = { text: say, mine: this.teamOf(i) === 0, t: 0, ultra: true };
+          if (prideHit) { p.wrongFoot(ULTRA.denmark.stun); this.shout(p, 'STUNNED!', 1); this.abilityPop = { text: "Denmark's Pride", mine: this.teamOf(prideVs) === 0, t: 0, ultra: true }; }
         }
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         if (/smash/i.test(shot.label)) p.recoverT = /Jump/.test(shot.label) ? SHOTS.smashRecovery.jumpTime : SHOTS.smashRecovery.time;
@@ -983,7 +998,7 @@ export class Game {
    * Where player i will meet the incoming shuttle from where they stand now, and whether swinging
    * right now would be early (it isn't in reach yet when the racket arrives), on time, or late.
    */
-  forecast(i: number): { light: 'early' | 'now' | 'late' | 'none'; point: V3 | null } | null {
+  forecast(i: number): { light: 'early' | 'now' | 'late' | 'none'; point: V3 | null; wide?: boolean } | null {
     const p = this.players[i], sh = this.shuttle;
     if (this.state !== 'rally' || !sh.inFlight || sh.lastHitter === p.side || sh.touchedNet) return null;
     const racketArrives = this.flightT + SWING.idealDelay;
@@ -1000,8 +1015,10 @@ export class Game {
     }
     if (tIn < 0) return { light: 'none', point: null };
     // Same tolerance as the timing grade, so green always means a Perfect hit.
-    const tol = SWING.perfectTolerance;
-    return { light: racketArrives < tIn - tol ? 'early' : racketArrives <= tOut + tol ? 'now' : 'late', point: best!.p };
+    // 5.0: a net-timing signature widens the green on low net shots, just as it widens the perfect window.
+    const wide = p.sigNetTiming > 1 && Math.abs(best!.p.y) < SHOTS.nearNet && best!.p.z < SHOTS.overheadHeight;
+    const tol = SWING.perfectTolerance * (wide ? p.sigNetTiming : 1);
+    return { light: racketArrives < tIn - tol ? 'early' : racketArrives <= tOut + tol ? 'now' : 'late', point: best!.p, wide };
   }
 
   private endRally(land: V2) {

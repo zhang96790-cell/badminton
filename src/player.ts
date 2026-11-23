@@ -113,6 +113,10 @@ export class Player implements PlayerView {
   /** A click made during recovery, played as soon as it ends. */
   private queued: { req: ShotRequest; assisted: boolean } | null = null;
   private landLag = 0;
+  /** 5.0: wrong-footed by a signature: nearly stopped for this long. */
+  stumbleT = 0;
+  /** 5.0: net-timing signatures (always on): the perfect window on net shots is this much wider. */
+  sigNetTiming = 1;
 
   /** This player's character stats in play (neutral = today's game). */
   eff: Effective = NEUTRAL;
@@ -135,7 +139,7 @@ export class Player implements PlayerView {
     const soft = req.kind === 'intent' ? req.intent === 'soft' : req.arc === 'high' && req.power < SHOTS.mouse.dropMaxPower;
     const high = req.kind === 'intent' ? req.intent === 'high' : req.arc === 'high' && req.power >= SHOTS.mouse.dropMaxPower;
     const tired = (1 - this.fade * 0.8) / (this.vsSmash ? this.smashHeavy : 1);
-    if (soft && netArea && !overhead) return this.eff.netTiming * this.eff.timing * tired;
+    if (soft && netArea && !overhead) return this.eff.netTiming * this.sigNetTiming * this.eff.timing * tired;
     if (!overhead && (high || soft)) return this.eff.defenceTiming * this.eff.timing * tired;
     return this.eff.timing * tired;
   }
@@ -190,6 +194,8 @@ export class Player implements PlayerView {
 
   /** Fooled by a disguised shot: half speed for a moment, as if caught going the wrong way. */
   wrongFoot(t: number) { if (!this.airborne) this.landLag = Math.max(this.landLag, t); }
+  /** 5.0: wrong-footed by a signature: stops dead for a moment, then half speed briefly. */
+  stumble(t: number) { if (!this.airborne) { this.stumbleT = Math.max(this.stumbleT, t); this.landLag = Math.max(this.landLag, t + 0.15); } }
 
   /** Little hop as the opponent hits; landing from it gives a burst of acceleration. */
   splitStep() {
@@ -222,6 +228,7 @@ export class Player implements PlayerView {
     let max = PLAYER.maxSpeed * this.speedMult * (1 - this.fade) * (Math.abs(this.pos.y) < STAT_JOBS.netMoveWithin ? this.eff.netMove : 1);
     if (this.swing) max *= PLAYER.swingMoveFactor;
     if (this.landLag > 0) max *= 0.5;
+    if (this.stumbleT > 0) { max *= 0.12; this.stumbleT = Math.max(0, this.stumbleT - dt); }
     if (this.recoverT > 0) { max *= SHOTS.smashRecovery.speed; this.recoverT = Math.max(0, this.recoverT - dt); }
     if (this.lunge < PLAYER.lungeTime) max *= PLAYER.lungeRecoverySpeed;
     if (this.boost > 0) max *= PLAYER.jumpSmashBoostSpeed;

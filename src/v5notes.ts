@@ -2,6 +2,18 @@
 export const V5_NOTES: { date: string; title: string; items: [string, string][] }[] = [
   {
     date: '23 Nov 2026',
+    title: 'Test build 8',
+    items: [
+      ['Denmark’s Pride shows up', 'Axelsen’s smashes now announce Denmark’s Pride (not Steep Angle), and Ultra badges are red and stay on top. CPU players can no longer defend his smash perfectly every time, so the stun and weak returns actually happen.'],
+      ['You can see wrong-footing', 'When a signature wrong-foots someone, they stop dead and “WRONG-FOOTED!” pops over their head. How long depends on the tier: S 0.2 s, SS 0.3 s, SSS 0.45 s.'],
+      ['Net timing signatures work', 'Net Thread, Halo Tumble and Southpaw Spin now really widen your perfect window on net shots, and your timing light gets a green ring when they do.'],
+      ['Last Stand reworked', 'Below 30% Rested, your Rested penalty (timing, movement and aim) is halved.'],
+      ['Smash boosts at the limit', 'If a smash boost would go past the smash speed limit, the extra makes the smash heavier instead (harder to time).'],
+      ['Cooldown dots', 'Each signature on the match cards has a dot: green means ready, a filling ring means it’s recharging.'],
+    ],
+  },
+  {
+    date: '23 Nov 2026',
     title: 'Test build 7',
     items: [
       ['Champion Ultras work', 'All six Ultras now work in matches, as designed: Great Wall, Untouchable, Fastest of All Time, The GOAT, King of Backhand and Denmark’s Pride. They go past the usual limits on purpose: tell us if any feels too strong.'],

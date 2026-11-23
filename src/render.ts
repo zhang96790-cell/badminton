@@ -585,6 +585,14 @@ export class Renderer {
     const r = flash ? 9 : 7;
     const ctx = this.ctx;
     ctx.save();
+    if (!flash && f!.wide) {
+      // 5.0: a net-timing signature is widening your green.
+      ctx.beginPath();
+      ctx.arc(x, y, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(74,222,128,0.75)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
     ctx.shadowColor = color;
     ctx.shadowBlur = state === 'none' || this.lite ? 0 : 12;
     ctx.beginPath();

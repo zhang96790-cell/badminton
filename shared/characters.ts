@@ -250,7 +250,10 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
     heavy: career ? 1 : 1 + J.heavyPerPower * p,
     netMove: career ? 1 : 1 + J.netMovePerNet * n,
   };
+  const smBefore = e.smash;
   for (const m of modifiers) for (const k of Object.keys(m) as (keyof Effective)[]) if (e[k] !== undefined) (e as unknown as Record<string, number>)[k] *= m[k] ?? 1;
+  // 5.0: the part of a smash boost the smash limit cuts off makes the smash heavier instead (harder to time).
+  if (v5 && e.smash > smHi && e.smash > smBefore) e.heavy *= Math.min(1.25, e.smash / Math.max(smHi, smBefore));
   for (const k of Object.keys(e) as Exclude<keyof Effective, 'backhandPower' | 'backhandNoise' | 'killMargin'>[]) {
     e[k] = k === 'smash' ? clamp(e[k], smLo, smHi)
       : k === 'netClearance' ? clamp(e[k], ...J.netClearance)

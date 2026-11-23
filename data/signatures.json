@@ -41,12 +41,12 @@
    "id": "last_stand",
    "name": "Last Stand",
    "tier": "S",
-   "trigger": "lowEnergy",
-   "effect": "energyUse",
-   "magnitude": 0.12,
+   "trigger": "lowRested",
+   "effect": "restedHalf",
+   "magnitude": 0.5,
    "duration": 0,
    "cooldown": 0,
-   "text": "Below 20 energy, matches use 12% less energy.",
+   "text": "Below 30% Rested, your Rested penalty (timing, movement and aim) is halved.",
    "from_sheet": true
   },
   {
@@ -58,7 +58,7 @@
    "magnitude": 0.07,
    "duration": 0,
    "cooldown": 3,
-   "text": "Drops, net shots and flicks have a 7% better chance of wrong-footing the opponent.",
+   "text": "Drops, net shots and flicks have a 7% better chance of wrong-footing the opponent. Wrong-footed players stop for 0.2 s.",
    "from_sheet": true
   },
   {
@@ -94,7 +94,7 @@
    "magnitude": 0.09,
    "duration": 0,
    "cooldown": 4,
-   "text": "Changing shot type from your last shot gives a 9% chance of wrong-footing the opponent.",
+   "text": "Changing shot type from your last shot gives a 9% chance of wrong-footing the opponent. Wrong-footed players stop for 0.2 s.",
    "from_sheet": true
   },
   {
@@ -130,7 +130,7 @@
    "magnitude": 0.1,
    "duration": 0,
    "cooldown": 5,
-   "text": "A crosscourt lift or flick has a 10% chance of wrong-footing the opponent.",
+   "text": "A crosscourt lift or flick has a 10% chance of wrong-footing the opponent. Wrong-footed players stop for 0.2 s.",
    "from_sheet": false
   },
   {
@@ -214,7 +214,7 @@
    "magnitude": 0.15,
    "duration": 0,
    "cooldown": 5,
-   "text": "Drops have a 15% chance of wrong-footing the opponent.",
+   "text": "Drops have a 15% chance of wrong-footing the opponent. Wrong-footed players stop for 0.3 s.",
    "from_sheet": false
   },
   {
@@ -226,7 +226,7 @@
    "magnitude": 0.08,
    "duration": 0,
    "cooldown": 6,
-   "text": "Smashes are up to 8% faster (within the game’s smash limit).",
+   "text": "Smashes are up to 8% faster (at the smash limit, they get heavier instead: harder to time).",
    "from_sheet": false
   },
   {
@@ -238,7 +238,7 @@
    "magnitude": 0.12,
    "duration": 0,
    "cooldown": 5,
-   "text": "A crosscourt smash or drive has a 12% chance of wrong-footing the opponent.",
+   "text": "A crosscourt smash or drive has a 12% chance of wrong-footing the opponent. Wrong-footed players stop for 0.3 s.",
    "from_sheet": false
   },
   {
@@ -262,7 +262,7 @@
    "magnitude": 0.06,
    "duration": 0,
    "cooldown": 6,
-   "text": "Smashes are up to 6% faster (within the game’s smash limit).",
+   "text": "Smashes are up to 6% faster (at the smash limit, they get heavier instead: harder to time).",
    "from_sheet": false
   },
   {
@@ -298,7 +298,7 @@
    "magnitude": 0.12,
    "duration": 0,
    "cooldown": 5,
-   "text": "Any crosscourt shot has a 12% chance of wrong-footing the opponent.",
+   "text": "Any crosscourt shot has a 12% chance of wrong-footing the opponent. Wrong-footed players stop for 0.3 s.",
    "from_sheet": false
   },
   {
@@ -346,7 +346,7 @@
    "magnitude": 0.15,
    "duration": 0,
    "cooldown": 5,
-   "text": "A crosscourt drop has a 15% chance of wrong-footing the opponent.",
+   "text": "A crosscourt drop has a 15% chance of wrong-footing the opponent. Wrong-footed players stop for 0.3 s.",
    "from_sheet": false
   },
   {
@@ -370,7 +370,7 @@
    "magnitude": 0.15,
    "duration": 0,
    "cooldown": 6,
-   "text": "A perfectly timed smash is up to 15% faster (within the game’s smash limit).",
+   "text": "A perfectly timed smash is up to 15% faster (at the smash limit, they get heavier instead: harder to time).",
    "from_sheet": false
   },
   {
@@ -418,7 +418,7 @@
    "magnitude": 0.28,
    "duration": 0,
    "cooldown": 5,
-   "text": "A perfectly timed drop wrong-foots the opponent badly.",
+   "text": "A perfectly timed drop wrong-foots the opponent badly. Wrong-footed players stop for 0.45 s.",
    "from_sheet": false
   },
   {
@@ -502,7 +502,7 @@
    "magnitude": 0.15,
    "duration": 0,
    "cooldown": 5,
-   "text": "Crosscourt drops have a 15% chance of wrong-footing the opponent.",
+   "text": "Crosscourt drops have a 15% chance of wrong-footing the opponent. Wrong-footed players stop for 0.3 s.",
    "from_sheet": true
   },
   {
@@ -526,7 +526,7 @@
    "magnitude": 0.12,
    "duration": 0,
    "cooldown": 6,
-   "text": "A perfectly timed smash is up to 12% faster (within the game’s smash limit).",
+   "text": "A perfectly timed smash is up to 12% faster (at the smash limit, they get heavier instead: harder to time).",
    "from_sheet": true
   },
   {
@@ -550,7 +550,7 @@
    "magnitude": 0.14,
    "duration": 0,
    "cooldown": 5,
-   "text": "A crosscourt smash or drive has a 14% chance of wrong-footing the opponent.",
+   "text": "A crosscourt smash or drive has a 14% chance of wrong-footing the opponent. Wrong-footed players stop for 0.3 s.",
    "from_sheet": true
   },
   {
@@ -586,7 +586,7 @@
    "magnitude": 0.08,
    "duration": 0,
    "cooldown": 6,
-   "text": "Smashes are up to 8% faster (within the game’s smash limit).",
+   "text": "Smashes are up to 8% faster (at the smash limit, they get heavier instead: harder to time).",
    "from_sheet": true
   },
   {

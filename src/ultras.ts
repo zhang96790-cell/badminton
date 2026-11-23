@@ -17,8 +17,9 @@ export const ULTRA = {
   goat: { perShot: 0.075, maxStacks: 10 },
   /** King of Backhand: backhand shots +30% power, +50% accuracy; backhand smashes at 85% of forehand power. */
   backhand: { power: 1.3, accuracy: 0.5, smashPower: 0.85 },
-  /** Denmark's Pride: smashes +20% and much harder to time; a defence that isn't perfect: stunned 1 s, and 90% of the time it goes to half court or up high. */
-  denmark: { smash: 1.2, heavy: 2.5, stun: 1.0, weakChance: 0.9, weakScale: 0.55 },
+  /** Denmark's Pride: smashes +20% and much harder to time; a defence that isn't perfect: stunned 1 s, and 90% of the time it goes to half court or up high.
+   *  cpuPerfect: a CPU's defence of it counts as perfect only this often (CPU timing is otherwise nearly always perfect). */
+  denmark: { smash: 1.2, heavy: 2.5, stun: 1.0, weakChance: 0.9, weakScale: 0.55, cpuPerfect: 0.3 },
 };
 /** Attacking shots for The GOAT (drives, smashes, drops, net kills and taps); defensive or neutral ones reset it. */
 const ATTACK: ShotKind[] = ['smash', 'kill', 'drive', 'push', 'drop'];
@@ -90,6 +91,7 @@ export class Ultras {
       if (kind === 'net') { this.speed[i] = { mult: F.afterNet, t: F.netTime }; return 'Fastest of All Time'; }
     }
     if (u === 'untouchable' && tumbleForced) return 'Untouchable';
+    if (u === 'denmark_s_pride' && kind === 'smash') return "Denmark's Pride";
     if (u === 'great_wall' && kind === 'lift') return null;
     return null;
   }

@@ -60,10 +60,10 @@ export class Hud {
     if (ap) {
       ctx.globalAlpha = Math.max(0, Math.min(1, (1.8 - ap.t) / 0.5));
       ctx.font = font(15, 800);
-      const label = `★ ${ap.text}`, tw = ctx.measureText(label).width + 28;
+      const label = `${ap.ultra ? 'ULTRA · ' : '★ '}${ap.text}`, tw = ctx.measureText(label).width + 28;
       const bx = ap.mine ? 24 : w - 24 - tw, by = h - 92;
-      panel(ctx, bx, by, tw, 32, 16, 'rgba(10,15,24,0.82)');
-      ctx.fillStyle = ap.mine ? '#f2c14e' : '#9ec5ff';
+      panel(ctx, bx, by, tw, 32, 16, ap.ultra ? 'rgba(120,8,24,0.9)' : 'rgba(10,15,24,0.82)');
+      ctx.fillStyle = ap.ultra ? '#fff' : ap.mine ? '#f2c14e' : '#9ec5ff';
       ctx.textAlign = 'left';
       ctx.fillText(label, bx + 14, by + 22);
       ctx.globalAlpha = 1;
@@ -550,10 +550,10 @@ export class Hud {
     const oppChar = game.statChars[1];
     const oppLabel = game.online ? (game.online.opponentName ?? 'Opponent') : oppChar ? oppChar.name : `CPU ${LEVEL_LABEL[lvl] ?? ''}`;
     const oppSub = oppChar ? '' : `${STYLES[game.settings.style]?.label ?? ''} style`;
-    this.mcCard(game, 16, top, cw, 'You as', game.statChars[0], game.statChars[0]?.name ?? game.players[0].name, '', this.mcNums[0], game.teamColor(0));
-    this.mcCard(game, w - 16 - cw, Math.max(top, 112), cw, 'Opponent', oppChar, oppLabel, oppSub, this.mcNums[1], game.teamColor(1));
+    this.mcCard(game, 0, 16, top, cw, 'You as', game.statChars[0], game.statChars[0]?.name ?? game.players[0].name, '', this.mcNums[0], game.teamColor(0));
+    this.mcCard(game, 1, w - 16 - cw, Math.max(top, 112), cw, 'Opponent', oppChar, oppLabel, oppSub, this.mcNums[1], game.teamColor(1));
   }
-  private mcCard(game: Game, x: number, y: number, cw: number, kicker: string, c: Character | null, name: string, sub: string, nums: string, team: string) {
+  private mcCard(game: Game, pi: number, x: number, y: number, cw: number, kicker: string, c: Character | null, name: string, sub: string, nums: string, team: string) {
     const ctx = this.ctx;
     const names = statNames(), sigs = c?.abilities ?? [];
     const ch = 58 + (c ? 62 : 22) + sigs.length * 20 + 32;
@@ -599,6 +599,7 @@ export class Hud {
       ctx.textAlign = 'left';
       yy += 62;
     }
+    const cds = game.sigs?.cooldowns(pi);
     for (const a of sigs) {
       const tier = a.tier === 'U' ? 'ULTRA' : a.tier;
       ctx.font = font(10, 900);
@@ -608,7 +609,23 @@ export class Hud {
       ctx.fillText(tier, x + 21, yy + 13);
       ctx.fillStyle = C.hud;
       ctx.font = font(12, 700);
-      ctx.fillText(this.fit(a.name, cw - 40 - tw), x + 22 + tw, yy + 14);
+      ctx.fillText(this.fit(a.name, cw - 56 - tw), x + 22 + tw, yy + 14);
+      // 5.0: cooldown dot: green = ready (or always on), a filling ring = recharging.
+      if (cds && (cds.has(a.id) || a.tier === 'U')) {
+        const left = cds.get(a.id) ?? null, dx = x + cw - 18, dy = yy + 9;
+        ctx.beginPath();
+        ctx.arc(dx, dy, 5, 0, Math.PI * 2);
+        ctx.fillStyle = left ? 'rgba(255,255,255,0.12)' : a.tier === 'U' ? '#ff4d5e' : '#4ade80';
+        ctx.fill();
+        if (left) {
+          ctx.beginPath();
+          ctx.moveTo(dx, dy);
+          ctx.arc(dx, dy, 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - left));
+          ctx.closePath();
+          ctx.fillStyle = '#f2c14e';
+          ctx.fill();
+        }
+      }
       yy += 20;
     }
     ctx.fillStyle = C.hudDim;

@@ -1,5 +1,6 @@
 // Career mode screens: hub, events, bracket, ranking, squad, ledger, recruiting, season recap and the daily
 // challenge. Plain HTML inside the #career panel (same look as Social). Matches are played by main.ts.
+import { hasLastStand } from './signatures';
 import { DEFAULT_CHARACTER, RARITY, characterById, getEdition, statNames, rosterFor, type Character } from '../../shared/characters';
 import type { Game } from '../game';
 import type { Settings } from '../game';
@@ -1125,8 +1126,8 @@ export function initCareer(d: CareerDeps) {
       walkOn: resume ? undefined : careerWalkOn(x, nm),
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
-        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy, a.bronze ? 'bronze' : nm.qual ? undefined : a.round), shopModifier(s!)], abilities: true, kitBrand: getEdition() === 5 ? s!.kitSponsor?.brandId : undefined },
-        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: getEdition() === 5 && s!.rivalFire?.includes(opp.id) ? LEVELS_UP(nm.level) : nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id), a.bronze ? 'bronze' : nm.qual ? undefined : a.round)] },
+        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy, a.bronze ? 'bronze' : nm.qual ? undefined : a.round, hasLastStand(characterById(a.as))), shopModifier(s!)], abilities: true, kitBrand: getEdition() === 5 ? s!.kitSponsor?.brandId : undefined },
+        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: getEdition() === 5 && s!.rivalFire?.includes(opp.id) ? LEVELS_UP(nm.level) : nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id), a.bronze ? 'bronze' : nm.qual ? undefined : a.round, hasLastStand(characterById(opp.id)))] },
         restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country), // 4.2.1: the boards are the event's own (local) sponsors, never yours
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },

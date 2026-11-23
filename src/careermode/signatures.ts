@@ -108,7 +108,7 @@ export class Signatures {
     x.prev = this.prev[i];
     const out: ShotBoost = { mods: [], deceive: 0, fired: [] };
     for (const d of this.list[i] ?? []) {
-      if (AFTER.has(d.trigger) || d.trigger === 'netWin' || d.trigger === 'lowEnergy') continue;
+      if (AFTER.has(d.trigger) || d.trigger === 'netWin' || d.trigger === 'lowRested' || d.effect === 'netTiming') continue;
       if (!matches(d.trigger, x) || !this.ready(i, d)) continue;
       if (d.effect === 'deceive') { out.deceive = Math.max(out.deceive, d.magnitude); out.fired.push(d); continue; }
       if (d.effect === 'oppMove') continue; // handled after the shot
@@ -158,15 +158,18 @@ export class Signatures {
     }
   }
 
+  /** 5.0: net-timing signatures (always on) widen player i's perfect window on net shots by this much. */
+  netTiming(i: number): number { return (this.list[i] ?? []).reduce((k, d) => (d.effect === 'netTiming' ? k * (1 + d.magnitude) : k), 1); }
+
+  /** 5.0: for the match cards: each signature's cooldown (0 = ready, 1 = just used), or null if it has none. */
+  cooldowns(i: number): Map<string, number | null> {
+    return new Map((this.list[i] ?? []).map((d) => [d.id, d.cooldown ? Math.max(0, Math.min(1, ((this.cd[i].get(d.id) ?? -1e9) - this.clock) / d.cooldown)) : null]));
+  }
+
   /** Timed effects on a player right now. */
   modsFor(i: number): Modifier[] { return this.timed.filter((x) => x.player === i).map((x) => x.mods); }
 }
 
-/** Last Stand: energy use cut when starting low (career). */
-export function energyUseFactor(c: Character, energy: number): number {
-  for (const a of c.abilities ?? []) {
-    const d = SIGNATURES.get(a.id);
-    if (d?.effect === 'energyUse' && energy < 20) return 1 - d.magnitude;
-  }
-  return 1;
-}
+/** 5.0 Last Stand: below this Rested, the Rested penalty (timing, movement and aim) is halved. */
+export const LAST_STAND_BELOW = 30;
+export const hasLastStand = (c: Character | null | undefined) => !!c?.abilities?.some((a) => SIGNATURES.get(a.id)?.effect === 'restedHalf');

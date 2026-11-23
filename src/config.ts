@@ -436,8 +436,9 @@ export const REPLAY = {
 export type Level = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert' | 'pro' | 'elite' | 'world' | 'legend'
   | 'titan' | 'phantom' | 'immortal' | 'apex' | 'ultimate' | 'impossible';
 /** How each CPU level is shown. */
-export const LEVEL_LABEL: Record<Level, string> = { beginner: 'Beginner', easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', pro: 'Pro', elite: 'Elite', world: 'World Class', legend: 'Legend',
-  titan: 'Titan', phantom: 'Phantom', immortal: 'Immortal', apex: 'Apex', ultimate: 'Ultimate', impossible: 'Impossible' };
+/** 4.5.2: names from a player's journey (the ids stay the same, so saves and achievements are untouched). */
+export const LEVEL_LABEL: Record<Level, string> = { beginner: 'Rookie', easy: 'Park Player', medium: 'Club Player', hard: 'Club Captain', expert: 'County Player', pro: 'National Squad', elite: 'Pro', world: 'Tour Player', legend: 'Top 20',
+  titan: 'Top 10', phantom: 'World No. 1', immortal: 'World Champion', apex: 'Olympic Champion', ultimate: 'Hall of Famer', impossible: 'Impossible' };
 
 export interface AILevel {
   /** Seconds before reacting to a shot. */

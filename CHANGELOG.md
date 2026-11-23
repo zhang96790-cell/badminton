@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.5.2: New CPU names (23 Nov 2026)
+
+- The CPU levels have new names that follow a player's journey: Rookie, Park Player, Club Player, Club Captain, County Player, National Squad, Pro, Tour Player, Top 20, Top 10, World No. 1, World Champion, Olympic Champion, Hall of Famer and Impossible. They play exactly as before, and your stats and achievements are kept.
+
 ## 4.5.1: Clearer cards and boards (23 Nov 2026)
 
 - The player cards during a match no longer have overlapping text: each stat's number and name sit on their own lines.

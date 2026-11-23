@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.5.2',
+    title: 'New CPU names',
+    date: '23 Nov 2026',
+    changes: [
+      "The CPU levels have new names that follow a player's journey: Rookie, Park Player, Club Player, Club Captain, County Player, National Squad, Pro, Tour Player, Top 20, Top 10, World No. 1, World Champion, Olympic Champion, Hall of Famer and Impossible. They play exactly as before, and your stats and achievements are kept.",
+    ],
+  },
+  {
     version: '4.5.1',
     title: 'Clearer cards and boards',
     date: '23 Nov 2026',

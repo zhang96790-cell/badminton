@@ -13,7 +13,7 @@ import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, typ
 import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, tripPlan, rivalsOf, headToHead, pressAnswer, PRESS, entryFor, signSponsor, sponsorIn, type SponsorSlot, money, myRank, newCareer, semiFreshStart, migrate,
-  nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, campGain, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
+  nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, campGain, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type NewsItem, type LiveMatch,
   type NextMatch,
 } from './state';
 import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
@@ -198,31 +198,55 @@ export function initCareer(d: CareerDeps) {
   let pressDue: { won: boolean; opp: string; event: string } | null = null;
   function pressHtml() {
     if (!pressDue) return '';
-    const opts = pressDue.won ? PRESS.win : PRESS.loss;
-    return `<section class="c-hero c-press"><p class="c-kicker">Press conference · ${e(pressDue.event)}</p><h3 class="c-title small">${pressDue.won ? `How did you beat ${e(characterById(pressDue.opp).name)}?` : `What went wrong against ${e(characterById(pressDue.opp).name)}?`}</h3>
-      <div class="c-opts">${opts.map((o) => `<button class="c-opt" data-press="${o.id}"><b>${e(o.label)}</b><span>${o.fans >= 0 ? '+' : ''}${o.fans} fans${o.mood ? ` · sponsors ${o.mood > 0 ? 'happier' : 'less happy'}` : ''}${o.fire ? ' · fires your opponent up' : ''}</span></button>`).join('')}</div></section>`;
+    const opts = pressDue.won ? PRESS.win : PRESS.loss, opp = characterById(pressDue.opp).name;
+    const mic = icon('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>');
+    return `<section class="v5-press"><div class="v5-press-mic">${mic}</div><div class="v5-press-main">
+      <p class="v5-press-where">Press conference · ${e(pressDue.event)}</p>
+      <h3 class="v5-press-q">${pressDue.won ? `How did you beat ${e(opp)}?` : `What went wrong against ${e(opp)}?`}</h3>
+      <div class="v5-answers">${opts.map((o) => `<button class="v5-answer" data-press="${o.id}"><b>${e(o.label)}</b><span class="v5-chips"><i class="${o.fans >= 10 ? 'good' : ''}">+${o.fans} fans</i>${o.mood ? `<i class="${o.mood > 0 ? 'good' : 'bad'}">Sponsors ${o.mood > 0 ? 'happier' : 'less happy'}</i>` : ''}${o.fire ? `<i class="bad">Fires ${e(opp.split(' ')[0])} up</i>` : ''}</span></button>`).join('')}</div>
+    </div></section>`;
   }
+  const NEWS_KIND: Record<NewsItem['kind'], string> = { you: 'You', world: 'Tour', rival: 'Rival', move: 'Moves', award: 'Awards' };
+  const newsLi = (n: NewsItem, i: number, year?: boolean) => `<li class="n-${n.kind}${i === 0 ? ' lead' : ''}"><span class="v5-wk">${year ? `${n.year} · ` : ''}W${n.week}</span><span class="v5-kind">${NEWS_KIND[n.kind]}</span><p>${e(n.text)}</p></li>`;
   function v5HubHtml() {
     const ids = rivalsOf(s!, W());
-    const rank = (id: string) => { const l = W().rankingAt(absWeek(s!.year, s!.week)); const i = l.findIndex((x) => x.id === id); return i < 0 || l[i].pts <= 0 ? '–' : `#${i + 1}`; };
-    const rivals = ids.map((id) => { const c = characterById(id), [w, l] = headToHead(s!, id); return `<div class="c-fact"><span>${e(c.country)} · ${rank(id)}</span><b>${e(c.name)}</b><span>You ${w}–${l}</span></div>`; }).join('');
-    const news = (s!.news ?? []).slice(0, 6).map((n) => `<li class="n-${n.kind}"><span>W${n.week}</span>${e(n.text)}</li>`).join('');
-    return `<div class="c-v5grid"><section class="c-card"><h3>Your rivals ${s!.year}</h3><div class="c-facts">${rivals || '<p class="sub">Your rivals are picked once you’re ranked.</p>'}</div><p class="sub">Beat a rival for a bonus and a headline. ${s!.fans ?? 0} fans.</p></section>
-      <section class="c-card"><h3>News</h3><ul class="c-news">${news || '<li>Nothing yet: play an event.</li>'}</ul><div class="c-cta"><button class="edit" data-ctab="news">All news</button></div></section></div>`;
+    const rank = (id: string) => { const l = W().rankingAt(absWeek(s!.year, s!.week)); const i = l.findIndex((x) => x.id === id); return i < 0 || l[i].pts <= 0 ? 'Unranked' : `#${i + 1}`; };
+    const rivals = ids.map((id) => {
+      const c = characterById(id), [w, l] = headToHead(s!, id), fired = s!.rivalFire?.includes(id);
+      return `<li class="v5-rival${fired ? ' fired' : ''}${w > l ? ' ahead' : l > w ? ' behind' : ''}"><span class="v5-rival-meta"><span class="v5-cc">${e(c.country)}</span>${rank(id)}</span>
+        <b class="v5-rival-name">${e(c.name)}</b>${fired ? '<span class="v5-tag fire">Fired up</span>' : ''}
+        <span class="v5-h2h" title="Your head-to-head"><b class="w">${w}</b><i>–</i><b class="l">${l}</b></span></li>`;
+    }).join('');
+    const news = (s!.news ?? []).slice(0, 5).map((n, i) => newsLi(n, i)).join('');
+    return `<div class="v5-hub">
+      <section class="v5-panel v5-rivals"><header class="v5-ph"><h3>Rivals <em>${s!.year}</em></h3><span class="v5-fans"><b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans</span></header>
+        ${rivals ? `<ol class="v5-rival-list">${rivals}</ol>` : '<p class="v5-empty-line">Your rivals are picked once you’re ranked.</p>'}
+        <p class="v5-foot">Beat a rival for a bonus and a headline. Your head-to-head is on the right.</p></section>
+      <section class="v5-panel v5-wire"><header class="v5-ph"><h3>Newswire</h3><button class="v5-more" data-ctab="news">All news ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></header>
+        <ul class="v5-news">${news || '<li class="v5-empty-line">Nothing yet: play an event.</li>'}</ul></section>
+    </div>`;
   }
   function renderNews() {
     const items = s!.news ?? [];
-    body.innerHTML = `<section class="c-hero"><p class="c-kicker">News</p><ul class="c-news big">${items.map((n) => `<li class="n-${n.kind}"><span>${n.year} W${n.week}</span>${e(n.text)}</li>`).join('') || '<li>No news yet.</li>'}</ul>
-      ${(s!.awards ?? []).length ? `<h3 class="c-title small">Awards</h3>${s!.awards!.slice().reverse().map((a) => `<p class="c-lead small"><b>${a.year}</b>: ${a.list.map((x) => `${e(x.award)}: ${e(x.winner)}`).join(' · ')}</p>`).join('')}` : ''}</section>`;
+    const awards = (s!.awards ?? []).slice().reverse();
+    body.innerHTML = `<section class="c-hero v5-newsroom"><h3 class="c-title">Newswire</h3>
+      <ul class="v5-news big">${items.map((n, i) => newsLi(n, i, true)).join('') || '<li class="v5-empty-line">No news yet. Play an event and the headlines start.</li>'}</ul>
+      ${awards.length ? `<h3 class="c-title small">Awards nights</h3>${awards.map((a) => `<div class="v5-award-line"><b>${a.year}</b>${a.list.map((x) => `<span class="${x.you ? 'you' : ''}"><i>${e(x.award)}</i>${e(x.winner)}</span>`).join('')}</div>`).join('')}` : ''}</section>`;
   }
 
   /** 5.0 travel planner: the whole trip's cost against the prize for each round, and where you break even. */
   function planHtml(x: TourEvent, qual?: boolean) {
     const p = tripPlan(s!, x);
-    if (qual) return `<p class="c-lead small">Travel planner: through qualifying the event pays your travel and hotel once you’re in the main draw, so every round you win is profit.</p>`;
+    if (qual) return `<div class="v5-plan"><header class="v5-ph"><h3>Travel planner</h3></header><p class="v5-foot">Through qualifying: once you’re in the main draw the event pays your travel and hotel, so every round you win is profit.</p></div>`;
     const show = p.rows.filter((r) => r.round !== 'R64' || x.draw_size > 32);
-    return `<div class="c-plan"><p class="c-kicker">Travel planner</p><table class="c-table"><tr><th>Go out in</th><th>Trip costs</th><th>Prize</th><th></th></tr>${show.map((r) => `<tr><td>${r.round === 'W' ? 'Win it' : ROUND_LABEL[r.round]}</td><td>${money(r.cost)}</td><td>${money(r.prize)}</td><td class="${r.prize >= r.cost ? 'up' : 'down'}">${r.prize >= r.cost ? '+' : '−'}${money(Math.abs(r.prize - r.cost)).replace('−', '')}</td></tr>`).join('')}</table>
-      <p class="c-lead small">${p.breakEven ? `You break even if you reach the ${p.breakEven === 'W' ? 'title' : ROUND_LABEL[p.breakEven].toLowerCase()}.` : 'This trip costs more than any prize here: worth it for the ranking points only.'}</p></div>`;
+    const max = Math.max(1, ...show.map((r) => Math.abs(r.prize - r.cost)));
+    const rows = show.map((r) => {
+      const net = r.prize - r.cost, up = net >= 0, be = r.round === p.breakEven;
+      return `<div class="v5-plan-row ${up ? 'up' : 'down'}${be ? ' be' : ''}"><span class="r">${r.round === 'W' ? 'Win it' : ROUND_LABEL[r.round]}${be ? '<span class="v5-tag gold">Break even</span>' : ''}</span><span class="c">${money(r.cost)}</span><span class="p">${money(r.prize)}</span>
+        <span class="bar"><i style="width:${(Math.abs(net) / max) * 50}%"></i></span><b class="net">${up ? '+' : '−'}${money(Math.abs(net)).replace('−', '')}</b></div>`;
+    }).join('');
+    return `<div class="v5-plan"><header class="v5-ph"><h3>Travel planner</h3><span class="v5-sub">${p.breakEven ? `Break even at the ${p.breakEven === 'W' ? 'title' : ROUND_LABEL[p.breakEven].toLowerCase()}` : 'Costs more than any prize: play it for the points'}</span></header>
+      <div class="v5-plan-head"><span>Go out in</span><span>Trip costs</span><span>Prize</span><span>Profit or loss</span></div>${rows}</div>`;
   }
   /** 3.19: a short offer of a tour loan, under an event you can only reach through qualifying. */
   function loanLine() {
@@ -356,15 +380,16 @@ export function initCareer(d: CareerDeps) {
   function calendarGrid() {
     const cells = [];
     for (let wk = 1; wk <= 52; wk++) {
-      const evs = W().cal.filter((v) => v.week === wk);
-      cells.push(`<div class="c-cal-w${wk === s!.week ? ' now' : ''}${wk < s!.week ? ' past' : ''}"><i>W${wk}</i>${evs.map((v) => {
+      const evs = W().cal.filter((v) => v.week === wk), now = wk === s!.week, past = wk < s!.week;
+      cells.push(`<div class="v5-wkc${now ? ' now' : ''}${past ? ' past' : ''}${evs.length ? '' : ' none'}"><i>${wk}${now ? '<span>This week</span>' : ''}</i>${evs.map((v) => {
         const c = canEnter(s!, v, W()), entry = entryFor(s!, v, W()), trip = travelCost(s!, v);
+        const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
         const rest = Math.max(0, Math.round(s!.energy) - travelRestCost(s!, v));
-        const tag = c.ok ? (c.qual ? 'Qualifying' : 'Main draw') : entry === 'out' ? 'Not in' : 'Save up';
-        return `<button class="c-cal-e ${v.tier.toLowerCase()}" data-detail="${v.id}" title="${e(v.name)}"><b>${e(v.name.replace(/ (Open|Masters|International|Championships?)$/, ''))}</b><span>${TIER_LABEL[v.tier]} · ${tag}</span><span>${money(trip)} trip · ${rest}% rested</span></button>`;
+        const [st, tag] = h ? ['done', `You: ${resultName(h)}`] : past ? ['out', 'Done'] : c.ok ? (c.qual ? ['qual', 'Qualifying'] : ['main', 'Main draw']) : entry === 'out' ? ['out', 'Not in'] : ['save', 'Save up'];
+        return `<button class="v5-ev t-${v.tier.toLowerCase()}" data-detail="${v.id}" title="${e(v.name)}"><span class="v5-ev-tier"><i></i>${TIER_LABEL[v.tier]}</span><b>${e(v.name.replace(/ (Open|Masters|International|Championships?)$/, ''))}</b><span class="v5-ev-st st-${st}">${e(tag)}</span>${past || h ? '' : `<span class="v5-ev-meta">${money(trip)} trip · ${rest}% rested</span>`}</button>`;
       }).join('')}</div>`);
     }
-    return `<div class="c-cal">${cells.join('')}</div>`;
+    return `<div class="v5-cal">${cells.join('')}</div>`;
   }
 
   function renderList() {
@@ -498,15 +523,20 @@ export function initCareer(d: CareerDeps) {
       ['main', 'Main sponsor', 'A perk brand: little money, but cheaper flights, free hotels, cheaper loans, win bonuses or cheaper tournaments.'],
       ['cash', 'Money sponsor', 'Pays the most, with no perk.'],
     ];
+    const ICON: Record<SponsorSlot, string> = {
+      kit: '<path d="M8.5 4 4 6.5l1.8 4 2.2-.9V20h8V9.6l2.2.9 1.8-4L15.5 4a3.5 3.5 0 0 1-7 0z"/>',
+      main: '<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+      cash: '<circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.4c-.4-1-1.5-1.6-2.8-1.6-1.6 0-2.8.8-2.8 2s1.1 1.7 2.8 2.1 2.9.9 2.9 2.2-1.3 2.1-2.9 2.1c-1.4 0-2.5-.6-2.9-1.7M12 6.3v1.5M12 16.7v1.5"/>',
+    };
     const html = slots.map(([slot, title, about]) => {
       const cur = sponsorIn(s!, slot), offers = sponsorUpgrade(s!, rank, d.appVersion, slot), req = cur?.request;
-      return `<h3 class="c-title small">${title}</h3><p class="c-lead small">${about}</p>
-        ${cur ? `<p class="c-lead"><b>${e(cur.name)}</b> until the end of ${cur.year}: ${terms(cur).map(e).join(' · ')}.</p>
-          ${req ? `<p class="c-lead small">Their event: ${e(req.name)}. ${req.paid ? 'Done: quarter-finals bonus paid.' : req.entered ? 'Entered (bonus paid). Reach the quarter-finals for the big one.' : 'Not played yet.'}</p>` : ''}`
-          : `<p class="c-lead small">${rank ? 'None yet.' : 'Sponsors come to you once you’re in the world top 200.'}</p>`}
-        ${offers ? `<div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${slot}:${i}"><b>${e(o.name)}</b>${terms(o).map((t) => `<span>${e(t)}</span>`).join('')}</button>`).join('')}</div>` : ''}`;
+      return `<article class="v5-slot ${cur ? 'signed' : 'open'} slot-${slot}"><header><span class="v5-slot-ic">${icon(ICON[slot])}</span><div><h4>${title}</h4><p>${about}</p></div></header>
+        ${cur ? `<div class="v5-deal"><span class="v5-tag green">Signed to the end of ${cur.year}</span><b class="v5-brand">${e(cur.name)}</b><ul class="v5-terms">${terms(cur).map((x) => `<li>${e(x)}</li>`).join('')}</ul>
+          ${req ? `<p class="v5-foot">Their event: ${e(req.name)}. ${req.paid ? 'Done: quarter-finals bonus paid.' : req.entered ? 'Entered (bonus paid). Reach the quarter-finals for the big one.' : 'Not played yet.'}</p>` : ''}</div>`
+          : `<div class="v5-open"><b>Open slot</b><span>${rank ? 'No offers yet. Better ones come as you climb.' : 'Offers start once you’re in the world top 200.'}</span></div>`}
+        ${offers ? `<div class="v5-offers"><p class="v5-offers-h">${cur ? 'A better deal is on offer' : 'On offer'}</p>${offers.map((o, i) => `<button class="c-opt" data-sponsor="${slot}:${i}"><b>${e(o.name)}</b>${terms(o).map((x) => `<span>${e(x)}</span>`).join('')}</button>`).join('')}</div>` : ''}</article>`;
     }).join('');
-    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Sponsors</p><p class="c-lead">Up to three: a kit deal, a main sponsor with a perk, and a money sponsor. Deals run to the end of the season, and better ones come as you climb.</p>${html}</section>`;
+    body.innerHTML = `<section class="c-hero v5-sponsors"><h3 class="c-title">Sponsors</h3><p class="c-lead">Up to three at once: a kit deal, a main sponsor with a perk, and a money sponsor. Deals run to the end of the season, and better ones come as you climb.</p><div class="v5-slots">${html}</div></section>`;
   }
   /** The Sponsors page: your sponsor and any offers (one sponsor; v5 has three slots). */
   function renderSponsors() {

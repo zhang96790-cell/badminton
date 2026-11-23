@@ -142,10 +142,30 @@
         <div class="pass sc-pass"><h2>Keyboard shortcuts</h2><div id="shortcutList"></div><p class="sub">Press ? or Esc to close.</p></div>
       </div>
 
-      <div id="labModal" class="fb-modal hidden" role="dialog" aria-modal="true" aria-labelledby="labTitle">
-        <div class="pass fb-pass"><h2 id="labTitle">Test area</h2><div id="labBody"></div><div class="fb-actions"><button type="button" class="edit" data-labclose>Close</button></div></div>
+      <div id="labModal" class="fb-modal lab-modal hidden" role="dialog" aria-modal="true" aria-labelledby="labTitle">
+        <div class="lab-card">
+          <div class="lab-stripes" aria-hidden="true"></div>
+          <header class="lab-head">
+            <span class="lab-v" aria-hidden="true">v5</span>
+            <div class="lab-name"><h2 id="labTitle">Closed test</h2><p>The new career, before it launches.</p></div>
+            <button type="button" class="lab-x" data-labclose aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+          </header>
+          <ul class="lab-list">
+            <li><b>New career</b><span>Bring your squad and ranking over</span></li>
+            <li><b>51 new players</b><span>Elite up to Champion</span></li>
+            <li><b>Entry lists</b><span>Every level open: your ranking decides</span></li>
+            <li><b>Living world</b><span>Players age, retire and debut</span></li>
+            <li><b>Rivals and news</b><span>Three rivals a season, press, awards</span></li>
+            <li><b>Three sponsors</b><span>Kit deal, main sponsor, money sponsor</span></li>
+          </ul>
+          <div id="labBody" class="lab-body"></div>
+        </div>
       </div>
-      <div id="v5Banner" class="v5-banner"><b>v5 TEST</b> Career and matches use the v5 rules, roster and a separate career. <button type="button" id="v5Leave">Leave</button></div>
+      <div id="v5Banner" class="v5-banner" role="status">
+        <span class="v5-slab">v5 test build</span>
+        <span class="v5-note">Separate v5 career. Your normal career and stats aren’t touched.</span>
+        <button type="button" id="v5Leave">Leave test <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+      </div>
 
       <aside id="matchcard" class="matchcard" aria-label="Match card" aria-hidden="true">
         <header class="mc-head">

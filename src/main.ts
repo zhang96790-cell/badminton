@@ -44,7 +44,13 @@ import { setEdition, getEdition } from '../shared/characters';
 // ── 5.0 test area: a tab that entered the hidden v5 area runs as v5 (checked against the account below). ──
 const V5_KEY = 'badminton.v5';
 try { if (sessionStorage.getItem(V5_KEY) === '1') setEdition(5); } catch { /* storage blocked */ }
-if (getEdition() === 5) document.body.classList.add('v5');
+if (getEdition() === 5) {
+  document.body.classList.add('v5');
+  // The home's Career box wears the v5 mark while testing.
+  const num = document.querySelector('.bc-career .bc-num'), k = document.querySelector('.bc-career .bc-k .status');
+  if (num) num.textContent = 'v5';
+  if (k) k.lastChild!.textContent = 'v5 career · test';
+}
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -2621,22 +2627,29 @@ function enterV5(on: boolean) {
   try { if (on) sessionStorage.setItem(V5_KEY, '1'); else sessionStorage.removeItem(V5_KEY); } catch { /* storage blocked */ }
   location.reload();
 }
+const LAB_ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
 async function openLab() {
   labModal.classList.remove('hidden');
-  if (!account) { labBody.innerHTML = '<p>Log in first: the test area is for a few accounts.</p>'; return; }
-  labBody.innerHTML = '<p class="sub">Checking…</p>';
+  if (!account) {
+    labBody.innerHTML = `<p class="lab-msg">Log in first: the test is for a few accounts.</p><button type="button" class="walk lab-go" data-lab="login">Log in ${LAB_ARROW}</button>`;
+    return;
+  }
+  labBody.innerHTML = '<p class="lab-msg lab-wait">Checking…</p>';
   const st = await (await loadAccount()).v5Status();
-  if (!st) { labBody.innerHTML = '<p>The test area isn’t set up yet.</p>'; return; }
+  if (!st) { labBody.innerHTML = '<p class="lab-msg">The test isn’t set up yet.</p>'; return; }
   if (getEdition() === 5) {
-    labBody.innerHTML = '<p>You’re in the v5 test area. Career and matches here use the v5 rules, roster and a separate v5 career.</p><div class="fb-actions"><button type="button" class="edit" data-lab="leave">Leave the test area</button></div>';
+    labBody.innerHTML = '<p class="lab-msg"><b>You’re in.</b> Career and matches here use the v5 rules, roster and your v5 career.</p><button type="button" class="edit lab-leave" data-lab="leave">Leave the test</button>';
     return;
   }
   // Once v5 is open to everyone, no code. Until then the code is asked every time you go in.
   if (st.open) {
-    labBody.innerHTML = '<p>v5 is open. Your normal career isn’t touched: v5 has its own.</p><div class="fb-actions"><button type="button" class="primary walk" data-lab="enter">Enter v5</button></div>';
+    labBody.innerHTML = `<p class="lab-msg">v5 is open. Your normal career isn’t touched: v5 has its own.</p><button type="button" class="walk lab-go" data-lab="enter">Enter v5 ${LAB_ARROW}</button>`;
     return;
   }
-  labBody.innerHTML = '<p>Enter the test code to go into v5. Your normal career isn’t touched: v5 has its own.</p><input id="labCode" class="mc-search" autocomplete="off" spellcheck="false" placeholder="Code"><p id="labMsg" class="pass-msg"></p><div class="fb-actions"><button type="button" class="primary walk" data-lab="code">Enter v5</button></div>';
+  labBody.innerHTML = `<label class="lab-code"><span>Test code</span><input id="labCode" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the code"></label>
+    <p id="labMsg" class="lab-err" role="alert"></p>
+    <button type="button" class="walk lab-go" data-lab="code">Enter v5 ${LAB_ARROW}</button>
+    <p class="lab-fine">Asked every time you go in. Your normal career isn’t touched: v5 has its own.</p>`;
   (document.getElementById('labCode') as HTMLInputElement).focus();
 }
 document.getElementById('labDot')!.addEventListener('click', () => void openLab());
@@ -2644,14 +2657,22 @@ labModal.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target
 labModal.addEventListener('click', async (e) => {
   const t = e.target as HTMLElement;
   if (t === labModal || t.closest('[data-labclose]')) { labModal.classList.add('hidden'); return; }
-  const a = t.closest<HTMLElement>('[data-lab]')?.dataset.lab;
+  const btn = t.closest<HTMLButtonElement>('[data-lab]'), a = btn?.dataset.lab;
+  if (a === 'login') { labModal.classList.add('hidden'); openAccount(); }
   if (a === 'enter') enterV5(true);
   if (a === 'leave') enterV5(false);
-  if (a === 'code') {
-    const code = (document.getElementById('labCode') as HTMLInputElement).value.trim();
-    const ok = code && await (await loadAccount()).v5Redeem(code);
-    if (ok) enterV5(true);
-    else document.getElementById('labMsg')!.textContent = 'That code didn’t work (a few tries an hour).';
+  if (a === 'code' && btn && !btn.disabled) {
+    const input = document.getElementById('labCode') as HTMLInputElement, msg = document.getElementById('labMsg')!;
+    const code = input.value.trim();
+    if (!code) { input.focus(); return; }
+    btn.disabled = true; btn.firstChild!.textContent = 'Checking… ';
+    const ok = await (await loadAccount()).v5Redeem(code);
+    if (ok) { btn.firstChild!.textContent = 'You’re in '; enterV5(true); return; }
+    btn.disabled = false; btn.firstChild!.textContent = 'Enter v5 ';
+    msg.textContent = 'That code didn’t work. You get a few wrong tries an hour.';
+    const box = input.closest('.lab-code')!;
+    box.classList.remove('bad'); void (box as HTMLElement).offsetWidth; box.classList.add('bad');
+    input.select();
   }
 });
 document.getElementById('v5Leave')?.addEventListener('click', () => enterV5(false));

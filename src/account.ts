@@ -3,6 +3,7 @@
 // Loaded on demand so the game starts without it.
 import { createClient, type AuthError } from '@supabase/supabase-js';
 import { isOffensive } from '../shared/names';
+import { getEdition } from '../shared/characters';
 
 // Both values are meant to be public: what each player may do is enforced by the database's row level security.
 const SUPABASE_URL = 'https://xyadhxnoqdanzbppgxni.supabase.co';
@@ -205,9 +206,11 @@ export const careerStarter = (character: string) => rpc<string | null>('career_s
 export interface OfferRow { id?: number; candidates: string[]; rerolled?: boolean; limited?: boolean }
 /** place: 1, 2 or 3 (3.5). Falls back to the older call (winners only) if the database hasn't had supabase/3.5-offers.sql. */
 export const offerCreate = async (tournament: string, tier: string, field: string[], place = 1) =>
-  (await rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field, p_place: place }))
+  getEdition() === 5 ? rpc<OfferRow>('offer5_create', { p_tournament: tournament, p_tier: tier, p_field: field, p_place: place })
+  : (await rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field, p_place: place }))
   ?? (place === 1 ? rpc<OfferRow>('offer_create', { p_tournament: tournament, p_tier: tier, p_field: field }) : null);
-export const offerReroll = (offer: number) => rpc<{ ok: boolean; candidates?: string[] }>('offer_reroll', { p_offer: offer });
+// 5.0 test area: its own offers, which can include the new 5.0 players.
+export const offerReroll = (offer: number) => rpc<{ ok: boolean; candidates?: string[] }>(getEdition() === 5 ? 'offer5_reroll' : 'offer_reroll', { p_offer: offer });
 export const offerChoose = (offer: number, character: string | null) => rpc<string | null>('offer_choose', { p_offer: offer, p_character: character });
 export interface DailyChallenge { day: string; opponent: string; handicaps: string[]; behind: number; difficulty: number; reward: number; next_at: string }
 export interface DailyInfo { challenge: DailyChallenge | null; claimed: boolean; reward_got: number | null; season_total: number; season_cap: number }

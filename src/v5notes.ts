@@ -2,6 +2,18 @@
 export const V5_NOTES: { date: string; title: string; items: [string, string][] }[] = [
   {
     date: '23 Nov 2026',
+    title: 'Test build 4',
+    items: [
+      ['Career only, full screen', 'The test opens straight into career mode, full screen. Leave test is in the top banner.'],
+      ['Pick anyone', 'A new v5 career lets you choose any player, with search and a rarity filter.'],
+      ['Squad has everyone', 'The Squad tab has every player, grouped by rarity, with search, a rarity filter and sorting by any stat. Who you play as is shown at the top with their stats and signatures.'],
+      ['Clearer tabs', 'The tabs are grouped: the season (Next up, Calendar, Ranking), you (Squad, Rivals, News, Trophies), money (Sponsors, Money, Shop), then Daily and Settings.'],
+      ['Calendar tab', 'The whole season week by week, with a key for levels and entry, and the same as a list.'],
+      ['Rivals tab', 'Your three rivals with their head-to-head score, your last meetings and rival headlines.'],
+    ],
+  },
+  {
+    date: '23 Nov 2026',
     title: 'Test build 3',
     items: [
       ['Every player unlocked', 'While you test, every player is yours to try in every mode, so you can check the balance.'],

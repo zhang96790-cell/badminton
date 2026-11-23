@@ -146,6 +146,18 @@ export function initCareer(d: CareerDeps) {
     ['settings', 'Settings', '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'],
   ];
   const icon = (paths: string) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+  const NAV_ICON = Object.fromEntries(NAV.map(([k, , p]) => [k, p]));
+  /** 5.0: the tabs in groups: the season, you, money, the rest. */
+  const NAV_V5: ([string, string, string] | null)[] = [
+    ['hub', 'Next up', NAV_ICON.hub], ['calendar', 'Calendar', '<rect x="4" y="5" width="16" height="15" rx="1"/><path d="M4 10h16M9 3v4M15 3v4M8 14h2M14 14h2M8 17h2"/>'], ['ranking', 'Ranking', NAV_ICON.ranking],
+    null,
+    ['squad', 'Squad', NAV_ICON.squad], ['rivals', 'Rivals', '<path d="M3 6l4 12 4-12M20 8c-.6-1.3-1.8-2-3.3-2-1.9 0-3.2 1-3.2 2.5 0 3.4 6.8 1.8 6.8 5.2 0 1.6-1.4 2.8-3.4 2.8-1.6 0-2.9-.7-3.5-2"/>'],
+    ['news', 'News', NAV_ICON.news], ['trophies', 'Trophies', NAV_ICON.trophies],
+    null,
+    ['sponsors', 'Sponsors', NAV_ICON.sponsors], ['ledger', 'Money', NAV_ICON.ledger], ['shop', 'Shop', NAV_ICON.shop],
+    null,
+    ['daily', 'Daily', NAV_ICON.daily], ['settings', 'Settings', NAV_ICON.settings],
+  ];
 
   function render() {
     setWhere(`career: ${!s ? 'new career' : s.current ? 'tournament' : tab}`);
@@ -157,9 +169,10 @@ export function initCareer(d: CareerDeps) {
     head.innerHTML = `<p class="hero-kicker">${s.year} · Week ${s.week} · in ${e(countryName(s.currentLocation))}</p><h2>${e(s.name)}</h2>
       <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div>
       <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
-    $('careerTabs').innerHTML = NAV.filter(([k]) => k !== 'news' || getEdition() === 5).map(([k, l, p]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span>${k === 'shop' && shopHasNew() ? '<span class="c-new dot">New</span>' : ''}</button>`).join('');
+    const tabBtn = ([k, l, p]: [string, string, string]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span>${k === 'shop' && shopHasNew() ? '<span class="c-new dot">New</span>' : ''}</button>`;
+    $('careerTabs').innerHTML = (getEdition() === 5 ? NAV_V5 : NAV.filter(([k]) => k !== 'news')).map((n) => (n ? tabBtn(n) : '<span class="c-tabsep" aria-hidden="true"></span>')).join('');
     if (s.pendingRecruitOffer || s.offerDue) { void renderOffer(); return; }
-    ({ hub: renderHub, ranking: renderRanking, squad: renderSquad, news: renderNews, sponsors: renderSponsors, shop: renderShop, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
+    ({ hub: renderHub, calendar: renderCalendar, rivals: renderRivals, ranking: renderRanking, squad: getEdition() === 5 ? renderSquadV5 : renderSquad, news: renderNews, sponsors: renderSponsors, shop: renderShop, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
   }
 
   /** You v them, for the next match. */
@@ -219,9 +232,9 @@ export function initCareer(d: CareerDeps) {
     }).join('');
     const news = (s!.news ?? []).slice(0, 5).map((n, i) => newsLi(n, i)).join('');
     return `<div class="v5-hub">
-      <section class="v5-panel v5-rivals"><header class="v5-ph"><h3>Rivals <em>${s!.year}</em></h3><span class="v5-fans"><b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans</span></header>
+      <section class="v5-panel v5-rivals"><header class="v5-ph"><h3>Rivals <em>${s!.year}</em></h3><button class="v5-more" data-ctab="rivals">All rivals ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></header>
         ${rivals ? `<ol class="v5-rival-list">${rivals}</ol>` : '<p class="v5-empty-line">Your rivals are picked once you’re ranked.</p>'}
-        <p class="v5-foot">Beat a rival for a bonus and a headline. Your head-to-head is on the right.</p></section>
+        <p class="v5-foot">Beat a rival for a bonus and a headline. Your head-to-head is on the right. <b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans.</p></section>
       <section class="v5-panel v5-wire"><header class="v5-ph"><h3>Newswire</h3><button class="v5-more" data-ctab="news">All news ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></header>
         <ul class="v5-news">${news || '<li class="v5-empty-line">Nothing yet: play an event.</li>'}</ul></section>
     </div>`;
@@ -392,7 +405,7 @@ export function initCareer(d: CareerDeps) {
     return `<div class="v5-cal">${cells.join('')}</div>`;
   }
 
-  function renderList() {
+  function listTable() {
     const rows = W().cal.map((v) => {
       const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
       const c = canEnter(s!, v, W());
@@ -402,11 +415,49 @@ export function initCareer(d: CareerDeps) {
         <td>${e(v.dates ?? `week ${v.week}`)}</td><td><b>${e(v.name)}</b></td><td><span class="c-tier ${v.tier.toLowerCase()}">${TIER_LABEL[v.tier]}</span></td>
         <td>${v.draw_size}</td><td>${e(v.city ? `${v.city}, ` : '')}${e(countryName(v.host_country))}</td><td>${money(prizeFor(v, 'W'))}</td><td>${status}</td></tr>`;
     }).join('');
+    return `<table class="c-table c-list"><tr><th>Dates</th><th>Tournament</th><th>Level</th><th>Players</th><th>Host</th><th>Winner gets</th><th>Status</th></tr>${rows}</table>`;
+  }
+  function renderList() {
+    if (getEdition() === 5) { tab = 'calendar'; render(); return; }
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">${s!.year} season · ${W().cal.length} tournaments</p><h3 class="c-title">All tournaments</h3>
       <p class="c-lead small">Click a tournament for its prizes and draw. ${getEdition() === 5 ? 'Every level is open: your world ranking decides if you go straight in, play qualifying, or miss out.' : 'Locked levels open when you reach a final at the level below, or climb the world ranking.'}</p>
-      ${getEdition() === 5 ? calendarGrid() : ''}
-      <table class="c-table c-list"><tr><th>Dates</th><th>Tournament</th><th>Level</th><th>Players</th><th>Host</th><th>Winner gets</th><th>Status</th></tr>${rows}</table>
+      ${listTable()}
       <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
+  }
+  /** 5.0: the Calendar tab: the season week by week, and the same as a list. */
+  function renderCalendar() {
+    const key = [['main', 'Main draw'], ['qual', 'Qualifying'], ['save', 'Save up'], ['out', 'Not in'], ['done', 'Your result']]
+      .map(([k, l]) => `<span class="v5-ev-st st-${k}">${l}</span>`).join('');
+    const tiers = ['S100', 'S300', 'S500', 'S750', 'S1000', 'WORLDS', 'OLYMPICS', 'WTF'].filter((x) => W().cal.some((v) => v.tier === x))
+      .map((x) => `<span class="v5-ev-tier t-${x.toLowerCase()}"><i></i>${TIER_LABEL[x]}</span>`).join('');
+    body.innerHTML = `<section class="v5-page"><header class="v5-page-head"><h3>${s!.year} season</h3><p>${W().cal.length} tournaments. Every level is open: your world ranking decides if you go straight in, play qualifying or miss out. Click one for its prizes, draw and travel plan.</p></header>
+      <div class="v5-cal-key"><div>${tiers}</div><div>${key}</div></div>
+      ${calendarGrid()}
+      <details class="v5-cal-list"><summary>Show as a list</summary>${listTable()}</details></section>`;
+  }
+  /** 5.0: the Rivals tab: your three rivals, your meetings with them, and rival headlines. */
+  function renderRivals() {
+    const ids = rivalsOf(s!, W());
+    const ranking = W().rankingAt(absWeek(s!.year, s!.week));
+    const rank = (id: string) => { const i = ranking.findIndex((x) => x.id === id); return i < 0 || ranking[i].pts <= 0 ? 'Unranked' : `World #${i + 1}`; };
+    const cards = ids.map((id) => {
+      const c = characterById(id), [w, l] = headToHead(s!, id), fired = s!.rivalFire?.includes(id);
+      const met = s!.history.flatMap((h) => (h.opponents ?? []).map((o, i) => (o === id ? { h, g: h.scores?.[i] ?? [] } : null)).filter((x): x is NonNullable<typeof x> => !!x));
+      const meetings = met.slice(-4).reverse().map(({ h, g }) => {
+        const won = g.filter(([a, b]) => a > b).length > g.filter(([a, b]) => b > a).length;
+        return `<li class="${won ? 'won' : 'lost'}"><b>${won ? 'Won' : 'Lost'}</b><span>${e(findEvent(s!, h.tournamentId, d.appVersion)?.name ?? 'Club open')} ${h.year}</span><em>${g.map(([a, b]) => `${a}–${b}`).join(', ')}</em></li>`;
+      }).join('');
+      return `<article class="v5-rival-card${fired ? ' fired' : ''}" style="--rar:${RARITY[c.rarity].color}">
+        <header><span class="rar">${RARITY[c.rarity].label}</span>${fired ? '<span class="v5-tag fire">Fired up</span>' : ''}</header>
+        <b class="v5-rival-big">${e(c.name)}</b><p class="v5-rival-sub">${e(countryName(c.country))} · ${e(c.style)} · ${rank(id)}</p>
+        <div class="v5-rival-score"><div><b class="${w > l ? 'up' : ''}">${w}</b><span>You</span></div><i>–</i><div><b class="${l > w ? 'down' : ''}">${l}</b><span>Them</span></div></div>
+        ${meetings ? `<ul class="v5-meet">${meetings}</ul>` : '<p class="v5-foot">You haven’t met yet this career.</p>'}
+      </article>`;
+    }).join('');
+    const news = (s!.news ?? []).filter((n) => n.kind === 'rival').slice(0, 6).map((n, i) => newsLi(n, i, true)).join('');
+    body.innerHTML = `<section class="v5-page"><header class="v5-page-head"><h3>Rivals ${s!.year}</h3><p>Three players near your ranking, picked each season. Beat one for a bonus and a headline. Say something fiery at a press conference and they come back fired up. You have <b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans.</p></header>
+      ${cards ? `<div class="v5-rival-cards">${cards}</div>` : '<p class="v5-empty-line">Your rivals are picked once you’re ranked.</p>'}
+      ${news ? `<h4 class="v5-sub-h">Rival headlines</h4><ul class="v5-news">${news}</ul>` : ''}</section>`;
   }
 
   function renderDraw(id: string) {
@@ -498,6 +549,54 @@ export function initCareer(d: CareerDeps) {
     void owned;
     body.innerHTML = `<div class="c-card"><h3>Your squad</h3><p class="sub">The player you started with and the ones you’ve recruited this career. Choose who plays your next tournament. Recruits also join your account for ranked and friend matches.</p>
       <div class="c-squad">${mine.map((c) => `<button class="${c.id === s!.characterId ? 'on' : ''}" data-pick="${c.id}" ${s!.current ? 'disabled' : ''}>${card(c, `<span class="sub">career strength ${c.career_strength}${c.abilities.length ? ` · ${c.abilities.map((ab) => `★ ${e(ab.name)}`).join(', ')}` : ''}</span>`)}</button>`).join('') || '<p>No players yet.</p>'}</div></div>`;
+  }
+
+  /** 5.0 test: the squad is every player. Who you play as on top, then everyone by rarity. */
+  let sqQ = '', sqRar = '', sqSort = 'rarity';
+  function renderSquadV5() {
+    const me = characterById(s!.characterId), names = statNames();
+    const all = released.filter((c) => c.id !== DEFAULT_CHARACTER);
+    const total = (c: Character) => c.stats.reduce((a, b) => a + b, 0);
+    const sigOf = (c: Character) => c.abilities.find((a) => a.slot === 'signature');
+    const tierTag = (tr: string) => (tr === 'U' ? 'Ultra' : tr);
+    const meSig = me.abilities.map((ab) => `<p class="ability"><span class="ab-tier t-${ab.tier}">${tierTag(ab.tier)}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('');
+    body.innerHTML = `<section class="v5-page">
+      <div class="v5-sq-me" style="--rar:${RARITY[me.rarity].color}"><canvas id="sqPent" class="v5-sq-pent" width="220" height="220"></canvas>
+        <div class="v5-sq-info"><span class="v5-tag gold">Playing as</span><h3>${e(me.name)}</h3>
+          <p class="v5-sq-line"><span class="rar">${RARITY[me.rarity].label}</span>${e(countryName(me.country))} · ${e(me.style)} · ${e(me.handedness)}-handed · total ${total(me)}</p>
+          <div class="v5-sq-stats">${names.map((n, i) => `<div><span>${n}</span><b>${me.stats[i]}</b><i style="--w:${(me.stats[i] / 50) * 100}%"></i></div>`).join('')}</div>
+          ${meSig || '<p class="v5-foot">No signature ability.</p>'}</div></div>
+      <div class="v5-sq-tools"><input id="sqQ" class="mc-search" placeholder="Search ${all.length} players by name or country" value="${e(sqQ)}" autocomplete="off" spellcheck="false">
+        <div class="v5-pick-rar"><button type="button" data-sqrar="" class="${sqRar ? '' : 'on'}">All</button>${[...new Set(all.map((c) => c.rarity))].sort((a, b) => RARITY[b].order - RARITY[a].order).map((r) => `<button type="button" data-sqrar="${r}" class="${sqRar === r ? 'on' : ''}" style="--rar:${RARITY[r].color}">${RARITY[r].label}</button>`).join('')}</div>
+        <label class="v5-sq-sort">Sort <select id="sqSort">${[['rarity', 'Rarity'], ['total', 'Stat total'], ...names.map((n, i) => [`s${i}`, n])].map(([k, l]) => `<option value="${k}"${sqSort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>
+      ${s!.current ? '<p class="v5-foot">You’re in a tournament: change player once it’s over.</p>' : '<p class="v5-foot">v5 test: every player is in your squad. Click one to play as them in your next tournament.</p>'}
+      <div id="sqList"></div></section>`;
+    const draw = () => {
+      const list = all.filter((c) => (!sqRar || c.rarity === sqRar) && (!sqQ || c.name.toLowerCase().includes(sqQ) || countryName(c.country).toLowerCase().includes(sqQ)));
+      const by = sqSort === 'rarity' ? null : sqSort === 'total' ? total : (c: Character) => c.stats[Number(sqSort.slice(1))];
+      const cardOf = (c: Character) => {
+        const sg = sigOf(c);
+        return `<button class="v5-sq-card${c.id === me.id ? ' on' : ''}" data-pick="${c.id}" style="--rar:${RARITY[c.rarity].color}" ${s!.current ? 'disabled' : ''} title="${names.map((n, i) => `${n} ${c.stats[i]}`).join(' · ')}">
+          <span class="v5-sq-top"><span class="rar">${RARITY[c.rarity].label}</span><span class="v5-sq-tot">${by && sqSort !== 'total' ? `${names[Number(sqSort.slice(1))]} ${by(c)}` : total(c)}</span></span>
+          <b>${e(c.name)}</b><span class="v5-sq-sub">${e(c.country)} · ${e(c.style)}</span>
+          <span class="v5-sq-bars">${c.stats.map((v, i) => `<i style="--h:${(v / 50) * 100}%" title="${names[i]} ${v}"></i>`).join('')}</span>
+          ${sg ? `<span class="v5-pick-sig t-${sg.tier}">${tierTag(sg.tier)} · ${e(sg.name)}</span>` : '<span class="v5-pick-sig">No signature</span>'}</button>`;
+      };
+      let html = '';
+      if (!by) {
+        for (const r of [...new Set(list.map((c) => c.rarity))].sort((a, b) => RARITY[b].order - RARITY[a].order)) {
+          const g = list.filter((c) => c.rarity === r).sort((a, b) => a.name.localeCompare(b.name));
+          html += `<section class="v5-sq-group" style="--rar:${RARITY[r].color}"><h4>${RARITY[r].label}<span>${g.length}</span></h4><div class="v5-sq-grid">${g.map(cardOf).join('')}</div></section>`;
+        }
+      } else html = `<div class="v5-sq-grid">${[...list].sort((a, b) => by(b) - by(a) || a.name.localeCompare(b.name)).map(cardOf).join('')}</div>`;
+      $('sqList').innerHTML = html || '<p class="v5-empty-line">No players match.</p>';
+    };
+    const q = $('sqQ') as HTMLInputElement;
+    q.oninput = () => { sqQ = q.value.trim().toLowerCase(); draw(); };
+    ($('sqSort') as HTMLSelectElement).onchange = (ev) => { sqSort = (ev.target as HTMLSelectElement).value; draw(); };
+    body.querySelectorAll<HTMLElement>('[data-sqrar]').forEach((b) => { b.onclick = () => { sqRar = b.dataset.sqrar ?? ''; body.querySelectorAll('[data-sqrar]').forEach((x) => x.classList.toggle('on', x === b)); draw(); }; });
+    draw();
+    void import('../pentagon').then(({ drawPentagon }) => drawPentagon($('sqPent') as HTMLCanvasElement, me.base_stats ?? me.stats, RARITY[me.rarity].color));
   }
 
   /** 3.19: borrow, see what you owe, pay it back. */

@@ -2685,7 +2685,8 @@ labModal.addEventListener('click', async (e) => {
   }
 });
 document.getElementById('v5Leave')?.addEventListener('click', () => enterV5(false));
-// 5.0 test: "What's new in v5" from the banner.
+// 5.0 test: the career header button shows the latest test build and opens what's new.
+{ const btn = document.getElementById('v5BuildBtn'); if (btn) btn.innerHTML = `<b>v5</b> ${hubEsc(V5_NOTES[0].title)} · What’s new`; }
 const v5Notes = document.getElementById('v5Notes')!;
 document.getElementById('v5BuildBtn')?.addEventListener('click', () => {
   document.getElementById('v5NotesBody')!.innerHTML = V5_NOTES.map((n) => `<section class="v5-note-build"><h3>${hubEsc(n.title)}<span>${hubEsc(n.date)}</span></h3>

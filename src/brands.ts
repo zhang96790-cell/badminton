@@ -1,3 +1,4 @@
+import { getEdition } from '../shared/characters';
 // Companies on the arena boards (3.4, lots more in 3.13). All made up for Skyline Smash: some invented
 // outright, some sound-alikes of the big names. Solar Sparks and Ventra keep their own image boards (ads.ts),
 // on the two middle boards behind the far baseline. Each tournament gets its own mix of boards, a badminton
@@ -97,9 +98,10 @@ const PERKS: Record<SponsorPerk, string[]> = {
   loans: ['hsbk', 'maybanc', 'harbourline', 'krungthai', 'dbx', 'goldenlion'],
   wins: ['pocara', 'avian', 'pepsi', 'hundredminus', 'mylo', 'beanstreet', 'gatorush', 'singha', 'amula'],
   // 4.4: the 'entry' perk (35% off tournament costs) waits for the new career's sponsor slots.
-  entry: [],
+  // 5.0 (v5 only): delivery and shopping brands pay part of your tournament costs.
+  entry: ['grabbit', 'dhx', 'shoppi', 'uniqo'],
 };
-export const perkOf = (brandId: string): SponsorPerk | null => (Object.keys(PERKS) as SponsorPerk[]).find((k) => PERKS[k].includes(brandId)) ?? null;
+export const perkOf = (brandId: string): SponsorPerk | null => (Object.keys(PERKS) as SponsorPerk[]).find((k) => (k !== 'entry' || getEdition() === 5) && PERKS[k].includes(brandId)) ?? null;
 export const PERK_TEXT: Record<SponsorPerk, string> = {
   flights: 'Flights half price',
   hotels: 'Hotels paid for',

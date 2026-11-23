@@ -95,6 +95,17 @@ export const CAREER_CFG = {
   tierCost: { S100: 1, S300: 1.15, S500: 1.35, S750: 1.65, S1000: 2, WTF: 2.2, WORLDS: 2, OLYMPICS: 2.2 } as Record<string, number>,
   /** 3.9.1: below this much money you can't go on tour: Club Opens only until you've earned it back. */
   tourMinMoney: 1500,
+  /**
+   * 5.0 entry lists (v5 only), like the real tour: a world ranking this good gets you straight into the main draw;
+   * a bit lower and you go through qualifying (only where an event has it; Super 100s take anyone into qualifying).
+   * Worlds, Olympics and the Tour Finals keep their rank limits (top 64, 32 and 8).
+   */
+  entryList: {
+    S100: { direct: 140, qual: 999 }, S300: { direct: 90, qual: 180 }, S500: { direct: 55, qual: 110 },
+    S750: { direct: 36, qual: 0 }, S1000: { direct: 26, qual: 0 }, WORLDS: { direct: 64, qual: 0 }, OLYMPICS: { direct: 32, qual: 0 }, WTF: { direct: 8, qual: 0 },
+  } as Record<string, { direct: number; qual: number }>,
+  /** 5.0 (v5 only): every round pays: early rounds pay this much more, and a qualifying loss pays a share of the first-round prize. */
+  everyRoundPays: { early: 1.8, qualLoss: [0.25, 0.45] as [number, number] },
   /** 5.0: the semi-fresh start keeps at most this much money. */
   v5MoneyCap: 25000,
   /** 4.1: the big events pay less (prizes there grew much faster than costs). Purse × this. */

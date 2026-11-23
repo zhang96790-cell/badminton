@@ -1937,3 +1937,33 @@ body:has(#menu:not(.hidden)) #viewbar { display: none; }
 .v5-banner b { font: 900 15px/1 'Saira Condensed', sans-serif; font-style: italic; letter-spacing: 0.04em; }
 .v5-banner button { border: 1px solid rgba(255, 255, 255, 0.7); background: transparent; color: #fff; padding: 3px 8px; font: 700 11px/1 var(--text); text-transform: uppercase; cursor: pointer; }
 body.v5 .v5-banner { display: flex; }
+
+/* 5.0 travel planner */
+.c-plan { margin-top: 6px; } .c-plan .c-table { max-width: 520px; } .c-plan td.up { color: #43d982; font-weight: 700; } .c-plan td.down { color: #ff8a8a; }
+
+/* ══ 5.0 (v5 test area): rivals, news, press, awards, season calendar ═════════════════════════════ */
+.c-v5grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.c-news { list-style: none; padding: 0; margin: 6px 0; display: grid; gap: 6px; }
+.c-news li { display: grid; grid-template-columns: auto 1fr; gap: 10px; font: 500 14px/1.35 var(--text); padding: 6px 8px; border-left: 3px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.03); }
+.c-news li span { font: 700 11px/1.6 var(--text); color: var(--ink-3); white-space: nowrap; }
+.c-news li.n-you { border-left-color: #ffc23d; } .c-news li.n-rival { border-left-color: #e8112d; } .c-news li.n-award { border-left-color: #7a3fd6; } .c-news li.n-move { border-left-color: #2f7bff; }
+.c-news.big li { font-size: 15px; }
+.c-press { border-left-color: #ffc23d !important; margin-bottom: 12px; }
+.c-awards { margin-top: 14px; padding: 18px; background: radial-gradient(ellipse at 50% 0%, rgba(255, 194, 61, 0.18), transparent 70%), rgba(255, 255, 255, 0.03); }
+.c-award-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.c-award { display: grid; gap: 4px; padding: 14px; background: rgba(10, 15, 29, 0.85); border-top: 3px solid #ffc23d; animation: c-award-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1.2) both; }
+.c-award span { font: 700 11px/1.2 var(--text); letter-spacing: 0.14em; text-transform: uppercase; color: #ffc23d; }
+.c-award b { font: 900 22px/1 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; }
+.c-award em { font: 500 12px/1.3 var(--text); font-style: normal; color: var(--ink-2); }
+.c-award.you { border-top-color: #e8112d; box-shadow: 0 0 0 2px #e8112d inset; }
+@keyframes c-award-in { from { opacity: 0; transform: translateY(18px) scale(0.96); } }
+.c-cal { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; margin: 10px 0 16px; }
+.c-cal-w { min-height: 34px; padding: 4px; background: rgba(255, 255, 255, 0.03); display: grid; gap: 3px; align-content: start; }
+.c-cal-w i { font: 700 10px/1 var(--text); font-style: normal; color: var(--ink-3); }
+.c-cal-w.now { box-shadow: inset 0 0 0 2px #e8112d; } .c-cal-w.past { opacity: 0.45; }
+.c-cal-e { display: grid; gap: 1px; text-align: left; padding: 5px 6px; border: 0; border-left: 3px solid #8ea6d8; background: rgba(255, 255, 255, 0.06); color: #f3f6fc; cursor: pointer; }
+.c-cal-e b { font: 800 12px/1.15 var(--text); } .c-cal-e span { font: 500 10.5px/1.2 var(--text); color: var(--ink-2); }
+.c-cal-e.s300 { border-left-color: #2ec4b6; } .c-cal-e.s500 { border-left-color: #4d9de0; } .c-cal-e.s750 { border-left-color: #8a5cf6; } .c-cal-e.s1000 { border-left-color: #e15a97; }
+.c-cal-e.worlds, .c-cal-e.olympics, .c-cal-e.wtf { border-left-color: #ffc23d; }
+@media (prefers-reduced-motion: reduce) { .c-award { animation: none; } }
+.c-retired { display: inline-block; padding: 1px 6px; background: #ffc23d; color: #241300; font: 900 14px/1.2 'Saira Condensed', sans-serif; font-style: italic; }

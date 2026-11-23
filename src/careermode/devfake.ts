@@ -17,6 +17,16 @@ export function fakeModule() {
   const boss = () => rosterFor('3.0').filter((c) => c.rarity === 'rare')[new Date().getUTCDate() % 50].id;
   return {
     careerGet: async () => get<null | { rev: number; data_version: number; state: unknown; updated_at: string }>('save', null),
+    // 5.0 test area (dev only): a separate fake v5 save, seeded from the fake normal career.
+    career5Get: async () => get<null | { rev: number; data_version: number; state: unknown; updated_at: string }>('save5', null),
+    career5Put: async (expected: number, dv: number, state: unknown) => {
+      const cur = get<{ rev: number; state: unknown; updated_at: string } | null>('save5', null);
+      const rev = (cur?.rev ?? 0) + 1;
+      put('save5', { rev, data_version: dv, state, updated_at: new Date().toISOString() });
+      void expected;
+      return { ok: true as const, rev };
+    },
+    career5Seed: async () => get<{ state: unknown } | null>('save', null)?.state ?? null,
     careerPut: async (expected: number, dv: number, state: unknown) => {
       const cur = get<{ rev: number; state: unknown; updated_at: string } | null>('save', null);
       if (cur && expected !== -1 && cur.rev !== expected) return { ok: false as const, conflict: true as const, rev: cur.rev, state: cur.state, updated_at: cur.updated_at };

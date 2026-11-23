@@ -12,7 +12,7 @@ import { titleTierOf } from '../titles';
 import { CAREER_CFG as CFG, LEVELS, ROUND_LABEL, TIER_LABEL, type HotelTier, type StaffRole, type TravelClass, type Difficulty, type Round } from './config';
 import { CareerSaves, type Conflict } from './save';
 import {
-  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, money, myRank, newCareer, semiFreshStart, migrate,
+  advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, tripPlan, rivalsOf, headToHead, pressAnswer, PRESS, entryFor, signSponsor, sponsorIn, type SponsorSlot, money, myRank, newCareer, semiFreshStart, migrate,
   nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, campGain, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type LiveMatch,
   type NextMatch,
 } from './state';
@@ -137,6 +137,7 @@ export function initCareer(d: CareerDeps) {
     ['hub', 'Next up', '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'],
     ['ranking', 'Ranking', '<path d="M5 20V10M12 20V4M19 20v-7"/>'],
     ['squad', 'Squad', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M14.5 15c.8-.4 1.6-.5 2.5-.5 2.3 0 4 1.5 4.5 4.5"/>'],
+    ['news', 'News', '<path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 17h4"/>'],
     ['sponsors', 'Sponsors', '<path d="M4 7h16v12H4zM9 7V5h6v2M4 12h16"/>'],
     ['shop', 'Shop', '<path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/>'],
     ['ledger', 'Money', '<path d="M12 3v18M16.5 7.5c-.8-1.2-2.4-2-4.5-2-2.6 0-4.5 1.3-4.5 3.2 0 4.6 9 2.4 9 6.8 0 1.9-1.9 3.3-4.5 3.3-2.2 0-4-.9-4.8-2.3"/>'],
@@ -156,9 +157,9 @@ export function initCareer(d: CareerDeps) {
     head.innerHTML = `<p class="hero-kicker">${s.year} · Week ${s.week} · in ${e(countryName(s.currentLocation))}</p><h2>${e(s.name)}</h2>
       <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div>
       <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
-    $('careerTabs').innerHTML = NAV.map(([k, l, p]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span>${k === 'shop' && shopHasNew() ? '<span class="c-new dot">New</span>' : ''}</button>`).join('');
+    $('careerTabs').innerHTML = NAV.filter(([k]) => k !== 'news' || getEdition() === 5).map(([k, l, p]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span>${k === 'shop' && shopHasNew() ? '<span class="c-new dot">New</span>' : ''}</button>`).join('');
     if (s.pendingRecruitOffer || s.offerDue) { void renderOffer(); return; }
-    ({ hub: renderHub, ranking: renderRanking, squad: renderSquad, sponsors: renderSponsors, shop: renderShop, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
+    ({ hub: renderHub, ranking: renderRanking, squad: renderSquad, news: renderNews, sponsors: renderSponsors, shop: renderShop, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
   }
 
   /** You v them, for the next match. */
@@ -192,6 +193,37 @@ export function initCareer(d: CareerDeps) {
         <button class="c-listbtn" data-list>All tournaments</button></div></div>`;
   }
 
+  // ── 5.0 (v5): rivals, news, fans and press conferences on the hub ──
+  /** A press conference waiting for your answer (after a career match). */
+  let pressDue: { won: boolean; opp: string; event: string } | null = null;
+  function pressHtml() {
+    if (!pressDue) return '';
+    const opts = pressDue.won ? PRESS.win : PRESS.loss;
+    return `<section class="c-hero c-press"><p class="c-kicker">Press conference · ${e(pressDue.event)}</p><h3 class="c-title small">${pressDue.won ? `How did you beat ${e(characterById(pressDue.opp).name)}?` : `What went wrong against ${e(characterById(pressDue.opp).name)}?`}</h3>
+      <div class="c-opts">${opts.map((o) => `<button class="c-opt" data-press="${o.id}"><b>${e(o.label)}</b><span>${o.fans >= 0 ? '+' : ''}${o.fans} fans${o.mood ? ` · sponsors ${o.mood > 0 ? 'happier' : 'less happy'}` : ''}${o.fire ? ' · fires your opponent up' : ''}</span></button>`).join('')}</div></section>`;
+  }
+  function v5HubHtml() {
+    const ids = rivalsOf(s!, W());
+    const rank = (id: string) => { const l = W().rankingAt(absWeek(s!.year, s!.week)); const i = l.findIndex((x) => x.id === id); return i < 0 || l[i].pts <= 0 ? '–' : `#${i + 1}`; };
+    const rivals = ids.map((id) => { const c = characterById(id), [w, l] = headToHead(s!, id); return `<div class="c-fact"><span>${e(c.country)} · ${rank(id)}</span><b>${e(c.name)}</b><span>You ${w}–${l}</span></div>`; }).join('');
+    const news = (s!.news ?? []).slice(0, 6).map((n) => `<li class="n-${n.kind}"><span>W${n.week}</span>${e(n.text)}</li>`).join('');
+    return `<div class="c-v5grid"><section class="c-card"><h3>Your rivals ${s!.year}</h3><div class="c-facts">${rivals || '<p class="sub">Your rivals are picked once you’re ranked.</p>'}</div><p class="sub">Beat a rival for a bonus and a headline. ${s!.fans ?? 0} fans.</p></section>
+      <section class="c-card"><h3>News</h3><ul class="c-news">${news || '<li>Nothing yet: play an event.</li>'}</ul><div class="c-cta"><button class="edit" data-ctab="news">All news</button></div></section></div>`;
+  }
+  function renderNews() {
+    const items = s!.news ?? [];
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">News</p><ul class="c-news big">${items.map((n) => `<li class="n-${n.kind}"><span>${n.year} W${n.week}</span>${e(n.text)}</li>`).join('') || '<li>No news yet.</li>'}</ul>
+      ${(s!.awards ?? []).length ? `<h3 class="c-title small">Awards</h3>${s!.awards!.slice().reverse().map((a) => `<p class="c-lead small"><b>${a.year}</b>: ${a.list.map((x) => `${e(x.award)}: ${e(x.winner)}`).join(' · ')}</p>`).join('')}` : ''}</section>`;
+  }
+
+  /** 5.0 travel planner: the whole trip's cost against the prize for each round, and where you break even. */
+  function planHtml(x: TourEvent, qual?: boolean) {
+    const p = tripPlan(s!, x);
+    if (qual) return `<p class="c-lead small">Travel planner: through qualifying the event pays your travel and hotel once you’re in the main draw, so every round you win is profit.</p>`;
+    const show = p.rows.filter((r) => r.round !== 'R64' || x.draw_size > 32);
+    return `<div class="c-plan"><p class="c-kicker">Travel planner</p><table class="c-table"><tr><th>Go out in</th><th>Trip costs</th><th>Prize</th><th></th></tr>${show.map((r) => `<tr><td>${r.round === 'W' ? 'Win it' : ROUND_LABEL[r.round]}</td><td>${money(r.cost)}</td><td>${money(r.prize)}</td><td class="${r.prize >= r.cost ? 'up' : 'down'}">${r.prize >= r.cost ? '+' : '−'}${money(Math.abs(r.prize - r.cost)).replace('−', '')}</td></tr>`).join('')}</table>
+      <p class="c-lead small">${p.breakEven ? `You break even if you reach the ${p.breakEven === 'W' ? 'title' : ROUND_LABEL[p.breakEven].toLowerCase()}.` : 'This trip costs more than any prize here: worth it for the ranking points only.'}</p></div>`;
+  }
   /** 3.19: a short offer of a tour loan, under an event you can only reach through qualifying. */
   function loanLine() {
     const opts = loanOptions(s!);
@@ -246,6 +278,7 @@ export function initCareer(d: CareerDeps) {
         ${c.qual ? `<p class="c-lead">${e(c.why ?? '')}</p>${loanLine()}` : !c.ok && c.why?.startsWith('You need') ? loanLine() : ''}
         <div class="c-cta">${c.ok ? `<button class="walk" data-enter="${x.id}">${c.qual ? 'Enter qualifying · free' : `Enter · ${money(travelCost(s!, x) + hotelCost(s!, x))}`} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button>` : `<p class="c-why">${e(c.why ?? '')}</p>`}
           <button class="edit" data-week="next">Skip this event</button><button class="edit" data-detail="${x.id}">Prizes and field</button></div>
+        ${getEdition() === 5 && (c.ok || c.why?.startsWith('You need')) ? planHtml(x, c.qual) : ''}
         <p class="c-lead small">The week: qualifying and the round of 32 Tuesday and Wednesday, round of 16 Thursday, quarter-finals Friday, semi-finals Saturday, final Sunday.</p>${recover(x)}`;
     } else if (next) {
       const weeks = next.week - s!.week;
@@ -256,7 +289,7 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">Season over</p><h3 class="c-title">That’s the ${s!.year} season</h3>
         <div class="c-cta"><button class="walk" data-skip>See your season ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></div>`;
     }
-    body.innerHTML = `${viewOnly ? '<p class="c-viewnote">You’re in a match: looking only. Press Esc to go back to it.</p>' : ''}<section class="c-hero">${hero}</section>${seasonStrip()}`;
+    body.innerHTML = `${viewOnly ? '<p class="c-viewnote">You’re in a match: looking only. Press Esc to go back to it.</p>' : ''}${getEdition() === 5 ? pressHtml() : ''}<section class="c-hero">${hero}</section>${seasonStrip()}${getEdition() === 5 ? v5HubHtml() : ''}`;
   }
 
   /**
@@ -319,6 +352,21 @@ export function initCareer(d: CareerDeps) {
   }
 
   /** Every event this season: dates, level, draw, host, and whether you can play it. */
+  /** 5.0: the season as a grid of weeks: each event's level, whether you're in, the trip cost, and Rested after the trip. */
+  function calendarGrid() {
+    const cells = [];
+    for (let wk = 1; wk <= 52; wk++) {
+      const evs = W().cal.filter((v) => v.week === wk);
+      cells.push(`<div class="c-cal-w${wk === s!.week ? ' now' : ''}${wk < s!.week ? ' past' : ''}"><i>W${wk}</i>${evs.map((v) => {
+        const c = canEnter(s!, v, W()), entry = entryFor(s!, v, W()), trip = travelCost(s!, v);
+        const rest = Math.max(0, Math.round(s!.energy) - travelRestCost(s!, v));
+        const tag = c.ok ? (c.qual ? 'Qualifying' : 'Main draw') : entry === 'out' ? 'Not in' : 'Save up';
+        return `<button class="c-cal-e ${v.tier.toLowerCase()}" data-detail="${v.id}" title="${e(v.name)}"><b>${e(v.name.replace(/ (Open|Masters|International|Championships?)$/, ''))}</b><span>${TIER_LABEL[v.tier]} · ${tag}</span><span>${money(trip)} trip · ${rest}% rested</span></button>`;
+      }).join('')}</div>`);
+    }
+    return `<div class="c-cal">${cells.join('')}</div>`;
+  }
+
   function renderList() {
     const rows = W().cal.map((v) => {
       const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
@@ -330,7 +378,8 @@ export function initCareer(d: CareerDeps) {
         <td>${v.draw_size}</td><td>${e(v.city ? `${v.city}, ` : '')}${e(countryName(v.host_country))}</td><td>${money(prizeFor(v, 'W'))}</td><td>${status}</td></tr>`;
     }).join('');
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">${s!.year} season · ${W().cal.length} tournaments</p><h3 class="c-title">All tournaments</h3>
-      <p class="c-lead small">Click a tournament for its prizes and draw. Locked levels open when you reach a final at the level below, or climb the world ranking.</p>
+      <p class="c-lead small">Click a tournament for its prizes and draw. ${getEdition() === 5 ? 'Every level is open: your world ranking decides if you go straight in, play qualifying, or miss out.' : 'Locked levels open when you reach a final at the level below, or climb the world ranking.'}</p>
+      ${getEdition() === 5 ? calendarGrid() : ''}
       <table class="c-table c-list"><tr><th>Dates</th><th>Tournament</th><th>Level</th><th>Players</th><th>Host</th><th>Winner gets</th><th>Status</th></tr>${rows}</table>
       <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
   }
@@ -390,7 +439,7 @@ export function initCareer(d: CareerDeps) {
     if (!x) return;
     const plan = W().plan(x, s!.year, null);
     const byRarity = new Map<string, number>();
-    for (const p of plan.slots) { const c = characterById(p); byRarity.set(c.rarity, (byRarity.get(c.rarity) ?? 0) + 1); }
+    for (const p of plan.slots) { const c = characterById(p); if (!p || c.id !== p || p === 'default_player') continue; byRarity.set(c.rarity, (byRarity.get(c.rarity) ?? 0) + 1); }
     const rounds = roundsFor(x.draw_size);
     const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === x.id);
     body.innerHTML = `<section class="c-hero"><p class="c-kicker">${e(x.dates ?? `Week ${x.week}`)} · ${TIER_LABEL[x.tier]}</p><h3 class="c-title">${e(x.name)}</h3>
@@ -434,8 +483,34 @@ export function initCareer(d: CareerDeps) {
     return `<p class="c-lead">Borrow to pay your own way on tour. You pay back ${Math.round(L.fee * 100)}% more, ${Math.round(L.repayShare * 100)}% of every prize goes to it, and you can pay it off any time. The better your best world ranking, the more you can borrow (up to ${money(loanLimit(s!))} for you now). One loan at a time.</p>
       <div class="c-opts">${loanOptions(s!).map((a) => `<button class="c-opt" data-loan="${a}"><b>Borrow ${money(a)}</b><span>Pay back ${money(loanOwed(a))}</span></button>`).join('')}</div>`;
   }
-  /** The Sponsors page: your sponsor and any offers (one sponsor; more slots come with the new career). */
+  /** 4.4: the Sponsors page: your kit deal, main (perk) sponsor and money sponsor, and offers for each. */
+  function renderSponsorsV5() {
+    const rank = myRank(s!, W());
+    const terms = (o: NonNullable<CareerState['sponsor']>) => [
+      `${money(o.weekly)} a week`, `${money(o.bonus)} a title`,
+      o.finalBonus ? `${money(o.finalBonus)} for every final, and their kit on your player` : '',
+      o.perk ? `${perkText(o.perk)}${o.winBonus ? ` (${money(o.winBonus)})` : ''}` : o.slot === 'kit' ? '' : 'No perk: pays the most',
+      o.home ? `Home brand: double pay in weeks you play in ${countryName(o.home)}` : '',
+      o.request ? `Wants you at the ${o.request.name}: ${money(o.request.enter)} to play, ${money(o.request.deep)} for the quarter-finals` : '',
+    ].filter(Boolean);
+    const slots: [SponsorSlot, string, string][] = [
+      ['kit', 'Kit deal', 'A badminton brand. Some money, a bonus for every final, and their name on your shirt.'],
+      ['main', 'Main sponsor', 'A perk brand: little money, but cheaper flights, free hotels, cheaper loans, win bonuses or cheaper tournaments.'],
+      ['cash', 'Money sponsor', 'Pays the most, with no perk.'],
+    ];
+    const html = slots.map(([slot, title, about]) => {
+      const cur = sponsorIn(s!, slot), offers = sponsorUpgrade(s!, rank, d.appVersion, slot), req = cur?.request;
+      return `<h3 class="c-title small">${title}</h3><p class="c-lead small">${about}</p>
+        ${cur ? `<p class="c-lead"><b>${e(cur.name)}</b> until the end of ${cur.year}: ${terms(cur).map(e).join(' · ')}.</p>
+          ${req ? `<p class="c-lead small">Their event: ${e(req.name)}. ${req.paid ? 'Done: quarter-finals bonus paid.' : req.entered ? 'Entered (bonus paid). Reach the quarter-finals for the big one.' : 'Not played yet.'}</p>` : ''}`
+          : `<p class="c-lead small">${rank ? 'None yet.' : 'Sponsors come to you once you’re in the world top 200.'}</p>`}
+        ${offers ? `<div class="c-opts">${offers.map((o, i) => `<button class="c-opt" data-sponsor="${slot}:${i}"><b>${e(o.name)}</b>${terms(o).map((t) => `<span>${e(t)}</span>`).join('')}</button>`).join('')}</div>` : ''}`;
+    }).join('');
+    body.innerHTML = `<section class="c-hero"><p class="c-kicker">Sponsors</p><p class="c-lead">Up to three: a kit deal, a main sponsor with a perk, and a money sponsor. Deals run to the end of the season, and better ones come as you climb.</p>${html}</section>`;
+  }
+  /** The Sponsors page: your sponsor and any offers (one sponsor; v5 has three slots). */
   function renderSponsors() {
+    if (getEdition() === 5) { renderSponsorsV5(); return; }
     const rank = myRank(s!, W()), offers = sponsorUpgrade(s!, rank, d.appVersion), sp = s!.sponsor;
     const terms = (o: NonNullable<typeof sp>) => [
       `${money(o.weekly)} a week`, `${money(o.bonus)} a title`,
@@ -518,6 +593,17 @@ export function initCareer(d: CareerDeps) {
   }
   const travelClassOfUi = (): TravelClass => s!.settings.travelClass ?? 'economy';
 
+  /** 5.0: what you won before the semi-fresh start, kept as legacy (it still counts for your ranking). */
+  function legacyHtml(h: CareerState['history']) {
+    const old = h.filter((x) => x.legacy);
+    if (!old.length) return '';
+    const titles = old.filter((x) => x.round === 'W' && x.tier !== 'CLUB'), byTier = new Map<string, number>();
+    for (const t of titles) byTier.set(t.tier, (byTier.get(t.tier) ?? 0) + 1);
+    return `<h3 class="c-title small">Legacy (before v5)</h3>
+      <div class="c-facts">${fact('Titles', String(titles.length))}${fact('Events played', String(old.length))}${fact('Prize money', money(old.reduce((a, x) => a + x.prize, 0)))}</div>
+      ${titles.length ? `<p class="c-lead small">${[...byTier].map(([t, n]) => `${n} × ${TIER_LABEL[t]}`).join(' · ')}</p>` : ''}`;
+  }
+
   function renderTrophies() {
     const h = s!.history;
     const titles = h.filter((x) => x.round === 'W' && x.tier !== 'CLUB' && !x.legacy);
@@ -530,10 +616,11 @@ export function initCareer(d: CareerDeps) {
       <div class="c-facts">${fact('Titles', String(s!.titles))}${fact('Best world ranking', s!.bestRank ? `#${s!.bestRank}` : '–')}${fact('Medals', medals.length ? medals.map((y) => (y.m === 'gold' ? '🥇' : y.m === 'silver' ? '🥈' : '🥉')).join('') : 'None yet')}${fact('Prize money won', money(h.reduce((t, x) => t + x.prize, 0)))}</div>
       ${titles.length ? `<p class="c-lead">${[...byTier].map(([t, n]) => `${n} × ${TIER_LABEL[t]}`).join(' · ')}</p><ul class="c-results">${titles.slice(-12).reverse().map((t) => `<li>🏆 ${t.year} ${e(calendar(d.appVersion, t.year).find((v) => v.id === t.tournamentId)?.name ?? 'Local Club Open')}</li>`).join('')}</ul>` : '<p class="c-lead">No titles yet.</p>'}
       ${medals.length ? `<ul class="c-results">${medals.map((y) => `<li>${y.m === 'gold' ? '🥇 Gold' : y.m === 'silver' ? '🥈 Silver' : '🥉 Bronze'}: ${y.x.tier === 'OLYMPICS' ? 'Olympic Games' : 'World Championships'} ${y.x.year}</li>`).join('')}</ul>` : ''}
+      ${legacyHtml(h)}
       <h3 class="c-title small">Milestones · ${ms.filter((m) => m.done).length} of ${ms.length}</h3>
       <div class="c-miles">${ms.map((m) => `<span class="${m.done ? 'done' : ''}">${m.done ? '★' : '☆'} ${e(m.label)}</span>`).join('')}</div>
       <h3 class="c-title small">Hall of Fame</h3>
-      ${hof.length ? `<table class="c-table"><tr><th>Player</th><th>Years</th><th>Titles</th><th>Best rank</th><th>Medals</th></tr>${hof.map((x) => `<tr><td>${e(x.name)} <span class="sub">(as ${e(x.as)})</span></td><td>${x.from}–${x.to}</td><td>${x.titles}</td><td>${x.bestRank ? `#${x.bestRank}` : '–'}</td><td>${'🥇'.repeat(x.golds)}${'🥈'.repeat(x.silvers)}${'🥉'.repeat(x.bronzes)}</td></tr>`).join('')}</table>` : '<p class="c-lead small">Retire a career to put it in the Hall of Fame.</p>'}
+      ${hof.length ? `<table class="c-table"><tr><th>Player</th><th>Years</th><th>Titles</th><th>Best rank</th><th>Medals</th></tr>${hof.map((x) => `<tr><td>${x.number ? `<b class="c-retired">#${x.number}</b> ` : ''}${e(x.name)} <span class="sub">(as ${e(x.as)}${x.awards ? ` · ${x.awards} award${x.awards === 1 ? '' : 's'}` : ''}${x.fans ? ` · ${x.fans} fans` : ''})</span></td><td>${x.from}–${x.to}</td><td>${x.titles}</td><td>${x.bestRank ? `#${x.bestRank}` : '–'}</td><td>${'🥇'.repeat(x.golds)}${'🥈'.repeat(x.silvers)}${'🥉'.repeat(x.bronzes)}</td></tr>`).join('')}</table>` : '<p class="c-lead small">Retire a career to put it in the Hall of Fame.</p>'}
       ${s!.year > CFG.startYear && !s!.current ? `<div class="c-cta"><button class="edit" data-retire>Retire and enter the Hall of Fame</button></div>` : '<p class="c-lead small">You can retire after your first season.</p>'}
       </section>`;
   }
@@ -606,6 +693,12 @@ export function initCareer(d: CareerDeps) {
   }
 
   // ── Recap ──
+  /** 5.0: the end-of-season awards presentation (cards reveal one by one). */
+  function awardsShow(y: number) {
+    const a = s!.awards?.find((x) => x.year === y);
+    if (!a) return '';
+    return `<section class="c-awards"><p class="c-kicker">Awards night ${y}</p><div class="c-award-row">${a.list.map((x, i) => `<div class="c-award${x.you ? ' you' : ''}" style="animation-delay:${0.3 + i * 0.6}s"><span>${e(x.award)}</span><b>${e(x.winner)}</b><em>${e(x.note)}${x.you ? ' · +$2,000' : ''}</em></div>`).join('')}</div></section>`;
+  }
   function renderRecap() {
     const y = s!.recap!;
     const hs = s!.history.filter((h) => h.year === y);
@@ -617,7 +710,7 @@ export function initCareer(d: CareerDeps) {
       <p>${hs.length} event${hs.length === 1 ? '' : 's'} · ${hs.filter((h) => h.round === 'W' && h.tier !== 'CLUB').length} title${hs.filter((h) => h.round === 'W' && h.tier !== 'CLUB').length === 1 ? '' : 's'} · finished ${endRank ? `ranked ${endRank}` : 'unranked'}</p>
       <p>Income ${money(inc)} · costs ${money(-out)} · net ${money(inc + out)}</p>
       <ul class="c-list">${hs.map((h) => `<li>${e(findEvent(s!, h.tournamentId, d.appVersion)?.name ?? 'Local Club Open')}: ${resultName(h)} (${h.points} points, ${money(h.prize)})</li>`).join('') || '<li>No events this season.</li>'}</ul>
-      <div class="c-actions"><button class="primary" data-recapdone>On to ${y + 1}</button></div></div>`;
+      <div class="c-actions"><button class="primary" data-recapdone>On to ${y + 1}</button></div></div>${awardsShow(y)}`;
   }
 
   // ── Recruiting ──
@@ -742,6 +835,9 @@ export function initCareer(d: CareerDeps) {
   const roundName = (nm: { round: Round; bronze?: boolean; qual?: 1 | 2 }) => (nm.qual ? `Qualifying round ${nm.qual}` : nm.bronze ? 'Bronze medal match' : ROUND_LABEL[nm.round]);
   const resultName = (h: { round: Round; place?: 3 | 4; qual?: 1 | 2 }) => (h.qual ? `Qualifying round ${h.qual}` : h.place === 3 ? '3rd place' : h.place === 4 ? '4th place' : ROUND_LABEL[h.round]);
 
+  /** 5.0: an opponent you fired up at a press conference plays one CPU level higher. */
+  const LEVELS_UP = (l: typeof LEVELS[number]) => LEVELS[Math.min(LEVELS.length - 1, LEVELS.indexOf(l) + 1)];
+
   /** 4.0: the walk-on for a career match: both players' numbers, their signature move, and your road to this round. */
   function careerWalkOn(x: TourEvent, nm: NextMatch): WalkOnInfo {
     const a = s!.current!, o = nm.opponent, me = characterById(a.as);
@@ -784,7 +880,7 @@ export function initCareer(d: CareerDeps) {
         move: mySig ? { kicker: 'Your signature move', name: mySig.name, text: SIGNATURES.get(mySig.id)?.text ?? mySig.text } : undefined,
       },
       them: {
-        name: o.name, line: `${countryName(o.country)} · ${RARITY[o.rarity].label}`,
+        name: o.name, line: `${getEdition() === 5 && s!.rivals?.ids.includes(o.id) ? 'RIVAL · ' : ''}${countryName(o.country)} · ${RARITY[o.rarity].label}`,
         stats: [[rankOf(o.id), 'World rank'], [String(o.career_strength), 'Strength'], [style.label, 'Style'], [`${opponentRested(s!, x, a.round, o.id)}%`, `Rested · ${restedTier(opponentRested(s!, x, a.round, o.id)).label}`]],
         move: sig ? { kicker: 'Signature move', name: sig.name, text: SIGNATURES.get(sig.id)?.text ?? sig.text } : { kicker: 'Plays like', name: style.label, text: style.trait },
       },
@@ -824,8 +920,8 @@ export function initCareer(d: CareerDeps) {
       walkOn: resume ? undefined : careerWalkOn(x, nm),
       setup: {
         mode: 'career', format: { games: nm.games, points: nm.points }, label: `${x.name} · ${roundName(nm)}`,
-        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy, a.bronze ? 'bronze' : nm.qual ? undefined : a.round), shopModifier(s!)], abilities: true },
-        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id), a.bronze ? 'bronze' : nm.qual ? undefined : a.round)] },
+        player: { characterId: a.as, modifiers: [coachModifier(s!), restedModifier(s!.energy, a.bronze ? 'bronze' : nm.qual ? undefined : a.round), shopModifier(s!)], abilities: true, kitBrand: getEdition() === 5 ? s!.kitSponsor?.brandId : undefined },
+        opponent: { kind: 'cpu', characterId: opp.id, cpuLevel: getEdition() === 5 && s!.rivalFire?.includes(opp.id) ? LEVELS_UP(nm.level) : nm.level, style: STYLE_AI[opp.style], abilities: true, modifiers: [restedModifier(opponentRested(s!, x, a.round, opp.id), a.bronze ? 'bronze' : nm.qual ? undefined : a.round)] },
         restrictions: {}, resume, look: eventLook(x.id, x.tier, x.host_country), // 4.2.1: the boards are the event's own (local) sponsors, never yours
         checkpoint: (snap, rally) => { live.snap = snap; live.rally = rally; writeLive(live); },
       },
@@ -853,6 +949,8 @@ export function initCareer(d: CareerDeps) {
     const pts = games.reduce((n, [p, q]) => n + p + q, 0);
     const drain = matchDrain(shots ?? pts * 7, games, 15, s!);
     const r = recordMatch(s!, W(), x, won, games, oppId, drain);
+    if (getEdition() === 5 && x.tier !== 'CLUB') pressDue = { won, opp: oppId, event: x.name };
+    if (s!.rivalFire?.includes(oppId)) s!.rivalFire = s!.rivalFire.filter((id) => id !== oppId);
     d.saveStats({ career_matches: 1, career_wins: won ? 1 : 0 });
     if (r.finished && r.result) {
       // Club opens aren't titles: nothing goes on your account for them.
@@ -1024,6 +1122,8 @@ export function initCareer(d: CareerDeps) {
     if (cl) { s.settings.travelClass = cl; s.settings.business = cl === 'business'; await save(); render(); return; }
     const ho = at('[data-hotel]')?.dataset.hotel as HotelTier | undefined;
     if (ho) { s.settings.hotel = ho; if (s.current) s.current.hotelTier = ho; await save(); render(); return; }
+    const pr = at('[data-press]')?.dataset.press;
+    if (pr && pressDue) { pressAnswer(s, pressDue.won, pr, pressDue.opp); d.toast('Press conference done', `${s.fans ?? 0} fans now.`); pressDue = null; await save(); render(); return; }
     const co = at('[data-coach]')?.dataset.coach;
     if (co) { const sh = (s.shop ??= {}); sh.coach = sh.coach === co ? null : co; if (s.staff) s.staff.coach = false; await save(); render(); return; }
     const ex = at('[data-extra]')?.dataset.extra as 'nutritionist' | 'psychologist' | 'stringing' | undefined;
@@ -1052,10 +1152,12 @@ export function initCareer(d: CareerDeps) {
     const stf = at('[data-staff]')?.dataset.staff as StaffRole | undefined;
     if (stf) { setStaff(s, stf, !s.staff?.[stf]); await save(); render(); return; }
     const spn = at('[data-sponsor]')?.dataset.sponsor;
-    if (spn !== undefined) { const offers = sponsorUpgrade(s, myRank(s, W()), d.appVersion); const o = offers?.[Number(spn)]; if (o) { s.sponsor = o; d.toast(`Signed with ${o.name}`, `${money(o.weekly)} a week and ${money(o.bonus)} a title.`); await save(); render(); } return; }
+    if (spn !== undefined) { const [slot, idx] = spn.includes(':') ? spn.split(':') as [SponsorSlot, string] : ['main' as SponsorSlot, spn]; const offers = sponsorUpgrade(s, myRank(s, W()), d.appVersion, slot); const o = offers?.[Number(idx)]; if (o) { signSponsor(s, o); d.toast(`Signed with ${o.name}`, `${money(o.weekly)} a week and ${money(o.bonus)} a title.`); await save(); render(); } return; }
     if (at('[data-retire]')) {
       if (!confirm('Retire? This career goes into the Hall of Fame and you start a new one. Players you recruited stay on your account.')) return;
-      retiredHall = retire(s); s = null; render(); return;
+      // 5.0 (v5): retire your shirt number too.
+      const num = getEdition() === 5 ? Math.max(1, Math.min(99, Math.round(Number(prompt('Which shirt number do you retire? (1–99)', '7')) || 7))) : undefined;
+      retiredHall = retire(s, num); s = null; render(); return;
     }
     const rf = at('[data-refuel]')?.dataset.refuel as 'food' | 'physio' | undefined;
     if (rf) return;

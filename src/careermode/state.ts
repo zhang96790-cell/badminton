@@ -1,9 +1,9 @@
 // Career state and the rules that change it (entering events, playing rounds, money, energy, weeks).
 // The state is the save; everything else (draws, NPC results, rankings) is worked out by World.
 import { CAREER as CAREER_STATS, characterById, getEdition, statNames, type Character, type Modifier } from '../../shared/characters';
-import { PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
+import { KIT_BRANDS, PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
-import { COUNTRIES, World, YOU, absWeek, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
+import { COUNTRIES, World, YOU, absWeek, activeIn, ageOf, careerMoves, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
 
 export interface LedgerLine { year: number; week: number; label: string; amount: number }
@@ -79,6 +79,14 @@ export interface CareerState {
   bestRankNow?: number | null;
   /** 4.1: set once the Rested bar is in use (older saves start fully rested). */
   restedSince?: string;
+  /** 5.0 (v5): headlines, your rivals, fans, sponsor mood after press conferences, and each season's awards. */
+  news?: NewsItem[];
+  rivals?: { year: number; ids: string[] };
+  fans?: number;
+  mood?: number;
+  /** Your answer fired a rival up: they play one CPU level higher next time you meet. */
+  rivalFire?: string[];
+  awards?: SeasonAwards[];
   /** 4.1: countries you own a house in (sleep there for free and rest better). */
   houses?: string[];
   /** 4.1: things you've bought or hired (coach tier, staff, upgrades, cosmetics). See the Shop. */
@@ -103,6 +111,8 @@ export interface CareerState {
 /** Bump to restart everyone's career the next time they open it. */
 export const CAREER_EPOCH = '3.3.1';
 
+export interface NewsItem { year: number; week: number; text: string; kind: 'you' | 'world' | 'rival' | 'move' | 'award' }
+export interface SeasonAwards { year: number; list: { award: string; winner: string; you: boolean; note: string }[] }
 export interface Sponsor {
   name: string; weekly: number; bonus: number; band: number; year: number;
   /** 4.2: the brand (src/brands.ts), its perk, a home-country deal, and this season's request. */
@@ -134,7 +144,7 @@ export interface Shop {
   cosmetics?: string[];
   equipped?: Record<string, string>;
 }
-export interface HallEntry { name: string; from: number; to: number; titles: number; bestRank: number | null; golds: number; silvers: number; bronzes: number; prize: number; as: string }
+export interface HallEntry { name: string; from: number; to: number; titles: number; bestRank: number | null; golds: number; silvers: number; bronzes: number; prize: number; as: string; /** 5.0: your retired shirt number, awards won and fans. */ number?: number; awards?: number; fans?: number }
 
 export const APP_VERSION_KEY = '3.0';
 // 4.1: seats and hotels matter again (the Rested bar): your choice, economy and a 3-star by default.
@@ -214,7 +224,7 @@ export function migrate(raw: unknown): CareerState | null {
   const out = { ...newCareer({ name: s.name ?? 'Player', homeCountry: s.homeCountry ?? 'GBR', characterId: s.characterId, difficulty: s.difficulty ?? 'relaxed', seed: s.rngSeed }), ...s } as CareerState;
   // 3.9: no more energy. Everyone's fresh, uninjured, flies economy and stays in a 3-star; the physio goes.
   // 4.4.1: the extra sponsor slots are gone again until the new career.
-  out.kitSponsor = null; out.cashSponsor = null;
+  if (getEdition() !== 5) { out.kitSponsor = null; out.cashSponsor = null; }
   if (!out.restedSince) out.energy = 100;
   out.injury = null;
   if (!out.restedSince) { out.settings = { ...out.settings, travelClass: 'economy', business: false, hotel: 'three' }; out.restedSince = '4.1'; }
@@ -289,7 +299,18 @@ export function trainingCamp(s: CareerState, stat: number, appVersion: string): 
 
 // ── Calendar and entry ──
 export const purseOf = (ev: TourEvent) => (ev.tier === 'CLUB' ? CFG.clubOpen.purse : Math.round(ev.prize_pool_usd * CFG.moneyScale * (CFG.prizeCut[ev.tier] ?? 1)));
-export const prizeFor = (ev: TourEvent, round: Round) => Math.round(purseOf(ev) * CFG.prizeShare[round]);
+export const prizeFor = (ev: TourEvent, round: Round) =>
+  Math.round(purseOf(ev) * CFG.prizeShare[round] * (getEdition() === 5 && (round === 'R64' || round === 'R32' || round === 'R16') ? CFG.everyRoundPays.early : 1));
+/**
+ * 5.0 travel planner: what a trip costs if you go out in each round (travel plus a hotel night per day you're
+ * there, free at your own house), the prize for that round, and the first round where you come out ahead.
+ */
+export function tripPlan(s: CareerState, ev: TourEvent): { cost: (r: Round) => number; breakEven: Round | null; rows: { round: Round; prize: number; cost: number }[] } {
+  const travel = travelCost(s, ev), night = hotelCost(s, ev), order = [...roundsFor(ev.draw_size), 'W' as Round];
+  const cost = (r: Round) => travel + night * Math.max(1, Math.min(order.indexOf(r) + 1, order.length - 1));
+  const rows = order.map((round) => ({ round, prize: prizeFor(ev, round), cost: cost(round) }));
+  return { cost, breakEven: rows.find((x) => x.prize >= x.cost)?.round ?? null, rows };
+}
 export const travelCost = (s: CareerState, ev: TourEvent, cls: TravelClass = travelClassOf(s)) => {
   if (ev.tier === 'CLUB') return 0;
   const base = CFG.travel[travelBand(s.currentLocation, ev.host_country)];
@@ -312,6 +333,18 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
   if (s.injury && s.injury.weeks > 0) return { ok: false, why: `You’re injured: ${s.injury.weeks} more week${s.injury.weeks === 1 ? '' : 's'} of rest.` };
   if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
   if (getEdition() !== 5 && CFG.closedTiers.includes(ev.tier)) return { ok: false, why: 'Super 500 events and above are locked for now. They open once more players are added.' };
+  // 5.0: entry lists instead of unlocks: your ranking decides main draw, qualifying, or not in.
+  if (getEdition() === 5) {
+    const e = entryFor(s, ev, w);
+    if (e === 'out') {
+      const L = CFG.entryList[ev.tier], r = myRank(s, w);
+      return { ok: false, why: `Your world ranking (${r ? `#${r}` : 'unranked'}) doesn’t get you in: the ${TIER_LABEL[ev.tier]} takes the top ${L.qual || L.direct}${L.qual ? ' (with qualifying)' : ''}.` };
+    }
+    if (cantAfford(s, ev) && !hasQualifying(ev)) return { ok: false, why: `You need ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, and this event has no qualifying. Save up, or take a tour loan (Money tab).` };
+    if (e === 'qual') return { ok: true, qual: true, why: `Your ranking puts you in qualifying: win two matches to reach the main draw (the event pays your travel and hotel if you get through).` };
+    if (needsQualifying(s, ev)) return { ok: true, qual: true, why: `You can’t afford the ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, so you’d go through qualifying: win two matches and the event pays your travel and hotel.` };
+    return { ok: true };
+  }
   const gate = (CFG.gates as Record<string, { finalIn?: string; rankAtMost: number } | undefined>)[ev.tier];
   if (gate && !unlocked(s, ev.tier)) {
     const r = myRank(s, w);
@@ -326,6 +359,16 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
   if (cantAfford(s, ev) && !hasQualifying(ev)) return { ok: false, why: `You need ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, and this event has no qualifying. Save up, or take a tour loan (Money tab).` };
   if (needsQualifying(s, ev)) return { ok: true, qual: true, why: `You can’t afford the ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, so you’d go through qualifying: win two matches and the event pays your travel and hotel.` };
   return { ok: true };
+}
+
+/** 5.0: where your ranking puts you on an event's entry list: the main draw, qualifying, or not in. */
+export function entryFor(s: CareerState, ev: TourEvent, w: World): 'direct' | 'qual' | 'out' {
+  const L = CFG.entryList[ev.tier];
+  if (!L) return 'direct';
+  const r = myRank(s, w) ?? 9999;
+  if (r <= L.direct) return 'direct';
+  if (hasQualifying(ev) && (r <= L.qual || L.qual >= 999)) return 'qual';
+  return 'out';
 }
 
 /** 3.19: not enough money to go on tour to this event (or below the tour minimum): qualifying instead. */
@@ -377,7 +420,7 @@ export const findEvent = (s: CareerState, id: string, appVersion: string): TourE
 
 export function enter(s: CareerState, ev: TourEvent, w?: World) {
   // 3.19: can't afford it: qualifying (free; the event pays travel and hotel if you get through).
-  const qual = !!w && needsQualifying(s, ev);
+  const qual = !!w && (needsQualifying(s, ev) || (getEdition() === 5 && entryFor(s, ev, w) === 'qual'));
   const travel = qual ? 0 : travelCost(s, ev);
   const cls = travelClassOf(s);
   if (travel) book(s, `Travel to ${ev.name}`, -travel);
@@ -469,6 +512,7 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
   // 4.1: the match tires you; nights before your next match bring some back.
   const dayBefore = roundDay(ev, a.round, hash(s.rngSeed, ev.id), !!a.qual);
   addRest(s, -drain);
+  matchNews(s, w, ev, won, opponentId);
   if (won && s.sponsor?.perk === 'wins' && s.sponsor.winBonus) book(s, `Win bonus: ${s.sponsor.name}`, s.sponsor.winBonus);
   const restUntil = (q: boolean) => { const n = Math.max(0, roundDay(ev, a.round, hash(s.rngSeed, ev.id), q) - dayBefore); addRest(s, n * nightRest(s, ev)); };
   // 3.19: qualifying. Win both and you're in the main draw; lose and you're out (with a few ranking points).
@@ -477,7 +521,10 @@ export function recordMatch(s: CareerState, w: World, ev: TourEvent, won: boolea
     if (won && stage === 1) { a.qual.stage = 2; return { finished: false }; }
     if (won) { delete a.qual; skipByes(s, w, ev); restUntil(false); return { finished: false, qualified: true }; }
     const pts = Math.round(pointsFor(ev.tier, a.round, ev.draw_size) * CFG.qualifying.lossPoints[stage - 1]);
-    const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: a.round, points: pts, prize: 0, costs: 0, opponents: [], scores: [], as: a.as, qual: stage };
+    // 5.0 (v5): every round pays, qualifying too.
+    const qprize = getEdition() === 5 ? Math.round(prizeFor(ev, a.round) * CFG.everyRoundPays.qualLoss[stage - 1]) : 0;
+    if (qprize) book(s, `Qualifying prize: ${ev.name}`, qprize);
+    const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: a.round, points: pts, prize: qprize, costs: 0, opponents: [], scores: [], as: a.as, qual: stage };
     s.history.push(res);
     s.currentLocation = ev.host_country;
     s.current = null;
@@ -513,6 +560,7 @@ function finish(s: CareerState, w: World, ev: TourEvent, reached: Round, noRewar
   if (prize && s.loan) repayLoan(s, Math.ceil(prize * CFG.loan.repayShare));
   const res: PlayerResult = { tournamentId: ev.id, year: s.year, week: s.week, tier: ev.tier, round: reached, points: pts, prize, costs: a.travel + a.hotel, opponents: a.opponents, scores: a.scores, as: a.as, ...(place ? { place } : {}) };
   s.history.push(res);
+  eventNews(s, ev, res);
   if (ev.tier !== 'CLUB') s.currentLocation = ev.host_country;
   if (reached === 'W') {
     // Local club opens don't count as titles (3.14.1).
@@ -554,6 +602,8 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
   void action;
   // 4.1: a week off brings back a lot; the days after an event a little.
   const playedThisWeek = s.history.some((h) => h.year === s.year && h.week === s.week);
+  // 5.0 (v5): this week's other champions make the news.
+  if (getEdition() === 5 && calendar(appVersion, s.year).some((v) => v.week === s.week)) weekNews(s, world(s, appVersion), appVersion);
   addRest(s, playedThisWeek ? CFG.rested.weekAfterEvent : CFG.rested.weekOff);
   // The week's wages and sponsor money.
   if (s.staff?.coach && !s.shop?.coach) book(s, `${CFG.staff.coach.label}’s wages`, -CFG.staff.coach.wage);
@@ -564,7 +614,8 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
   if (tc) book(s, 'Team costs (travel team)', -tc);
   // A week off at your training base rests you more.
   if (s.shop?.base && !s.history.some((h) => h.year === s.year && h.week === s.week)) addRest(s, CFG.base.restPerLevel * s.shop.base.level);
-  for (const sp of allSponsors(s)) book(s, `Sponsor: ${sp.name}`, sp.weekly);
+  // 5.0: press conferences change your sponsors' mood (a little more or less each week, v5 only).
+  for (const sp of allSponsors(s)) book(s, `Sponsor: ${sp.name}`, Math.round(sp.weekly * (getEdition() === 5 ? 1 + 0.05 * (s.mood ?? 0) : 1)));
   // 4.2: a home-country sponsor pays double in weeks you play an event at home.
   const playedHome = s.history.some((h) => h.year === s.year && h.week === s.week && findEvent(s, h.tournamentId, appVersion)?.host_country === s.homeCountry);
   if (playedHome) for (const sp of allSponsors(s)) if (sp.home) book(s, `Home event bonus: ${sp.name}`, sp.weekly);
@@ -572,6 +623,7 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
   const last = Math.max(...calendar(appVersion, s.year).map((e) => e.week), 1);
   if (s.week >= last || s.week >= 52) {
     // The off-season: fully rested for the new year, sponsors come back with new offers.
+    if (getEdition() === 5) { const w = world(s, appVersion); seasonAwards(s, w); }
     s.recap = s.year; s.year++; s.season = s.year; s.week = 1;
     s.energy = 100; s.injury = null; // a fresh start every season
     if (s.sponsor && s.sponsor.year < s.year) s.sponsor = null;
@@ -625,6 +677,46 @@ export function sponsorOffers(s: CareerState, rank: number | null, appVersion = 
     make(home[0], 0.9, 1, { home: s.homeCountry, perk: perkOf(home[0]?.id ?? '') }),
   ].filter((x): x is Sponsor => !!x);
 }
+/** 5.0 (v5 only): the three sponsor slots from 4.4. */
+/**
+ * 4.4: sponsor offers at this ranking, from the game's real brands, for three slots. A kit deal from a badminton
+ * brand (some pay, a bonus every final, their kit on your player); a main sponsor that's a perk brand (little
+ * money, one perk); and a money sponsor (the most pay, no perk). Brands from your country pay double in weeks
+ * you play at home. Main and money sponsors ask you to play one event. Null if unranked.
+ */
+function sponsorOffersSlots(s: CareerState, rank: number | null, appVersion = '5.0', slot: SponsorSlot = 'main'): Sponsor[] | null {
+  if (!rank) return null;
+  const band = CFG.sponsorBands.find((b) => rank <= b.rank);
+  if (!band) return null;
+  const r = rng(hash(s.rngSeed, s.year, band.rank, 'sponsor', slot));
+  const mix = <T,>(a: T[]) => [...a].sort(() => r() - 0.5);
+  const upcoming = calendar(appVersion, s.year).filter((v) => v.week > s.week && !CFG.closedTiers.includes(v.tier));
+  const request = (brandId: string, weekly: number): Sponsor['request'] => {
+    const theirs = upcoming.filter((v) => eventLook(v.id, v.tier, v.host_country).sponsors.some((b) => b.id === brandId) || v.host_country === SPONSOR_BRANDS.find((b) => b.id === brandId)?.country);
+    const pickFrom = theirs.length ? theirs : upcoming.filter((v) => v.tier === 'S100' || v.tier === 'S300');
+    const v = pickFrom[Math.floor(r() * pickFrom.length)];
+    return v ? { eventId: v.id, name: v.name, enter: Math.max(150, weekly * 3), deep: Math.max(300, weekly * 6) } : null;
+  };
+  const make = (b: { id: string; name: string; country?: string } | undefined, wk: number, bo: number, extra: Partial<Sponsor>, ask = true): Sponsor | null => {
+    if (!b) return null;
+    const weekly = Math.round(band.weekly * wk);
+    return { name: b.name, brandId: b.id, weekly, bonus: Math.round(band.bonus * bo), band: band.rank, year: s.year, slot, request: ask ? request(b.id, weekly) : null,
+      ...(b.country === s.homeCountry ? { home: s.homeCountry } : {}), ...extra };
+  };
+  if (slot === 'kit') {
+    const kits = mix(KIT_BRANDS);
+    return kits.slice(0, 2).map((b) => make(b, 0.5, 0.6, { perk: null, finalBonus: Math.round(band.bonus * 0.5) }, false)).filter((x): x is Sponsor => !!x);
+  }
+  if (slot === 'cash') {
+    const cash = mix(SPONSOR_BRANDS.filter((b) => !perkOf(b.id)));
+    const home = cash.find((b) => b.country === s.homeCountry), other = cash.find((b) => b.country !== s.homeCountry);
+    return [make(other, 1.25, 0.6, { perk: null }), make(home, 1.1, 0.6, { perk: null })].filter((x): x is Sponsor => !!x);
+  }
+  const perks = mix(SPONSOR_BRANDS.filter((b) => perkOf(b.id)));
+  const seen = new Set<string>();
+  const picks = perks.filter((b) => { const p = perkOf(b.id)!; if (seen.has(p)) return false; seen.add(p); return true; }).slice(0, 3);
+  return picks.map((b) => { const pk = perkOf(b.id); return make(b, 0.35, 0.3, { perk: pk, ...(pk === 'wins' ? { winBonus: Math.round(band.bonus * 0.15) } : {}) }); }).filter((x): x is Sponsor => !!x);
+}
 export const perkText = (p: SponsorPerk | null | undefined) => (p ? PERK_TEXT[p] : '');
 /** 3.14.3: a deal signed before the sponsor cut drops to the new rates for its band (keeping its steady or bonus style). */
 export function rescaleSponsor(s: CareerState): boolean {
@@ -639,9 +731,11 @@ export function rescaleSponsor(s: CareerState): boolean {
   return true;
 }
 /** A better sponsor deal is on offer (you're in a better ranking band than your sponsor's). */
-export const sponsorUpgrade = (s: CareerState, rank: number | null, appVersion?: string) => {
-  const offers = sponsorOffers(s, rank, appVersion);
-  return offers?.length && (!s.sponsor || offers[0].band < s.sponsor.band || s.sponsor.year < s.year) ? offers : null;
+export const sponsorUpgrade = (s: CareerState, rank: number | null, appVersion?: string, slot: SponsorSlot = 'main') => {
+  // 5.0: in v5 there are three slots (kit deal, main perk sponsor, money sponsor); before v5, one sponsor.
+  const offers = getEdition() === 5 ? sponsorOffersSlots(s, rank, appVersion, slot) : slot === 'main' ? sponsorOffers(s, rank, appVersion) : null;
+  const cur = sponsorIn(s, slot);
+  return offers?.length && (!cur || offers[0].band < cur.band || cur.year < s.year) ? offers : null;
 };
 
 export function setStaff(s: CareerState, role: StaffRole, on: boolean) { (s.staff ??= {})[role] = on; }
@@ -683,12 +777,13 @@ export function newMilestones(s: CareerState): Milestone[] {
 }
 
 /** Retire: your career goes into the Hall of Fame (kept for your next career). */
-export function retire(s: CareerState): HallEntry[] {
+export function retire(s: CareerState, number?: number): HallEntry[] {
   const medals = s.history.map(medalOf);
   const entry: HallEntry = {
     name: s.name, from: CFG.startYear, to: s.year, titles: s.titles, bestRank: s.bestRank, as: characterById(s.characterId).name,
     golds: medals.filter((m) => m === 'gold').length, silvers: medals.filter((m) => m === 'silver').length, bronzes: medals.filter((m) => m === 'bronze').length,
     prize: s.history.reduce((t, h) => t + h.prize, 0),
+    ...(number ? { number, awards: (s.awards ?? []).reduce((n, a) => n + a.list.filter((x) => x.you).length, 0), fans: s.fans ?? 0 } : {}),
   };
   return [...(s.hallOfFame ?? []), entry];
 }
@@ -731,4 +826,110 @@ export function semiFreshStart(old: CareerState): CareerState {
     milestones: [], current: null, pendingRecruitOffer: null, offerDue: null, ledger: [], recap: null,
     titleTiersSynced: true, sponsorRescaled: true, energy: 100, restedSince: '5.0',
   };
+}
+
+// ── 5.0 (v5): news, rivals, press conferences and the season's awards ──
+export function pushNews(s: CareerState, text: string, kind: NewsItem['kind']) {
+  (s.news ??= []).unshift({ year: s.year, week: s.week, text, kind });
+  if (s.news.length > 80) s.news.length = 80;
+}
+const nameOf = (id: string) => (id === YOU ? 'You' : characterById(id).name);
+
+/** Three rivals for the season: the strongest players ranked close to you (picked once a season). */
+export function rivalsOf(s: CareerState, w: World): string[] {
+  if (s.rivals?.year === s.year) return s.rivals.ids;
+  const list = w.rankingAt(absWeek(s.year, s.week)).filter((x) => x.id !== YOU && activeIn(x.id, s.year));
+  const me = myRank(s, w) ?? Math.min(list.length, 220);
+  const near = list.slice(Math.max(0, me - 14), me + 12).map((x) => x.id);
+  const r = rng(hash(s.rngSeed, s.year, 'rivals'));
+  const ids = near.sort((a, b) => w.strength.get(b) - w.strength.get(a) + (r() - 0.5) * 20).slice(0, 3);
+  s.rivals = { year: s.year, ids };
+  pushNews(s, `Rivals for ${s.year}: ${ids.map(nameOf).join(', ')}.`, 'rival');
+  return ids;
+}
+/** Head to head against a player: [your wins, their wins]. */
+export function headToHead(s: CareerState, id: string): [number, number] {
+  let w = 0, l = 0;
+  for (const h of s.history) (h.opponents ?? []).forEach((o, i) => {
+    if (o !== id) return;
+    const g = h.scores?.[i] ?? [], mine = g.filter(([a, b]) => a > b).length, theirs = g.filter(([a, b]) => b > a).length;
+    if (mine > theirs) w++; else l++;
+  });
+  return [w, l];
+}
+/** After your match: rival bonus and headlines (upsets, rivals). */
+export function matchNews(s: CareerState, w: World, ev: TourEvent, won: boolean, oppId: string) {
+  if (getEdition() !== 5) return;
+  const rank = (id: string) => { const l = w.rankingAt(absWeek(s.year, s.week)); const i = l.findIndex((x) => x.id === id); return i < 0 || l[i].pts <= 0 ? 999 : i + 1; };
+  const mine = myRank(s, w) ?? 999, theirs = rank(oppId), opp = nameOf(oppId);
+  if (s.rivals?.ids.includes(oppId)) {
+    if (won) { const bonus = 300 + Math.round(prizeFor(ev, 'QF') * 0.25); book(s, `Beat your rival ${opp}`, bonus); pushNews(s, `${s.name} beats rival ${opp} at the ${ev.name}.`, 'rival'); }
+    else pushNews(s, `${opp} gets the better of rival ${s.name} at the ${ev.name}.`, 'rival');
+  } else if (won && theirs < 999 && mine - theirs >= 40) pushNews(s, `Upset at the ${ev.name}: ${s.name} (#${mine === 999 ? '–' : mine}) beats #${theirs} ${opp}.`, 'you');
+}
+/** After your event: your headline. */
+export function eventNews(s: CareerState, ev: TourEvent, r: PlayerResult) {
+  if (getEdition() !== 5 || ev.tier === 'CLUB') return;
+  const big = ['S750', 'S1000', 'WORLDS', 'OLYMPICS', 'WTF'].includes(ev.tier);
+  if (r.round === 'W') pushNews(s, `${s.name} wins the ${ev.name}!`, 'you');
+  else if (r.round === 'F') pushNews(s, `${s.name} reaches the ${ev.name} final.`, 'you');
+  else if ((r.round === 'SF' || (big && r.round === 'QF')) && !r.qual) pushNews(s, `${s.name} into the last ${r.round === 'SF' ? 4 : 8} at the ${ev.name}.`, 'you');
+}
+/** The week's other champions, for the news (events you didn't play). */
+export function weekNews(s: CareerState, w: World, appVersion: string) {
+  if (getEdition() !== 5) return;
+  for (const ev of calendar(appVersion, s.year).filter((v) => v.week === s.week)) {
+    if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id && h.round === 'W')) continue;
+    const p = w.plan(ev, s.year, null);
+    const { rounds } = playOut(p.slots, w.strength, hash(s.rngSeed, s.year, ev.id, 'play'));
+    const champ = rounds[rounds.length - 1]?.[0];
+    if (champ && champ !== YOU) pushNews(s, `${nameOf(champ)} wins the ${ev.name}.`, 'world');
+  }
+}
+/** Press conference answers: what they do. */
+export const PRESS = {
+  win: [
+    { id: 'humble', label: 'Credit the team and stay humble', fans: 15, mood: 1, fire: false },
+    { id: 'confident', label: '“I’m here to win the whole thing.”', fans: 25, mood: 0, fire: true },
+    { id: 'sponsor', label: 'Thank your sponsor and the fans', fans: 8, mood: 2, fire: false },
+  ],
+  loss: [
+    { id: 'credit', label: 'Credit your opponent', fans: 10, mood: 1, fire: false },
+    { id: 'fiery', label: '“I’ll beat them next time.”', fans: 12, mood: -1, fire: true },
+    { id: 'focus', label: 'Keep it short: on to next week', fans: 4, mood: 0, fire: false },
+  ],
+};
+export function pressAnswer(s: CareerState, won: boolean, id: string, oppId: string) {
+  const a = (won ? PRESS.win : PRESS.loss).find((x) => x.id === id);
+  if (!a) return;
+  s.fans = Math.max(0, (s.fans ?? 0) + a.fans);
+  s.mood = Math.max(-2, Math.min(2, (s.mood ?? 0) + a.mood));
+  if (a.fire && !(s.rivalFire ??= []).includes(oppId)) s.rivalFire.push(oppId);
+}
+/** The end-of-season awards (called once the season is over, before the new one starts). */
+export function seasonAwards(s: CareerState, w: World): SeasonAwards {
+  const year = s.year, at = absWeek(year, 52), start = absWeek(year, 1);
+  const end = w.rankingAt(at).filter((x) => x.pts > 0), begin = w.rankingAt(start);
+  const rankAt = (list: { id: string }[], id: string) => { const i = list.findIndex((x) => x.id === id); return i < 0 ? 999 : i + 1; };
+  const poy = end[0]?.id ?? YOU;
+  const improved = end.slice(0, 60).map((x) => ({ id: x.id, gain: rankAt(begin, x.id) - rankAt(end, x.id) })).sort((a, b) => b.gain - a.gain)[0];
+  const young = end.find((x) => x.id !== YOU && ageOf(x.id, year) <= 21);
+  const mine = s.history.filter((h) => h.year === year && !h.legacy);
+  const titles = mine.filter((h) => h.round === 'W').length;
+  const fanFav = (s.fans ?? 0) >= 300 || titles >= 2 ? YOU : end.find((x) => x.id !== YOU)?.id ?? YOU;
+  const list = [
+    { award: 'Player of the Year', winner: nameOf(poy), you: poy === YOU, note: 'World number 1 at the end of the season' },
+    { award: 'Most Improved', winner: nameOf(improved?.id ?? YOU), you: improved?.id === YOU, note: improved ? `Up ${Math.max(0, improved.gain)} places` : '' },
+    { award: 'Breakthrough of the Year', winner: young ? nameOf(young.id) : '–', you: false, note: young ? `Aged ${ageOf(young.id, year)}` : '' },
+    { award: 'Fan Favourite', winner: nameOf(fanFav), you: fanFav === YOU, note: fanFav === YOU ? `${s.fans ?? 0} fans` : 'Voted by the fans' },
+  ];
+  for (const a of list) if (a.you) book(s, `Award: ${a.award}`, 2000);
+  const out = { year, list };
+  (s.awards ??= []).push(out);
+  for (const a of list) pushNews(s, `${a.award} ${year}: ${a.winner}.`, 'award');
+  const moves = careerMoves(w.pool, year + 1);
+  const notable = (c: Character) => ['epic', 'elite', 'mythic', 'legendary', 'champion'].includes(c.rarity);
+  for (const c of moves.retired.filter(notable).slice(0, 4)) pushNews(s, `${c.name} retires, aged ${ageOf(c.id, year)}.`, 'move');
+  for (const c of moves.debuts.slice(0, 4)) pushNews(s, `${c.name} turns pro.`, 'move');
+  return out;
 }

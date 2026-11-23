@@ -83,6 +83,27 @@ export function simStrength(c: Character): number {
   return v;
 }
 
+// ── 5.0 living world (v5 only): players age, improve, peak, decline and retire; some turn pro later. ──
+/** A player's age in a season (15–33 in the first season, so a few are still juniors). */
+export const ageOf = (id: string, year: number) => 15 + (hash('age', id) % 19) + (year - CFG.startYear);
+/** The season they hang up their racket (aged 33–37). */
+const retireAge = (id: string) => 33 + (hash('retire', id) % 5);
+/** On tour that season: turned pro (18+) and not retired. Before v5, everyone, always. */
+export const activeIn = (id: string, year: number) => getEdition() !== 5 || (ageOf(id, year) >= 18 && ageOf(id, year) <= retireAge(id));
+/** Strength by age: still improving at 18–20, at their peak 21–28, then a little less each year. */
+export const ageFactor = (id: string, year: number) => {
+  if (getEdition() !== 5) return 1;
+  const a = ageOf(id, year);
+  return a < 21 ? 0.94 + 0.02 * (a - 18) : a <= 28 ? 1 : Math.max(0.8, 1 - 0.025 * (a - 28));
+};
+/** Who retired after a season, and who turned pro for the next one (for the news). */
+export function careerMoves(pool: Character[], year: number): { retired: Character[]; debuts: Character[] } {
+  return {
+    retired: pool.filter((c) => activeIn(c.id, year - 1) && !activeIn(c.id, year) && ageOf(c.id, year) > 18),
+    debuts: pool.filter((c) => !activeIn(c.id, year - 1) && activeIn(c.id, year) && ageOf(c.id, year) === 18),
+  };
+}
+
 /** Absolute week number, for "the last 52 weeks". */
 export const absWeek = (year: number, week: number) => year * 52 + (week - 1);
 
@@ -254,7 +275,11 @@ export class World {
     this.run();
   }
 
-  strength = { get: (id: string) => this.str.get(id) ?? 100 };
+  /** 5.0: the season being simulated (strength changes with age in the v5 living world). */
+  private curYear = 0;
+  strength = { get: (id: string) => (this.str.get(id) ?? 100) * (id === YOU ? 1 : ageFactor(id, this.curYear)) };
+  /** 5.0: the players on tour in a season (everyone before v5). */
+  poolFor = (year: number) => this.pool.filter((c) => activeIn(c.id, year));
 
   private add(id: string, at: number, pts: number, ev: string) {
     let l = this.results.get(id);
@@ -283,7 +308,7 @@ export class World {
       ids = this.rankingAt(at).map((x) => x.id).filter((id) => id !== YOU && id !== playerAs).slice(0, playerAs ? size - 1 : size);
       if (playerAs) ids.push(YOU);
     } else {
-      ids = drawField(ev, year, this.input.seed, this.pool, size + 1);
+      ids = drawField(ev, year, this.input.seed, this.poolFor(year), size + 1);
       ids = playerAs ? [...ids.filter((id) => id !== playerAs).slice(0, size - 1), YOU] : ids.slice(0, size);
     }
     // Seeds: 4 in a 16 or 32 draw, 8 in 64, 16 when there are 16 byes (a 48 draw).
@@ -298,6 +323,7 @@ export class World {
     const { history, startYear, year, week, seed } = this.input;
     const mine = new Map(history.map((h) => [`${h.year}:${h.tournamentId}`, h]));
     for (let y = startYear - 1; y <= year; y++) {
+      this.curYear = y;
       for (const ev of this.allFor(y)) {
         if (y === year && ev.week > week) break;
         const h = mine.get(`${y}:${ev.id}`);
@@ -315,6 +341,7 @@ export class World {
         if (h) this.add(YOU, at, h.points, ev.id);
       }
     }
+    this.curYear = year;
     // Local Club Opens (only ever the player's): their points count too.
     for (const h of history) if (h.tier === 'CLUB' && (h.year < year || (h.year === year && h.week <= week))) this.add(YOU, absWeek(h.year, h.week), h.points, h.tournamentId);
   }

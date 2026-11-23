@@ -598,6 +598,7 @@ export class Game {
     // Online, the server waits a moment after each point so the receiver is ready.
     this.timer = this.online ? RULES.onlineServeWait : 0.35;
     this.rallyHits = 0;
+    this.ultras?.newRally();
     this.rallySmashes = [0, 0, 0, 0];
     this.landing = null;
     this.serveBox = null;
@@ -1015,6 +1016,7 @@ export class Game {
       const inCourt = crossed && (sh.isServe ? isIn(land, this.serveBox!) : isIn(land, halfRect(-hitter as Side, this.doublesCourt)));
       this.landing = { p: land, call: hIdx === 0 ? (inCourt ? 'IN' : 'OUT') : null, t: 0 };
       this.rallyHits = 0;
+      this.ultras?.newRally();
       this.rallySmashes = [0, 0, 0, 0];
     this.rallySmashes = [0, 0, 0, 0];
       this.idle();
@@ -1792,6 +1794,7 @@ export class Game {
       for (const p of this.players) { p.frozen = false; p.serving = null; }
       this.recorder.reset();
       this.rallyHits = 0;
+      this.ultras?.newRally();
       this.rallySmashes = [0, 0, 0, 0];
     this.rallySmashes = [0, 0, 0, 0];
     }

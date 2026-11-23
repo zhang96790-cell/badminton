@@ -623,7 +623,7 @@
    "magnitude": 0,
    "duration": 0,
    "cooldown": 0,
-   "text": "After 3 net shots in a row, Kento Momota's next net shot always tumbles, and he never touches the net on net kills. He can net kill and net tap tighter net shots than his opponents can.",
+   "text": "Once 3 net shots have been played in a rally (by either player), Kento Momota's next net shot always tumbles. He never touches the net on net kills, and he can net kill and net tap tighter net shots than his opponents can.",
    "from_sheet": true,
    "champion": "kento_momota"
   },

@@ -28,8 +28,8 @@ export class Ultras {
   private ids: (UltraId | null)[];
   /** The GOAT: attacking shots in a row. */
   streak = [0, 0, 0, 0];
-  /** Untouchable: your own net shots in a row. */
-  netRun = [0, 0, 0, 0];
+  /** Untouchable: net shots this rally, by either player (3 in total, then Momota's next net shot tumbles). */
+  rallyNets = 0;
   private speed = [0, 1, 2, 3].map(() => ({ mult: 1, t: 0 }));
   constructor(chars: (Character | null)[]) {
     this.ids = chars.map((c) => {
@@ -67,7 +67,7 @@ export class Ultras {
 
   /** Untouchable: after 3 of your net shots in a row, this net shot is sure to tumble. */
   forceTumble(i: number, kind: ShotKind): boolean {
-    return this.ids[i] === 'untouchable' && kind === 'net' && this.netRun[i] >= ULTRA.untouchable.netRun;
+    return this.ids[i] === 'untouchable' && kind === 'net' && this.rallyNets >= ULTRA.untouchable.netRun;
   }
 
   /** How heavy this player's smashes are (Denmark's Pride: much harder to time). */
@@ -76,7 +76,8 @@ export class Ultras {
   /** After a shot: streaks, speed boosts. Returns what to announce, if anything. */
   afterShot(i: number, kind: ShotKind, tumbleForced: boolean): string | null {
     const u = this.ids[i];
-    this.netRun[i] = kind === 'net' && !tumbleForced ? this.netRun[i] + 1 : 0;
+    // Untouchable: count every net shot in the rally; a forced tumble starts the count again.
+    this.rallyNets = tumbleForced ? 0 : kind === 'net' ? this.rallyNets + 1 : this.rallyNets;
     if (!u) return null;
     if (u === 'the_goat') {
       if (ATTACK.includes(kind)) this.streak[i]++;
@@ -98,6 +99,9 @@ export class Ultras {
 
   /** Movement multiplier from a speed Ultra right now. */
   moveMult(i: number): number { return this.speed[i].t > 0 ? this.speed[i].mult : 1; }
+
+  /** A new rally: the net-shot count starts again. */
+  newRally() { this.rallyNets = 0; }
 
   /** Count down; true when a speed boost just ended (stats need refreshing). */
   tick(dt: number): boolean {

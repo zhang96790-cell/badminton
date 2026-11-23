@@ -940,25 +940,46 @@ export function weekNews(s: CareerState, w: World, appVersion: string) {
     if (champ && champ !== YOU) pushNews(s, `${nameOf(champ)} wins the ${ev.name}.`, 'world');
   }
 }
-/** Press conference answers: what they do. */
-export const PRESS = {
+/**
+ * 5.0: press conferences. What an answer does is hidden and a little random (a guessing game): it can please or
+ * annoy your sponsors, fire your opponent up for your next meeting, help you rest, or earn a small sponsor bonus.
+ * No fans. "No comment" skips it (usually nothing happens).
+ */
+interface PressOutcome { w: number; mood?: number; fire?: boolean; rest?: number; cash?: number; msg: string }
+export const PRESS: { win: { id: string; label: string }[]; loss: { id: string; label: string }[] } = {
   win: [
-    { id: 'humble', label: 'Credit the team and stay humble', fans: 15, mood: 1, fire: false },
-    { id: 'confident', label: '“I’m here to win the whole thing.”', fans: 25, mood: 0, fire: true },
-    { id: 'sponsor', label: 'Thank your sponsor and the fans', fans: 8, mood: 2, fire: false },
+    { id: 'humble', label: 'Credit the team and stay humble' },
+    { id: 'confident', label: '“I’m here to win the whole thing.”' },
+    { id: 'sponsor', label: 'Thank your sponsor and the fans' },
   ],
   loss: [
-    { id: 'credit', label: 'Credit your opponent', fans: 10, mood: 1, fire: false },
-    { id: 'fiery', label: '“I’ll beat them next time.”', fans: 12, mood: -1, fire: true },
-    { id: 'focus', label: 'Keep it short: on to next week', fans: 4, mood: 0, fire: false },
+    { id: 'credit', label: 'Credit your opponent' },
+    { id: 'fiery', label: '“I’ll beat them next time.”' },
+    { id: 'focus', label: 'Keep it short: on to next week' },
   ],
 };
-export function pressAnswer(s: CareerState, won: boolean, id: string, oppId: string) {
-  const a = (won ? PRESS.win : PRESS.loss).find((x) => x.id === id);
-  if (!a) return;
-  s.fans = Math.max(0, (s.fans ?? 0) + a.fans);
-  s.mood = Math.max(-2, Math.min(2, (s.mood ?? 0) + a.mood));
-  if (a.fire && !(s.rivalFire ??= []).includes(oppId)) s.rivalFire.push(oppId);
+const OUTCOMES: Record<string, PressOutcome[]> = {
+  humble: [{ w: 5, mood: 1, msg: 'The press liked your humility.' }, { w: 3, mood: 2, cash: 400, msg: 'Your sponsor loved that answer.' }, { w: 2, msg: 'Nobody quoted it. A quiet week.' }],
+  confident: [{ w: 4, mood: 1, fire: true, msg: 'A big headline. Someone on tour noticed.' }, { w: 3, mood: -1, fire: true, msg: 'That came across as arrogant.' }, { w: 3, mood: 2, cash: 600, msg: 'The crowd loved it, and so did your sponsor.' }],
+  sponsor: [{ w: 5, mood: 2, msg: 'Your sponsor was delighted.' }, { w: 3, mood: 1, cash: 300, msg: 'A small thank-you from your sponsor.' }, { w: 2, mood: -1, msg: 'It sounded like an advert. The press rolled their eyes.' }],
+  credit: [{ w: 5, mood: 1, msg: 'Gracious in defeat: well received.' }, { w: 3, rest: 5, msg: 'You let it go and slept well.' }, { w: 2, mood: -1, msg: 'The press called it soft.' }],
+  fiery: [{ w: 4, fire: true, msg: 'Your words made the back pages. Your opponent read them.' }, { w: 3, fire: true, mood: -1, msg: 'Your sponsor wasn’t happy with that.' }, { w: 3, mood: 1, rest: 5, msg: 'Getting it off your chest helped.' }],
+  focus: [{ w: 6, rest: 5, msg: 'Short and sweet. On to next week.' }, { w: 4, mood: -1, msg: 'Some called it rude.' }],
+  skip: [{ w: 6, msg: 'You skipped the press. Nothing much came of it.' }, { w: 3, mood: -1, msg: 'The press weren’t impressed that you skipped it.' }, { w: 1, rest: 5, msg: 'An early night instead.' }],
+};
+/** Answer (or skip, id "skip"): applies a hidden, random outcome and returns a hint of how it went. */
+export function pressAnswer(s: CareerState, won: boolean, id: string, oppId: string): string {
+  const list = OUTCOMES[id];
+  if (!list) return '';
+  const r = rng(hash(s.rngSeed, s.year, s.week, oppId, id, s.history.length, 'press'))();
+  let x = r * list.reduce((n, o) => n + o.w, 0);
+  const o = list.find((c) => (x -= c.w) <= 0) ?? list[list.length - 1];
+  if (o.mood) s.mood = Math.max(-2, Math.min(2, (s.mood ?? 0) + o.mood));
+  if (o.fire && !(s.rivalFire ??= []).includes(oppId)) s.rivalFire.push(oppId);
+  if (o.rest) s.energy = Math.min(100, s.energy + o.rest);
+  if (o.cash && allSponsors(s).length) book(s, 'Sponsor bonus (press conference)', o.cash);
+  void won;
+  return o.cash && !allSponsors(s).length ? o.msg.replace(/,? and so did your sponsor|Your sponsor loved that answer\.|A small thank-you from your sponsor\./, '').trim() || 'It went down well.' : o.msg;
 }
 /** The end-of-season awards (called once the season is over, before the new one starts). */
 export function seasonAwards(s: CareerState, w: World): SeasonAwards {
@@ -975,7 +996,7 @@ export function seasonAwards(s: CareerState, w: World): SeasonAwards {
     { award: 'Player of the Year', winner: nameOf(poy), you: poy === YOU, note: 'World number 1 at the end of the season' },
     { award: 'Most Improved', winner: nameOf(improved?.id ?? YOU), you: improved?.id === YOU, note: improved ? `Up ${Math.max(0, improved.gain)} places` : '' },
     { award: 'Breakthrough of the Year', winner: young ? nameOf(young.id) : '–', you: false, note: young ? `Aged ${ageOf(young.id, year)}` : '' },
-    { award: 'Fan Favourite', winner: nameOf(fanFav), you: fanFav === YOU, note: fanFav === YOU ? `${s.fans ?? 0} fans` : 'Voted by the fans' },
+    { award: 'Fan Favourite', winner: nameOf(fanFav), you: fanFav === YOU, note: fanFav === YOU ? `${titles} title${titles === 1 ? '' : 's'} this season` : 'Voted by the fans' },
   ];
   for (const a of list) if (a.you) book(s, `Award: ${a.award}`, 2000);
   const out = { year, list };

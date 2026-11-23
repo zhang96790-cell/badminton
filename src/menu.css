@@ -2358,3 +2358,9 @@ body.v5 #career .c-cpubtn { display: inline-flex; align-items: center; height: 2
 body.v5 #career .c-cpubtn.go { border-color: #e8112d; background: #e8112d; }
 body.v5 #career .c-cpubtn:hover { border-color: #fff; }
 body.v5 .matchcard { z-index: 30; }
+
+/* 5.0: press conferences: no hints, and a No comment option */
+.v5-press-skip { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.v5-press-skip .edit { padding: 7px 14px; font-size: 12px; }
+.v5-press-skip span { font: 500 13px/1.3 var(--text); color: #a9b4cc; }
+.v5-answer { align-content: center; min-height: 64px; }

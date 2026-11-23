@@ -222,7 +222,8 @@ export function initCareer(d: CareerDeps) {
     return `<section class="v5-press"><div class="v5-press-mic">${mic}</div><div class="v5-press-main">
       <p class="v5-press-where">Press conference · ${e(pressDue.event)}</p>
       <h3 class="v5-press-q">${pressDue.won ? `How did you beat ${e(opp)}?` : `What went wrong against ${e(opp)}?`}</h3>
-      <div class="v5-answers">${opts.map((o) => `<button class="v5-answer" data-press="${o.id}"><b>${e(o.label)}</b><span class="v5-chips"><i class="${o.fans >= 10 ? 'good' : ''}">+${o.fans} fans</i>${o.mood ? `<i class="${o.mood > 0 ? 'good' : 'bad'}">Sponsors ${o.mood > 0 ? 'happier' : 'less happy'}</i>` : ''}${o.fire ? `<i class="bad">Fires ${e(opp.split(' ')[0])} up</i>` : ''}</span></button>`).join('')}</div>
+      <div class="v5-answers">${opts.map((o) => `<button class="v5-answer" data-press="${o.id}"><b>${e(o.label)}</b></button>`).join('')}</div>
+      <div class="v5-press-skip"><button class="edit" data-press="skip">No comment</button><span>How the press, your sponsors and your rivals take it is up to them.</span></div>
     </div></section>`;
   }
   const NEWS_KIND: Record<NewsItem['kind'], string> = { you: 'You', world: 'Tour', rival: 'Rival', move: 'Moves', award: 'Awards' };
@@ -257,7 +258,7 @@ export function initCareer(d: CareerDeps) {
     return `${entriesHtml()}<div class="v5-hub">
       <section class="v5-panel v5-rivals"><header class="v5-ph"><h3>Rivals <em>${s!.year}</em></h3><button class="v5-more" data-ctab="rivals">All rivals ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></header>
         ${rivals ? `<ol class="v5-rival-list">${rivals}</ol>` : '<p class="v5-empty-line">Your rivals are picked once you’re ranked.</p>'}
-        <p class="v5-foot">Beat a rival for a bonus and a headline. Your head-to-head is on the right. <b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans.</p></section>
+        <p class="v5-foot">Beat a rival for a bonus and a headline. Your head-to-head is on the right.</p></section>
       <section class="v5-panel v5-wire"><header class="v5-ph"><h3>Newswire</h3><button class="v5-more" data-ctab="news">All news ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></header>
         <ul class="v5-news">${news || '<li class="v5-empty-line">Nothing yet: play an event.</li>'}</ul></section>
     </div>`;
@@ -482,7 +483,7 @@ export function initCareer(d: CareerDeps) {
       </article>`;
     }).join('');
     const news = (s!.news ?? []).filter((n) => n.kind === 'rival').slice(0, 6).map((n, i) => newsLi(n, i, true)).join('');
-    body.innerHTML = `<section class="v5-page"><header class="v5-page-head"><h3>Rivals ${s!.year}</h3><p>Three players near your ranking, picked each season. Beat one for a bonus and a headline. Say something fiery at a press conference and they come back fired up. You have <b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans.</p></header>
+    body.innerHTML = `<section class="v5-page"><header class="v5-page-head"><h3>Rivals ${s!.year}</h3><p>Three players near your ranking, picked each season. Beat one for a bonus and a headline. What you say at press conferences can fire them up.</p></header>
       ${cards ? `<div class="v5-rival-cards">${cards}</div>` : '<p class="v5-empty-line">Your rivals are picked once you’re ranked.</p>'}
       ${news ? `<h4 class="v5-sub-h">Rival headlines</h4><ul class="v5-news">${news}</ul>` : ''}</section>`;
   }
@@ -1341,7 +1342,7 @@ export function initCareer(d: CareerDeps) {
     const ho = at('[data-hotel]')?.dataset.hotel as HotelTier | undefined;
     if (ho) { s.settings.hotel = ho; if (s.current) s.current.hotelTier = ho; await save(); render(); return; }
     const pr = at('[data-press]')?.dataset.press;
-    if (pr && pressDue) { pressAnswer(s, pressDue.won, pr, pressDue.opp); d.toast('Press conference done', `${s.fans ?? 0} fans now.`); pressDue = null; await save(); render(); return; }
+    if (pr && pressDue) { const said = pressAnswer(s, pressDue.won, pr, pressDue.opp); d.toast(pr === 'skip' ? 'No comment' : 'Press conference', said); pressDue = null; await save(); render(); return; }
     const co = at('[data-coach]')?.dataset.coach;
     if (co) { const sh = (s.shop ??= {}); sh.coach = sh.coach === co ? null : co; if (s.staff) s.staff.coach = false; await save(); render(); return; }
     const ex = at('[data-extra]')?.dataset.extra as 'nutritionist' | 'psychologist' | 'stringing' | undefined;

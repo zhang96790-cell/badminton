@@ -626,12 +626,19 @@ export const STYLES: Record<Style, {
   adaptAfter?: number;
   /** 3.7.3: against your smash, blocks short this many times more often (and lifts less): the counter-attack. */
   counter?: number;
+  /** 5.0: smashes (or kills) this share of overheads taken closer to the net than attackFrom (m). */
+  attackFrom?: number;
+  attackShare?: number;
+  /** 5.0: keeps low balls flat: drives and pushes this many times more, lifts this many times less. */
+  flat?: number;
 }> = {
   // 3.12.2: everyone but the Attacker smashes and kills more and clears less; the defensive styles most.
   allround: { label: 'All-rounder', smash: 1.2, drop: 1.05, clear: 0.95, net: 1.05, kill: 1.2, jump: 1.1, baseDepth: 3.5, margin: -0.02, speed: 1.04, serveShort: 1, steady: 0.8, reach: 0.05,
     trait: 'No weak spots: a little quicker around the court and a little more precise than most, with every shot in its bag' },
-  attacker: { label: 'Attacker', smash: 2.5, drop: 0.85, clear: 0.4, net: 0.75, kill: 2.0, jump: 2.6, baseDepth: 3.2, margin: -0.04, speed: 1, serveShort: 0.9, followUp: 0.8, counter: 1.2,
-    trait: 'Jump-smashes whenever it can and follows its smash to the net for the kill, but takes risks near the lines' },
+  // 5.0: far more attacking: smashes almost everything overhead, keeps the shuttle flat, and chases its smash in.
+  attacker: { label: 'Attacker', smash: 3.4, drop: 1.0, clear: 0.25, net: 0.7, kill: 3, jump: 3.6, baseDepth: 3.0, margin: -0.02, speed: 1.02, serveShort: 0.85, followUp: 1.2, counter: 1.0,
+    attackFrom: 5.3, attackShare: 0.85, flat: 1.8,
+    trait: 'Smashes almost everything above its head (jumping whenever it can), keeps low balls flat with drives and pushes, and chases its smash in for the kill. Takes risks near the lines' },
   defender: { label: 'Defender', smash: 1.3, drop: 0.95, clear: 0.85, net: 0.95, kill: 1.2, jump: 0.75, baseDepth: 3.8, margin: 0.15, speed: 1.05, serveShort: 0.8, defReach: 0.04, defAim: 0.8,
     trait: 'Gets more smashes back than anyone, and its lifts and blocks land deep and accurate' },
   net: { label: 'Net player', smash: 1.2, drop: 1.5, clear: 0.8, net: 1.6, kill: 1.5, jump: 0.8, baseDepth: 3.0, margin: 0.05, speed: 1, serveShort: 1.2, rush: 0.1,

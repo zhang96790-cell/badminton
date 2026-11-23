@@ -9,6 +9,7 @@ export const V5_NOTES: { date: string; title: string; items: [string, string][] 
       ['Net timing signatures work', 'Net Thread, Halo Tumble and Southpaw Spin now really widen your perfect window on net shots, and your timing light gets a green ring when they do.'],
       ['Last Stand reworked', 'Below 30% Rested, your Rested penalty (timing, movement and aim) is halved.'],
       ['Smash boosts at the limit', 'If a smash boost would go past the smash speed limit, the extra makes the smash heavier instead (harder to time).'],
+      ['Attacking CPU attacks', 'The Attacker style now smashes almost every shuttle above its head from mid-court and three-quarter court, keeps low balls flat with drives and pushes instead of lifting, and chases its smash in for the kill.'],
       ['Cooldown dots', 'Each signature on the match cards has a dot: green means ready, a filling ring means it’s recharging.'],
     ],
   },

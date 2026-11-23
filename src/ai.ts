@@ -411,6 +411,8 @@ export class AIController implements Controller {
     const vsSmash = sh.lastHitter === -this.me.side && /smash/i.test(this.game.lastShotLabel);
     // 3.17: Impossible smashes every high shuttle from about half court in.
     if (L.mustSmash && c.z >= SHOTS.overheadHeight && dNet < L.mustSmash && !sh.tumbling) return 'fast';
+    // 5.0: the Attacker smashes almost every overhead from anywhere but the very back.
+    if (S.attackFrom && c.z >= SHOTS.overheadHeight && dNet < S.attackFrom && !sh.tumbling && chance(S.attackShare ?? 0.8)) return 'fast';
     if (c.z >= SHOTS.overheadHeight) {
       if (dNet < 2.6) { fast = 3 * L.kill * S.kill; soft = 0.8; high = 0.1; }
       else {
@@ -441,6 +443,8 @@ export class AIController implements Controller {
       fast = 0.6;
     }
     if (vsSmash && c.z < SHOTS.overheadHeight) { soft *= counter; high /= Math.sqrt(counter); }
+    // 5.0: the Attacker keeps low and mid-height balls flat (drives, pushes) instead of lifting them.
+    if (S.flat && c.z < SHOTS.overheadHeight && !sh.tumbling) { fast *= S.flat; high /= S.flat; }
     // Doubles is about keeping the shuttle down: lift less, attack and push more.
     if (doubles) { high *= 0.55; fast *= 1.3; }
     // A tumbling net shot can't be netted back or attacked: lift it.

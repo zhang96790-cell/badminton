@@ -14,7 +14,7 @@ const ABILITIES = JSON.parse(readFileSync(new URL('../data/signatures.json', imp
 const byId = new Map(ABILITIES.map((a) => [a.id, a]));
 
 /** 5.0 stat totals per rarity (owner: the top should be about 200, so they hold up against hard CPUs). Stats 10–50. */
-export const V5_BUDGET = { common: 100, rare: 110, super_rare: 120, epic: 132, elite: 146, mythic: 162, legendary: 180, champion: 200 };
+export const V5_BUDGET = { common: 100, rare: 110, super_rare: 120, epic: 132, elite: 146, mythic: 162, legendary: 180, champion: 210 };
 export const V5_MAX = 50;
 /** Signature counts per rarity: none / S / SS / Ultra (owner's table for the first four; the top tiers all have one). */
 const SIG_TARGET = {

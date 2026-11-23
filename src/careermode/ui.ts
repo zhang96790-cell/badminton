@@ -35,7 +35,7 @@ export interface CareerDeps {
   esc: (s: string) => string;
 }
 
-const STYLE_AI: Record<string, Style> = { 'all-rounder': 'allround', attacker: 'attacker', defender: 'defender', 'net player': 'net', deceptive: 'deceptive', 'fast retriever': 'retriever', 'defensive wall': 'wall' };
+const STYLE_AI: Record<string, Style> = { 'all-rounder': 'allround', attacker: 'attacker', defender: 'defender', 'net player': 'net', deceptive: 'deceptive', 'fast retriever': 'retriever', 'defensive wall': 'wall', control: 'control' };
 const HANDICAP_TEXT: Record<string, string> = { no_smash: 'No smashes (hard overheads become drives)', no_drop: 'No drop shots (soft overheads become clears)', fast_opponent: 'Your opponent moves 10% faster', start_behind: 'You start {n} points down', to_11: 'A single game to 11', half_energy: 'You play tired: a little slower, and your timing is a little harder' };
 
 export function initCareer(d: CareerDeps) {

@@ -39,7 +39,7 @@ export const RARITY: Record<Rarity, { label: string; budget: number; color: stri
   champion: { label: 'Champion', budget: BUDGETS.champion, color: '#f5f5f5', order: 7 },
 };
 
-export const STYLES = ['all-rounder', 'attacker', 'defender', 'net player', 'deceptive', 'fast retriever', 'defensive wall'] as const;
+export const STYLES = ['all-rounder', 'attacker', 'defender', 'net player', 'deceptive', 'fast retriever', 'defensive wall', 'control'] as const;
 export type CharStyle = (typeof STYLES)[number];
 
 /** A signature or skill: what it's called and its plain-language text (numbers live in data/signatures.json). */

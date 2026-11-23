@@ -599,7 +599,7 @@ export const AI_TOUGH: Partial<Record<Level, Partial<AILevel>>> = {
   },
 };
 
-export type Style = 'allround' | 'attacker' | 'defender' | 'net' | 'deceptive' | 'retriever' | 'wall';
+export type Style = 'allround' | 'attacker' | 'defender' | 'net' | 'deceptive' | 'retriever' | 'wall' | 'control';
 
 /** CPU personalities: multipliers on shot preferences plus where they like to stand. */
 /**
@@ -642,6 +642,9 @@ export const STYLES: Record<Style, {
     trait: 'Reaches shots no one else would and mixes safe, high lifts with smashes whenever it gets the chance' },
   wall: { label: 'Defensive wall', smash: 1.15, drop: 1.35, clear: 0.85, net: 1.25, kill: 1.2, jump: 0.5, baseDepth: 3.9, margin: 0.15, speed: 1.02, serveShort: 0.8, reach: 0.03, steady: 0.6, deepClears: true, counter: 2.2,
     trait: 'Soaks up your smashes, blocks them short to the net and counters with drops and net shots; its clears go to the back line' },
+  // 4.6: placement and patience: very accurate, moves you corner to corner, attacks only the short or weak reply.
+  control: { label: 'Control', smash: 0.85, drop: 1.6, clear: 1.25, net: 1.45, kill: 1.7, jump: 0.5, baseDepth: 3.4, margin: 0.1, speed: 1.02, serveShort: 1.15, steady: 0.55, deepClears: true,
+    trait: 'Moves you corner to corner with precise clears, drops and net shots, hardly ever misses, and waits for the short reply to kill' },
 };
 
 export interface KeyMap {

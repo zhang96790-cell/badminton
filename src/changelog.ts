@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.5.4',
+    title: 'A new CPU style: Control',
+    date: '23 Nov 2026',
+    changes: [
+      'A new CPU style: Control. It moves you corner to corner with precise clears, drops and net shots, hardly ever misses, and waits for a short reply to kill. Pick it on the match card.',
+    ],
+  },
+  {
     version: '4.5.3',
     title: 'Left-handers play left-handed',
     date: '23 Nov 2026',

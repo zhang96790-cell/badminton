@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.5.4: A new CPU style: Control (23 Nov 2026)
+
+- A new CPU style: Control. It moves you corner to corner with precise clears, drops and net shots, hardly ever misses, and waits for a short reply to kill. Pick it on the match card.
+
 ## 4.5.3: Left-handers play left-handed (23 Nov 2026)
 
 - Fixed: left-handed players now play left-handed (racket in the left hand, forehand and backhand the right way round). Before, everyone played right-handed whatever their card said.

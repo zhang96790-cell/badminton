@@ -9,7 +9,7 @@ export const WARNINGS_PATH = new URL('../docs/roster-warnings.md', import.meta.u
 export const CONFIG = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 export const BUDGET = CONFIG.budgets[CONFIG.rankedBudgetMode] ?? CONFIG.budgets.sheet;
 export const RARITIES = Object.keys(CONFIG.budgets.sheet);
-export const STYLES = ['all-rounder', 'attacker', 'defender', 'net player', 'deceptive', 'fast retriever', 'defensive wall'];
+export const STYLES = ['all-rounder', 'attacker', 'defender', 'net player', 'deceptive', 'fast retriever', 'defensive wall', 'control'];
 export const STAT_KEYS = ['power', 'speed', 'net', 'defence', 'stamina'];
 export const PLACEHOLDER = 'default_player';
 /** Longest id: stats keys like char_losses_<id> must fit in 32 characters. */

@@ -260,7 +260,8 @@ function entryChance(tier: string, r: number): number {
   switch (tier) {
     case 'S1000': return band([[15, 1], [32, 0.95], [50, 0.6], [9999, 0.12]]);
     case 'S750': return band([[15, 1], [40, 0.9], [60, 0.6], [9999, 0.12]]);
-    case 'S500': return band([[15, 0.2], [30, 0.65], [80, 0.8], [150, 0.45], [9999, 0.15]]);
+    // The top 15 play their two picked Super 500s, and often more (35% each).
+    case 'S500': return band([[15, 0.35], [30, 0.65], [80, 0.8], [150, 0.45], [9999, 0.15]]);
     case 'S300': return band([[15, 0.03], [30, 0.15], [60, 0.5], [150, 0.75], [9999, 0.35]]);
     case 'S100': return band([[30, 0.01], [60, 0.15], [120, 0.6], [250, 0.7], [9999, 0.45]]);
     default: return 0;

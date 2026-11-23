@@ -2244,6 +2244,8 @@ async function startMatch(mode: Mode = 'match', as?: string) {
   renderer.boardLine = mode === 'match' && settings.opponent !== 'human' ? `vs CPU ${LEVEL_LABEL[settings.opponent as Level]}` : null;
   logEvent('start', mode, mode === 'match' && settings.opponent !== 'human' ? settings.opponent : null);
   const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, as && canUse(as) ? as : myCharacter());
+  // 5.0 test: Play vs CPU from the career switches your signatures (and Ultra) on.
+  if (as && getEdition() === 5) setup.player.abilities = true;
   // 4.5: a different mat each match (the tutorial keeps the classic green).
   renderer.courtTheme = mode === 'tutorial' ? null : COURT_THEMES[COURT_VARIETY[Math.floor(Math.random() * COURT_VARIETY.length)]];
   game = new Game({ ...settings }, input, broadcast, mode, null, setup);

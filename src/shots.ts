@@ -181,8 +181,8 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const lowKill = netKill && z0 < netHeightAt(c.point.x) + SHOTS.netKill.minAbove;
   const stretched = c.stretch > SHOTS.stretchStart;
 
-  const handPower = c.hand === 'backhand' ? SHOTS.backhandPower : c.hand === 'round-the-head' ? SHOTS.roundTheHeadPower : 1;
-  const handNoise = c.hand === 'backhand' ? SHOTS.backhandNoise : c.hand === 'round-the-head' ? SHOTS.roundTheHeadNoise : 1;
+  const handPower = c.hand === 'backhand' ? eff.backhandPower ?? SHOTS.backhandPower : c.hand === 'round-the-head' ? SHOTS.roundTheHeadPower : 1;
+  const handNoise = c.hand === 'backhand' ? eff.backhandNoise ?? SHOTS.backhandNoise : c.hand === 'round-the-head' ? SHOTS.roundTheHeadNoise : 1;
   const power = (scrambled ? SHOTS.behindPower : 1) * (deep ? B.deepPower : 1) * (tumbleFast ? T.fastPower : 1)
     * (perfect && zone === 'overhead' && kindOf === 'fast' && Math.abs(c.point.y) > 4 && c.behind === 0 ? B.smashBonus : 1)
     * handPower

@@ -88,6 +88,8 @@ export class Player implements PlayerView {
   recoverT = 0;
   /** Extra reach on top of PLAYER.reach (human players get a little more). */
   extraReach = 0;
+  /** 5.0 Ultra (Great Wall): extra reach (m) until this player's next hit. */
+  ultraReach = 0;
   /** The current swing was started by swing assist. */
   assisted = false;
   /** Set when a jump smash is hit; the boost starts when they land. */
@@ -304,7 +306,7 @@ export class Player implements PlayerView {
   reachFor(z: number, flight = Infinity): number {
     // 3.11: the quick-shot reach cut is for drives, pushes and kills; smash defence keeps its pre-3.10.2 reach.
     const lunge = this.vsSmash ? hurry(flight, { ...PLAYER.lungeQuick, min: PLAYER.smashLungeMin }) : lungeScale(flight);
-    return PLAYER.reach + this.extraReach * (this.humanReach && !this.vsSmash ? humanReachScale(flight) : 1) + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lunge : 0);
+    return PLAYER.reach + this.ultraReach + this.extraReach * (this.humanReach && !this.vsSmash ? humanReachScale(flight) : 1) + (this.vsSmash ? this.eff.defReach : 0) + (z < PLAYER.lungeMaxZ ? PLAYER.lungeReach * lunge : 0);
   }
 
   /** The shuttle is within reach now but won't be next step. */

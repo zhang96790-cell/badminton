@@ -213,6 +213,8 @@ export function initCareer(d: CareerDeps) {
   // ── 5.0 (v5): rivals, news, fans and press conferences on the hub ──
   /** A press conference waiting for your answer (after a career match). */
   let pressDue: { won: boolean; opp: string; event: string } | null = null;
+  // Dev only: show a press conference on demand (for testing the answers).
+  if (import.meta.env.DEV) (window as unknown as { __press?: (won: boolean) => void }).__press = (won) => { pressDue = { won, opp: 'lin_dan', event: 'Test Open' }; render(); };
   function pressHtml() {
     if (!pressDue) return '';
     const opts = pressDue.won ? PRESS.win : PRESS.loss, opp = characterById(pressDue.opp).name;

@@ -1,3 +1,4 @@
+import { Ultras, ULTRA } from './ultras';
 import { AIController } from './ai';
 import type { Camera, View } from './camera';
 import { COURT, DOUBLES, LEVEL_LABEL, KEYS, OFFICIALS, ONLINE, PHYSICS, PLAYER, REPLAY, RULES, SERVE, SHOTS, STYLES, SWING, VISUAL, type KeyMap, type Level, type Style } from './config';
@@ -217,6 +218,8 @@ export class Game {
   private noDropTold = false;
   /** Signature abilities in this match (null when off). */
   sigs: Signatures | null = null;
+  /** 5.0: the Champions' Ultra Signatures in this match. */
+  ultras: Ultras | null = null;
   /** The last ability that fired, for the screen. */
   abilityPop: { text: string; mine: boolean; t: number } | null = null;
   private statMode: 'ranked' | 'career' = 'ranked';
@@ -233,7 +236,7 @@ export class Game {
     if (!c) return;
     const p = this.players[i];
     p.eff = getEffectiveStats(c, [...this.baseMods[i], ...(this.sigs?.modsFor(i) ?? [])], this.statMode);
-    p.speedMult = this.baseSpeed[i] * p.eff.move;
+    p.speedMult = this.baseSpeed[i] * p.eff.move * (this.ultras?.moveMult(i) ?? 1);
   }
   /** Online: how far (game seconds) the other player's latest shot still lags behind its true position. */
   private catchUp = 0;
@@ -341,6 +344,8 @@ export class Game {
     // Signature abilities (career and the daily challenge; never online until they're balanced for it).
     if (!online && !doubles && (this.setup.player.abilities || this.setup.opponent.abilities)) {
       this.sigs = Signatures.forCharacters([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null], (i) => this.teamOf(i));
+      const ul = new Ultras([this.setup.player.abilities ? this.statChars[0] : null, this.setup.opponent.abilities ? this.statChars[1] : null]);
+      if (ul.any) { this.ultras = ul; this.heavyOf = this.heavyOf.map((h, k) => h * ul.heavy(k)); }
     }
     if (drill) {
       this.session = mode === 'practice' ? new Practice() : new Tutorial(settings.p1Control === 'mouse' ? 'mouse' : 'keyboard', this.p1Keys);
@@ -523,6 +528,7 @@ export class Game {
     this.cheer = Math.max(0, this.cheer - real * 0.3);
     this.stats.tick(real);
     if (this.sigs?.tick(dt)) { this.refreshEff(0); this.refreshEff(1); }
+    if (this.ultras?.tick(dt)) { this.refreshEff(0); this.refreshEff(1); }
     if (this.abilityPop && (this.abilityPop.t += real) > 1.8) this.abilityPop = null;
     if (!this.session) this.scoreWatch();
     for (const o of this.officials) o.signalT += real;
@@ -782,6 +788,7 @@ export class Game {
         if (this.liftGuard > 0) continue;
         const c = p.tryContact(sh.pos, sh.vel, dt, this.flightT);
         if (!c) continue;
+        p.ultraReach = 0;
         // Developer restrictions: no smashing (a hard overhead is only a drive), no dropping (it's a clear).
         if (i === 0 && this.limits.noSmash && c.point.z >= SHOTS.overheadHeight) c.rising = true;
         // No drop shots (daily challenge): an overhead soft shot is played flat and fast instead (not lobbed).
@@ -847,13 +854,35 @@ export class Game {
           sigCtx = { kind: shotKind(shot.label), perfect: c.timing >= 1, incomingKmh, lunged: c.stretch > SHOTS.stretchStart, early: this.flightT < 0.6,
             crosscourt: Math.abs(c.point.x) > 0.5 && c.point.x * shot.velocity.x < 0, prev: null };
           const boost = this.sigs.forShot(i, sigCtx);
-          if (boost.mods.length && this.statChars[i]) shot = resolveShot(req, c, aimScale, this.isHuman(i), getEffectiveStats(this.statChars[i]!, [...this.baseMods[i], ...this.sigs.modsFor(i), ...boost.mods], this.statMode));
+          let effShot = effHere;
+          if (boost.mods.length && this.statChars[i]) effShot = getEffectiveStats(this.statChars[i]!, [...this.baseMods[i], ...this.sigs.modsFor(i), ...boost.mods], this.statMode);
+          // 5.0: a Champion's Ultra works on top, past the usual limits.
+          if (this.ultras?.of(i)) effShot = this.ultras.shotEff(i, sigCtx.kind, c.hand, c.point.z >= SHOTS.overheadHeight, effShot);
+          if (effShot !== effHere) shot = resolveShot(req, c, aimScale, this.isHuman(i), effShot);
           deceived = boost.deceive > 0 && Math.random() < boost.deceive;
           sigFired = boost.fired;
         }
+        // 5.0 Ultra (Denmark's Pride): a defence of Axelsen's smash that isn't perfectly timed is usually weak.
+        const prideVs = this.ultras && c.vsSmash ? this.players.findIndex((q, j) => q.side === sh.lastHitter && this.ultras!.of(j) === 'denmark_s_pride') : -1;
+        const prideHit = prideVs >= 0 && c.timing < 1;
+        if (prideHit && Math.random() < ULTRA.denmark.weakChance) {
+          const k = ULTRA.denmark.weakScale;
+          shot = { ...shot, velocity: { x: shot.velocity.x * k, y: shot.velocity.y * k, z: Math.max(shot.velocity.z, 2.5) } };
+        }
         sh.launch(c.point, shot.velocity, p.side, false);
         this.predict();
+        const uKind = shotKind(shot.label);
+        if (this.ultras?.of(i) === 'great_wall' && uKind === 'lift') {
+          // Great Wall: lifts always land in, right at the back.
+          for (let k = 0; k < 12 && (!this.predicted || Math.abs(this.predicted.y) > COURT.halfLength - 0.08 || Math.abs(this.predicted.x) > COURT.singlesHalfWidth - 0.05); k++) {
+            const v = sh.vel, sx = this.predicted && Math.abs(this.predicted.x) > COURT.singlesHalfWidth - 0.05 ? 0.9 : 1;
+            sh.launch(c.point, { x: v.x * sx * 0.97, y: v.y * 0.97, z: v.z }, p.side, false);
+            this.predict();
+          }
+        }
+        let tumbleForced = false;
         if (this.checkTumble(shot.label, c.timing >= 1)) shot.label = 'Net shot (tumbling)';
+        else if (this.ultras?.forceTumble(i, uKind) && this.predicted) { sh.tumbling = true; shot.label = 'Net shot (tumbling)'; tumbleForced = true; }
         if (/Lift/.test(shot.label)) this.liftGuard = SHOTS.liftGuard;
         // Each new shot shows its landing marker again, unless it's disguised.
         this.disguiseT = 0;
@@ -871,6 +900,13 @@ export class Game {
           if (f && f !== sigBefore) this.abilityPop = { text: f.def.name, mine: this.teamOf(f.player) === 0, t: 0 };
         }
         p.onHit(c.point);
+        if (this.ultras) {
+          const say = this.ultras.afterShot(i, uKind, tumbleForced);
+          p.ultraReach = this.ultras.liftReach(i, uKind);
+          if (this.ultras.of(i) === 'fastest_of_all_time') this.refreshEff(i);
+          if (say) this.abilityPop = { text: say, mine: this.teamOf(i) === 0, t: 0 };
+          if (prideHit) { p.wrongFoot(ULTRA.denmark.stun); this.abilityPop = { text: "Denmark's Pride", mine: this.teamOf(prideVs) === 0, t: 0 }; }
+        }
         if (c.airborne && /Jump smash/.test(shot.label)) p.jumpSmashed = true;
         if (/smash/i.test(shot.label)) p.recoverT = /Jump/.test(shot.label) ? SHOTS.smashRecovery.jumpTime : SHOTS.smashRecovery.time;
         // 4.3: a perfect drop is disguised (no landing marker at first) for people too.

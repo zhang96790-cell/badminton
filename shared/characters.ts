@@ -107,6 +107,9 @@ export const ROSTER_HASH = (() => {
  * far from today's game (smash speed −5% to +8%, everything else ±10%).
  */
 export interface Effective {
+  /** 5.0 Ultra (King of Backhand): this player's backhand power and aim error, in place of the game's usual ones. */
+  backhandPower?: number;
+  backhandNoise?: number;
   /** Smash (and other hard overhead) speed. */
   smash: number;
   /** How deep clears go. */
@@ -245,8 +248,8 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
     heavy: career ? 1 : 1 + J.heavyPerPower * p,
     netMove: career ? 1 : 1 + J.netMovePerNet * n,
   };
-  for (const m of modifiers) for (const k of Object.keys(m) as (keyof Effective)[]) e[k] *= m[k] ?? 1;
-  for (const k of Object.keys(e) as (keyof Effective)[]) {
+  for (const m of modifiers) for (const k of Object.keys(m) as (keyof Effective)[]) if (e[k] !== undefined) (e as unknown as Record<string, number>)[k] *= m[k] ?? 1;
+  for (const k of Object.keys(e) as Exclude<keyof Effective, 'backhandPower' | 'backhandNoise'>[]) {
     e[k] = k === 'smash' ? clamp(e[k], smLo, smHi)
       : k === 'netClearance' ? clamp(e[k], ...J.netClearance)
       : k === 'defReach' ? clamp(e[k], ...J.defReach)

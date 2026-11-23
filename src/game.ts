@@ -825,7 +825,8 @@ export class Game {
           this.events.push({ type: 'net' });
           break;
         }
-        if (this.touchesNet(p, req, c)) {
+        // 5.0 Ultra (Untouchable): Momota never touches the net on his net kills.
+        if (this.touchesNet(p, req, c) && this.ultras?.of(i) !== 'untouchable') {
           // Hit hard from right on top of the net: the racket clips it. The shuttle drops dead on this side.
           p.onHit(c.point);
           sh.vel = { x: 0, y: 0, z: -1.5 };
@@ -843,7 +844,9 @@ export class Game {
         // 4.3: each smash after the first in a rally is a little slower (you tire of smashing every shot).
         const overheadHard = req.kind === 'intent' ? req.intent === 'fast' : mouseShotKind(req.arc, req.power) === 'smash';
         const sm = overheadHard && c.point.z >= SHOTS.overheadHeight && Math.abs(c.point.y) >= SHOTS.nearNet ? this.rallySmashes[i] ?? 0 : 0;
-        const SF = SHOTS.smashFatigue, effHere = sm ? { ...p.eff, smash: p.eff.smash * Math.max(SF.minPower, 1 - SF.perSmash * sm) } : p.eff;
+        const SF = SHOTS.smashFatigue, effSm = sm ? { ...p.eff, smash: p.eff.smash * Math.max(SF.minPower, 1 - SF.perSmash * sm) } : p.eff;
+        // 5.0 Ultra (Untouchable): Momota kills tighter net shots than anyone.
+        const effHere = this.ultras?.of(i) === 'untouchable' ? { ...effSm, killMargin: ULTRA.untouchable.killMargin } : effSm;
         let shot = resolveShot(req, c, aimScale, this.isHuman(i), effHere);
         if (/smash/i.test(shot.label)) this.rallySmashes[i] = (this.rallySmashes[i] ?? 0) + 1;
         p.tire++; // 3.7: every shot you play tires you a little (Stamina slows it)

@@ -174,11 +174,11 @@ export function resolveShot(req: ShotRequest, c: Contact, aimScale = 1, perfectJ
   const risingFast = !!c.rising && zone === 'overhead' && kindOf === 'fast';
   const shotZone = risingFast ? 'mid' : zone;
   // Hard shots from close to the net and below the tape are slower (a kill above the tape isn't).
-  const belowTape = z0 < netHeightAt(c.point.x) + 0.1;
+  const belowTape = z0 < netHeightAt(c.point.x) + 0.1 - (eff.killMargin ?? 0);
   const netDrive = kindOf === 'fast' && belowTape && Math.abs(c.point.y) < SHOTS.netDriveWithin;
   // Net kills are short, sharp taps, not full smashes: much less pace, and only a real kill well above the tape.
   const netKill = kindOf === 'fast' && netArea && !belowTape;
-  const lowKill = netKill && z0 < netHeightAt(c.point.x) + SHOTS.netKill.minAbove;
+  const lowKill = netKill && z0 < netHeightAt(c.point.x) + SHOTS.netKill.minAbove - (eff.killMargin ?? 0);
   const stretched = c.stretch > SHOTS.stretchStart;
 
   const handPower = c.hand === 'backhand' ? eff.backhandPower ?? SHOTS.backhandPower : c.hand === 'round-the-head' ? SHOTS.roundTheHeadPower : 1;

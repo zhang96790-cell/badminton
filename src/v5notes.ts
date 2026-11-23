@@ -5,6 +5,7 @@ export const V5_NOTES: { date: string; title: string; items: [string, string][] 
     title: 'Test build 7',
     items: [
       ['Champion Ultras work', 'All six Ultras now work in matches, as designed: Great Wall, Untouchable, Fastest of All Time, The GOAT, King of Backhand and Denmark’s Pride. They go past the usual limits on purpose: tell us if any feels too strong.'],
+      ['Untouchable bends the net rules', 'Kento Momota never touches the net on his net kills, and he can kill net shots 8 cm closer to the tape than anyone else. No other player’s net rules change.'],
       ['Signatures in Play vs CPU', 'Play vs CPU from the career now uses your player’s signatures and Ultra, so you can try them.'],
       ['Press conferences fixed', 'The answers were hidden under the next box, so clicks didn’t land. They show in full now.'],
     ],

@@ -1,6 +1,6 @@
 // 5.0: the Champions' Ultra Signatures, as their designer wrote them. Unlike S, SS and SSS signatures, an Ultra
-// works past the game's normal stat limits (that's the point of it). Net-fault rules and the net-kill thresholds
-// are never changed. Toned-down versions are in the "Signatures and Shots" doc if testing shows they're too strong.
+// works past the game's normal stat limits (that's the point of it). Only Untouchable (Momota) bends the net
+// rules, as its designer wrote and the owner approved: no net-touch fault on his kills, and a lower kill threshold. Toned-down versions are in the "Signatures and Shots" doc if testing shows they're too strong.
 import type { Character, Effective } from '../shared/characters';
 import { PLAYER } from './config';
 import type { ShotKind } from './careermode/signatures';
@@ -10,7 +10,8 @@ const KNOWN = new Set<UltraId>(['great_wall', 'untouchable', 'fastest_of_all_tim
 
 export const ULTRA = {
   greatWall: { liftDepth: 0.3, liftAim: 0.4, blockAim: 0.45, reach: 0.25 },
-  untouchable: { netRun: 3, killNetAim: 0.6, killAim: 0.7 },
+  /** Also (as designed, the one Ultra that bends the net rules): no net-touch fault on his net kills, and he kills 8 cm lower than anyone. */
+  untouchable: { netRun: 3, killNetAim: 0.6, killAim: 0.7, killMargin: 0.08 },
   fastest: { afterSmash: 1.4, smashTime: 1.2, afterNet: 1.5, netTime: 1.0 },
   /** The GOAT: +7.5% per attacking shot in a row (counted up to 10: +75%). */
   goat: { perShot: 0.075, maxStacks: 10 },

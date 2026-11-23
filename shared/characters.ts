@@ -110,6 +110,8 @@ export interface Effective {
   /** 5.0 Ultra (King of Backhand): this player's backhand power and aim error, in place of the game's usual ones. */
   backhandPower?: number;
   backhandNoise?: number;
+  /** 5.0 Ultra (Untouchable): net kills from this much (m) lower than anyone else, and taps likewise. */
+  killMargin?: number;
   /** Smash (and other hard overhead) speed. */
   smash: number;
   /** How deep clears go. */
@@ -249,7 +251,7 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
     netMove: career ? 1 : 1 + J.netMovePerNet * n,
   };
   for (const m of modifiers) for (const k of Object.keys(m) as (keyof Effective)[]) if (e[k] !== undefined) (e as unknown as Record<string, number>)[k] *= m[k] ?? 1;
-  for (const k of Object.keys(e) as Exclude<keyof Effective, 'backhandPower' | 'backhandNoise'>[]) {
+  for (const k of Object.keys(e) as Exclude<keyof Effective, 'backhandPower' | 'backhandNoise' | 'killMargin'>[]) {
     e[k] = k === 'smash' ? clamp(e[k], smLo, smHi)
       : k === 'netClearance' ? clamp(e[k], ...J.netClearance)
       : k === 'defReach' ? clamp(e[k], ...J.defReach)

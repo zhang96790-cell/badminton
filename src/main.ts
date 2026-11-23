@@ -2627,16 +2627,20 @@ async function openLab() {
   labBody.innerHTML = '<p class="sub">Checking…</p>';
   const st = await (await loadAccount()).v5Status();
   if (!st) { labBody.innerHTML = '<p>The test area isn’t set up yet.</p>'; return; }
-  if (st.tester || st.open) {
-    labBody.innerHTML = getEdition() === 5
-      ? '<p>You’re in the v5 test area. Career and matches here use the v5 rules, roster and a separate v5 career.</p><div class="fb-actions"><button type="button" class="edit" data-lab="leave">Leave the test area</button></div>'
-      : '<p>You’re a v5 tester. Your normal career isn’t touched: v5 has its own.</p><div class="fb-actions"><button type="button" class="primary walk" data-lab="enter">Enter v5</button></div>';
+  if (getEdition() === 5) {
+    labBody.innerHTML = '<p>You’re in the v5 test area. Career and matches here use the v5 rules, roster and a separate v5 career.</p><div class="fb-actions"><button type="button" class="edit" data-lab="leave">Leave the test area</button></div>';
     return;
   }
-  labBody.innerHTML = '<p>Enter the test code.</p><input id="labCode" class="mc-search" autocomplete="off" spellcheck="false" placeholder="Code"><p id="labMsg" class="pass-msg"></p><div class="fb-actions"><button type="button" class="primary walk" data-lab="code">Unlock</button></div>';
+  // Once v5 is open to everyone, no code. Until then the code is asked every time you go in.
+  if (st.open) {
+    labBody.innerHTML = '<p>v5 is open. Your normal career isn’t touched: v5 has its own.</p><div class="fb-actions"><button type="button" class="primary walk" data-lab="enter">Enter v5</button></div>';
+    return;
+  }
+  labBody.innerHTML = '<p>Enter the test code to go into v5. Your normal career isn’t touched: v5 has its own.</p><input id="labCode" class="mc-search" autocomplete="off" spellcheck="false" placeholder="Code"><p id="labMsg" class="pass-msg"></p><div class="fb-actions"><button type="button" class="primary walk" data-lab="code">Enter v5</button></div>';
   (document.getElementById('labCode') as HTMLInputElement).focus();
 }
 document.getElementById('labDot')!.addEventListener('click', () => void openLab());
+labModal.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target as HTMLElement).id === 'labCode') labModal.querySelector<HTMLElement>('[data-lab="code"]')?.click(); });
 labModal.addEventListener('click', async (e) => {
   const t = e.target as HTMLElement;
   if (t === labModal || t.closest('[data-labclose]')) { labModal.classList.add('hidden'); return; }
@@ -2646,7 +2650,7 @@ labModal.addEventListener('click', async (e) => {
   if (a === 'code') {
     const code = (document.getElementById('labCode') as HTMLInputElement).value.trim();
     const ok = code && await (await loadAccount()).v5Redeem(code);
-    if (ok) { toast('Welcome, tester', 'You can now enter v5.'); void openLab(); }
+    if (ok) enterV5(true);
     else document.getElementById('labMsg')!.textContent = 'That code didn’t work (a few tries an hour).';
   }
 });

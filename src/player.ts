@@ -150,7 +150,9 @@ export class Player implements PlayerView {
 
   /** x sign of the player's right-hand side (they face the net). */
   get right(): number { return -this.side; }
-  get racketSide(): number { return this.right * (PLAYER.handedness === 'right' ? 1 : -1); }
+  /** 4.5.3: this player's own hand (from their character); the default is right-handed. */
+  handed: 'right' | 'left' = PLAYER.handedness;
+  get racketSide(): number { return this.right * (this.handed === 'right' ? 1 : -1); }
   get forward(): number { return -this.side; }
   get airborne(): boolean { return this.z > 0.02; }
 

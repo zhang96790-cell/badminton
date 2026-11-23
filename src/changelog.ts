@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.5.3',
+    title: 'Left-handers play left-handed',
+    date: '23 Nov 2026',
+    changes: [
+      'Fixed: left-handed players now play left-handed (racket in the left hand, forehand and backhand the right way round). Before, everyone played right-handed whatever their card said.',
+      'The player cards during a match have a little more room at the bottom, so the last signature no longer touches the winners and errors line.',
+    ],
+  },
+  {
     version: '4.5.2',
     title: 'New CPU names',
     date: '23 Nov 2026',

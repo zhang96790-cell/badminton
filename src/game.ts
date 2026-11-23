@@ -333,6 +333,10 @@ export class Game {
     this.baseSpeed = this.players.map((p) => p.speedMult / p.eff.move);
     // 3.7: how heavy each player's smash is. Online, the other player's comes from the player they picked.
     const oppChar = online && !online.lineup && this.setup.opponent.characterId ? characterById(this.setup.opponent.characterId) : null;
+    // 4.5.3: left-handers play left-handed (you, and an opponent whose player we know).
+    this.players[0].handed = this.statChars[0]?.handedness ?? 'right';
+    const oppHand = (this.statChars[1] ?? oppChar)?.handedness;
+    if (oppHand && this.players[1]) this.players[1].handed = oppHand;
     this.heavyOf = this.players.map((p, i) => (oppChar && i === 1 ? getEffectiveStats(oppChar, [], 'ranked').heavy : p.eff.heavy));
     // Signature abilities (career and the daily challenge; never online until they're balanced for it).
     if (!online && !doubles && (this.setup.player.abilities || this.setup.opponent.abilities)) {

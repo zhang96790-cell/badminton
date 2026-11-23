@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.5.3: Left-handers play left-handed (23 Nov 2026)
+
+- Fixed: left-handed players now play left-handed (racket in the left hand, forehand and backhand the right way round). Before, everyone played right-handed whatever their card said.
+- The player cards during a match have a little more room at the bottom, so the last signature no longer touches the winners and errors line.
+
 ## 4.5.2: New CPU names (23 Nov 2026)
 
 - The CPU levels have new names that follow a player's journey: Rookie, Park Player, Club Player, Club Captain, County Player, National Squad, Pro, Tour Player, Top 20, Top 10, World No. 1, World Champion, Olympic Champion, Hall of Famer and Impossible. They play exactly as before, and your stats and achievements are kept.

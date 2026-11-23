@@ -556,7 +556,7 @@ export class Hud {
   private mcCard(game: Game, x: number, y: number, cw: number, kicker: string, c: Character | null, name: string, sub: string, nums: string, team: string) {
     const ctx = this.ctx;
     const names = statNames(), sigs = c?.abilities ?? [];
-    const ch = 58 + (c ? 62 : 22) + sigs.length * 20 + 22;
+    const ch = 58 + (c ? 62 : 22) + sigs.length * 20 + 32;
     panel(ctx, x, y, cw, ch, 8, 'rgba(9,13,21,0.88)');
     ctx.fillStyle = c ? RARITY[c.rarity].color : team;
     ctx.fillRect(x, y + 8, 4, ch - 16);

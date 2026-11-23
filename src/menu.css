@@ -2340,3 +2340,20 @@ body.v5 .career.c-board .social-tabs button svg { width: 17px; height: 17px; }
 .v5-entrylist li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
 .v5-entrylist li span:last-child { color: #a9b4cc; font-size: 12px; }
 @media (max-width: 1100px) { .v5-entry-row { grid-template-columns: 40px minmax(0, 1fr); } .v5-entry-ctl { grid-column: 1 / -1; } }
+
+/* 5.0: the Superstar Signature (SSS) tier, between SS and the Champions' Ultra */
+.ability .ab-tier.t-SSS { background: #7b3fe4; color: #fff; }
+.v5-pick-sig.t-SSS { color: #c2a1ff; font-weight: 800; }
+
+/* 5.0 test (temporary): Play vs CPU and the match card, in the career header */
+.career .c-headbtns { display: contents; }
+.career .c-cpubtn { display: none; }
+body.v5 #career .c-headbtns { display: flex; align-items: center; gap: 8px; position: absolute; top: 16px; right: max(28px, calc((100vw - 1320px) / 2)); }
+body.v5 #career .c-headbtns > button { position: static; }
+body.v5 #career.c-viewonly .c-headbtns { right: calc(max(28px, calc((100vw - 1320px) / 2)) + 50px); }
+body.v5 #career.c-viewonly .c-cpubtn { display: none; }
+body.v5 #career .c-cpubtn { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.45); background: transparent; color: #f6f7f9; cursor: pointer;
+  font: 800 12px/1 'Saira Condensed', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+body.v5 #career .c-cpubtn.go { border-color: #e8112d; background: #e8112d; }
+body.v5 #career .c-cpubtn:hover { border-color: #fff; }
+body.v5 .matchcard { z-index: 30; }

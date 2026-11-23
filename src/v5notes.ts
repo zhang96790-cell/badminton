@@ -2,6 +2,18 @@
 export const V5_NOTES: { date: string; title: string; items: [string, string][] }[] = [
   {
     date: '23 Nov 2026',
+    title: 'Test build 6',
+    items: [
+      ['New roster', 'Every Common to Epic player has new stats and signatures, merged from two rebuilds. Champions are stronger (stats total 210).'],
+      ['Signature tiers', 'S (Signature), SS (Special Signature), SSS (Superstar Signature) and Ultra (Champions only). They stack: an SS always comes with an S.'],
+      ['Champions', 'Each Champion has their own S and SS, plus an Ultra. The Ultras show on their cards but don’t work in matches yet.'],
+      ['Control style', 'A new style: precise placement, corner to corner, waiting for the short reply.'],
+      ['Play vs CPU', 'Match card and Play vs CPU buttons at the top of the career, to try any player in an exhibition (for this test only).'],
+      ['More Super 500s', 'The top 15 enter more Super 500s than before.'],
+    ],
+  },
+  {
+    date: '23 Nov 2026',
     title: 'Test build 5',
     items: [
       ['Enter ahead', 'Enter events at least 2 weeks before (from Next up, the Calendar or an event’s page). When entries close, your world ranking decides main draw, qualifying or out.'],

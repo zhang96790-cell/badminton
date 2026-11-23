@@ -603,7 +603,7 @@ export class Hud {
       const tier = a.tier === 'U' ? 'ULTRA' : a.tier;
       ctx.font = font(10, 900);
       const tw = ctx.measureText(tier).width + 10;
-      panel(ctx, x + 16, yy + 2, tw, 15, 3, a.tier === 'U' ? '#e8112d' : a.tier === 'SS' ? '#ffc23d' : '#5b8cff');
+      panel(ctx, x + 16, yy + 2, tw, 15, 3, a.tier === 'U' ? '#e8112d' : a.tier === 'SSS' ? '#9b5cff' : a.tier === 'SS' ? '#ffc23d' : '#5b8cff');
       ctx.fillStyle = a.tier === 'SS' ? '#241300' : '#fff';
       ctx.fillText(tier, x + 21, yy + 13);
       ctx.fillStyle = C.hud;

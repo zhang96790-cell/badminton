@@ -43,7 +43,7 @@ export const STYLES = ['all-rounder', 'attacker', 'defender', 'net player', 'dec
 export type CharStyle = (typeof STYLES)[number];
 
 /** A signature or skill: what it's called and its plain-language text (numbers live in data/signatures.json). */
-export interface Ability { id: string; tier: 'S' | 'SS' | 'U'; name: string; text: string; slot: 'signature' | 'skill' }
+export interface Ability { id: string; tier: 'S' | 'SS' | 'SSS' | 'U'; name: string; text: string; slot: 'signature' | 'skill' }
 
 export interface Character {
   /** Made from the name: lowercase letters and underscores (stats are saved under it). */

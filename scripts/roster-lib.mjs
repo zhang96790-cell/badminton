@@ -121,7 +121,7 @@ export function normalise(rows) {
 }
 
 /** Errors (the roster can't be used) as plain sentences. */
-export function problems(roster, MAX = 35) {
+export function problems(roster, MAX = 35, maxAbilities = 2) {
   const out = [];
   const list = roster.characters;
   if (!Array.isArray(list)) return ['"characters" must be a list'];
@@ -154,7 +154,7 @@ export function problems(roster, MAX = 35) {
     }
     if (!/^\d+(\.\d+)*$/.test(String(c.released_in ?? ''))) out.push(`${who}: released_in must be a version like 3.0`);
     if (typeof c.enabled !== 'boolean') out.push(`${who}: enabled must be true or false`);
-    if ((c.abilities?.length ?? 0) > 2) out.push(`${who}: at most 2 abilities (signature + skill)`);
+    if ((c.abilities?.length ?? 0) > maxAbilities) out.push(`${who}: at most ${maxAbilities} abilities`);
   });
   return out;
 }

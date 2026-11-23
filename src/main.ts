@@ -51,7 +51,7 @@ try { if (sessionStorage.getItem(V5_KEY) === '1') setEdition(5); } catch { /* st
 if (getEdition() === 5) {
   document.body.classList.add('v5');
   // The test banner and its pop-ups sit above the full-screen career (out of the home screen's layer).
-  for (const id of ['v5Banner', 'v5Notes', 'labModal']) { const el = document.getElementById(id); if (el) document.body.appendChild(el); }
+  for (const id of ['v5Banner', 'v5Notes', 'labModal', 'matchcard']) { const el = document.getElementById(id); if (el) document.body.appendChild(el); }
   // The home's Career box wears the v5 mark while testing.
   const num = document.querySelector('.bc-career .bc-num'), k = document.querySelector('.bc-career .bc-k .status');
   if (num) num.textContent = 'v5';
@@ -2227,7 +2227,8 @@ function exhibitionWalkOn(): WalkOnInfo {
 }
 let walkingOn = false;
 
-async function startMatch(mode: Mode = 'match') {
+/** `as`: play as this character (5.0 test: Play vs CPU from the career uses your career player). */
+async function startMatch(mode: Mode = 'match', as?: string) {
   if (walkingOn) return;
   // 4.0: a walk-on before a match against the CPU (not 2 players, practice or the tutorial).
   if (mode === 'match' && settings.opponent !== 'human') {
@@ -2242,7 +2243,7 @@ async function startMatch(mode: Mode = 'match') {
   // 4.4: exhibition boards say who you're playing; and a note for the admin analytics.
   renderer.boardLine = mode === 'match' && settings.opponent !== 'human' ? `vs CPU ${LEVEL_LABEL[settings.opponent as Level]}` : null;
   logEvent('start', mode, mode === 'match' && settings.opponent !== 'human' ? settings.opponent : null);
-  const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, myCharacter());
+  const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, as && canUse(as) ? as : myCharacter());
   // 4.5: a different mat each match (the tutorial keeps the classic green).
   renderer.courtTheme = mode === 'tutorial' ? null : COURT_THEMES[COURT_VARIETY[Math.floor(Math.random() * COURT_VARIETY.length)]];
   game = new Game({ ...settings }, input, broadcast, mode, null, setup);
@@ -2527,6 +2528,9 @@ const careerUi = initCareer({
   // 5.0: the v5 test area never touches account stats or leaderboards.
   saveStats: (delta) => { if (getEdition() !== 5) saveCareer(delta); },
   esc: hubEsc,
+  // 5.0 test (temporary): exhibition matches from inside the career.
+  playCpu: (as) => void startMatch('match', as),
+  openMatchCard: () => openDrawer('card'),
 });
 function leaveCareerMatch() {
   const leave = careerLeave;

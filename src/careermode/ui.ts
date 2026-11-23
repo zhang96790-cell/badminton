@@ -33,6 +33,9 @@ export interface CareerDeps {
   openAccount: (why: string) => void;
   saveStats: (delta: Record<string, number>) => void;
   esc: (s: string) => string;
+  /** 5.0 test (temporary): an exhibition against the CPU, and its match card, from the career. */
+  playCpu?: (characterId?: string) => void;
+  openMatchCard?: () => void;
 }
 
 const STYLE_AI: Record<string, Style> = { 'all-rounder': 'allround', attacker: 'attacker', defender: 'defender', 'net player': 'net', deceptive: 'deceptive', 'fast retriever': 'retriever', 'defensive wall': 'wall', control: 'control' };
@@ -170,7 +173,8 @@ export function initCareer(d: CareerDeps) {
       <div class="c-stats"><div><b>${money(s.money)}</b><span>Money</span></div>
       <div><b>${r ? `#${r}` : '–'}</b><span>World rank</span></div><div><b>${s.titles}</b><span>Titles</span></div></div>`;
     const tabBtn = ([k, l, p]: [string, string, string]) => `<button role="tab" data-ctab="${k}" aria-selected="${k === tab}" ${s!.current && k === 'squad' ? 'title="Change players between tournaments"' : ''}>${icon(p)}<span>${l}</span>${k === 'shop' && shopHasNew() ? '<span class="c-new dot">New</span>' : ''}</button>`;
-    $('careerTabs').innerHTML = (getEdition() === 5 ? NAV_V5 : NAV.filter(([k]) => k !== 'news')).map((n) => (n ? tabBtn(n) : '<span class="c-tabsep" aria-hidden="true"></span>')).join('');
+    $('careerTabs').innerHTML = (getEdition() === 5 ? NAV_V5 : NAV.filter(([k]) => k !== 'news')).map((n) => (n ? tabBtn(n) : '<span class="c-tabsep" aria-hidden="true"></span>')).join('')
+      ;
     if (s.pendingRecruitOffer || s.offerDue) { void renderOffer(); return; }
     ({ hub: renderHub, calendar: renderCalendar, rivals: renderRivals, ranking: renderRanking, squad: getEdition() === 5 ? renderSquadV5 : renderSquad, news: renderNews, sponsors: renderSponsors, shop: renderShop, ledger: renderLedger, daily: renderDaily, trophies: renderTrophies, settings: renderSettings } as Record<string, () => void>)[tab]?.();
   }
@@ -1261,6 +1265,8 @@ export function initCareer(d: CareerDeps) {
     const t = ev2.target as HTMLElement;
     const at = (sel: string) => t.closest<HTMLElement>(sel);
     if (at('[data-cclose]')) { close(); return; }
+    if (at('[data-cpu]')) { if (s?.current) { d.toast('Finish your tournament first', 'Play the CPU between tournaments.'); return; } close(); d.playCpu?.(s?.characterId); return; }
+    if (at('[data-cpucard]')) { d.openMatchCard?.(); return; }
     if (at('[data-ctour]')) { if (s) startCareerTour(); else d.toast('Start a career first', 'The tour shows you around once your career has begun.'); return; }
     if (at('[data-retry]')) { void open(tab); return; }
     if (at('[data-login]')) { close(); d.openAccount('Log in or sign up to start a career.'); return; }

@@ -4,7 +4,7 @@
 import data from '../../data/signatures.json';
 import type { Character, Modifier } from '../../shared/characters';
 
-export interface SigDef { id: string; name: string; tier: 'S' | 'SS' | 'U'; trigger: string; effect: string; magnitude: number; duration: number; cooldown: number; text: string; from_sheet: boolean }
+export interface SigDef { id: string; name: string; tier: 'S' | 'SS' | 'SSS' | 'U'; trigger: string; effect: string; magnitude: number; duration: number; cooldown: number; text: string; from_sheet: boolean }
 export const SIGNATURES = new Map((data.abilities as SigDef[]).map((a) => [a.id, a]));
 /** Abilities in ranked and friendly matches: off until the balance simulations are clean. */
 export const signaturesInRanked = false;

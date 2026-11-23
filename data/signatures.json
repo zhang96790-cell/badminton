@@ -1,5 +1,5 @@
 {
- "note": "Signature abilities (career and the daily challenge; off in ranked and friendly until balance sims are clean). trigger = when it fires, effect = what changes, magnitude = how much (0.1 = 10%), duration in seconds (0 = that shot), cooldown in seconds. Never changes net-fault rules or the net-kill/net-spin thresholds. from_sheet = numbers from the owner's roster sheet. 5.0: Ultra (U) signatures have narrow triggers (perfect timing, a full lunge, a set-up shot) and much bigger effects; top-tier players only.",
+ "note": "Signature abilities (career and the daily challenge; off in ranked and friendly until balance sims are clean). trigger = when it fires, effect = what changes, magnitude = how much (0.1 = 10%), duration in seconds (0 = that shot), cooldown in seconds. Never changes net-fault rules or the net-kill/net-spin thresholds. from_sheet = numbers from the owner's roster sheet. 5.0: tiers S (Signature), SS (Special Signature), SSS (Superstar Signature: narrow triggers, big effects) and U (Ultra Signature, Champions only; trigger \"ultra\" = not built into matches yet).",
  "abilities": [
   {
    "id": "counterstrike",
@@ -364,7 +364,7 @@
   {
    "id": "sky_hammer",
    "name": "Sky Hammer",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "perfectSmash",
    "effect": "smash",
    "magnitude": 0.15,
@@ -376,7 +376,7 @@
   {
    "id": "killer_instinct",
    "name": "Killer Instinct",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "netThenSmash",
    "effect": "shotSpeed",
    "magnitude": 0.16,
@@ -388,7 +388,7 @@
   {
    "id": "second_wind",
    "name": "Second Wind",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "perfectRetrieve",
    "effect": "move",
    "magnitude": 0.16,
@@ -400,7 +400,7 @@
   {
    "id": "silk_web",
    "name": "Silk Web",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "lungeNet",
    "effect": "netAim",
    "magnitude": 0.35,
@@ -412,7 +412,7 @@
   {
    "id": "phantom_veil",
    "name": "Phantom Veil",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "perfectDrop",
    "effect": "deceive",
    "magnitude": 0.28,
@@ -424,7 +424,7 @@
   {
    "id": "lightning_counter",
    "name": "Lightning Counter",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "perfectCounter",
    "effect": "shotSpeed",
    "magnitude": 0.2,
@@ -436,7 +436,7 @@
   {
    "id": "precision_strike",
    "name": "Precision Strike",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "earlyCross",
    "effect": "aim",
    "magnitude": 0.35,
@@ -448,7 +448,7 @@
   {
    "id": "iron_curtain",
    "name": "Iron Curtain",
-   "tier": "U",
+   "tier": "SSS",
    "trigger": "perfectBlock",
    "effect": "oppSmash",
    "magnitude": 0.18,
@@ -456,6 +456,228 @@
    "cooldown": 10,
    "text": "A perfectly timed block or lift off a hard smash: the opponent’s smashes are 18% slower for 3 seconds (never below the smash floor).",
    "from_sheet": false
+  },
+  {
+   "id": "endless_lift",
+   "name": "Endless Lift",
+   "tier": "S",
+   "trigger": "lift",
+   "effect": "defenceDepth",
+   "magnitude": 0.12,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Lifts land 12% deeper, pinning attackers to the back line.",
+   "from_sheet": true
+  },
+  {
+   "id": "counter_wall",
+   "name": "Counter Wall",
+   "tier": "SS",
+   "trigger": "block",
+   "effect": "shotSpeed",
+   "magnitude": 0.14,
+   "duration": 2,
+   "cooldown": 8,
+   "text": "After blocking a hard smash (180+ km/h), your shots are 14% faster for 2 seconds.",
+   "from_sheet": true
+  },
+  {
+   "id": "southpaw_spin",
+   "name": "Southpaw Spin",
+   "tier": "S",
+   "trigger": "net",
+   "effect": "netTiming",
+   "magnitude": 0.12,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Net shots get a 12% wider perfect-timing window (net rules and tumbling are unchanged).",
+   "from_sheet": true
+  },
+  {
+   "id": "crosscourt_lock",
+   "name": "Crosscourt Lock",
+   "tier": "SS",
+   "trigger": "crosscourtDrop",
+   "effect": "deceive",
+   "magnitude": 0.15,
+   "duration": 0,
+   "cooldown": 5,
+   "text": "Crosscourt drops have a 15% chance of wrong-footing the opponent.",
+   "from_sheet": true
+  },
+  {
+   "id": "feline_footwork",
+   "name": "Feline Footwork",
+   "tier": "S",
+   "trigger": "retrieve",
+   "effect": "move",
+   "magnitude": 0.1,
+   "duration": 3,
+   "cooldown": 8,
+   "text": "After a retrieval, 10% faster movement for 3 seconds.",
+   "from_sheet": true
+  },
+  {
+   "id": "malaysian_missile",
+   "name": "Malaysian Missile",
+   "tier": "SS",
+   "trigger": "perfectSmash",
+   "effect": "smash",
+   "magnitude": 0.12,
+   "duration": 0,
+   "cooldown": 6,
+   "text": "A perfectly timed smash is up to 12% faster (within the game’s smash limit).",
+   "from_sheet": true
+  },
+  {
+   "id": "super_dan_touch",
+   "name": "Super Dan Touch",
+   "tier": "S",
+   "trigger": "drop",
+   "effect": "aim",
+   "magnitude": 0.12,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Drops are 12% more accurate.",
+   "from_sheet": true
+  },
+  {
+   "id": "left_hand_whip",
+   "name": "Left-Hand Whip",
+   "tier": "SS",
+   "trigger": "crosscourtAttack",
+   "effect": "deceive",
+   "magnitude": 0.14,
+   "duration": 0,
+   "cooldown": 5,
+   "text": "A crosscourt smash or drive has a 14% chance of wrong-footing the opponent.",
+   "from_sheet": true
+  },
+  {
+   "id": "wrist_of_steel",
+   "name": "Wrist of Steel",
+   "tier": "S",
+   "trigger": "drive",
+   "effect": "shotSpeed",
+   "magnitude": 0.1,
+   "duration": 0,
+   "cooldown": 6,
+   "text": "Drives are 10% faster.",
+   "from_sheet": true
+  },
+  {
+   "id": "backhand_clear",
+   "name": "Backhand Clear",
+   "tier": "SS",
+   "trigger": "clear",
+   "effect": "oppMove",
+   "magnitude": 0.14,
+   "duration": 1.2,
+   "cooldown": 8,
+   "text": "After a clear, the opponent moves 14% slower for 1.2 seconds.",
+   "from_sheet": true
+  },
+  {
+   "id": "steep_angle",
+   "name": "Steep Angle",
+   "tier": "S",
+   "trigger": "smash",
+   "effect": "smash",
+   "magnitude": 0.08,
+   "duration": 0,
+   "cooldown": 6,
+   "text": "Smashes are up to 8% faster (within the game’s smash limit).",
+   "from_sheet": true
+  },
+  {
+   "id": "viking_net_press",
+   "name": "Viking Net Press",
+   "tier": "SS",
+   "trigger": "netWin",
+   "effect": "nextAttack",
+   "magnitude": 0.15,
+   "duration": 0,
+   "cooldown": 10,
+   "text": "After winning a point at the net, the next attacking shot is 15% faster.",
+   "from_sheet": true
+  },
+  {
+   "id": "great_wall",
+   "name": "Great Wall",
+   "tier": "U",
+   "trigger": "ultra",
+   "effect": "none",
+   "magnitude": 0,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "All of Chen Long's lifts go to the very back of the court and are always in. After a lift, Chen Long goes into a defensive stance: his reach is 25% bigger for the next shot. His blocks are much less likely to fail to get over the net.",
+   "from_sheet": true,
+   "champion": "chen_long"
+  },
+  {
+   "id": "untouchable",
+   "name": "Untouchable",
+   "tier": "U",
+   "trigger": "ultra",
+   "effect": "none",
+   "magnitude": 0,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "After 3 net shots in a row, Kento Momota's next net shot always tumbles, and he never touches the net on net kills. He can net kill and net tap tighter net shots than his opponents can.",
+   "from_sheet": true,
+   "champion": "kento_momota"
+  },
+  {
+   "id": "fastest_of_all_time",
+   "name": "Fastest of All Time",
+   "tier": "U",
+   "trigger": "ultra",
+   "effect": "none",
+   "magnitude": 0,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "After a successful smash, Lee Chong Wei moves 40% faster, so he can reach tight blocks close to the net. After a successful net shot, he moves 50% faster getting back to the back court.",
+   "from_sheet": true,
+   "champion": "lee_chong_wei"
+  },
+  {
+   "id": "the_goat",
+   "name": "The GOAT",
+   "tier": "U",
+   "trigger": "ultra",
+   "effect": "none",
+   "magnitude": 0,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Every attacking shot Lin Dan plays in a row (drives, smashes, drops, net kills, net taps) boosts his power, accuracy and speed by 7.5%. The boost resets when he has to play a defensive or neutral shot (lifts, clears, net shots).",
+   "from_sheet": true,
+   "champion": "lin_dan"
+  },
+  {
+   "id": "king_of_backhand",
+   "name": "King of Backhand",
+   "tier": "U",
+   "trigger": "ultra",
+   "effect": "none",
+   "magnitude": 0,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Shots on Taufik Hidayat's backhand side have 30% more power and are 50% more accurate. He can play backhand smashes, at 85% of his forehand smash power.",
+   "from_sheet": true,
+   "champion": "taufik_hidayat"
+  },
+  {
+   "id": "denmark_s_pride",
+   "name": "Denmark's Pride",
+   "tier": "U",
+   "trigger": "ultra",
+   "effect": "none",
+   "magnitude": 0,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Smashes have 20% more power and need perfect timing to defend, by block or lift. A defence without perfect timing leaves the opponent stunned for 1 second, unable to move. A mistimed defence goes to half court or high at the net 90% of the time.",
+   "from_sheet": true,
+   "champion": "viktor_axelsen"
   }
  ]
 }

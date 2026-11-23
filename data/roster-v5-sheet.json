@@ -1,0 +1,9810 @@
+{
+"rows": [
+{
+"name": "Chen Long",
+"rarity": "Champion",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+46,
+36,
+35,
+50,
+43
+],
+"S": "Endless Lift",
+"SS": "Counter Wall",
+"SSS": null,
+"U": "Great Wall",
+"note": "Ultra kept as written for now; toned-down versions are in the Champion Ultras doc.",
+"id": "chen_long"
+},
+{
+"name": "Kento Momota",
+"rarity": "Champion",
+"country": "JPN",
+"style": "net player",
+"hand": "left",
+"stats": [
+40,
+40,
+49,
+31,
+50
+],
+"S": "Southpaw Spin",
+"SS": "Crosscourt Lock",
+"SSS": null,
+"U": "Untouchable",
+"note": "Ultra kept as written for now; toned-down versions are in the Champion Ultras doc.",
+"id": "kento_momota"
+},
+{
+"name": "Lee Chong Wei",
+"rarity": "Champion",
+"country": "MAS",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+48,
+50,
+43,
+30,
+39
+],
+"S": "Feline Footwork",
+"SS": "Malaysian Missile",
+"SSS": null,
+"U": "Fastest of All Time",
+"note": "Ultra kept as written for now; toned-down versions are in the Champion Ultras doc.",
+"id": "lee_chong_wei"
+},
+{
+"name": "Lin Dan",
+"rarity": "Champion",
+"country": "CHN",
+"style": "control",
+"hand": "left",
+"stats": [
+49,
+40,
+42,
+34,
+45
+],
+"S": "Super Dan Touch",
+"SS": "Left-Hand Whip",
+"SSS": null,
+"U": "The GOAT",
+"note": "Ultra kept as written for now; toned-down versions are in the Champion Ultras doc.",
+"id": "lin_dan"
+},
+{
+"name": "Taufik Hidayat",
+"rarity": "Champion",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+45,
+40,
+40,
+40,
+45
+],
+"S": "Wrist of Steel",
+"SS": "Backhand Clear",
+"SSS": null,
+"U": "King of Backhand",
+"note": "Ultra kept as written for now; toned-down versions are in the Champion Ultras doc.",
+"id": "taufik_hidayat"
+},
+{
+"name": "Viktor Axelsen",
+"rarity": "Champion",
+"country": "DEN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+50,
+30,
+34,
+50,
+46
+],
+"S": "Steep Angle",
+"SS": "Viking Net Press",
+"SSS": null,
+"U": "Denmark's Pride",
+"note": "Ultra kept as written for now; toned-down versions are in the Champion Ultras doc.",
+"id": "viktor_axelsen"
+},
+{
+"name": "Allan Budikusuma",
+"rarity": "Legendary",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+48,
+32,
+32,
+32,
+36
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "allan_budikusuma"
+},
+{
+"name": "Ardy Wiranata",
+"rarity": "Legendary",
+"country": "INA",
+"style": "net player",
+"hand": "right",
+"stats": [
+29,
+29,
+49,
+29,
+44
+],
+"S": "Razor Drop",
+"SS": "Vortex Net Trap",
+"SSS": "Precision Strike",
+"U": null,
+"note": null,
+"id": "ardy_wiranata"
+},
+{
+"name": "Chen Jin",
+"rarity": "Legendary",
+"country": "CHN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+47,
+28,
+28,
+41,
+36
+],
+"S": "Iron Formation",
+"SS": "Ghostline Drive",
+"SSS": "Sky Hammer",
+"U": null,
+"note": null,
+"id": "chen_jin"
+},
+{
+"name": "Hendrawan",
+"rarity": "Legendary",
+"country": "INA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+47,
+28,
+28,
+41,
+36
+],
+"S": "Iron Formation",
+"SS": "Thunder Rebound",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hendrawan"
+},
+{
+"name": "Ji Xinpeng",
+"rarity": "Legendary",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+29,
+29,
+49,
+29,
+44
+],
+"S": "Razor Drop",
+"SS": "Vortex Net Trap",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ji_xinpeng"
+},
+{
+"name": "Peter Gade",
+"rarity": "Legendary",
+"country": "DEN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+26,
+44,
+46,
+26,
+38
+],
+"S": "Silk Touch",
+"SS": "Relentless Pursuit",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "peter_gade"
+},
+{
+"name": "Poul-Erik Høyer Larsen",
+"rarity": "Legendary",
+"country": "DEN",
+"style": "net player",
+"hand": "right",
+"stats": [
+26,
+26,
+46,
+39,
+43
+],
+"S": "Iron Formation",
+"SS": "Halo Tumble",
+"SSS": "Killer Instinct",
+"U": null,
+"note": null,
+"id": "pe_hoyer_larsen"
+},
+{
+"name": "Rashid Sidek",
+"rarity": "Legendary",
+"country": "MAS",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+29,
+29,
+48,
+28,
+46
+],
+"S": "Crosscourt Flick",
+"SS": "Phantom Drop",
+"SSS": "Silk Web",
+"U": null,
+"note": null,
+"id": "rashid_sidek"
+},
+{
+"name": "Rudy Hartono",
+"rarity": "Legendary",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+47,
+35,
+28,
+37,
+33
+],
+"S": "Steady Lift",
+"SS": "Silent Crossfire",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rudy_hartono"
+},
+{
+"name": "Sony Dwi Kuncoro",
+"rarity": "Legendary",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+47,
+43,
+29,
+28,
+33
+],
+"S": "Burst Return",
+"SS": "Thunder Rebound",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "sony_dwi_kuncoro"
+},
+{
+"name": "Bao Chunlai",
+"rarity": "Mythic",
+"country": "CHN",
+"style": "attacker",
+"hand": "left",
+"stats": [
+46,
+28,
+28,
+27,
+33
+],
+"S": "Late Drive",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bao_chunlai"
+},
+{
+"name": "Boonsak Ponsana",
+"rarity": "Mythic",
+"country": "THA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+26,
+32,
+26,
+46,
+32
+],
+"S": "Steady Lift",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "boonsak_ponsana"
+},
+{
+"name": "Chen Hong",
+"rarity": "Mythic",
+"country": "CHN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+42,
+26,
+29,
+25,
+40
+],
+"S": "Quickfire Smash",
+"SS": "Thunder Rebound",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "chen_hong"
+},
+{
+"name": "Dong Jiong",
+"rarity": "Mythic",
+"country": "CHN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+42,
+38,
+27,
+25,
+30
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "dong_jiong"
+},
+{
+"name": "Heryanto Arbi",
+"rarity": "Mythic",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+46,
+28,
+28,
+27,
+33
+],
+"S": "Quickfire Smash",
+"SS": "Thunder Rebound",
+"SSS": "Killer Instinct",
+"U": null,
+"note": null,
+"id": "heryanto_arbi"
+},
+{
+"name": "Joko Suprianto",
+"rarity": "Mythic",
+"country": "INA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+27,
+38,
+42,
+25,
+30
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "joko_suprianto"
+},
+{
+"name": "Kenneth Jonassen",
+"rarity": "Mythic",
+"country": "DEN",
+"style": "defender",
+"hand": "right",
+"stats": [
+28,
+28,
+27,
+46,
+33
+],
+"S": "Iron Formation",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kenneth_jonassen"
+},
+{
+"name": "Lee Hyun-il",
+"rarity": "Mythic",
+"country": "KOR",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+27,
+42,
+26,
+38,
+29
+],
+"S": "Burst Return",
+"SS": "Relentless Pursuit",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lee_hyun_il"
+},
+{
+"name": "Muhammad Hafiz Hashim",
+"rarity": "Mythic",
+"country": "MAS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+42,
+38,
+27,
+25,
+30
+],
+"S": "Early Pressure",
+"SS": "Thunder Rebound",
+"SSS": "Iron Curtain",
+"U": null,
+"note": null,
+"id": "m_hafiz_hashim"
+},
+{
+"name": "Peter Rasmussen",
+"rarity": "Mythic",
+"country": "DEN",
+"style": "net player",
+"hand": "right",
+"stats": [
+26,
+25,
+46,
+25,
+40
+],
+"S": "Silk Touch",
+"SS": "Vortex Net Trap",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "peter_rasmussen"
+},
+{
+"name": "Pullela Gopichand",
+"rarity": "Mythic",
+"country": "IND",
+"style": "net player",
+"hand": "right",
+"stats": [
+26,
+25,
+46,
+25,
+40
+],
+"S": "Silk Touch",
+"SS": "Vortex Net Trap",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pullela_gopichand"
+},
+{
+"name": "Shon Seung-mo",
+"rarity": "Mythic",
+"country": "KOR",
+"style": "all-rounder",
+"hand": "left",
+"stats": [
+42,
+25,
+25,
+37,
+33
+],
+"S": "Steady Lift",
+"SS": "Tempest Clear",
+"SSS": "Sky Hammer",
+"U": null,
+"note": null,
+"id": "shon_seung_mo"
+},
+{
+"name": "Sun Jun",
+"rarity": "Mythic",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+26,
+25,
+46,
+25,
+40
+],
+"S": "Feather Touch",
+"SS": "Vortex Net Trap",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "sun_jun"
+},
+{
+"name": "Wong Choong Hann",
+"rarity": "Mythic",
+"country": "MAS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+42,
+25,
+37,
+25,
+33
+],
+"S": "Early Pressure",
+"SS": "Thunder Rebound",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wong_choong_hann"
+},
+{
+"name": "Xia Xuanze",
+"rarity": "Mythic",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+27,
+38,
+25,
+42,
+30
+],
+"S": "Iron Formation",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xia_xuanze"
+},
+{
+"name": "Chen Yuekun",
+"rarity": "Elite",
+"country": "CHN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+43,
+25,
+25,
+25,
+28
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "chen_yuekun"
+},
+{
+"name": "Dionysius Hayom Rumbaka",
+"rarity": "Elite",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+43,
+25,
+25,
+25,
+28
+],
+"S": "Quickfire Smash",
+"SS": "Silent Crossfire",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "d_hayom_rumbaka"
+},
+{
+"name": "Du Pengyu",
+"rarity": "Elite",
+"country": "CHN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+24,
+28,
+24,
+43,
+27
+],
+"S": "Iron Formation",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "du_pengyu"
+},
+{
+"name": "Hans-Kristian Vittinghus",
+"rarity": "Elite",
+"country": "DEN",
+"style": "defender",
+"hand": "right",
+"stats": [
+35,
+24,
+23,
+38,
+26
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hk_vittinghus"
+},
+{
+"name": "Kazushi Yamada",
+"rarity": "Elite",
+"country": "JPN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+24,
+35,
+38,
+22,
+27
+],
+"S": "Silk Touch",
+"SS": "Phantom Cascade",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kazushi_yamada"
+},
+{
+"name": "Kenichi Tago",
+"rarity": "Elite",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+22,
+22,
+30,
+37,
+35
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kenichi_tago"
+},
+{
+"name": "Lee Dong-keun",
+"rarity": "Elite",
+"country": "KOR",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+24,
+28,
+24,
+43,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lee_dong_keun"
+},
+{
+"name": "Marc Zwiebler",
+"rarity": "Elite",
+"country": "GER",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+23,
+22,
+42,
+22,
+37
+],
+"S": "Crosscourt Flick",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marc_zwiebler"
+},
+{
+"name": "Nguyen Tien Minh",
+"rarity": "Elite",
+"country": "VIE",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+24,
+38,
+23,
+35,
+26
+],
+"S": "Relentless Pursuit",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nguyen_tien_minh"
+},
+{
+"name": "Parupalli Kashyap",
+"rarity": "Elite",
+"country": "IND",
+"style": "net player",
+"hand": "right",
+"stats": [
+22,
+22,
+44,
+22,
+36
+],
+"S": "Silk Touch",
+"SS": "Halo Tumble",
+"SSS": "Sky Hammer",
+"U": null,
+"note": null,
+"id": "parupalli_kashyap"
+},
+{
+"name": "Przemysław Wacha",
+"rarity": "Elite",
+"country": "POL",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+23,
+22,
+42,
+22,
+37
+],
+"S": "Silk Touch",
+"SS": "Phantom Drop",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "przemyslaw_wacha"
+},
+{
+"name": "Rajiv Ouseph",
+"rarity": "Elite",
+"country": "ENG",
+"style": "all-rounder",
+"hand": "left",
+"stats": [
+38,
+24,
+22,
+35,
+27
+],
+"S": "Quickfire Smash",
+"SS": "Tempest Clear",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rajiv_ouseph"
+},
+{
+"name": "Ronald Susilo",
+"rarity": "Elite",
+"country": "SGP",
+"style": "defender",
+"hand": "right",
+"stats": [
+22,
+22,
+30,
+37,
+35
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronald_susilo"
+},
+{
+"name": "Roslin Hashim",
+"rarity": "Elite",
+"country": "MAS",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+24,
+38,
+35,
+23,
+26
+],
+"S": "Burst Return",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "roslin_hashim"
+},
+{
+"name": "Sho Sasaki",
+"rarity": "Elite",
+"country": "JPN",
+"style": "net player",
+"hand": "right",
+"stats": [
+22,
+22,
+37,
+34,
+31
+],
+"S": "Feather Touch",
+"SS": "Halo Tumble",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "sho_sasaki"
+},
+{
+"name": "Simon Santoso",
+"rarity": "Elite",
+"country": "INA",
+"style": "net player",
+"hand": "right",
+"stats": [
+22,
+22,
+44,
+22,
+36
+],
+"S": "Feather Touch",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "simon_santoso"
+},
+{
+"name": "Tanongsak Saensomboonsuk",
+"rarity": "Elite",
+"country": "THA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+38,
+35,
+24,
+22,
+27
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "t_saensomboonsuk"
+},
+{
+"name": "Tommy Sugiarto",
+"rarity": "Elite",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+43,
+25,
+25,
+25,
+28
+],
+"S": "Early Pressure",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tommy_sugiarto"
+},
+{
+"name": "Wang Zhengming",
+"rarity": "Elite",
+"country": "CHN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+38,
+24,
+22,
+35,
+27
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wang_zhengming"
+},
+{
+"name": "Wei Nan",
+"rarity": "Elite",
+"country": "CHN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+24,
+38,
+23,
+35,
+26
+],
+"S": "Burst Return",
+"SS": "Tempest Clear",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wei_nan"
+},
+{
+"name": "Adrian Sable",
+"rarity": "Epic",
+"country": "AUS",
+"style": "net player",
+"hand": "right",
+"stats": [
+25,
+23,
+38,
+20,
+26
+],
+"S": "Crosscourt Flick",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_sable"
+},
+{
+"name": "Alden Iverson",
+"rarity": "Epic",
+"country": "NED",
+"style": "net player",
+"hand": "right",
+"stats": [
+21,
+26,
+36,
+21,
+28
+],
+"S": "Feather Touch",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_iverson"
+},
+{
+"name": "Andres Martinez",
+"rarity": "Epic",
+"country": "COL",
+"style": "net player",
+"hand": "right",
+"stats": [
+27,
+23,
+38,
+18,
+26
+],
+"S": "Net Dominance",
+"SS": "Halo Tumble",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "andres_martinez"
+},
+{
+"name": "Bastian Radley",
+"rarity": "Epic",
+"country": "EGY",
+"style": "net player",
+"hand": "right",
+"stats": [
+21,
+26,
+37,
+19,
+29
+],
+"S": "Net Dominance",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_radley"
+},
+{
+"name": "Brennan Bellamy",
+"rarity": "Epic",
+"country": "INA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+19,
+24,
+24,
+36,
+29
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_bellamy"
+},
+{
+"name": "Cassian Keaton",
+"rarity": "Epic",
+"country": "MAS",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+23,
+26,
+32,
+18,
+33
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_keaton"
+},
+{
+"name": "Chinedu Eze",
+"rarity": "Epic",
+"country": "NGA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+23,
+18,
+24,
+38,
+29
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "chinedu_eze"
+},
+{
+"name": "Denzel Thorne",
+"rarity": "Epic",
+"country": "POL",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+20,
+24,
+34,
+20,
+34
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_thorne"
+},
+{
+"name": "Diego Vargas",
+"rarity": "Epic",
+"country": "BOL",
+"style": "net player",
+"hand": "right",
+"stats": [
+25,
+27,
+38,
+18,
+24
+],
+"S": "Net Dominance",
+"SS": "Vortex Net Trap",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "diego_vargas"
+},
+{
+"name": "Emric Eldric",
+"rarity": "Epic",
+"country": "DEN",
+"style": "defender",
+"hand": "right",
+"stats": [
+22,
+23,
+23,
+37,
+27
+],
+"S": "Iron Formation",
+"SS": "Falcon Counter",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_eldric"
+},
+{
+"name": "Felix Dunley",
+"rarity": "Epic",
+"country": "VIE",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+22,
+38,
+24,
+27,
+21
+],
+"S": "Burst Return",
+"SS": "Tempest Clear",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_dunley"
+},
+{
+"name": "Gavin Maddox",
+"rarity": "Epic",
+"country": "NED",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+22,
+38,
+22,
+26,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_maddox"
+},
+{
+"name": "Hadrian Fenwick",
+"rarity": "Epic",
+"country": "HKG",
+"style": "attacker",
+"hand": "right",
+"stats": [
+38,
+29,
+19,
+25,
+21
+],
+"S": "Early Pressure",
+"SS": "Silent Crossfire",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_fenwick"
+},
+{
+"name": "Harlan Vale",
+"rarity": "Epic",
+"country": "IND",
+"style": "all-rounder",
+"hand": "left",
+"stats": [
+28,
+26,
+25,
+27,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_vale"
+},
+{
+"name": "Isak Oakley",
+"rarity": "Epic",
+"country": "IND",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+27,
+25,
+28,
+27,
+25
+],
+"S": "Angle Slice",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_oakley"
+},
+{
+"name": "Ivo Galen",
+"rarity": "Epic",
+"country": "JPN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+20,
+37,
+23,
+28,
+24
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_galen"
+},
+{
+"name": "Jalen Pryce",
+"rarity": "Epic",
+"country": "INA",
+"style": "defender",
+"hand": "right",
+"stats": [
+21,
+24,
+24,
+37,
+26
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_pryce"
+},
+{
+"name": "Jonas York",
+"rarity": "Epic",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+20,
+25,
+23,
+37,
+27
+],
+"S": "Iron Formation",
+"SS": "Silent Crossfire",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_york"
+},
+{
+"name": "Kellan Irving",
+"rarity": "Epic",
+"country": "THA",
+"style": "net player",
+"hand": "right",
+"stats": [
+23,
+26,
+37,
+20,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_irving"
+},
+{
+"name": "Kyaw Zaw",
+"rarity": "Epic",
+"country": "MMR",
+"style": "attacker",
+"hand": "right",
+"stats": [
+39,
+28,
+20,
+22,
+23
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kyaw_zaw"
+},
+{
+"name": "Lucan Roth",
+"rarity": "Epic",
+"country": "NZL",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+20,
+23,
+35,
+20,
+34
+],
+"S": "False Opening",
+"SS": "Phantom Drop",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_roth"
+},
+{
+"name": "Marek Quade",
+"rarity": "Epic",
+"country": "HKG",
+"style": "attacker",
+"hand": "right",
+"stats": [
+39,
+29,
+21,
+23,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_quade"
+},
+{
+"name": "Nolan Baxter",
+"rarity": "Epic",
+"country": "GER",
+"style": "defender",
+"hand": "right",
+"stats": [
+22,
+26,
+23,
+36,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_baxter"
+},
+{
+"name": "Orin Kessler",
+"rarity": "Epic",
+"country": "IND",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+23,
+38,
+22,
+27,
+22
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_kessler"
+},
+{
+"name": "Oskar Sterling",
+"rarity": "Epic",
+"country": "KOR",
+"style": "defender",
+"hand": "right",
+"stats": [
+24,
+21,
+23,
+37,
+27
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_sterling"
+},
+{
+"name": "Pavel Tolland",
+"rarity": "Epic",
+"country": "THA",
+"style": "net player",
+"hand": "right",
+"stats": [
+23,
+24,
+38,
+18,
+29
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_tolland"
+},
+{
+"name": "Perrin Dale",
+"rarity": "Epic",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+39,
+27,
+20,
+23,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_dale"
+},
+{
+"name": "Quentin Caldwell",
+"rarity": "Epic",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+22,
+23,
+23,
+37,
+27
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_caldwell"
+},
+{
+"name": "Ronan Marlow",
+"rarity": "Epic",
+"country": "IND",
+"style": "attacker",
+"hand": "right",
+"stats": [
+40,
+27,
+19,
+24,
+22
+],
+"S": "Early Pressure",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_marlow"
+},
+{
+"name": "Silas Varden",
+"rarity": "Epic",
+"country": "AUS",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+22,
+37,
+21,
+29,
+23
+],
+"S": "Backcourt Clear",
+"SS": "Ghostline Drive",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_varden"
+},
+{
+"name": "Tavian Farrow",
+"rarity": "Epic",
+"country": "CHN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+38,
+28,
+23,
+22,
+21
+],
+"S": "Quickfire Smash",
+"SS": "Ghostline Drive",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_farrow"
+},
+{
+"name": "Tomas Everett",
+"rarity": "Epic",
+"country": "DEN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+20,
+25,
+36,
+18,
+33
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_everett"
+},
+{
+"name": "Ulric Orwell",
+"rarity": "Epic",
+"country": "SCO",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+22,
+21,
+23,
+37,
+29
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_orwell"
+},
+{
+"name": "Viggo Xander",
+"rarity": "Epic",
+"country": "DEN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+22,
+23,
+22,
+39,
+26
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_xander"
+},
+{
+"name": "Wesley Granger",
+"rarity": "Epic",
+"country": "KOR",
+"style": "control",
+"hand": "right",
+"stats": [
+23,
+26,
+28,
+25,
+30
+],
+"S": "Net Thread",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_granger"
+},
+{
+"name": "Wilfred Hollis",
+"rarity": "Epic",
+"country": "INA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+26,
+27,
+27,
+27,
+25
+],
+"S": "Phantom Rhythm",
+"SS": "Mirage Switch",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_hollis"
+},
+{
+"name": "Xavier Prescott",
+"rarity": "Epic",
+"country": "UAE",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+20,
+22,
+24,
+38,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_prescott"
+},
+{
+"name": "Yuri Quillon",
+"rarity": "Epic",
+"country": "CHN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+21,
+25,
+35,
+19,
+32
+],
+"S": "False Opening",
+"SS": "Phantom Cascade",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_quillon"
+},
+{
+"name": "Zev Zoric",
+"rarity": "Epic",
+"country": "JPN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+27,
+27,
+27,
+24,
+27
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_zoric"
+},
+{
+"name": "Adrian Oakley",
+"rarity": "Super Rare",
+"country": "NED",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+25,
+22,
+24,
+25,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_oakley"
+},
+{
+"name": "Alden Galen",
+"rarity": "Super Rare",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+20,
+24,
+20,
+33,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_galen"
+},
+{
+"name": "Bastian Pryce",
+"rarity": "Super Rare",
+"country": "KOR",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+23,
+22,
+29,
+18,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_pryce"
+},
+{
+"name": "Brennan York",
+"rarity": "Super Rare",
+"country": "KOR",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+21,
+33,
+23,
+23,
+20
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_york"
+},
+{
+"name": "Calder Yarrow",
+"rarity": "Super Rare",
+"country": "DEN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+20,
+22,
+28,
+19,
+31
+],
+"S": "False Opening",
+"SS": "Phantom Cascade",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_yarrow"
+},
+{
+"name": "Cassian Irving",
+"rarity": "Super Rare",
+"country": "VIE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+20,
+22,
+30,
+18,
+30
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_irving"
+},
+{
+"name": "Darian Halden",
+"rarity": "Super Rare",
+"country": "DEN",
+"style": "net player",
+"hand": "right",
+"stats": [
+20,
+21,
+34,
+18,
+27
+],
+"S": "Net Dominance",
+"SS": "Mirage Switch",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_halden"
+},
+{
+"name": "Denzel Roth",
+"rarity": "Super Rare",
+"country": "CAN",
+"style": "net player",
+"hand": "right",
+"stats": [
+23,
+22,
+33,
+18,
+24
+],
+"S": "Feather Touch",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_roth"
+},
+{
+"name": "Dias Ospanov",
+"rarity": "Super Rare",
+"country": "KAZ",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+24,
+16,
+20,
+35,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "dias_ospanov"
+},
+{
+"name": "Elias Quade",
+"rarity": "Super Rare",
+"country": "INA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+21,
+23,
+29,
+17,
+30
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_quade"
+},
+{
+"name": "Emric Ashford",
+"rarity": "Super Rare",
+"country": "CHN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+25,
+23,
+24,
+24,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_ashford"
+},
+{
+"name": "Felix Baxter",
+"rarity": "Super Rare",
+"country": "KOR",
+"style": "net player",
+"hand": "right",
+"stats": [
+24,
+22,
+33,
+16,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_baxter"
+},
+{
+"name": "Florian Jensen",
+"rarity": "Super Rare",
+"country": "FRA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+21,
+23,
+29,
+18,
+29
+],
+"S": "Angle Slice",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_jensen"
+},
+{
+"name": "Gavin Kessler",
+"rarity": "Super Rare",
+"country": "ESP",
+"style": "defender",
+"hand": "right",
+"stats": [
+20,
+20,
+20,
+34,
+26
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_kessler"
+},
+{
+"name": "Gideon Sterling",
+"rarity": "Super Rare",
+"country": "MAS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+34,
+25,
+24,
+19,
+18
+],
+"S": "Early Pressure",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_sterling"
+},
+{
+"name": "Hadrian Dale",
+"rarity": "Super Rare",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+19,
+22,
+23,
+31,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_dale"
+},
+{
+"name": "Harlan Tolland",
+"rarity": "Super Rare",
+"country": "TPE",
+"style": "control",
+"hand": "right",
+"stats": [
+20,
+26,
+25,
+23,
+26
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_tolland"
+},
+{
+"name": "Isak Marlow",
+"rarity": "Super Rare",
+"country": "USA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+28,
+23,
+23,
+23,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_marlow"
+},
+{
+"name": "Ivo Caldwell",
+"rarity": "Super Rare",
+"country": "ESP",
+"style": "attacker",
+"hand": "right",
+"stats": [
+35,
+23,
+22,
+20,
+20
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_caldwell"
+},
+{
+"name": "Jakub Svoboda",
+"rarity": "Super Rare",
+"country": "CZE",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+20,
+25,
+37,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jakub_svoboda"
+},
+{
+"name": "Jalen Lowell",
+"rarity": "Super Rare",
+"country": "CAN",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+22,
+36,
+18,
+24,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_lowell"
+},
+{
+"name": "Jonas Varden",
+"rarity": "Super Rare",
+"country": "NED",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+25,
+24,
+25,
+22,
+24
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_varden"
+},
+{
+"name": "Kellan Everett",
+"rarity": "Super Rare",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+18,
+20,
+23,
+33,
+26
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_everett"
+},
+{
+"name": "Kieran Underwood",
+"rarity": "Super Rare",
+"country": "POL",
+"style": "attacker",
+"hand": "right",
+"stats": [
+34,
+22,
+22,
+22,
+20
+],
+"S": "Early Pressure",
+"SS": "Mirage Switch",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_underwood"
+},
+{
+"name": "Lennox Farrow",
+"rarity": "Super Rare",
+"country": "SGP",
+"style": "defender",
+"hand": "right",
+"stats": [
+18,
+22,
+24,
+31,
+25
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_farrow"
+},
+{
+"name": "Lucan Norwood",
+"rarity": "Super Rare",
+"country": "EGY",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+21,
+22,
+29,
+16,
+32
+],
+"S": "False Opening",
+"SS": "Phantom Cascade",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_norwood"
+},
+{
+"name": "Marek Orwell",
+"rarity": "Super Rare",
+"country": "FRA",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+20,
+33,
+23,
+23,
+21
+],
+"S": "Burst Return",
+"SS": "Tempest Clear",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_orwell"
+},
+{
+"name": "Marko Maric",
+"rarity": "Super Rare",
+"country": "HRV",
+"style": "defender",
+"hand": "right",
+"stats": [
+21,
+18,
+26,
+35,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marko_maric"
+},
+{
+"name": "Marten Sepp",
+"rarity": "Super Rare",
+"country": "EST",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+17,
+36,
+27,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marten_sepp"
+},
+{
+"name": "Milan Whitaker",
+"rarity": "Super Rare",
+"country": "JPN",
+"style": "control",
+"hand": "right",
+"stats": [
+19,
+24,
+28,
+23,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_whitaker"
+},
+{
+"name": "Nerio Hollis",
+"rarity": "Super Rare",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+21,
+34,
+20,
+24,
+21
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_hollis"
+},
+{
+"name": "Nolan Xander",
+"rarity": "Super Rare",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+20,
+23,
+17,
+36,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_xander"
+},
+{
+"name": "Orin Granger",
+"rarity": "Super Rare",
+"country": "HKG",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+16,
+22,
+22,
+35,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_granger"
+},
+{
+"name": "Oskar Quillon",
+"rarity": "Super Rare",
+"country": "IND",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+23,
+25,
+24,
+24,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_quillon"
+},
+{
+"name": "Pavel Prescott",
+"rarity": "Super Rare",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+20,
+22,
+35,
+18,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_prescott"
+},
+{
+"name": "Perrin Zoric",
+"rarity": "Super Rare",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+18,
+21,
+21,
+35,
+25
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_zoric"
+},
+{
+"name": "Quentin Arden",
+"rarity": "Super Rare",
+"country": "IND",
+"style": "net player",
+"hand": "left",
+"stats": [
+21,
+20,
+34,
+20,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_arden"
+},
+{
+"name": "Rafael Jorvik",
+"rarity": "Super Rare",
+"country": "CHN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+26,
+19,
+22,
+20
+],
+"S": "Net Dominance",
+"SS": "Silent Crossfire",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_jorvik"
+},
+{
+"name": "Rashawn Clarke",
+"rarity": "Super Rare",
+"country": "JAM",
+"style": "defender",
+"hand": "right",
+"stats": [
+19,
+24,
+23,
+32,
+22
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rashawn_clarke"
+},
+{
+"name": "Ronan Iverson",
+"rarity": "Super Rare",
+"country": "GER",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+20,
+35,
+20,
+24,
+21
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_iverson"
+},
+{
+"name": "Silas Radley",
+"rarity": "Super Rare",
+"country": "IND",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+22,
+29,
+20,
+30
+],
+"S": "Phantom Rhythm",
+"SS": "Mirage Switch",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_radley"
+},
+{
+"name": "Soren Sable",
+"rarity": "Super Rare",
+"country": "BRA",
+"style": "defender",
+"hand": "right",
+"stats": [
+20,
+23,
+21,
+31,
+25
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_sable"
+},
+{
+"name": "Tavian Bellamy",
+"rarity": "Super Rare",
+"country": "IND",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+34,
+19,
+28,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_bellamy"
+},
+{
+"name": "Tenzin Wangchuk",
+"rarity": "Super Rare",
+"country": "BTN",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+30,
+36,
+17,
+20
+],
+"S": "Net Dominance",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tenzin_wangchuk"
+},
+{
+"name": "Tomas Corvin",
+"rarity": "Super Rare",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+17,
+21,
+21,
+34,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_corvin"
+},
+{
+"name": "Ulric Keaton",
+"rarity": "Super Rare",
+"country": "HKG",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+18,
+23,
+20,
+33,
+26
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_keaton"
+},
+{
+"name": "Urian Larkin",
+"rarity": "Super Rare",
+"country": "THA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+25,
+23,
+24,
+23,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_larkin"
+},
+{
+"name": "Vernon Upton",
+"rarity": "Super Rare",
+"country": "ENG",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+16,
+22,
+20,
+36,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_upton"
+},
+{
+"name": "Viggo Thorne",
+"rarity": "Super Rare",
+"country": "MAS",
+"style": "defender",
+"hand": "right",
+"stats": [
+18,
+19,
+24,
+32,
+27
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_thorne"
+},
+{
+"name": "Wesley Eldric",
+"rarity": "Super Rare",
+"country": "DEN",
+"style": "net player",
+"hand": "right",
+"stats": [
+23,
+22,
+32,
+19,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_eldric"
+},
+{
+"name": "Wilfred Dunley",
+"rarity": "Super Rare",
+"country": "JPN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+27,
+22,
+21,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_dunley"
+},
+{
+"name": "Xavier Norden",
+"rarity": "Super Rare",
+"country": "DEN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+38,
+28,
+18,
+20,
+16
+],
+"S": "Early Pressure",
+"SS": "Silent Crossfire",
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_norden"
+},
+{
+"name": "Yarden Weller",
+"rarity": "Super Rare",
+"country": "FRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+37,
+23,
+19,
+21,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_weller"
+},
+{
+"name": "Yuri Maddox",
+"rarity": "Super Rare",
+"country": "KOR",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+19,
+23,
+20,
+33,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_maddox"
+},
+{
+"name": "Zaid Kareem",
+"rarity": "Super Rare",
+"country": "IRQ",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+18,
+26,
+33,
+27
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zaid_kareem"
+},
+{
+"name": "Zane Fenwick",
+"rarity": "Super Rare",
+"country": "TPE",
+"style": "net player",
+"hand": "right",
+"stats": [
+22,
+22,
+34,
+18,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_fenwick"
+},
+{
+"name": "Zev Vale",
+"rarity": "Super Rare",
+"country": "SCO",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+23,
+35,
+19,
+23,
+20
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_vale"
+},
+{
+"name": "Adrian Everett",
+"rarity": "Rare",
+"country": "HKG",
+"style": "attacker",
+"hand": "right",
+"stats": [
+34,
+24,
+19,
+17,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_everett"
+},
+{
+"name": "Adrian Marlow",
+"rarity": "Rare",
+"country": "SGP",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+19,
+32,
+17,
+23,
+19
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_marlow"
+},
+{
+"name": "Alden Caldwell",
+"rarity": "Rare",
+"country": "ENG",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+19,
+21,
+31,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_caldwell"
+},
+{
+"name": "Alden Underwood",
+"rarity": "Rare",
+"country": "THA",
+"style": "net player",
+"hand": "right",
+"stats": [
+20,
+19,
+31,
+16,
+24
+],
+"S": "Net Dominance",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_underwood"
+},
+{
+"name": "Anar Enkhbayar",
+"rarity": "Rare",
+"country": "MNG",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+24,
+25,
+20,
+22,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "anar_enkhbayar"
+},
+{
+"name": "Bastian Farrow",
+"rarity": "Rare",
+"country": "BRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+18,
+21,
+19,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_farrow"
+},
+{
+"name": "Bastian Lowell",
+"rarity": "Rare",
+"country": "TPE",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+20,
+34,
+14,
+25,
+17
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_lowell"
+},
+{
+"name": "Benjamin Contreras",
+"rarity": "Rare",
+"country": "CHL",
+"style": "attacker",
+"hand": "left",
+"stats": [
+35,
+21,
+15,
+18,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "benjamin_contreras"
+},
+{
+"name": "Brennan Norwood",
+"rarity": "Rare",
+"country": "POL",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+21,
+31,
+20,
+19,
+19
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_norwood"
+},
+{
+"name": "Brennan Varden",
+"rarity": "Rare",
+"country": "CHN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+20,
+21,
+18,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_varden"
+},
+{
+"name": "Calder Orwell",
+"rarity": "Rare",
+"country": "MAS",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+22,
+20,
+24,
+20,
+24
+],
+"S": "Crosscourt Flick",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_orwell"
+},
+{
+"name": "Calder Underwood",
+"rarity": "Rare",
+"country": "NED",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+18,
+18,
+17,
+33,
+24
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_underwood"
+},
+{
+"name": "Cassian Everett",
+"rarity": "Rare",
+"country": "IND",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+20,
+32,
+19,
+21,
+18
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_everett"
+},
+{
+"name": "Cassian Whitaker",
+"rarity": "Rare",
+"country": "CHN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+20,
+29,
+17,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_whitaker"
+},
+{
+"name": "Darian Farrow",
+"rarity": "Rare",
+"country": "DEN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+22,
+22,
+20,
+24,
+22
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_farrow"
+},
+{
+"name": "Darian Xander",
+"rarity": "Rare",
+"country": "JPN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+35,
+22,
+16,
+19,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_xander"
+},
+{
+"name": "Denzel Hollis",
+"rarity": "Rare",
+"country": "MAS",
+"style": "control",
+"hand": "right",
+"stats": [
+20,
+22,
+23,
+20,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_hollis"
+},
+{
+"name": "Denzel Norwood",
+"rarity": "Rare",
+"country": "GER",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+21,
+25,
+21,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_norwood"
+},
+{
+"name": "Elias Granger",
+"rarity": "Rare",
+"country": "TPE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+19,
+26,
+18,
+29
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_granger"
+},
+{
+"name": "Elias Orwell",
+"rarity": "Rare",
+"country": "CHN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+33,
+19,
+22,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_orwell"
+},
+{
+"name": "Emric Quillon",
+"rarity": "Rare",
+"country": "IND",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+15,
+23,
+19,
+31,
+22
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_quillon"
+},
+{
+"name": "Emric Whitaker",
+"rarity": "Rare",
+"country": "TPE",
+"style": "net player",
+"hand": "right",
+"stats": [
+19,
+18,
+31,
+18,
+24
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_whitaker"
+},
+{
+"name": "Fahad AlOtaibi",
+"rarity": "Rare",
+"country": "KWT",
+"style": "net player",
+"hand": "right",
+"stats": [
+24,
+19,
+33,
+15,
+19
+],
+"S": "Net Dominance",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "fahad_alotaibi"
+},
+{
+"name": "Faris Ismail",
+"rarity": "Rare",
+"country": "BRN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+16,
+23,
+35,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "faris_ismail"
+},
+{
+"name": "Felix Prescott",
+"rarity": "Rare",
+"country": "DEN",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+21,
+31,
+17,
+22,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_prescott"
+},
+{
+"name": "Felix Xander",
+"rarity": "Rare",
+"country": "KOR",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+23,
+18,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_xander"
+},
+{
+"name": "Fetra Rabe",
+"rarity": "Rare",
+"country": "MDG",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+15,
+34,
+16,
+21,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "fetra_rabe"
+},
+{
+"name": "Florian Hollis",
+"rarity": "Rare",
+"country": "MAS",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+18,
+31,
+19,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_hollis"
+},
+{
+"name": "Florian Zoric",
+"rarity": "Rare",
+"country": "JPN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+22,
+26,
+16,
+27
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_zoric"
+},
+{
+"name": "Gavin Arden",
+"rarity": "Rare",
+"country": "IND",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+32,
+18,
+23,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_arden"
+},
+{
+"name": "Gavin Granger",
+"rarity": "Rare",
+"country": "POL",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+20,
+20,
+17,
+32,
+21
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_granger"
+},
+{
+"name": "Georgi Petrov",
+"rarity": "Rare",
+"country": "BGR",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+16,
+30,
+14,
+31
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "georgi_petrov"
+},
+{
+"name": "Gideon Iverson",
+"rarity": "Rare",
+"country": "NZL",
+"style": "net player",
+"hand": "right",
+"stats": [
+20,
+22,
+31,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_iverson"
+},
+{
+"name": "Gideon Quillon",
+"rarity": "Rare",
+"country": "DEN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+31,
+18,
+25,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_quillon"
+},
+{
+"name": "Giorgos Dimitriou",
+"rarity": "Rare",
+"country": "GRC",
+"style": "defender",
+"hand": "right",
+"stats": [
+21,
+16,
+23,
+31,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "giorgos_dimitriou"
+},
+{
+"name": "Hadrian Radley",
+"rarity": "Rare",
+"country": "SCO",
+"style": "defender",
+"hand": "right",
+"stats": [
+19,
+18,
+22,
+30,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_radley"
+},
+{
+"name": "Hadrian Zoric",
+"rarity": "Rare",
+"country": "MAS",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+21,
+32,
+16,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_zoric"
+},
+{
+"name": "Hamza ElAmrani",
+"rarity": "Rare",
+"country": "MAR",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+16,
+19,
+32,
+15,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hamza_elamrani"
+},
+{
+"name": "Harlan Jorvik",
+"rarity": "Rare",
+"country": "MAS",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+19,
+21,
+27,
+17,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_jorvik"
+},
+{
+"name": "Harlan Prescott",
+"rarity": "Rare",
+"country": "SWE",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+25,
+18,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_prescott"
+},
+{
+"name": "Isak Corvin",
+"rarity": "Rare",
+"country": "MEX",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+20,
+22,
+29,
+22
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_corvin"
+},
+{
+"name": "Isak Iverson",
+"rarity": "Rare",
+"country": "IND",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+20,
+23,
+24,
+21,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_iverson"
+},
+{
+"name": "Ivo Arden",
+"rarity": "Rare",
+"country": "ENG",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+24,
+21,
+16,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_arden"
+},
+{
+"name": "Ivo Sable",
+"rarity": "Rare",
+"country": "KOR",
+"style": "net player",
+"hand": "right",
+"stats": [
+19,
+21,
+30,
+18,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_sable"
+},
+{
+"name": "Jalen Bellamy",
+"rarity": "Rare",
+"country": "RSA",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+21,
+20,
+31,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_bellamy"
+},
+{
+"name": "Jalen Jorvik",
+"rarity": "Rare",
+"country": "THA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+20,
+29,
+14,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_jorvik"
+},
+{
+"name": "Jonas Larkin",
+"rarity": "Rare",
+"country": "NZL",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+19,
+32,
+13,
+29
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_larkin"
+},
+{
+"name": "Jonas Radley",
+"rarity": "Rare",
+"country": "NED",
+"style": "control",
+"hand": "right",
+"stats": [
+21,
+22,
+23,
+20,
+24
+],
+"S": "Net Thread",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_radley"
+},
+{
+"name": "Kellan Corvin",
+"rarity": "Rare",
+"country": "FRA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+21,
+22,
+31,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_corvin"
+},
+{
+"name": "Kellan Upton",
+"rarity": "Rare",
+"country": "THA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+20,
+27,
+17,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_upton"
+},
+{
+"name": "Kieran Keaton",
+"rarity": "Rare",
+"country": "DEN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+31,
+22,
+24,
+15,
+18
+],
+"S": "Late Drive",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_keaton"
+},
+{
+"name": "Kieran Sable",
+"rarity": "Rare",
+"country": "INA",
+"style": "attacker",
+"hand": "left",
+"stats": [
+29,
+23,
+20,
+20,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_sable"
+},
+{
+"name": "Lennox Bellamy",
+"rarity": "Rare",
+"country": "VIE",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+20,
+31,
+19,
+23,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_bellamy"
+},
+{
+"name": "Lennox Thorne",
+"rarity": "Rare",
+"country": "AUS",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+22,
+20,
+21,
+23,
+24
+],
+"S": "Angle Slice",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_thorne"
+},
+{
+"name": "Lucan Dunley",
+"rarity": "Rare",
+"country": "CHN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+20,
+20,
+25,
+18,
+27
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_dunley"
+},
+{
+"name": "Lucan Larkin",
+"rarity": "Rare",
+"country": "IND",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+17,
+20,
+17,
+33,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_larkin"
+},
+{
+"name": "Luka Beridze",
+"rarity": "Rare",
+"country": "GEO",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+18,
+17,
+23,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "luka_beridze"
+},
+{
+"name": "Mantas Petrauskas",
+"rarity": "Rare",
+"country": "LTU",
+"style": "net player",
+"hand": "right",
+"stats": [
+20,
+18,
+29,
+21,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "mantas_petrauskas"
+},
+{
+"name": "Marek Eldric",
+"rarity": "Rare",
+"country": "RSA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+25,
+23,
+21,
+21,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_eldric"
+},
+{
+"name": "Marek Keaton",
+"rarity": "Rare",
+"country": "CHN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+32,
+19,
+23,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_keaton"
+},
+{
+"name": "Milan Maddox",
+"rarity": "Rare",
+"country": "KOR",
+"style": "defender",
+"hand": "left",
+"stats": [
+17,
+19,
+22,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_maddox"
+},
+{
+"name": "Milan Upton",
+"rarity": "Rare",
+"country": "GER",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+24,
+20,
+18,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_upton"
+},
+{
+"name": "Nadir Mansouri",
+"rarity": "Rare",
+"country": "DZA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+19,
+23,
+17,
+29,
+22
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nadir_mansouri"
+},
+{
+"name": "Nerio Dunley",
+"rarity": "Rare",
+"country": "TPE",
+"style": "net player",
+"hand": "right",
+"stats": [
+21,
+20,
+30,
+16,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_dunley"
+},
+{
+"name": "Nerio Vale",
+"rarity": "Rare",
+"country": "KOR",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+20,
+21,
+16,
+32,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_vale"
+},
+{
+"name": "Nolan Norden",
+"rarity": "Rare",
+"country": "IND",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+19,
+21,
+30,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_norden"
+},
+{
+"name": "Nolan Thorne",
+"rarity": "Rare",
+"country": "GER",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+23,
+21,
+17,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_thorne"
+},
+{
+"name": "Orin Eldric",
+"rarity": "Rare",
+"country": "FRA",
+"style": "control",
+"hand": "right",
+"stats": [
+20,
+21,
+23,
+22,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_eldric"
+},
+{
+"name": "Orin Weller",
+"rarity": "Rare",
+"country": "VIE",
+"style": "net player",
+"hand": "right",
+"stats": [
+21,
+18,
+31,
+18,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_weller"
+},
+{
+"name": "Oskar Galen",
+"rarity": "Rare",
+"country": "JPN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+17,
+23,
+19,
+28,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_galen"
+},
+{
+"name": "Oskar Maddox",
+"rarity": "Rare",
+"country": "IND",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+23,
+20,
+18,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_maddox"
+},
+{
+"name": "Pavel Fenwick",
+"rarity": "Rare",
+"country": "GER",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+23,
+22,
+16,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_fenwick"
+},
+{
+"name": "Pavel Norden",
+"rarity": "Rare",
+"country": "TPE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+19,
+28,
+16,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_norden"
+},
+{
+"name": "Perrin Pryce",
+"rarity": "Rare",
+"country": "CHN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+25,
+22,
+22,
+20,
+21
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_pryce"
+},
+{
+"name": "Perrin Vale",
+"rarity": "Rare",
+"country": "CAN",
+"style": "defender",
+"hand": "right",
+"stats": [
+18,
+19,
+19,
+31,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_vale"
+},
+{
+"name": "Quentin Oakley",
+"rarity": "Rare",
+"country": "MEX",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+21,
+27,
+16,
+27
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_oakley"
+},
+{
+"name": "Quentin Weller",
+"rarity": "Rare",
+"country": "NED",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+21,
+21,
+24,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_weller"
+},
+{
+"name": "Rafael Fenwick",
+"rarity": "Rare",
+"country": "VIE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+21,
+27,
+15,
+28
+],
+"S": "Angle Slice",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_fenwick"
+},
+{
+"name": "Rafael York",
+"rarity": "Rare",
+"country": "MAS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+30,
+23,
+20,
+19,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_york"
+},
+{
+"name": "Ronan Galen",
+"rarity": "Rare",
+"country": "CHN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+31,
+19,
+23,
+19
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_galen"
+},
+{
+"name": "Ronan Yarrow",
+"rarity": "Rare",
+"country": "ESP",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+19,
+27,
+18,
+28
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_yarrow"
+},
+{
+"name": "Sami Rahimi",
+"rarity": "Rare",
+"country": "AFG",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+33,
+16,
+26,
+19
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "sami_rahimi"
+},
+{
+"name": "Silas Halden",
+"rarity": "Rare",
+"country": "JPN",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+18,
+32,
+18,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_halden"
+},
+{
+"name": "Silas Pryce",
+"rarity": "Rare",
+"country": "AUS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+19,
+20,
+34,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_pryce"
+},
+{
+"name": "Soren Irving",
+"rarity": "Rare",
+"country": "IND",
+"style": "net player",
+"hand": "right",
+"stats": [
+19,
+18,
+32,
+19,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_irving"
+},
+{
+"name": "Soren Oakley",
+"rarity": "Rare",
+"country": "GER",
+"style": "net player",
+"hand": "right",
+"stats": [
+22,
+23,
+30,
+14,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_oakley"
+},
+{
+"name": "Tavian Roth",
+"rarity": "Rare",
+"country": "CHN",
+"style": "defender",
+"hand": "left",
+"stats": [
+15,
+21,
+18,
+33,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_roth"
+},
+{
+"name": "Tavian York",
+"rarity": "Rare",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+24,
+31,
+16,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_york"
+},
+{
+"name": "Thato Motsumi",
+"rarity": "Rare",
+"country": "BWA",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+22,
+17,
+34,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "thato_motsumi"
+},
+{
+"name": "Tomas Quade",
+"rarity": "Rare",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+17,
+22,
+19,
+31,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_quade"
+},
+{
+"name": "Tomas Yarrow",
+"rarity": "Rare",
+"country": "DEN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+23,
+16,
+22,
+17
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_yarrow"
+},
+{
+"name": "Ulric Ashford",
+"rarity": "Rare",
+"country": "SGP",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+20,
+31,
+18,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_ashford"
+},
+{
+"name": "Ulric Irving",
+"rarity": "Rare",
+"country": "HKG",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+19,
+28,
+17,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_irving"
+},
+{
+"name": "Urian Baxter",
+"rarity": "Rare",
+"country": "INA",
+"style": "defender",
+"hand": "right",
+"stats": [
+19,
+20,
+20,
+30,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_baxter"
+},
+{
+"name": "Urian Halden",
+"rarity": "Rare",
+"country": "GER",
+"style": "control",
+"hand": "right",
+"stats": [
+20,
+20,
+24,
+22,
+24
+],
+"S": "Feather Touch",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_halden"
+},
+{
+"name": "Vernon Kessler",
+"rarity": "Rare",
+"country": "SGP",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+23,
+24,
+21,
+21,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_kessler"
+},
+{
+"name": "Vernon Quade",
+"rarity": "Rare",
+"country": "IND",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+19,
+30,
+15,
+28
+],
+"S": "Angle Slice",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_quade"
+},
+{
+"name": "Viggo Jensen",
+"rarity": "Rare",
+"country": "CHN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+23,
+21,
+21,
+23,
+22
+],
+"S": "Angle Slice",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_jensen"
+},
+{
+"name": "Viggo Roth",
+"rarity": "Rare",
+"country": "SGP",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+23,
+19,
+18,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_roth"
+},
+{
+"name": "Wesley Ashford",
+"rarity": "Rare",
+"country": "INA",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+20,
+19,
+33,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_ashford"
+},
+{
+"name": "Wesley Sterling",
+"rarity": "Rare",
+"country": "JPN",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+17,
+20,
+20,
+30,
+23
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_sterling"
+},
+{
+"name": "Wilfred Baxter",
+"rarity": "Rare",
+"country": "MAS",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+21,
+18,
+32,
+23
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_baxter"
+},
+{
+"name": "Wilfred Tolland",
+"rarity": "Rare",
+"country": "THA",
+"style": "defender",
+"hand": "left",
+"stats": [
+15,
+21,
+21,
+31,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_tolland"
+},
+{
+"name": "Xavier Dale",
+"rarity": "Rare",
+"country": "ESP",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+35,
+21,
+21,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_dale"
+},
+{
+"name": "Xavier Jensen",
+"rarity": "Rare",
+"country": "GER",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+19,
+21,
+32,
+23
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_jensen"
+},
+{
+"name": "Yarden Marlow",
+"rarity": "Rare",
+"country": "ESP",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+35,
+20,
+20,
+19
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_marlow"
+},
+{
+"name": "Yarden Sterling",
+"rarity": "Rare",
+"country": "INA",
+"style": "defender",
+"hand": "right",
+"stats": [
+18,
+22,
+18,
+31,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_sterling"
+},
+{
+"name": "Yuri Caldwell",
+"rarity": "Rare",
+"country": "JPN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+24,
+20,
+22,
+22,
+22
+],
+"S": "Net Thread",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_caldwell"
+},
+{
+"name": "Yuri Kessler",
+"rarity": "Rare",
+"country": "ENG",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+21,
+30,
+21,
+20,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_kessler"
+},
+{
+"name": "Zane Dale",
+"rarity": "Rare",
+"country": "TPE",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+17,
+18,
+19,
+32,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_dale"
+},
+{
+"name": "Zane Varden",
+"rarity": "Rare",
+"country": "MAS",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+23,
+31,
+16,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_varden"
+},
+{
+"name": "Zev Lowell",
+"rarity": "Rare",
+"country": "ESP",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+19,
+20,
+19,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_lowell"
+},
+{
+"name": "Zev Tolland",
+"rarity": "Rare",
+"country": "JPN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+19,
+22,
+17,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_tolland"
+},
+{
+"name": "Aaro Makinen",
+"rarity": "Common",
+"country": "FIN",
+"style": "defender",
+"hand": "right",
+"stats": [
+14,
+14,
+23,
+30,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "aaro_makinen"
+},
+{
+"name": "Aayush Thapa",
+"rarity": "Common",
+"country": "NPL",
+"style": "net player",
+"hand": "right",
+"stats": [
+19,
+20,
+29,
+12,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "aayush_thapa"
+},
+{
+"name": "Adrian Corvin",
+"rarity": "Common",
+"country": "NZL",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+20,
+18,
+27,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_corvin"
+},
+{
+"name": "Adrian Iverson",
+"rarity": "Common",
+"country": "THA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+20,
+19,
+21,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_iverson"
+},
+{
+"name": "Adrian Maddox",
+"rarity": "Common",
+"country": "GER",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+17,
+18,
+28,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_maddox"
+},
+{
+"name": "Adrian Upton",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+16,
+30,
+17,
+20,
+17
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "adrian_upton"
+},
+{
+"name": "Alden Arden",
+"rarity": "Common",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+15,
+20,
+29,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_arden"
+},
+{
+"name": "Alden Eldric",
+"rarity": "Common",
+"country": "MEX",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+18,
+25,
+12,
+27
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_eldric"
+},
+{
+"name": "Alden Keaton",
+"rarity": "Common",
+"country": "ESP",
+"style": "attacker",
+"hand": "right",
+"stats": [
+30,
+21,
+14,
+20,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_keaton"
+},
+{
+"name": "Alden Sable",
+"rarity": "Common",
+"country": "GER",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+15,
+29,
+19,
+19,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "alden_sable"
+},
+{
+"name": "Arman Karimi",
+"rarity": "Common",
+"country": "IRN",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+17,
+12,
+27,
+17,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "arman_karimi"
+},
+{
+"name": "Bastian Bellamy",
+"rarity": "Common",
+"country": "SWE",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+17,
+30,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_bellamy"
+},
+{
+"name": "Bastian Jorvik",
+"rarity": "Common",
+"country": "CHN",
+"style": "attacker",
+"hand": "left",
+"stats": [
+32,
+22,
+15,
+17,
+14
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_jorvik"
+},
+{
+"name": "Bastian Norden",
+"rarity": "Common",
+"country": "FRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+30,
+21,
+18,
+17,
+14
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_norden"
+},
+{
+"name": "Bastian Thorne",
+"rarity": "Common",
+"country": "RSA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+28,
+19,
+19,
+17,
+17
+],
+"S": "Early Pressure",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bastian_thorne"
+},
+{
+"name": "Ben Hoffmann",
+"rarity": "Common",
+"country": "LUX",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+19,
+17,
+13,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ben_hoffmann"
+},
+{
+"name": "Borey Sok",
+"rarity": "Common",
+"country": "KHM",
+"style": "defender",
+"hand": "right",
+"stats": [
+12,
+14,
+21,
+29,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "borey_sok"
+},
+{
+"name": "Brennan Dunley",
+"rarity": "Common",
+"country": "HKG",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+32,
+13,
+22,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_dunley"
+},
+{
+"name": "Brennan Larkin",
+"rarity": "Common",
+"country": "THA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+19,
+20,
+23,
+18,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_larkin"
+},
+{
+"name": "Brennan Radley",
+"rarity": "Common",
+"country": "VIE",
+"style": "attacker",
+"hand": "right",
+"stats": [
+28,
+19,
+19,
+18,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_radley"
+},
+{
+"name": "Brennan Vale",
+"rarity": "Common",
+"country": "JPN",
+"style": "defender",
+"hand": "left",
+"stats": [
+13,
+19,
+17,
+29,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "brennan_vale"
+},
+{
+"name": "Bright Chirwa",
+"rarity": "Common",
+"country": "MWI",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+13,
+20,
+30,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "bright_chirwa"
+},
+{
+"name": "Calder Eldric",
+"rarity": "Common",
+"country": "MAS",
+"style": "defender",
+"hand": "right",
+"stats": [
+14,
+15,
+18,
+31,
+22
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_eldric"
+},
+{
+"name": "Calder Keaton",
+"rarity": "Common",
+"country": "GER",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+22,
+20,
+18,
+19,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_keaton"
+},
+{
+"name": "Calder Sable",
+"rarity": "Common",
+"country": "TPE",
+"style": "defender",
+"hand": "left",
+"stats": [
+17,
+20,
+20,
+25,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_sable"
+},
+{
+"name": "Calder Weller",
+"rarity": "Common",
+"country": "GER",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+32,
+15,
+20,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "calder_weller"
+},
+{
+"name": "Cassian Corvin",
+"rarity": "Common",
+"country": "JPN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+33,
+16,
+18,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_corvin"
+},
+{
+"name": "Cassian Galen",
+"rarity": "Common",
+"country": "BRA",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+19,
+27,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_galen"
+},
+{
+"name": "Cassian Maddox",
+"rarity": "Common",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+19,
+19,
+26,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_maddox"
+},
+{
+"name": "Cassian Upton",
+"rarity": "Common",
+"country": "SWE",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+19,
+16,
+30,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "cassian_upton"
+},
+{
+"name": "Darian Bellamy",
+"rarity": "Common",
+"country": "HKG",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+30,
+15,
+20,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_bellamy"
+},
+{
+"name": "Darian Fenwick",
+"rarity": "Common",
+"country": "MAS",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+16,
+18,
+24,
+15,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_fenwick"
+},
+{
+"name": "Darian Norden",
+"rarity": "Common",
+"country": "USA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+19,
+18,
+23,
+16,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_norden"
+},
+{
+"name": "Darian Thorne",
+"rarity": "Common",
+"country": "FRA",
+"style": "defender",
+"hand": "right",
+"stats": [
+13,
+21,
+17,
+28,
+21
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "darian_thorne"
+},
+{
+"name": "Dawit Bekele",
+"rarity": "Common",
+"country": "ETH",
+"style": "defender",
+"hand": "right",
+"stats": [
+12,
+18,
+21,
+30,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "dawit_bekele"
+},
+{
+"name": "Denzel Dunley",
+"rarity": "Common",
+"country": "JPN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+18,
+24,
+16,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_dunley"
+},
+{
+"name": "Denzel Larkin",
+"rarity": "Common",
+"country": "CAN",
+"style": "defender",
+"hand": "right",
+"stats": [
+14,
+21,
+17,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_larkin"
+},
+{
+"name": "Denzel Pryce",
+"rarity": "Common",
+"country": "DEN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+16,
+20,
+27,
+22
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_pryce"
+},
+{
+"name": "Denzel Vale",
+"rarity": "Common",
+"country": "HKG",
+"style": "attacker",
+"hand": "right",
+"stats": [
+28,
+21,
+18,
+17,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "denzel_vale"
+},
+{
+"name": "Dritan Berisha",
+"rarity": "Common",
+"country": "ALB",
+"style": "defender",
+"hand": "right",
+"stats": [
+13,
+14,
+21,
+33,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "dritan_berisha"
+},
+{
+"name": "Elias Eldric",
+"rarity": "Common",
+"country": "THA",
+"style": "control",
+"hand": "right",
+"stats": [
+14,
+22,
+22,
+19,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_eldric"
+},
+{
+"name": "Elias Keaton",
+"rarity": "Common",
+"country": "INA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+17,
+21,
+26,
+21
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_keaton"
+},
+{
+"name": "Elias Oakley",
+"rarity": "Common",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+21,
+15,
+16,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_oakley"
+},
+{
+"name": "Elias Weller",
+"rarity": "Common",
+"country": "MAS",
+"style": "all-rounder",
+"hand": "left",
+"stats": [
+17,
+18,
+22,
+21,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "elias_weller"
+},
+{
+"name": "Emric Galen",
+"rarity": "Common",
+"country": "DEN",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+15,
+18,
+25,
+16,
+26
+],
+"S": "Crosscourt Flick",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_galen"
+},
+{
+"name": "Emric Maddox",
+"rarity": "Common",
+"country": "IND",
+"style": "attacker",
+"hand": "right",
+"stats": [
+27,
+18,
+21,
+17,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_maddox"
+},
+{
+"name": "Emric Upton",
+"rarity": "Common",
+"country": "JPN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+19,
+31,
+15,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_upton"
+},
+{
+"name": "Emric Yarrow",
+"rarity": "Common",
+"country": "DEN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+27,
+21,
+17,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "emric_yarrow"
+},
+{
+"name": "Facundo Fernandez",
+"rarity": "Common",
+"country": "ARG",
+"style": "defender",
+"hand": "right",
+"stats": [
+12,
+21,
+19,
+31,
+17
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "facundo_fernandez"
+},
+{
+"name": "Felix Fenwick",
+"rarity": "Common",
+"country": "MAS",
+"style": "attacker",
+"hand": "left",
+"stats": [
+30,
+23,
+20,
+14,
+13
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_fenwick"
+},
+{
+"name": "Felix Norden",
+"rarity": "Common",
+"country": "FRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+32,
+21,
+14,
+19,
+14
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_norden"
+},
+{
+"name": "Felix Thorne",
+"rarity": "Common",
+"country": "KOR",
+"style": "attacker",
+"hand": "right",
+"stats": [
+31,
+22,
+16,
+16,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_thorne"
+},
+{
+"name": "Felix York",
+"rarity": "Common",
+"country": "TPE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+19,
+24,
+15,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "felix_york"
+},
+{
+"name": "Florian Dunley",
+"rarity": "Common",
+"country": "IND",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+21,
+19,
+19,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_dunley"
+},
+{
+"name": "Florian Halden",
+"rarity": "Common",
+"country": "NZL",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+15,
+27,
+18,
+21,
+19
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_halden"
+},
+{
+"name": "Florian Pryce",
+"rarity": "Common",
+"country": "SGP",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+15,
+31,
+16,
+21
+],
+"S": "Net Dominance",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_pryce"
+},
+{
+"name": "Florian Vale",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+30,
+18,
+20,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "florian_vale"
+},
+{
+"name": "Gavin Eldric",
+"rarity": "Common",
+"country": "INA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+19,
+25,
+11,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_eldric"
+},
+{
+"name": "Gavin Irving",
+"rarity": "Common",
+"country": "MAS",
+"style": "attacker",
+"hand": "left",
+"stats": [
+28,
+22,
+17,
+17,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_irving"
+},
+{
+"name": "Gavin Oakley",
+"rarity": "Common",
+"country": "NED",
+"style": "control",
+"hand": "right",
+"stats": [
+17,
+18,
+23,
+19,
+23
+],
+"S": "Feather Touch",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_oakley"
+},
+{
+"name": "Gavin Weller",
+"rarity": "Common",
+"country": "CAN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+18,
+25,
+14,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gavin_weller"
+},
+{
+"name": "Gideon Galen",
+"rarity": "Common",
+"country": "SGP",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+32,
+17,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_galen"
+},
+{
+"name": "Gideon Maddox",
+"rarity": "Common",
+"country": "TPE",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+22,
+18,
+20,
+20,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_maddox"
+},
+{
+"name": "Gideon Quade",
+"rarity": "Common",
+"country": "USA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+15,
+30,
+19,
+20,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_quade"
+},
+{
+"name": "Gideon Yarrow",
+"rarity": "Common",
+"country": "KOR",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+15,
+21,
+16,
+27,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "gideon_yarrow"
+},
+{
+"name": "Hadrian Baxter",
+"rarity": "Common",
+"country": "JPN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+31,
+22,
+19,
+14,
+14
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_baxter"
+},
+{
+"name": "Hadrian Halden",
+"rarity": "Common",
+"country": "TPE",
+"style": "attacker",
+"hand": "right",
+"stats": [
+29,
+23,
+17,
+17,
+14
+],
+"S": "Late Drive",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_halden"
+},
+{
+"name": "Hadrian Pryce",
+"rarity": "Common",
+"country": "TPE",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+18,
+17,
+29,
+22
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_pryce"
+},
+{
+"name": "Hadrian Vale",
+"rarity": "Common",
+"country": "MAS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+29,
+18,
+16,
+21,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "hadrian_vale"
+},
+{
+"name": "Harlan Fenwick",
+"rarity": "Common",
+"country": "KOR",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+14,
+26,
+19,
+22,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_fenwick"
+},
+{
+"name": "Harlan Norden",
+"rarity": "Common",
+"country": "JPN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+15,
+26,
+20,
+21,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_norden"
+},
+{
+"name": "Harlan Roth",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+15,
+18,
+31,
+14,
+22
+],
+"S": "Net Thread",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_roth"
+},
+{
+"name": "Harlan York",
+"rarity": "Common",
+"country": "THA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+31,
+20,
+16,
+18,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "harlan_york"
+},
+{
+"name": "Isak Galen",
+"rarity": "Common",
+"country": "CAN",
+"style": "net player",
+"hand": "left",
+"stats": [
+18,
+19,
+29,
+14,
+20
+],
+"S": "Net Dominance",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_galen"
+},
+{
+"name": "Isak Kessler",
+"rarity": "Common",
+"country": "TPE",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+15,
+20,
+28,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_kessler"
+},
+{
+"name": "Isak Quade",
+"rarity": "Common",
+"country": "KOR",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+14,
+16,
+29,
+14,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_quade"
+},
+{
+"name": "Isak Yarrow",
+"rarity": "Common",
+"country": "INA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+19,
+18,
+23,
+20,
+20
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "isak_yarrow"
+},
+{
+"name": "Ivo Ashford",
+"rarity": "Common",
+"country": "CHN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+16,
+18,
+25,
+15,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_ashford"
+},
+{
+"name": "Ivo Irving",
+"rarity": "Common",
+"country": "MAS",
+"style": "net player",
+"hand": "right",
+"stats": [
+15,
+18,
+29,
+16,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_irving"
+},
+{
+"name": "Ivo Oakley",
+"rarity": "Common",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+16,
+16,
+19,
+29,
+20
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_oakley"
+},
+{
+"name": "Ivo Weller",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+16,
+29,
+17,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ivo_weller"
+},
+{
+"name": "Jalen Fenwick",
+"rarity": "Common",
+"country": "BRA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+22,
+18,
+19,
+20
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_fenwick"
+},
+{
+"name": "Jalen Jensen",
+"rarity": "Common",
+"country": "INA",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+17,
+27,
+17,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_jensen"
+},
+{
+"name": "Jalen Roth",
+"rarity": "Common",
+"country": "INA",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+20,
+19,
+26,
+18
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_roth"
+},
+{
+"name": "Jalen York",
+"rarity": "Common",
+"country": "TPE",
+"style": "defender",
+"hand": "right",
+"stats": [
+14,
+19,
+19,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jalen_york"
+},
+{
+"name": "Jassim AlDoseri",
+"rarity": "Common",
+"country": "BHR",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+23,
+31,
+12,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jassim_aldoseri"
+},
+{
+"name": "Jonas Baxter",
+"rarity": "Common",
+"country": "AUS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+13,
+16,
+19,
+29,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_baxter"
+},
+{
+"name": "Jonas Halden",
+"rarity": "Common",
+"country": "VIE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+14,
+20,
+25,
+15,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_halden"
+},
+{
+"name": "Jonas Pryce",
+"rarity": "Common",
+"country": "GER",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+19,
+18,
+29,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_pryce"
+},
+{
+"name": "Jonas Tolland",
+"rarity": "Common",
+"country": "NED",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+16,
+19,
+25,
+16,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "jonas_tolland"
+},
+{
+"name": "Kamran Aliyev",
+"rarity": "Common",
+"country": "AZE",
+"style": "defender",
+"hand": "right",
+"stats": [
+13,
+14,
+21,
+30,
+22
+],
+"S": "Counterstrike",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kamran_aliyev"
+},
+{
+"name": "Kellan Caldwell",
+"rarity": "Common",
+"country": "THA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+31,
+15,
+20,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_caldwell"
+},
+{
+"name": "Kellan Kessler",
+"rarity": "Common",
+"country": "CHN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+16,
+18,
+18,
+28,
+20
+],
+"S": "Iron Formation",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_kessler"
+},
+{
+"name": "Kellan Quade",
+"rarity": "Common",
+"country": "GER",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+17,
+19,
+27,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_quade"
+},
+{
+"name": "Kellan Yarrow",
+"rarity": "Common",
+"country": "JPN",
+"style": "control",
+"hand": "right",
+"stats": [
+18,
+19,
+22,
+19,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kellan_yarrow"
+},
+{
+"name": "Keshav Gopaul",
+"rarity": "Common",
+"country": "MUS",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+21,
+14,
+31,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "keshav_gopaul"
+},
+{
+"name": "Kieran Ashford",
+"rarity": "Common",
+"country": "ESP",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+31,
+17,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_ashford"
+},
+{
+"name": "Kieran Irving",
+"rarity": "Common",
+"country": "SGP",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+17,
+19,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_irving"
+},
+{
+"name": "Kieran Oakley",
+"rarity": "Common",
+"country": "KOR",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+14,
+17,
+17,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_oakley"
+},
+{
+"name": "Kieran Sterling",
+"rarity": "Common",
+"country": "AUS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+29,
+22,
+16,
+17,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kieran_sterling"
+},
+{
+"name": "Kojo Owusu",
+"rarity": "Common",
+"country": "GHA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+29,
+18,
+20,
+16,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kojo_owusu"
+},
+{
+"name": "Kristjan Gudmundsson",
+"rarity": "Common",
+"country": "ISL",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+23,
+18,
+17,
+21,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "kristjan_gudmundsson"
+},
+{
+"name": "Lennox Dale",
+"rarity": "Common",
+"country": "GER",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+23,
+18,
+21,
+18,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_dale"
+},
+{
+"name": "Lennox Jensen",
+"rarity": "Common",
+"country": "KOR",
+"style": "defender",
+"hand": "right",
+"stats": [
+19,
+17,
+17,
+28,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_jensen"
+},
+{
+"name": "Lennox Roth",
+"rarity": "Common",
+"country": "POL",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+30,
+16,
+22,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_roth"
+},
+{
+"name": "Lennox York",
+"rarity": "Common",
+"country": "UAE",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+15,
+17,
+23,
+19,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lennox_york"
+},
+{
+"name": "Luca Bianchi",
+"rarity": "Common",
+"country": "ITA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+28,
+22,
+16,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "luca_bianchi"
+},
+{
+"name": "Lucan Baxter",
+"rarity": "Common",
+"country": "INA",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+20,
+28,
+15,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_baxter"
+},
+{
+"name": "Lucan Halden",
+"rarity": "Common",
+"country": "AUS",
+"style": "attacker",
+"hand": "left",
+"stats": [
+28,
+21,
+20,
+16,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_halden"
+},
+{
+"name": "Lucan Lowell",
+"rarity": "Common",
+"country": "CHN",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+16,
+16,
+26,
+15,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_lowell"
+},
+{
+"name": "Lucan Tolland",
+"rarity": "Common",
+"country": "INA",
+"style": "control",
+"hand": "right",
+"stats": [
+14,
+20,
+24,
+18,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lucan_tolland"
+},
+{
+"name": "Luis Lopez",
+"rarity": "Common",
+"country": "GTM",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+19,
+33,
+15,
+19,
+14
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "luis_lopez"
+},
+{
+"name": "Lukas Steiner",
+"rarity": "Common",
+"country": "AUT",
+"style": "defender",
+"hand": "right",
+"stats": [
+14,
+14,
+22,
+30,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "lukas_steiner"
+},
+{
+"name": "Marek Ashford",
+"rarity": "Common",
+"country": "IND",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+14,
+19,
+27,
+13,
+27
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_ashford"
+},
+{
+"name": "Marek Irving",
+"rarity": "Common",
+"country": "RSA",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+19,
+26,
+13,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_irving"
+},
+{
+"name": "Marek Marlow",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+20,
+28,
+18,
+19,
+15
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_marlow"
+},
+{
+"name": "Marek Sterling",
+"rarity": "Common",
+"country": "JPN",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+18,
+17,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "marek_sterling"
+},
+{
+"name": "Mate Nagy",
+"rarity": "Common",
+"country": "HUN",
+"style": "net player",
+"hand": "right",
+"stats": [
+14,
+14,
+32,
+20,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "mate_nagy"
+},
+{
+"name": "Milan Caldwell",
+"rarity": "Common",
+"country": "BRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+31,
+19,
+18,
+17,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_caldwell"
+},
+{
+"name": "Milan Kessler",
+"rarity": "Common",
+"country": "AUS",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+15,
+19,
+29,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_kessler"
+},
+{
+"name": "Milan Quade",
+"rarity": "Common",
+"country": "TPE",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+19,
+16,
+30,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_quade"
+},
+{
+"name": "Milan Underwood",
+"rarity": "Common",
+"country": "CHN",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+13,
+19,
+17,
+29,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "milan_underwood"
+},
+{
+"name": "Nerio Baxter",
+"rarity": "Common",
+"country": "SGP",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+20,
+19,
+19,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_baxter"
+},
+{
+"name": "Nerio Farrow",
+"rarity": "Common",
+"country": "FRA",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+18,
+27,
+19,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_farrow"
+},
+{
+"name": "Nerio Lowell",
+"rarity": "Common",
+"country": "INA",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+19,
+17,
+21,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_lowell"
+},
+{
+"name": "Nerio Tolland",
+"rarity": "Common",
+"country": "CHN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+20,
+25,
+12,
+25
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nerio_tolland"
+},
+{
+"name": "Noah Peeters",
+"rarity": "Common",
+"country": "BEL",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+13,
+18,
+26,
+17,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "noah_peeters"
+},
+{
+"name": "Nolan Dale",
+"rarity": "Common",
+"country": "IND",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+19,
+25,
+14,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_dale"
+},
+{
+"name": "Nolan Jensen",
+"rarity": "Common",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+14,
+18,
+19,
+29,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_jensen"
+},
+{
+"name": "Nolan Roth",
+"rarity": "Common",
+"country": "POL",
+"style": "control",
+"hand": "right",
+"stats": [
+18,
+21,
+19,
+20,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_roth"
+},
+{
+"name": "Nolan Varden",
+"rarity": "Common",
+"country": "SGP",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+18,
+29,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "nolan_varden"
+},
+{
+"name": "Orin Ashford",
+"rarity": "Common",
+"country": "CAN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+14,
+31,
+19,
+19,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_ashford"
+},
+{
+"name": "Orin Everett",
+"rarity": "Common",
+"country": "IND",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+18,
+19,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_everett"
+},
+{
+"name": "Orin Marlow",
+"rarity": "Common",
+"country": "JPN",
+"style": "attacker",
+"hand": "right",
+"stats": [
+29,
+21,
+18,
+16,
+16
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_marlow"
+},
+{
+"name": "Orin Sterling",
+"rarity": "Common",
+"country": "IND",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+18,
+19,
+22,
+15,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "orin_sterling"
+},
+{
+"name": "Oskar Caldwell",
+"rarity": "Common",
+"country": "JPN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+19,
+25,
+13,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_caldwell"
+},
+{
+"name": "Oskar Kessler",
+"rarity": "Common",
+"country": "DEN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+22,
+21,
+18,
+20,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_kessler"
+},
+{
+"name": "Oskar Orwell",
+"rarity": "Common",
+"country": "FRA",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+18,
+20,
+26,
+20
+],
+"S": "Relentless Pursuit",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_orwell"
+},
+{
+"name": "Oskar Underwood",
+"rarity": "Common",
+"country": "IND",
+"style": "net player",
+"hand": "right",
+"stats": [
+15,
+19,
+31,
+14,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "oskar_underwood"
+},
+{
+"name": "Otieno Kamau",
+"rarity": "Common",
+"country": "KEN",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+20,
+17,
+14,
+32,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "otieno_kamau"
+},
+{
+"name": "Pavel Dale",
+"rarity": "Common",
+"country": "IND",
+"style": "attacker",
+"hand": "left",
+"stats": [
+30,
+20,
+17,
+18,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_dale"
+},
+{
+"name": "Pavel Jensen",
+"rarity": "Common",
+"country": "TPE",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+17,
+30,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_jensen"
+},
+{
+"name": "Pavel Norwood",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+28,
+18,
+20,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_norwood"
+},
+{
+"name": "Pavel Varden",
+"rarity": "Common",
+"country": "AUS",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+20,
+20,
+18,
+22,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "pavel_varden"
+},
+{
+"name": "Perrin Farrow",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+30,
+17,
+21,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_farrow"
+},
+{
+"name": "Perrin Lowell",
+"rarity": "Common",
+"country": "RSA",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+15,
+16,
+21,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_lowell"
+},
+{
+"name": "Perrin Tolland",
+"rarity": "Common",
+"country": "GER",
+"style": "attacker",
+"hand": "right",
+"stats": [
+33,
+19,
+17,
+16,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_tolland"
+},
+{
+"name": "Perrin Xander",
+"rarity": "Common",
+"country": "THA",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+17,
+28,
+17,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "perrin_xander"
+},
+{
+"name": "Quentin Everett",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+18,
+21,
+26,
+14,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_everett"
+},
+{
+"name": "Quentin Marlow",
+"rarity": "Common",
+"country": "AUS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+17,
+18,
+28,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_marlow"
+},
+{
+"name": "Quentin Sterling",
+"rarity": "Common",
+"country": "DEN",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+13,
+16,
+22,
+28,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_sterling"
+},
+{
+"name": "Quentin Whitaker",
+"rarity": "Common",
+"country": "FRA",
+"style": "net player",
+"hand": "right",
+"stats": [
+19,
+21,
+27,
+13,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "quentin_whitaker"
+},
+{
+"name": "Rafael Dale",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+21,
+16,
+28,
+16,
+19
+],
+"S": "Net Thread",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_dale"
+},
+{
+"name": "Rafael Hollis",
+"rarity": "Common",
+"country": "JPN",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+21,
+28,
+13,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_hollis"
+},
+{
+"name": "Rafael Norwood",
+"rarity": "Common",
+"country": "FRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+34,
+21,
+16,
+14,
+15
+],
+"S": "Quickfire Smash",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_norwood"
+},
+{
+"name": "Rafael Varden",
+"rarity": "Common",
+"country": "MAS",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+19,
+23,
+15,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rafael_varden"
+},
+{
+"name": "Rami Mansour",
+"rarity": "Common",
+"country": "LBN",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+23,
+32,
+13,
+19,
+13
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "rami_mansour"
+},
+{
+"name": "Roberts Kalnins",
+"rarity": "Common",
+"country": "LVA",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+14,
+22,
+28,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "roberts_kalnins"
+},
+{
+"name": "Ronan Caldwell",
+"rarity": "Common",
+"country": "AUS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+27,
+19,
+22,
+15,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_caldwell"
+},
+{
+"name": "Ronan Granger",
+"rarity": "Common",
+"country": "CAN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+13,
+19,
+18,
+29,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_granger"
+},
+{
+"name": "Ronan Orwell",
+"rarity": "Common",
+"country": "SWE",
+"style": "defensive wall",
+"hand": "left",
+"stats": [
+15,
+18,
+17,
+29,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_orwell"
+},
+{
+"name": "Ronan Underwood",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+31,
+18,
+20,
+15
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ronan_underwood"
+},
+{
+"name": "Silas Farrow",
+"rarity": "Common",
+"country": "ESP",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+22,
+17,
+20,
+20
+],
+"S": "Crosscourt Flick",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_farrow"
+},
+{
+"name": "Silas Lowell",
+"rarity": "Common",
+"country": "MEX",
+"style": "attacker",
+"hand": "right",
+"stats": [
+28,
+21,
+17,
+19,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_lowell"
+},
+{
+"name": "Silas Prescott",
+"rarity": "Common",
+"country": "KOR",
+"style": "fast retriever",
+"hand": "left",
+"stats": [
+16,
+29,
+16,
+23,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_prescott"
+},
+{
+"name": "Silas Xander",
+"rarity": "Common",
+"country": "GER",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+17,
+17,
+30,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "silas_xander"
+},
+{
+"name": "Soren Everett",
+"rarity": "Common",
+"country": "ENG",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+16,
+30,
+19,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_everett"
+},
+{
+"name": "Soren Marlow",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+16,
+18,
+28,
+18,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_marlow"
+},
+{
+"name": "Soren Quillon",
+"rarity": "Common",
+"country": "KOR",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+33,
+13,
+20,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_quillon"
+},
+{
+"name": "Soren Whitaker",
+"rarity": "Common",
+"country": "GER",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+16,
+20,
+28,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "soren_whitaker"
+},
+{
+"name": "Stavros Ioannou",
+"rarity": "Common",
+"country": "CYP",
+"style": "defender",
+"hand": "right",
+"stats": [
+20,
+14,
+16,
+30,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "stavros_ioannou"
+},
+{
+"name": "Tanvir Rahman",
+"rarity": "Common",
+"country": "BGD",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+14,
+14,
+29,
+16,
+27
+],
+"S": "False Opening",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tanvir_rahman"
+},
+{
+"name": "Tavian Hollis",
+"rarity": "Common",
+"country": "ESP",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+22,
+29,
+13,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_hollis"
+},
+{
+"name": "Tavian Norwood",
+"rarity": "Common",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+17,
+18,
+18,
+27,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_norwood"
+},
+{
+"name": "Tavian Varden",
+"rarity": "Common",
+"country": "TPE",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+28,
+18,
+20,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_varden"
+},
+{
+"name": "Tavian Zoric",
+"rarity": "Common",
+"country": "THA",
+"style": "net player",
+"hand": "right",
+"stats": [
+15,
+17,
+31,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tavian_zoric"
+},
+{
+"name": "Tomas Arden",
+"rarity": "Common",
+"country": "CHN",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+16,
+19,
+26,
+14,
+25
+],
+"S": "Phantom Rhythm",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_arden"
+},
+{
+"name": "Tomas Granger",
+"rarity": "Common",
+"country": "CHN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+17,
+17,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_granger"
+},
+{
+"name": "Tomas Orwell",
+"rarity": "Common",
+"country": "INA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+16,
+21,
+27,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_orwell"
+},
+{
+"name": "Tomas Underwood",
+"rarity": "Common",
+"country": "MAS",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+17,
+19,
+25,
+14,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "tomas_underwood"
+},
+{
+"name": "Ulric Everett",
+"rarity": "Common",
+"country": "IND",
+"style": "attacker",
+"hand": "right",
+"stats": [
+28,
+22,
+19,
+17,
+14
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_everett"
+},
+{
+"name": "Ulric Iverson",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+17,
+30,
+18,
+19,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_iverson"
+},
+{
+"name": "Ulric Quillon",
+"rarity": "Common",
+"country": "SGP",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+22,
+16,
+28,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_quillon"
+},
+{
+"name": "Ulric Whitaker",
+"rarity": "Common",
+"country": "AUS",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+16,
+24,
+17,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "ulric_whitaker"
+},
+{
+"name": "Urian Farrow",
+"rarity": "Common",
+"country": "IND",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+14,
+18,
+16,
+30,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_farrow"
+},
+{
+"name": "Urian Jorvik",
+"rarity": "Common",
+"country": "VIE",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+20,
+28,
+15,
+20
+],
+"S": "Net Thread",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_jorvik"
+},
+{
+"name": "Urian Prescott",
+"rarity": "Common",
+"country": "MAS",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+19,
+27,
+15,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_prescott"
+},
+{
+"name": "Urian Xander",
+"rarity": "Common",
+"country": "INA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+29,
+22,
+17,
+17,
+15
+],
+"S": "Crosscourt Flick",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "urian_xander"
+},
+{
+"name": "Vernon Arden",
+"rarity": "Common",
+"country": "SGP",
+"style": "control",
+"hand": "right",
+"stats": [
+17,
+17,
+22,
+20,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_arden"
+},
+{
+"name": "Vernon Granger",
+"rarity": "Common",
+"country": "MAS",
+"style": "attacker",
+"hand": "right",
+"stats": [
+31,
+21,
+16,
+17,
+15
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_granger"
+},
+{
+"name": "Vernon Orwell",
+"rarity": "Common",
+"country": "SWE",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+17,
+22,
+19,
+21
+],
+"S": "Backcourt Clear",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_orwell"
+},
+{
+"name": "Vernon Sable",
+"rarity": "Common",
+"country": "TPE",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+20,
+22,
+18,
+20,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vernon_sable"
+},
+{
+"name": "Viggo Hollis",
+"rarity": "Common",
+"country": "KOR",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+20,
+24,
+14,
+25
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_hollis"
+},
+{
+"name": "Viggo Norwood",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "right",
+"stats": [
+17,
+16,
+28,
+17,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_norwood"
+},
+{
+"name": "Viggo Radley",
+"rarity": "Common",
+"country": "JPN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+13,
+18,
+19,
+28,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_radley"
+},
+{
+"name": "Viggo Zoric",
+"rarity": "Common",
+"country": "EGY",
+"style": "net player",
+"hand": "left",
+"stats": [
+16,
+19,
+30,
+15,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "viggo_zoric"
+},
+{
+"name": "Vuk Jovanovic",
+"rarity": "Common",
+"country": "MNE",
+"style": "attacker",
+"hand": "right",
+"stats": [
+30,
+23,
+15,
+16,
+16
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "vuk_jovanovic"
+},
+{
+"name": "Wesley Corvin",
+"rarity": "Common",
+"country": "ENG",
+"style": "net player",
+"hand": "right",
+"stats": [
+14,
+20,
+29,
+16,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_corvin"
+},
+{
+"name": "Wesley Iverson",
+"rarity": "Common",
+"country": "INA",
+"style": "control",
+"hand": "right",
+"stats": [
+13,
+20,
+24,
+19,
+24
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_iverson"
+},
+{
+"name": "Wesley Quillon",
+"rarity": "Common",
+"country": "INA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+29,
+18,
+19,
+16
+],
+"S": "Burst Return",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_quillon"
+},
+{
+"name": "Wesley Whitaker",
+"rarity": "Common",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+19,
+18,
+20,
+25,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wesley_whitaker"
+},
+{
+"name": "Wilfred Bellamy",
+"rarity": "Common",
+"country": "MAS",
+"style": "defender",
+"hand": "right",
+"stats": [
+15,
+17,
+19,
+29,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_bellamy"
+},
+{
+"name": "Wilfred Jorvik",
+"rarity": "Common",
+"country": "NED",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+18,
+18,
+29,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_jorvik"
+},
+{
+"name": "Wilfred Prescott",
+"rarity": "Common",
+"country": "MAS",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+19,
+24,
+14,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_prescott"
+},
+{
+"name": "Wilfred Xander",
+"rarity": "Common",
+"country": "AUS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+16,
+18,
+29,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "wilfred_xander"
+},
+{
+"name": "Xavier Hollis",
+"rarity": "Common",
+"country": "ESP",
+"style": "net player",
+"hand": "right",
+"stats": [
+19,
+20,
+27,
+16,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_hollis"
+},
+{
+"name": "Xavier Larkin",
+"rarity": "Common",
+"country": "CHN",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+19,
+16,
+29,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_larkin"
+},
+{
+"name": "Xavier Radley",
+"rarity": "Common",
+"country": "CHN",
+"style": "net player",
+"hand": "left",
+"stats": [
+18,
+20,
+26,
+16,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_radley"
+},
+{
+"name": "Xavier Zoric",
+"rarity": "Common",
+"country": "BRA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+16,
+19,
+29,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "xavier_zoric"
+},
+{
+"name": "Yarden Corvin",
+"rarity": "Common",
+"country": "JPN",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+20,
+15,
+29,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_corvin"
+},
+{
+"name": "Yarden Iverson",
+"rarity": "Common",
+"country": "CHN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+18,
+20,
+22,
+18,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_iverson"
+},
+{
+"name": "Yarden Quillon",
+"rarity": "Common",
+"country": "VIE",
+"style": "defender",
+"hand": "right",
+"stats": [
+16,
+17,
+18,
+30,
+19
+],
+"S": "Unbreakable Guard",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_quillon"
+},
+{
+"name": "Yarden Upton",
+"rarity": "Common",
+"country": "BRA",
+"style": "attacker",
+"hand": "right",
+"stats": [
+30,
+18,
+19,
+16,
+17
+],
+"S": "Late Drive",
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yarden_upton"
+},
+{
+"name": "Yonatan Peretz",
+"rarity": "Common",
+"country": "ISR",
+"style": "defender",
+"hand": "right",
+"stats": [
+13,
+25,
+14,
+30,
+18
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yonatan_peretz"
+},
+{
+"name": "Yuri Arden",
+"rarity": "Common",
+"country": "CAN",
+"style": "defender",
+"hand": "left",
+"stats": [
+19,
+18,
+18,
+26,
+19
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_arden"
+},
+{
+"name": "Yuri Granger",
+"rarity": "Common",
+"country": "CAN",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+20,
+19,
+19,
+20,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_granger"
+},
+{
+"name": "Yuri Keaton",
+"rarity": "Common",
+"country": "KOR",
+"style": "deceptive",
+"hand": "right",
+"stats": [
+17,
+18,
+26,
+16,
+23
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_keaton"
+},
+{
+"name": "Yuri Sable",
+"rarity": "Common",
+"country": "CHN",
+"style": "control",
+"hand": "right",
+"stats": [
+18,
+21,
+21,
+19,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "yuri_sable"
+},
+{
+"name": "Zane Dunley",
+"rarity": "Common",
+"country": "MAS",
+"style": "deceptive",
+"hand": "left",
+"stats": [
+18,
+17,
+24,
+15,
+26
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_dunley"
+},
+{
+"name": "Zane Larkin",
+"rarity": "Common",
+"country": "NZL",
+"style": "all-rounder",
+"hand": "left",
+"stats": [
+20,
+21,
+20,
+19,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_larkin"
+},
+{
+"name": "Zane Radley",
+"rarity": "Common",
+"country": "TPE",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+19,
+20,
+19,
+21,
+21
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_radley"
+},
+{
+"name": "Zane Zoric",
+"rarity": "Common",
+"country": "MAS",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+17,
+17,
+29,
+22
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zane_zoric"
+},
+{
+"name": "Zev Bellamy",
+"rarity": "Common",
+"country": "ENG",
+"style": "net player",
+"hand": "left",
+"stats": [
+18,
+18,
+29,
+15,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_bellamy"
+},
+{
+"name": "Zev Jorvik",
+"rarity": "Common",
+"country": "FRA",
+"style": "defensive wall",
+"hand": "right",
+"stats": [
+15,
+20,
+16,
+29,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_jorvik"
+},
+{
+"name": "Zev Prescott",
+"rarity": "Common",
+"country": "USA",
+"style": "fast retriever",
+"hand": "right",
+"stats": [
+18,
+31,
+15,
+19,
+17
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_prescott"
+},
+{
+"name": "Zev Thorne",
+"rarity": "Common",
+"country": "IRL",
+"style": "all-rounder",
+"hand": "right",
+"stats": [
+21,
+19,
+22,
+18,
+20
+],
+"S": null,
+"SS": null,
+"SSS": null,
+"U": null,
+"note": null,
+"id": "zev_thorne"
+}
+],
+"champ": {
+"chen_long": {
+"S": [
+"Endless Lift",
+"Lifts land 12% deeper, pinning attackers to the back line."
+],
+"SS": [
+"Counter Wall",
+"After blocking a hard smash (180+ km/h), your shots are 14% faster for 2 seconds. Cooldown 8 s."
+],
+"U": [
+"Great Wall",
+"All of Chen Long's lifts go to the very back of the court and are always in. After a lift, Chen Long goes into a defensive stance: his reach is 25% bigger for the next shot. His blocks are much less likely to fail to get over the net."
+]
+},
+"kento_momota": {
+"S": [
+"Southpaw Spin",
+"Net shots get a 12% wider perfect-timing window."
+],
+"SS": [
+"Crosscourt Lock",
+"Crosscourt drops have a 15% chance of wrong-footing the opponent. Cooldown 5 s."
+],
+"U": [
+"Untouchable",
+"After 3 net shots in a row, Kento Momota's next net shot always tumbles, and he never touches the net on net kills. He can net kill and net tap tighter net shots than his opponents can."
+]
+},
+"lee_chong_wei": {
+"S": [
+"Feline Footwork",
+"After a retrieval, 10% faster movement for 3 seconds. Cooldown 8 s."
+],
+"SS": [
+"Malaysian Missile",
+"A perfectly timed smash is up to 12% faster (within the game’s smash limit). Cooldown 6 s."
+],
+"U": [
+"Fastest of All Time",
+"After a successful smash, Lee Chong Wei moves 40% faster, so he can reach tight blocks close to the net. After a successful net shot, he moves 50% faster getting back to the back court."
+]
+},
+"lin_dan": {
+"S": [
+"Super Dan Touch",
+"Drops are 12% more accurate."
+],
+"SS": [
+"Left-Hand Whip",
+"A crosscourt smash or drive has a 14% chance of wrong-footing the opponent. Cooldown 5 s."
+],
+"U": [
+"The GOAT",
+"Every attacking shot Lin Dan plays in a row (drives, smashes, drops, net kills, net taps) boosts his power, accuracy and speed by 7.5%. The boost resets when he has to play a defensive or neutral shot (lifts, clears, net shots)."
+]
+},
+"taufik_hidayat": {
+"S": [
+"Wrist of Steel",
+"Drives are 10% faster. Cooldown 6 s."
+],
+"SS": [
+"Backhand Clear",
+"After a clear, the opponent moves 14% slower for 1.2 seconds. Cooldown 8 s."
+],
+"U": [
+"King of Backhand",
+"Shots on Taufik Hidayat's backhand side have 30% more power and are 50% more accurate. He can play backhand smashes, at 85% of his forehand smash power."
+]
+},
+"viktor_axelsen": {
+"S": [
+"Steep Angle",
+"Smashes are up to 8% faster (within the game’s smash limit). Cooldown 6 s."
+],
+"SS": [
+"Viking Net Press",
+"After winning a point at the net, the next attacking shot is 15% faster. Cooldown 10 s."
+],
+"U": [
+"Denmark's Pride",
+"Smashes have 20% more power and need perfect timing to defend, by block or lift. A defence without perfect timing leaves the opponent stunned for 1 second, unable to move. A mistimed defence goes to half court or high at the net 90% of the time."
+]
+}
+}
+}

@@ -5,6 +5,16 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.5: More on screen, more courts (23 Nov 2026)
+
+- Fixed: “This career was changed on another device” kept showing when it hadn’t been. Two saves close together (or a save whose reply got lost) looked like another device; saves now go one at a time and your own saves are recognised.
+- Career: if you left a match part-way, opening career now shows the career screen with a Continue match button, instead of throwing you straight back into the match.
+- The match screen shows more: a card for your player (rarity, style, stats, signatures) and one for your opponent, each with winners, errors and their fastest smash this match.
+- Courts come in many more colours (navy, emerald, rust, slate, berry and ocean, as well as green, blue, teal, crimson and purple), and exhibition and practice matches use a different one each time.
+- A new pause screen: a clear card with each key shown next to what it does.
+- Leaderboards show gold, silver and bronze for the top three and highlight your own row. Achievements show a progress bar, a star when earned and a lock when not.
+- Smaller fixes: the Assists & controls tab no longer covers the drawer’s buttons, a chosen Off is grey instead of red, Impossible is easier to read on the match card, empty lists are clearer, and What’s new and Send feedback match the other pop-ups.
+
 ## 4.4.10: Right countries (23 Nov 2026)
 
 - Fixed: some players showed the wrong country on the Players screen and player cards (for example China as Switzerland, Denmark as Germany, Indonesia as India and Malaysia as Morocco).

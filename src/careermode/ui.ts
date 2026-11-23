@@ -126,7 +126,8 @@ export function initCareer(d: CareerDeps) {
       await save();
     }
     if (s && rescaleSponsor(s)) await save();
-    if (s && !viewOnly && await resumeLive()) return;
+    if (s && !viewOnly && await resumeLive(false)) return;
+    if (liveDue) tab = 'hub';
     render();
     maybeCareerTour();
   }
@@ -290,7 +291,7 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">Qualifying · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]} · Tuesday</p><h3 class="c-title">Qualifying round ${nm.qual} of 2</h3>
         ${versus(nm.opponent)}
         <div class="c-facts">${fact('Format', 'One game to 15')}${fact('Win both', 'You’re in the main draw')}${fact('Travel and hotel', 'Paid by the event')}</div>
-        <div class="c-cta"><button class="walk" data-playnext>Play qualifying round ${nm.qual} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-withdraw>Withdraw</button></div>${recover()}`;
+        ${liveNote()}<div class="c-cta">${goBtn(`Play qualifying round ${nm.qual}`, 'data-playnext')}<button class="edit" data-withdraw>Withdraw</button></div>${recover()}`;
     } else if (s!.current) {
       const ev2 = ev()!, a = s!.current, nm = nextMatch(s!, W(), ev2)!;
       const prizeNow = prizeFor(ev2, a.round), prizeWin = prizeFor(ev2, 'W');
@@ -298,7 +299,7 @@ export function initCareer(d: CareerDeps) {
       hero = `<p class="c-kicker">Next up · ${e(ev2.name)} · ${TIER_LABEL[ev2.tier]} · ${day}</p><h3 class="c-title">${a.bronze ? 'Bronze medal match' : ROUND_LABEL[a.round]}</h3>
         ${versus(nm.opponent)}
         <div class="c-facts">${fact('Format', nm.games === 1 ? 'One game to 15' : 'Best of 3 to 15')}${fact('Prize if you lose here', money(prizeNow))}${fact('Prize if you win it all', money(prizeWin))}</div>
-        <div class="c-cta"><button class="walk" data-playnext>Play ${a.bronze ? 'for 3rd place' : ROUND_LABEL[a.round].toLowerCase()} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
+        ${liveNote()}<div class="c-cta">${goBtn(`Play ${a.bronze ? 'for 3rd place' : ROUND_LABEL[a.round].toLowerCase()}`, 'data-playnext')}<button class="edit" data-draw="${ev2.id}">See the draw</button><button class="edit" data-withdraw>Withdraw</button></div>
         ${a.scores.length ? `<ul class="c-results">${a.scores.map((g, i) => `<li>${ROUND_LABEL[roundsFor(ev2.draw_size)[i]]}: ${a.bronze && i === a.scores.length - 1 ? 'lost to' : 'beat'} ${e(characterById(a.opponents[i]).name)} <b>${g.map(([m, t]) => `${m}–${t}`).join(', ')}</b></li>`).join('')}</ul>` : ''}
         ${recover()}
 `;
@@ -958,8 +959,18 @@ export function initCareer(d: CareerDeps) {
   function writeLive(l: LiveMatch | null) {
     try { if (l) localStorage.setItem(liveKey(), JSON.stringify(l)); else localStorage.removeItem(liveKey()); } catch { /* storage blocked */ }
   }
-  /** On opening career: carry on with a match left part-way. True if it took over. */
-  async function resumeLive(): Promise<boolean> {
+  /** 4.5: a match left part-way, waiting for "Continue match" on the hub (career opens on its screen, not in the match). */
+  let liveDue = false;
+  const playIcon = () => icon('<path d="M4 12h15M13 6l6 6-6 6"/>');
+  /** The hub's button for the next match: Continue match when one was left part-way. */
+  const goBtn = (label: string, attr: string) => liveDue
+    ? `<button class="walk" data-continue>Continue match ${playIcon()}</button>`
+    : `<button class="walk" ${attr}>${label} ${playIcon()}</button>`;
+  const liveNote = () => (liveDue ? '<p class="c-lead">You left this match part-way. Continue to carry on from the same score.</p>' : '');
+  /** A match left part-way: with `play`, carry on with it now; without, just get it ready for Continue match
+   * (a match that is already decided is finished either way). True if it took over the screen. */
+  async function resumeLive(play = true): Promise<boolean> {
+    liveDue = false;
     const a = s?.current, x = ev(), nm = a && x && nextMatch(s!, W(), x);
     const same = (l: LiveMatch | null | undefined) => !!l && !!a && !!nm && l.eventId === a.eventId && l.round === nm.round && l.opp === nm.opponent.id;
     const local = readLive(), l = same(local) ? local : same(a?.live) ? a!.live! : null;
@@ -974,7 +985,7 @@ export function initCareer(d: CareerDeps) {
     if (l.rally) {
       const o = mm.award(1);
       if (o.gameOver && !o.matchOver) mm.newGame();
-      d.toast('Point to your opponent', 'You left in the middle of a rally.');
+      if (play) d.toast('Point to your opponent', 'You left in the middle of a rally.');
     }
     const over = mm.games[0] >= mm.gamesToWin || mm.games[1] >= mm.gamesToWin;
     if (over) {
@@ -983,6 +994,7 @@ export function initCareer(d: CareerDeps) {
       await finishMatch(x!, nm!.opponent.id, mm.games[0] > mm.games[1], mm.history.map((h) => [h[0], h[1]] as [number, number]));
       return true;
     }
+    if (!play) { liveDue = true; return false; }
     d.toast('Match resumed', `${x!.name}, ${roundName(nm!).toLowerCase()}: carrying on from where you left.`);
     await playNext(mm.snapshot());
     return true;
@@ -1318,8 +1330,9 @@ export function initCareer(d: CareerDeps) {
     const rf = at('[data-refuel]')?.dataset.refuel as 'food' | 'physio' | undefined;
     if (rf) return;
     if (at('[data-playnext]')) { renderPreMatch(); return; }
+    if (at('[data-continue]')) { if (!(await resumeLive(true))) render(); return; }
     if (at('[data-startmatch]')) { void playNext(); return; }
-    if (at('[data-withdraw]')) { if (!confirm('Withdraw from this tournament? You keep any prize and points from rounds you’ve already won.')) return; withdraw(s, W(), ev()!); await save(); render(); return; }
+    if (at('[data-withdraw]')) { if (!confirm('Withdraw from this tournament? You keep any prize and points from rounds you’ve already won.')) return; liveDue = false; writeLive(null); if (s.current) delete s.current.live; withdraw(s, W(), ev()!); await save(); render(); return; }
     const pk = at('[data-pick]')?.dataset.pick;
     if (pk && !s.current) { s.characterId = pk; if (!s.squad.includes(pk)) s.squad.push(pk); await save(); render(); return; }
     if (at('[data-recapdone]')) { s.recap = null; await save(); render(); return; }

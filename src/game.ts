@@ -220,7 +220,8 @@ export class Game {
   /** The last ability that fired, for the screen. */
   abilityPop: { text: string; mine: boolean; t: number } | null = null;
   private statMode: 'ranked' | 'career' = 'ranked';
-  private statChars: (Character | null)[] = [null, null];
+  /** The characters whose stats each side plays with (the HUD shows them too). */
+  statChars: (Character | null)[] = [null, null];
   private heavyOf: number[] = [1, 1, 1, 1];
   /** 3.10: net shots in a row this rally (the next one floats a little higher). */
   private netRun = 0;

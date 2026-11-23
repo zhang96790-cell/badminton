@@ -5,6 +5,20 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.5',
+    title: 'More on screen, more courts',
+    date: '23 Nov 2026',
+    changes: [
+      'Fixed: “This career was changed on another device” kept showing when it hadn’t been. Two saves close together (or a save whose reply got lost) looked like another device; saves now go one at a time and your own saves are recognised.',
+      'Career: if you left a match part-way, opening career now shows the career screen with a Continue match button, instead of throwing you straight back into the match.',
+      'The match screen shows more: a card for your player (rarity, style, stats, signatures) and one for your opponent, each with winners, errors and their fastest smash this match.',
+      'Courts come in many more colours (navy, emerald, rust, slate, berry and ocean, as well as green, blue, teal, crimson and purple), and exhibition and practice matches use a different one each time.',
+      'A new pause screen: a clear card with each key shown next to what it does.',
+      'Leaderboards show gold, silver and bronze for the top three and highlight your own row. Achievements show a progress bar, a star when earned and a lock when not.',
+      'Smaller fixes: the Assists & controls tab no longer covers the drawer’s buttons, a chosen Off is grey instead of red, Impossible is easier to read on the match card, empty lists are clearer, and What’s new and Send feedback match the other pop-ups.',
+    ],
+  },
+  {
     version: '4.4.10',
     title: 'Right countries',
     date: '23 Nov 2026',

@@ -358,7 +358,16 @@ export const COURT_THEMES: Record<string, CourtTheme> = {
   finals: { court: '#24578c', alley: '#1f4a78', surround: '#121417', boards: '#5a4512' },
   worlds: { court: '#1f4f9c', alley: '#1a4486', surround: '#0f1d3a', boards: '#0a1a44' },
   club: { court: '#6b7a3a', alley: '#5d6a32', surround: '#2a2a26', boards: '#2b2f1d' },
+  // 4.5: more mats, so courts vary from match to match.
+  navy: { court: '#2a4a7f', alley: '#24406e', surround: '#121c33', boards: '#0b1735' },
+  emerald: { court: '#1f8a5a', alley: '#1a774d', surround: '#163428', boards: '#0c2a1f' },
+  rust: { court: '#a4502e', alley: '#8e4528', surround: '#2b1d18', boards: '#3a1a0d' },
+  slate: { court: '#4b5a6e', alley: '#414e60', surround: '#1b2029', boards: '#151a24' },
+  berry: { court: '#8a3466', alley: '#762c58', surround: '#26172a', boards: '#3a1031' },
+  ocean: { court: '#1d6f9e', alley: '#195f88', surround: '#10293a', boards: '#08283f' },
 };
+/** 4.5: the mats an exhibition, practice or tour event can be played on (not the Finals, Worlds or club looks). */
+export const COURT_VARIETY = ['green', 'blue', 'teal', 'crimson', 'purple', 'navy', 'emerald', 'rust', 'slate', 'berry', 'ocean'];
 
 export const RULES = {
   /** Picked on the menu. Interval when the leading score first reaches intervalAt. */

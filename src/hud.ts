@@ -1,4 +1,5 @@
-import { COURT, KEYS, VISUAL } from './config';
+import { COURT, KEYS, LEVEL_LABEL, STYLES, VISUAL } from './config';
+import { RARITY, statNames, type Character } from '../shared/characters';
 import type { Game } from './game';
 import { REPLAY_CAMS } from './camera';
 import type { Playback } from './replay';
@@ -50,6 +51,8 @@ export class Hud {
       this.scoreboard(game, w);
       this.clock(game);
       this.rally(game, w);
+      // 4.5: who's playing: your player on the left, the opponent on the right.
+      if (!game.doubles && game.settings.opponent !== 'human' && w >= 1000) this.matchup(game, w, h);
     }
 
     // A signature ability just fired: a small badge (yours bottom-left, the opponent's bottom-right).
@@ -187,20 +190,63 @@ export class Hud {
             : game.pauseMine
               ? ['Paused', `${game.doubles ? 'Everyone else is' : `${game.players[1].name} is`} ready  ·  Esc to resume  ·  Q to forfeit and leave`]
               : [`Paused by ${them}`, `Play carries on when ${them} resumes  ·  Esc to pause too`];
-      ctx.font = font(34, 800);
-      ctx.fillText(title, w / 2, h / 2 - 10);
-      ctx.font = font(15, 500);
-      ctx.fillText(sub, w / 2, h / 2 + 22);
-      if (game.online && game.paused && !game.peerAway) {
+      // 4.5: a broadcast card: the title on a red slab, then each key as a keycap beside what it does.
+      const items = sub.split('  ·  ').map((s) => s.trim()).filter(Boolean);
+      const keyed = items.map((s) => {
+        const m = s.match(/^(Esc|Q|C|X)\s+(?:to\s+)?(.*)$/);
+        return m ? { key: m[1], text: m[2].charAt(0).toUpperCase() + m[2].slice(1) } : { key: '', text: s };
+      });
+      const online = game.online && game.paused && !game.peerAway;
+      const cw = Math.min(560, w - 40), cx = (w - cw) / 2;
+      ctx.font = font(16, 600);
+      const rows = keyed.map((r) => ({ ...r, lines: wrap(ctx, r.text, cw - 56 - (r.key ? 64 : 0)) }));
+      const bodyH = rows.reduce((s, r) => s + Math.max(38, r.lines.length * 21 + 14), 0) + (online ? 56 : 0);
+      const ch = 86 + bodyH + 18, cy = (h - ch) / 2;
+      ctx.fillStyle = 'rgba(10,15,29,0.95)';
+      ctx.fillRect(cx, cy, cw, ch);
+      ctx.fillStyle = '#e8112d';
+      ctx.fillRect(cx, cy, cw, 5);
+      // The slab with the title.
+      ctx.font = bfont(38, 900);
+      const tw = Math.min(cw - 40, ctx.measureText(title.toUpperCase()).width + 56);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + 20); ctx.lineTo(cx + tw + 18, cy + 20); ctx.lineTo(cx + tw, cy + 72); ctx.lineTo(cx, cy + 72); ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.fillText(this.fit(title.toUpperCase(), tw - 40), cx + 28, cy + 60);
+      let y = cy + 92;
+      for (const r of rows) {
+        const rh = Math.max(38, r.lines.length * 21 + 14);
+        let tx = cx + 28;
+        if (r.key) {
+          ctx.font = font(14, 800);
+          const kw = Math.max(40, ctx.measureText(r.key).width + 22);
+          panel(ctx, tx, y + 4, kw, 30, 5, '#f6f7f9');
+          ctx.fillStyle = 'rgba(0,0,0,0.25)';
+          ctx.fillRect(tx + 3, y + 31, kw - 6, 3);
+          ctx.fillStyle = '#0a0f1d';
+          ctx.textAlign = 'center';
+          ctx.fillText(r.key, tx + kw / 2, y + 24);
+          ctx.textAlign = 'left';
+          tx += 64;
+        }
+        ctx.fillStyle = r.key ? '#f6f7f9' : '#c9d3ea';
+        ctx.font = font(16, r.key ? 700 : 500);
+        r.lines.forEach((l, i) => ctx.fillText(l, tx, y + 24 + i * 21));
+        y += rh;
+      }
+      if (online) {
         // The warning: pauses are capped so nobody can stall a match.
         const left = Math.max(0, Math.ceil(game.pauseLeft));
         ctx.fillStyle = left <= 15 ? C.callOut : C.accent;
         ctx.font = font(15, 700);
-        ctx.fillText(`Play resumes automatically in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`, w / 2, h / 2 + 58);
+        ctx.fillText(`Play resumes automatically in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`, cx + 28, y + 22);
         ctx.fillStyle = C.hudDim;
         ctx.font = font(13, 500);
-        ctx.fillText('Pauses last at most a minute, so nobody can stall the match', w / 2, h / 2 + 80);
+        ctx.fillText('Pauses last at most a minute, so nobody can stall the match', cx + 28, y + 44);
       }
+      ctx.textAlign = 'center';
     }
   }
 
@@ -484,6 +530,87 @@ export class Hud {
     ctx.fillStyle = urgent ? C.callOut : C.hud;
     ctx.font = font(15, 800);
     ctx.fillText(`${Math.ceil(s)}s`, x + 42, y + 33);
+  }
+
+  /** 4.5: the matchup cards. Numbers are worked out once per point (not every frame). */
+  private mcKey = '';
+  private mcNums: [string, string] = ['', ''];
+  private matchup(game: Game, w: number, h: number) {
+    const key = `${game.stats.rallies.length}`;
+    if (key !== this.mcKey) {
+      this.mcKey = key;
+      this.mcNums = ([0, 1] as const).map((i) => {
+        const s = game.stats.summary(i);
+        return `${s.winners} winners · ${s.unforced} errors${s.topSmash ? ` · smash ${Math.round(s.topSmash)} km/h` : ''}`;
+      }) as [string, string];
+    }
+    const cw = 232, top = Math.max(this.sbBottom + 52, 120);
+    if (top + 200 > h - 120) return;
+    const lvl = game.settings.opponent as keyof typeof LEVEL_LABEL;
+    const oppChar = game.statChars[1];
+    const oppLabel = game.online ? (game.online.opponentName ?? 'Opponent') : oppChar ? oppChar.name : `CPU ${LEVEL_LABEL[lvl] ?? ''}`;
+    const oppSub = oppChar ? '' : `${STYLES[game.settings.style]?.label ?? ''} style`;
+    this.mcCard(game, 16, top, cw, 'You as', game.statChars[0], game.statChars[0]?.name ?? game.players[0].name, '', this.mcNums[0], game.teamColor(0));
+    this.mcCard(game, w - 16 - cw, Math.max(top, 112), cw, 'Opponent', oppChar, oppLabel, oppSub, this.mcNums[1], game.teamColor(1));
+  }
+  private mcCard(game: Game, x: number, y: number, cw: number, kicker: string, c: Character | null, name: string, sub: string, nums: string, team: string) {
+    const ctx = this.ctx;
+    const names = statNames(), sigs = c?.abilities ?? [];
+    const ch = 58 + (c ? 50 : 22) + sigs.length * 20 + 22;
+    panel(ctx, x, y, cw, ch, 8, 'rgba(9,13,21,0.88)');
+    ctx.fillStyle = c ? RARITY[c.rarity].color : team;
+    ctx.fillRect(x, y + 8, 4, ch - 16);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.hudDim;
+    ctx.font = font(10, 800);
+    ctx.fillText(kicker.toUpperCase(), x + 16, y + 18);
+    if (c) {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = RARITY[c.rarity].color;
+      ctx.fillText(RARITY[c.rarity].label.toUpperCase(), x + cw - 12, y + 18);
+      ctx.textAlign = 'left';
+    }
+    ctx.fillStyle = C.hud;
+    ctx.font = bfont(21, 900);
+    ctx.fillText(this.fit(name.toUpperCase(), cw - 28), x + 16, y + 42);
+    ctx.fillStyle = C.hudDim;
+    ctx.font = font(11, 600);
+    ctx.fillText(this.fit(c ? `${c.country === 'XXX' ? '' : `${c.country} · `}${c.style} · ${c.handedness}-handed` : sub, cw - 28), x + 16, y + 58);
+    let yy = y + 66;
+    if (c) {
+      // Five stat bars, out of 50 (v5) or 35.
+      const top = Math.max(35, ...c.stats), bw = (cw - 32 - 4 * 6) / 5;
+      c.stats.forEach((v, i) => {
+        const bx = x + 16 + i * (bw + 6);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(bx, yy + 4, bw, 22);
+        ctx.fillStyle = RARITY[c.rarity].color;
+        const fh = Math.max(2, (22 * v) / (top > 35 ? 50 : 35));
+        ctx.fillRect(bx, yy + 26 - fh, bw, fh);
+        ctx.fillStyle = C.hudDim;
+        ctx.font = font(9, 800);
+        ctx.textAlign = 'center';
+        ctx.fillText(`${names[i].slice(0, 3).toUpperCase()} ${v}`, bx + bw / 2, yy + 40);
+      });
+      ctx.textAlign = 'left';
+      yy += 50;
+    }
+    for (const a of sigs) {
+      const tier = a.tier === 'U' ? 'ULTRA' : a.tier;
+      ctx.font = font(10, 900);
+      const tw = ctx.measureText(tier).width + 10;
+      panel(ctx, x + 16, yy + 2, tw, 15, 3, a.tier === 'U' ? '#e8112d' : a.tier === 'SS' ? '#ffc23d' : '#5b8cff');
+      ctx.fillStyle = a.tier === 'SS' ? '#241300' : '#fff';
+      ctx.fillText(tier, x + 21, yy + 13);
+      ctx.fillStyle = C.hud;
+      ctx.font = font(12, 700);
+      ctx.fillText(this.fit(a.name, cw - 40 - tw), x + 22 + tw, yy + 14);
+      yy += 20;
+    }
+    ctx.fillStyle = C.hudDim;
+    ctx.font = font(11, 600);
+    ctx.fillText(this.fit(nums, cw - 28), x + 16, y + ch - 12);
+    void game;
   }
 
   private rally(game: Game, w: number) {

@@ -21,7 +21,7 @@ import { CHANGELOG } from './changelog';
 import { DEFAULT_LOOK } from './brands';
 import { openPlayerCard } from './playercard';
 import { titleChips, titleSummary } from './titles';
-import { COURT_THEMES, LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
+import { COURT_THEMES, COURT_VARIETY, LEVEL_LABEL, REPLAY, RULES, STYLES, UI_KEYS, type Level } from './config';
 import { showWalkOn, type WalkOnInfo } from './walkon';
 import { Game, type Mode, type Settings } from './game';
 import { drawReview } from './hawkeye';
@@ -802,16 +802,17 @@ document.getElementById('pickOffer')!.addEventListener('click', async (e) => {
 /** 4.4: how rare each achievement is (share of players who have it), loaded once. */
 let rarity: Record<string, number> | null = null;
 async function loadRarity() { if (!rarity) rarity = (await (await loadAccount()).achievementRarity()) ?? {}; return rarity; }
+const ACH_STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/></svg>', ACH_LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const rareText = (id: string) => (rarity && rarity[id] !== undefined ? `${rarity[id] < 1 ? '<1' : Math.round(rarity[id])}% of players have this` : '');
 
 async function renderAwards() {
   const got = loadUnlocked();
   const n = ACHIEVEMENTS.filter((a) => got[a.id] || career[`max_ach_${a.id}`]).length;
-  document.getElementById('awardsScope')!.innerHTML = `<b>${n}</b> of ${ACHIEVEMENTS.length} achievements`;
+  document.getElementById('awardsScope')!.innerHTML = `<div class="ach-progress"><span><b>${n}</b> of ${ACHIEVEMENTS.length} achievements</span><i style="--p:${Math.round((n / ACHIEVEMENTS.length) * 100)}%"></i></div>`;
   const draw = () => {
     document.getElementById('achList')!.innerHTML = ACHIEVEMENTS.map((a) => {
       const on = !!(got[a.id] || career[`max_ach_${a.id}`]), r = rareText(a.id);
-      return `<div class="tile ach${on ? ' on' : ''}"><b>${on ? '★' : '☆'} ${hubEsc(a.name)}</b><span>${hubEsc(a.desc)}</span>${r ? `<em class="ach-rare${(rarity?.[a.id] ?? 100) < 5 ? ' very' : ''}">${r}</em>` : ''}</div>`;
+      return `<div class="tile ach${on ? ' on' : ''}"><b>${on ? ACH_STAR : ACH_LOCK}${hubEsc(a.name)}</b><span>${hubEsc(a.desc)}</span>${r ? `<em class="ach-rare${(rarity?.[a.id] ?? 100) < 5 ? ' very' : ''}">${r}</em>` : ''}</div>`;
     }).join('');
   };
   draw();
@@ -852,7 +853,7 @@ async function renderProfile() {
         <p class="sub">Counted from matches since 4.4. Win % is the share of those shots that won the point outright.</p>`
         : '<p class="sub">Your shot analytics start with your next match.</p>'}
       <h4 class="pf-h">Rarest achievements</h4>
-      ${rare.length ? `<div class="pf-rare">${rare.map((a) => `<div><b>★ ${hubEsc(a.name)}</b><span>${rareText(a.id)}</span></div>`).join('')}</div>` : `<p class="sub">${mine.length ? 'Loading…' : 'No achievements yet.'}</p>`}
+      ${rare.length ? `<div class="pf-rare">${rare.map((a) => `<div><b>${ACH_STAR}${hubEsc(a.name)}</b><span>${rareText(a.id)}</span></div>`).join('')}</div>` : `<p class="sub">${mine.length ? 'Loading…' : 'No achievements yet.'}</p>`}
       <p class="sub">Your rating graph is in Stats, your heatmap in Heatmap and your matches in Matches.</p>`;
   };
   draw();
@@ -2242,6 +2243,8 @@ async function startMatch(mode: Mode = 'match') {
   renderer.boardLine = mode === 'match' && settings.opponent !== 'human' ? `vs CPU ${LEVEL_LABEL[settings.opponent as Level]}` : null;
   logEvent('start', mode, mode === 'match' && settings.opponent !== 'human' ? settings.opponent : null);
   const setup = defaultSetup(mode === 'match' ? 'cpu' : 'practice', settings.games, settings.points, myCharacter());
+  // 4.5: a different mat each match (the tutorial keeps the classic green).
+  renderer.courtTheme = mode === 'tutorial' ? null : COURT_THEMES[COURT_VARIETY[Math.floor(Math.random() * COURT_VARIETY.length)]];
   game = new Game({ ...settings }, input, broadcast, mode, null, setup);
   game.onMatchOver = recordCareer;
   if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
@@ -2266,6 +2269,7 @@ function showMenu() {
     try { localStorage.setItem(TUTORIAL_DONE, '1'); } catch { /* storage unavailable */ }
   }
   game = null;
+  renderer.courtTheme = null;
   voice.stop();
   syncTutorialHint();
   menu.classList.remove('hidden');

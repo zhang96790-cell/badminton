@@ -234,7 +234,7 @@ export function eventLook(id: string, tier: string, host?: string): EventLook {
   if (tier === 'WORLDS') return { court: 'worlds', scoreboard: 'classic', poweredBy, boards, shuttle, blazer: '#1b2a4a', accent: '#ffd166', sponsors, ...cr };
   if (tier === 'WTF') return { court: 'finals', scoreboard: 'broadcast', poweredBy, boards, shuttle, blazer: '#1a1a1a', accent: '#e8c25a', sponsors, ...cr };
   if (tier === 'CLUB') return { court: 'club', scoreboard: 'minimal', poweredBy, boards, shuttle, blazer: '#3a3f47', accent: '#cfe38a', sponsors, ...cr };
-  const courts = ['green', 'green', 'blue', 'teal', 'crimson', 'blue'];
+  const courts = ['green', 'green', 'blue', 'teal', 'crimson', 'blue', 'navy', 'emerald', 'rust', 'slate', 'berry', 'ocean'];
   const styles: ScoreboardStyle[] = tier === 'S1000' || tier === 'S750' ? ['broadcast', 'broadcast', 'classic'] : tier === 'S500' ? ['broadcast', 'classic', 'minimal'] : ['minimal', 'classic', 'broadcast'];
   const blazers = ['#26344d', '#2b2f36', '#4a1f2a', '#1f3b34'];
   const accents = ['#ffd166', '#7fd1ff', '#ff8fa3', '#9be58a'];

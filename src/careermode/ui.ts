@@ -679,7 +679,7 @@ export function initCareer(d: CareerDeps) {
     body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
       <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
       
-      <h3>Choose your player</h3><p class="sub">Everyone starts as a Common player with no signature ability. Finish in the top 3 (or win the bigger events) to recruit stronger ones.</p>
+      <h3>Choose your player</h3><p class="sub">${getEdition() === 5 ? 'v5 test: every player is unlocked, so pick anyone and check how they play.' : 'Everyone starts as a Common player with no signature ability. Finish in the top 3 (or win the bigger events) to recruit stronger ones.'}</p>
       <div id="cStarters" class="c-squad"></div>
       <div class="c-actions"><button class="primary" id="cBegin" disabled>Start career</button></div></div>`;
     void fillStarters();
@@ -687,7 +687,34 @@ export function initCareer(d: CareerDeps) {
   let starter: { id: string; free: boolean } | null = null;
   /** A retired career's Hall of Fame, carried into the next career. */
   let retiredHall: import('./state').HallEntry[] | null = null;
+  /** 5.0 test: every player, with search and a rarity filter. */
+  function fillAllPlayers() {
+    const all = released.filter((c) => c.id !== DEFAULT_CHARACTER).sort((a, b) => RARITY[b.rarity].order - RARITY[a.rarity].order || a.name.localeCompare(b.name));
+    const rars = [...new Set(all.map((c) => c.rarity))];
+    let q = '', rar = '';
+    const box = $('cStarters');
+    box.classList.add('v5-allpick');
+    box.innerHTML = `<div class="v5-pick-tools"><input id="cPickQ" class="mc-search" placeholder="Search ${all.length} players" autocomplete="off" spellcheck="false">
+      <div class="v5-pick-rar"><button type="button" data-prar="" class="on">All</button>${rars.map((r) => `<button type="button" data-prar="${r}" style="--rar:${RARITY[r as Character['rarity']].color}">${RARITY[r as Character['rarity']].label}</button>`).join('')}</div></div><div id="cPickGrid" class="v5-pick-grid"></div>`;
+    const draw = () => {
+      const list = all.filter((c) => (!rar || c.rarity === rar) && (!q || c.name.toLowerCase().includes(q) || countryName(c.country).toLowerCase().includes(q)));
+      $('cPickGrid').innerHTML = list.map((c) => {
+        const sig = c.abilities.find((a) => a.slot === 'signature');
+        return `<button data-starter="${c.id}" data-free="0" class="${starter?.id === c.id ? 'on' : ''}">${card(c, sig ? `<span class="v5-pick-sig t-${sig.tier}">${sig.tier === 'U' ? 'Ultra' : sig.tier} · ${e(sig.name)}</span>` : '')}</button>`;
+      }).join('') || '<p class="sub">No players match.</p>';
+    };
+    box.oninput = (ev) => { if ((ev.target as HTMLElement).id === 'cPickQ') { q = (ev.target as HTMLInputElement).value.trim().toLowerCase(); draw(); } };
+    box.onclick = (ev) => {
+      const b = (ev.target as HTMLElement).closest<HTMLElement>('[data-prar]');
+      if (!b) return;
+      rar = b.dataset.prar ?? '';
+      box.querySelectorAll('[data-prar]').forEach((x) => x.classList.toggle('on', x === b));
+      draw();
+    };
+    draw();
+  }
   async function fillStarters() {
+    if (getEdition() === 5) { if (!$('cPickGrid')) { starter = null; ($('cBegin') as HTMLButtonElement).disabled = true; fillAllPlayers(); } return; }
     const home = ($('cHome') as HTMLSelectElement).value;
     // Everyone starts as a Common with no signature ability (recruits come from winning).
     const commons = released.filter((c) => c.rarity === 'common' && c.id !== DEFAULT_CHARACTER && !c.abilities.length);

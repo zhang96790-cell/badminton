@@ -1994,9 +1994,42 @@ body.v5 .v5-banner { display: flex; }
   font: 800 13px/1 'Saira Condensed', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; }
 #v5Leave svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
 #v5Leave:hover { background: #ffc23d; }
-#v5NotesBtn { padding: 6px 12px; border: 1px solid rgba(255, 255, 255, 0.45); background: transparent; color: #fff; cursor: pointer;
-  font: 800 13px/1 'Saira Condensed', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; }
-#v5NotesBtn:hover { border-color: #ffc23d; color: #ffc23d; }
+/* 5.0 test: career only. No home screen behind it, and the career can't be closed (Leave test is in the banner). */
+body.v5 #menu .board { display: none !important; }
+/* 5.0: the career fills the screen (under the test banner). */
+body.v5 #career.social { padding: 34px 0 0; place-items: stretch; background: #0a0f1d; }
+body.v5 #career .social-panel { width: 100%; height: calc(100vh - 34px); max-height: none; border-radius: 0; border-top: 0; }
+body.v5 #career #careerBody { padding-left: max(28px, calc((100vw - 1320px) / 2)); padding-right: max(28px, calc((100vw - 1320px) / 2)); }
+body.v5 #career .social-hero, body.v5 #career #careerTabs { padding-left: max(28px, calc((100vw - 1320px) / 2)); padding-right: max(28px, calc((100vw - 1320px) / 2)); }
+body.v5 #career:not(.c-viewonly) [data-cclose] { display: none; }
+body.v5 #career .social-hero { padding-top: 56px; }
+body.v5 #career .c-tourbtn { top: 16px; right: max(28px, calc((100vw - 1320px) / 2)); }
+body.v5 #career.c-viewonly .c-tourbtn { right: calc(max(28px, calc((100vw - 1320px) / 2)) + 50px); }
+.career .c-buildbtn { display: none; }
+body.v5 .career .c-buildbtn { display: inline-flex; align-items: center; gap: 8px; position: absolute; top: 18px; right: 96px; padding: 0 12px 0 0; height: 28px; border: 0;
+  background: #fff; color: #0a0f1d; cursor: pointer; font: 800 12px/1 'Saira Condensed', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
+body.v5 .career .c-buildbtn b { display: grid; place-items: center; align-self: stretch; padding: 0 12px 0 9px; background: #e8112d; color: #fff; clip-path: polygon(0 0, 100% 0, 84% 100%, 0 100%);
+  font: 900 16px/1 'Saira Condensed', sans-serif; font-style: italic; letter-spacing: 0; }
+body.v5 .career .c-buildbtn:hover { background: #ffc23d; }
+body.v5 #career .c-buildbtn { top: 16px; right: calc(max(28px, calc((100vw - 1320px) / 2)) + 74px); }
+body.v5 #career.c-viewonly .c-buildbtn { right: calc(max(28px, calc((100vw - 1320px) / 2)) + 124px); }
+
+/* 5.0 test: choose any player */
+.v5-allpick { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.v5-pick-tools { display: grid; gap: 8px; }
+.v5-pick-tools input { width: 100%; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); color: #fff; font: 600 15px/1.2 var(--text); }
+.v5-pick-tools input:focus { outline: none; border-color: #ffc23d; }
+.v5-pick-rar { display: flex; flex-wrap: wrap; gap: 6px; }
+.v5-pick-rar button { --rar: #fff; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; color: #dfe5f2; cursor: pointer;
+  font: 800 12px/1 'Saira Condensed', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; box-shadow: inset 0 -3px 0 var(--rar); }
+.v5-pick-rar button.on { background: #fff; color: #0a0f1d; border-color: #fff; }
+.v5-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; max-height: 46vh; overflow-y: auto; padding-right: 4px; }
+.v5-allpick .v5-pick-grid button { text-align: left; padding: 9px 11px; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 0 !important; background: rgba(10, 15, 29, 0.8) !important; color: #f6f7f9 !important; }
+.v5-allpick .v5-pick-grid button:hover { border-color: rgba(255, 255, 255, 0.5) !important; }
+.v5-allpick .v5-pick-grid button.on { border-color: #ffc23d !important; box-shadow: inset 0 0 0 2px #ffc23d !important; }
+.v5-pick-sig { flex-basis: 100%; font: 700 11.5px/1.2 var(--text); color: #a9b4cc; }
+.v5-pick-sig.t-U { color: #ff6b7a; font-weight: 800; }
+.v5-pick-sig.t-SS { color: #ffc23d; }
 .v5-notes-card { width: min(760px, 100%); }
 .v5-notes-body { position: relative; display: grid; gap: 6px; padding: 6px 0 26px; }
 .v5-note-build h3 { display: flex; align-items: baseline; gap: 12px; margin: 16px 28px 0; font: 900 24px/1 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; color: #fff; }

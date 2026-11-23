@@ -50,6 +50,8 @@ const v5Go = (() => { try { const g = sessionStorage.getItem(V5_GO) === '1'; ses
 try { if (sessionStorage.getItem(V5_KEY) === '1') setEdition(5); } catch { /* storage blocked */ }
 if (getEdition() === 5) {
   document.body.classList.add('v5');
+  // The test banner and its pop-ups sit above the full-screen career (out of the home screen's layer).
+  for (const id of ['v5Banner', 'v5Notes', 'labModal']) { const el = document.getElementById(id); if (el) document.body.appendChild(el); }
   // The home's Career box wears the v5 mark while testing.
   const num = document.querySelector('.bc-career .bc-num'), k = document.querySelector('.bc-career .bc-k .status');
   if (num) num.textContent = 'v5';
@@ -1232,7 +1234,7 @@ document.getElementById('inviteDismiss')!.addEventListener('click', () => void c
 // Logged in on this browser before: restore the session (Supabase keeps it under this key).
 try {
   if (localStorage.getItem('badminton.account')) {
-    void loadAccount().then(async (m) => { const a = await m.current(); if (a) await afterLogin(a, false); if (a && v5Go && getEdition() === 5) void careerUi.open('hub'); });
+    void loadAccount().then(async (m) => { const a = await m.current(); if (a) await afterLogin(a, false); if (getEdition() === 5 && !careerUi.isOpen()) void careerUi.open('hub'); });
   }
 } catch { /* storage unavailable */ }
 
@@ -1443,7 +1445,7 @@ syncTourBadge();
 
 // First visit: controls first, then the welcome.
 if (!settings.controlsChosen) openControlsPick();
-else if (!v5Go) maybeWelcome();
+else if (!v5Go && getEdition() !== 5) maybeWelcome();
 
 // ── Online rooms (Court 2) ───────────────────────────────────────────────────
 const roomModal = document.getElementById('roomModal')!;
@@ -2267,6 +2269,8 @@ function showMenu() {
   voice.stop();
   syncTutorialHint();
   menu.classList.remove('hidden');
+  // 5.0 test: there is no home screen in v5, only the career.
+  if (getEdition() === 5) setTimeout(() => { if (!game && !careerUi.isOpen()) void careerUi.open('hub'); }, 0);
 }
 
 document.getElementById('start')!.addEventListener('click', () => startMatch('match'));
@@ -2540,6 +2544,8 @@ function endCareerMatch(retired: boolean) {
 }
 if (import.meta.env.DEV) (window as unknown as { endCareerMatch: typeof endCareerMatch }).endCareerMatch = endCareerMatch;
 document.getElementById('careerOpen')!.addEventListener('click', () => void careerUi.open('hub'));
+// 5.0 test: land straight in the career (a saved login opens it once the session is back).
+if (getEdition() === 5) { let saved = false; try { saved = !!localStorage.getItem('badminton.account'); } catch { /* storage blocked */ } if (!saved) void careerUi.open('hub'); }
 document.getElementById('dailyOpen')!.addEventListener('click', () => void careerUi.open('daily'));
 
 // ── Problem log (3.0.2): errors and freezes, kept on this computer ───────────
@@ -2681,7 +2687,7 @@ labModal.addEventListener('click', async (e) => {
 document.getElementById('v5Leave')?.addEventListener('click', () => enterV5(false));
 // 5.0 test: "What's new in v5" from the banner.
 const v5Notes = document.getElementById('v5Notes')!;
-document.getElementById('v5NotesBtn')?.addEventListener('click', () => {
+document.getElementById('v5BuildBtn')?.addEventListener('click', () => {
   document.getElementById('v5NotesBody')!.innerHTML = V5_NOTES.map((n) => `<section class="v5-note-build"><h3>${hubEsc(n.title)}<span>${hubEsc(n.date)}</span></h3>
     <ul class="lab-list">${n.items.map(([h, x]) => `<li><b>${hubEsc(h)}</b><span>${hubEsc(x)}</span></li>`).join('')}</ul></section>`).join('');
   v5Notes.classList.remove('hidden');

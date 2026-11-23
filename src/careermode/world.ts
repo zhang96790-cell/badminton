@@ -4,7 +4,7 @@ import tournamentsData from '../../data/tournaments.json';
 import { sponsoredName } from '../brands';
 import regionsData from '../../data/country_regions.json';
 import yearsData from '../../data/calendar_years.json';
-import { RARITY, ROSTER, ROSTER_V5, compareVersions, getEdition, type Character, type Rarity } from '../../shared/characters';
+import { RARITY, ROSTER, ROSTER_V5, characterById, compareVersions, getEdition, type Character, type Rarity } from '../../shared/characters';
 import { CAREER_CFG as CFG, LEVELS, type Round, type Tier } from './config';
 import type { Level } from '../config';
 
@@ -39,7 +39,7 @@ const calCache = new Map<string, TourEvent[]>();
  * swap, add or drop events (Olympics in 2028 and 2032, new Worlds and Finals hosts every year).
  */
 export function calendar(appVersion: string, year = 2027): TourEvent[] {
-  const key = `${appVersion}:${year}`;
+  const key = `${appVersion}:${year}:${getEdition()}`;
   const hit = calCache.get(key);
   if (hit) return hit;
   const r = rulesFor(year);
@@ -49,7 +49,8 @@ export function calendar(appVersion: string, year = 2027): TourEvent[] {
   for (const ev of r.add ?? []) list.push({ order: 99, sponsor: null, released_in: '3.0', enabled: true, notes: '', city: null, week: null, draw_size: 32, prize_pool_usd: 0, tier: 'S100', host_country: 'XXX', name: ev.id, ...ev } as RawEvent);
   list = list.filter((e) => !(r.remove ?? []).includes(e.id) && e.enabled && compareVersions(e.released_in, appVersion) <= 0);
   const gap = Math.max(1, Math.floor(50 / Math.max(1, list.length)));
-  const out = list.map((e, i) => ({ ...e, name: sponsoredName(e.id, e.name), week: e.week ?? Math.min(52, 2 + i * gap) })).sort((a, b) => a.week - b.week || a.order - b.order);
+  const v5Draw = (e: RawEvent) => (getEdition() === 5 && (e.tier === 'S1000' || e.tier === 'S750') ? 32 : e.draw_size);
+  const out = list.map((e, i) => ({ ...e, draw_size: v5Draw(e), name: sponsoredName(e.id, e.name), week: e.week ?? Math.min(52, 2 + i * gap) })).sort((a, b) => a.week - b.week || a.order - b.order);
   calCache.set(key, out);
   return out;
 }
@@ -240,6 +241,32 @@ export interface WorldInput {
 
 export interface EventPlan { ev: TourEvent; year: number; slots: string[]; seeds: string[] }
 
+// ── 5.0 (v5): realistic entries ──
+/** Biggest events first, so a player in two events in one week plays the bigger one. */
+const TIER_RANK: Record<string, number> = { OLYMPICS: 9, WTF: 8, WORLDS: 7, S1000: 6, S750: 5, S500: 4, S300: 3, S100: 2, CLUB: 0 };
+/** Entries close this many weeks before an event; the draw (and seeds) are made this many weeks before. */
+export const ENTRY_WEEKS = 2, DRAW_WEEKS = 1;
+/** Events with a qualifying round (as hasQualifying in state.ts). */
+const hasQual = (ev: TourEvent) => ev.tier === 'S100' || ev.tier === 'S300' || (ev.tier === 'S500' && ev.draw_size === 48);
+/** Places in qualifying beyond the main draw (events that have qualifying). */
+export const QUAL_PLACES = 24;
+/**
+ * How likely a player of this world ranking is to enter an event of this level. The top 15 must play every
+ * Super 1000, Super 750 and the Worlds (and two Super 500s, picked elsewhere); the top 30 fill the big events and
+ * rarely play Super 100s or 300s; lower-ranked players fill the small events.
+ */
+function entryChance(tier: string, r: number): number {
+  const band = (cuts: [number, number][]) => (cuts.find(([max]) => r <= max) ?? cuts[cuts.length - 1])[1];
+  switch (tier) {
+    case 'S1000': return band([[15, 1], [32, 0.95], [50, 0.6], [9999, 0.12]]);
+    case 'S750': return band([[15, 1], [40, 0.9], [60, 0.6], [9999, 0.12]]);
+    case 'S500': return band([[15, 0.2], [30, 0.65], [80, 0.8], [150, 0.45], [9999, 0.15]]);
+    case 'S300': return band([[15, 0.03], [30, 0.15], [60, 0.5], [150, 0.75], [9999, 0.35]]);
+    case 'S100': return band([[30, 0.01], [60, 0.15], [120, 0.6], [250, 0.7], [9999, 0.45]]);
+    default: return 0;
+  }
+}
+
 /**
  * Work the world out up to a week: every event from the season before the career started (so the ranking
  * starts sensible), NPC-only unless the player played it. Returns everyone's results, plus the plan (field
@@ -251,9 +278,12 @@ export class World {
   private str = new Map<string, number>();
   results: Results = new Map();
   private plans = new Map<string, EventPlan>();
+  /** 5.0: each week's entry lists (event id → players who entered, best-ranked first). */
+  private weekEntries = new Map<string, Map<string, string[]>>();
 
   /** Unseen world events (off by default), added to every year's calendar for the ranking. */
   private extra: TourEvent[];
+  private extraIds = new Set<string>();
   /** A year's calendar plus the unseen world events, in week order. */
   private allFor = (year: number) => [...calendar(this.input.appVersion, year), ...this.extra].sort((a, b) => a.week - b.week || a.id.localeCompare(b.id));
 
@@ -270,6 +300,7 @@ export class World {
       }
     }
     this.extra = extra;
+    this.extraIds = new Set(extra.map((e) => e.id));
     for (const c of this.pool) this.str.set(c.id, simStrength(c));
     this.str.set(YOU, 100);
     this.run();
@@ -296,14 +327,97 @@ export class World {
    * The field and bracket for an event. With the player (`playerAs` = who they play as), that character is
    * left out and the player takes the last place; without, it's the same NPC field every time.
    */
+  /** The ranking time for an event's entry list: its deadline, or now if that's still ahead. */
+  entryAt(ev: TourEvent, year: number) { return Math.min(absWeek(year, ev.week) - ENTRY_WEEKS, absWeek(this.input.year, this.input.week)); }
+
+  /**
+   * 5.0: an event's entry list (NPCs only), best-ranked first, from the world ranking at the entry deadline.
+   * The first `draw_size` of them play; the rest are reserves. Worked out for a whole week at once.
+   */
+  entrants(ev: TourEvent, year: number): string[] {
+    const wkey = `${year}:${ev.week}`;
+    let m = this.weekEntries.get(wkey);
+    if (!m) { m = this.entriesForWeek(year, ev.week, this.entryAt(ev, year)); this.weekEntries.set(wkey, m); }
+    return m.get(ev.id) ?? [];
+  }
+  private entriesForWeek(year: number, week: number, at: number): Map<string, string[]> {
+    const out = new Map<string, string[]>();
+    const events = this.allFor(year).filter((e) => e.week === week && !this.extraIds.has(e.id)).sort((a, b) => (TIER_RANK[b.tier] ?? 0) - (TIER_RANK[a.tier] ?? 0));
+    const pool = this.poolFor(year);
+    const ranked = this.rankingAt(at, pool.map((c) => c.id)).map((x) => x.id);
+    const rankOf = new Map(ranked.map((id, i) => [id, i + 1]));
+    const country = new Map(pool.map((c) => [c.id, c.country]));
+    // The top 15's two Super 500s this season (each picks two of the year's Super 500s).
+    const s500 = calendar(this.input.appVersion, year).filter((e) => e.tier === 'S500').map((e) => e.id);
+    const myS500 = (id: string) => { const h = hash(this.input.seed, year, id, 's500'); return s500.length ? [s500[h % s500.length], s500[(h >>> 8) % s500.length]] : []; };
+    const taken = new Set<string>();
+    for (const ev of events) {
+      const size = ev.draw_size, free = ranked.filter((id) => !taken.has(id));
+      let list: string[];
+      if (ev.tier === 'WTF') list = free.slice(0, size);
+      else if (ev.tier === 'WORLDS' || ev.tier === 'OLYMPICS') {
+        // The best-ranked, at most two from a country.
+        const per = new Map<string, number>();
+        list = [];
+        for (const id of free) {
+          const c = country.get(id) ?? '';
+          if ((per.get(c) ?? 0) >= 2) continue;
+          per.set(c, (per.get(c) ?? 0) + 1);
+          list.push(id);
+          if (list.length >= size + 8) break;
+        }
+      } else {
+        list = free.filter((id) => {
+          const r = rankOf.get(id) ?? 9999;
+          if (ev.tier === 'S500' && r <= 15 && myS500(id).includes(ev.id)) return true;
+          return rng(hash(this.input.seed, year, ev.id, id, 'enter'))() < entryChance(ev.tier, r);
+        });
+        // Host wildcards: the home country's best (up to two) get a place at Super 100 to 500 events.
+        if (ev.tier === 'S100' || ev.tier === 'S300' || ev.tier === 'S500') {
+          // (Not the stars: a wildcard goes to a home player outside the top 30.)
+          const hosts = free.filter((id) => country.get(id) === ev.host_country && (rankOf.get(id) ?? 9999) > 30 && !list.slice(0, size).includes(id)).slice(0, CFG.minHostPlayers);
+          if (hosts.length) list = [...list.filter((id) => !hosts.includes(id)).slice(0, size - hosts.length), ...hosts, ...list.filter((id) => !hosts.includes(id)).slice(size - hosts.length)];
+        }
+        // Not enough entries: the next best-ranked players who are free that week.
+        // (Filled from below the level's usual top, so a star never ends up at a Super 100.)
+        const floor = ev.tier === 'S100' ? 40 : ev.tier === 'S300' ? 25 : ev.tier === 'S500' ? 15 : 0;
+        if (list.length < size) list = [...list, ...free.filter((id) => !list.includes(id) && (rankOf.get(id) ?? 9999) > floor).slice(0, size - list.length)];
+      }
+      for (const id of list.slice(0, size)) taken.add(id);
+      out.set(ev.id, list);
+    }
+    return out;
+  }
+
+  /** 5.0: where the player would stand on an event's entry list: their place, and whether that's main draw, qualifying or out. */
+  entryPlace(ev: TourEvent, year: number, homeCountry: string): { place: number; status: 'direct' | 'qual' | 'out'; of: number } {
+    const at = this.entryAt(ev, year);
+    const mine = pointsAt(this.results.get(YOU), at);
+    if (ev.tier === 'WTF') {
+      const place = this.rankingAt(at).findIndex((x) => x.id === YOU) + 1 || 9999;
+      return { place, status: place > 0 && place <= ev.draw_size && mine > 0 ? 'direct' : 'out', of: ev.draw_size };
+    }
+    const list = this.entrants(ev, year).filter((id) => id !== YOU);
+    const ahead = list.filter((id) => pointsAt(this.results.get(id), at) > mine);
+    const place = ahead.length + 1;
+    if ((ev.tier === 'WORLDS' || ev.tier === 'OLYMPICS') && ahead.filter((id) => characterById(id).country === homeCountry).length >= 2) return { place, status: 'out', of: ev.draw_size };
+    const status = place <= ev.draw_size ? 'direct' : hasQual(ev) && place <= ev.draw_size + QUAL_PLACES ? 'qual' : 'out';
+    return { place, status, of: ev.draw_size };
+  }
+
   plan(ev: TourEvent, year: number, playerAs: string | null): EventPlan {
     const key = `${year}:${ev.id}:${playerAs ?? '-'}`;
     const cached = this.plans.get(key);
     if (cached) return cached;
     const size = ev.draw_size;
-    const at = absWeek(year, ev.week) - 1;
+    const at = absWeek(year, ev.week) - DRAW_WEEKS;
+    const v5 = getEdition() === 5 && !this.extraIds.has(ev.id) && !ev.id.includes('~');
     let ids: string[];
-    if (ev.tier === 'WTF') {
+    if (v5) {
+      // 5.0: the entry list, best-ranked first; you take the last place (you were on the list to get in).
+      const list = this.entrants(ev, year);
+      ids = playerAs ? [...list.filter((id) => id !== playerAs).slice(0, size - 1), YOU] : list.slice(0, size);
+    } else if (ev.tier === 'WTF') {
       // The World Tour Finals: the world's best that week (you take your place if you're among them).
       ids = this.rankingAt(at).map((x) => x.id).filter((id) => id !== YOU && id !== playerAs).slice(0, playerAs ? size - 1 : size);
       if (playerAs) ids.push(YOU);
@@ -312,7 +426,9 @@ export class World {
       ids = playerAs ? [...ids.filter((id) => id !== playerAs).slice(0, size - 1), YOU] : ids.slice(0, size);
     }
     // Seeds: 4 in a 16 or 32 draw, 8 in 64, 16 when there are 16 byes (a 48 draw).
-    const nSeeds = Math.max(4, slotsFor(size) - size, size >= 64 ? 8 : 4);
+    // 5.0: the real tour's numbers: 8 seeds in a 32 draw, 16 in a 48 or 64, 4 in a 16, 2 in an 8.
+    const slots = slotsFor(size);
+    const nSeeds = v5 ? (slots >= 64 ? 16 : slots >= 32 ? 8 : slots >= 16 ? 4 : 2) : Math.max(4, slots - size, size >= 64 ? 8 : 4);
     const seeds = this.rankingAt(at, ids).filter((x) => x.pts > 0).slice(0, Math.min(nSeeds, ids.length)).map((x) => x.id);
     const p = { ev, year, slots: placeSeeds(ids, seeds, hash(this.input.seed, year, ev.id, 'bracket'), size), seeds };
     this.plans.set(key, p);

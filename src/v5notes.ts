@@ -2,6 +2,18 @@
 export const V5_NOTES: { date: string; title: string; items: [string, string][] }[] = [
   {
     date: '23 Nov 2026',
+    title: 'Test build 5',
+    items: [
+      ['Enter ahead', 'Enter events at least 2 weeks before (from Next up, the Calendar or an event’s page). When entries close, your world ranking decides main draw, qualifying or out.'],
+      ['Draws a week before', 'The draw and seeds are made 1 week before each event, from the ranking then. Before that, an event’s page shows its entry list.'],
+      ['Realistic fields', 'The top 15 play every Super 1000, Super 750 and the Worlds, plus two Super 500s. Super 1000 and 750 draws are 32, so you need to be around the top 30 to get in. Lower-ranked players fill the smaller events.'],
+      ['Real seeding', '8 seeds in 32-player draws, 16 in 48 and 64.'],
+      ['World Championships', '64 players, at most 2 from a country.'],
+      ['World Tour Finals', 'The top 8 of the normal world ranking at the end of the season.'],
+    ],
+  },
+  {
+    date: '23 Nov 2026',
     title: 'Test build 4',
     items: [
       ['Career only, full screen', 'The test opens straight into career mode, full screen. Leave test is in the top banner.'],

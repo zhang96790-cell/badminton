@@ -2315,3 +2315,28 @@ body.v5 .career.c-board .social-tabs button svg { width: 17px; height: 17px; }
 .tile.ach:not(.on) b svg { fill: none; stroke: #8c97b2; stroke-width: 2; }
 .pf-rare b { display: flex; align-items: center; gap: 6px; }
 .pf-rare b svg { width: 15px; height: 15px; fill: #ffc23d; }
+
+/* ══ 5.0: entering events ahead (entries close 2 weeks before, the draw is made 1 week before) ═══════ */
+.v5-entries { margin-top: 16px; overflow: visible; }
+.v5-entries::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(120deg, rgba(67, 217, 130, 0.14), transparent 55%); }
+.v5-entry-list { display: grid; gap: 4px; }
+.v5-entry-row { display: grid; grid-template-columns: 48px minmax(0, 1.2fr) minmax(0, 1.6fr); gap: 12px; align-items: center; padding: 8px 10px; background: rgba(10, 15, 29, 0.78); }
+.v5-entry-row.on { box-shadow: inset 3px 0 0 #43d982; }
+.v5-entry-wk { font: 900 18px/1 'Saira Condensed', sans-serif; font-style: italic; color: #8c97b2; }
+.v5-entry-ev { display: grid; gap: 2px; padding: 0; border: 0; background: none; color: #f6f7f9; text-align: left; cursor: pointer; min-width: 0; }
+.v5-entry-ev b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 900 17px/1.05 'Saira Condensed', sans-serif; font-style: italic; text-transform: uppercase; }
+.v5-entry-ev span { font: 600 12px/1.2 var(--text); color: #a9b4cc; }
+.v5-entry-ev:hover b { color: #ffc23d; }
+.v5-entry-ctl, .v5-entry-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; }
+.v5-entry-ctl .walk, .v5-entry-box .walk { padding: 7px 18px; font-size: 16px; }
+.v5-entry-ctl .edit, .v5-entry-box .edit { padding: 6px 12px; font-size: 12px; }
+.v5-entry-note { font: 600 12.5px/1.35 var(--text); color: #b8c3dc; }
+.v5-entry-box { margin: 4px 0; padding: 12px 14px; background: rgba(10, 15, 29, 0.6); }
+.v5-ev-st.st-open { background: rgba(67, 217, 130, 0.18); color: #7ff0ae; box-shadow: inset 0 0 0 1px rgba(67, 217, 130, 0.5); }
+.v5-entrylist { margin: 6px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px; counter-reset: el; }
+.v5-entrylist li { display: grid; grid-template-columns: 26px 48px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 6px 8px; background: rgba(255, 255, 255, 0.04); font: 600 13px/1.2 var(--text); counter-increment: el; }
+.v5-entrylist li::before { content: counter(el); font: 800 11px/1 var(--text); color: #8c97b2; }
+.v5-entrylist li .r { color: #ffc23d; font-weight: 800; font-variant-numeric: tabular-nums; }
+.v5-entrylist li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+.v5-entrylist li span:last-child { color: #a9b4cc; font-size: 12px; }
+@media (max-width: 1100px) { .v5-entry-row { grid-template-columns: 40px minmax(0, 1fr); } .v5-entry-ctl { grid-column: 1 / -1; } }

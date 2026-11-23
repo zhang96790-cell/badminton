@@ -5,6 +5,11 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.5.1: Clearer cards and boards (23 Nov 2026)
+
+- The player cards during a match no longer have overlapping text: each stat's number and name sit on their own lines.
+- The small writing on the court billboards (the line under each sponsor and “Powered by” on the back board) is bigger and clearer.
+
 ## 4.5: More on screen, more courts (23 Nov 2026)
 
 - Fixed: “This career was changed on another device” kept showing when it hadn’t been. Two saves close together (or a save whose reply got lost) looked like another device; saves now go one at a time and your own saves are recognised.

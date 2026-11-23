@@ -3,7 +3,7 @@
 import { CAREER as CAREER_STATS, characterById, getEdition, statNames, type Character, type Modifier } from '../../shared/characters';
 import { KIT_BRANDS, PERK_TEXT, SPONSOR_BRANDS, eventLook, perkOf, type SponsorPerk } from '../brands';
 import { CAREER_CFG as CFG, TIER_LABEL, type Difficulty, type HotelTier, type Round, type StaffRole, type TravelClass } from './config';
-import { COUNTRIES, World, YOU, absWeek, activeIn, ageOf, careerMoves, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
+import { COUNTRIES, ENTRY_WEEKS, World, YOU, absWeek, activeIn, ageOf, careerMoves, pointsFor, calendar, cpuLevelFor, hash, nextRound, playOut, rng, roundsFor, travelBand, type Band, type PlayerResult, type TourEvent } from './world';
 import type { Level } from '../config';
 
 export interface LedgerLine { year: number; week: number; label: string; amount: number }
@@ -86,6 +86,8 @@ export interface CareerState {
   mood?: number;
   /** Your answer fired a rival up: they play one CPU level higher next time you meet. */
   rivalFire?: string[];
+  /** 5.0: events you've entered ahead (entries close 2 weeks before); `status` is set when entries close. */
+  entries?: { id: string; year: number; status?: 'direct' | 'qual' }[];
   awards?: SeasonAwards[];
   /** 4.1: countries you own a house in (sleep there for free and rest better). */
   houses?: string[];
@@ -147,6 +149,8 @@ export interface Shop {
 export interface HallEntry { name: string; from: number; to: number; titles: number; bestRank: number | null; golds: number; silvers: number; bronzes: number; prize: number; as: string; /** 5.0: your retired shirt number, awards won and fans. */ number?: number; awards?: number; fans?: number }
 
 export const APP_VERSION_KEY = '3.0';
+const APP_VERSION_V5 = '5.0';
+const QUAL_PLACES_STATE = 24;
 // 4.1: seats and hotels matter again (the Rested bar): your choice, economy and a 3-star by default.
 export const travelClassOf = (s: CareerState): TravelClass => s.settings.travelClass ?? 'economy';
 export const hotelOf = (s: CareerState): HotelTier => s.settings.hotel ?? 'three';
@@ -335,11 +339,9 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
   if (getEdition() !== 5 && CFG.closedTiers.includes(ev.tier)) return { ok: false, why: 'Super 500 events and above are locked for now. They open once more players are added.' };
   // 5.0: entry lists instead of unlocks: your ranking decides main draw, qualifying, or not in.
   if (getEdition() === 5) {
+    if (ev.tier !== 'CLUB' && !entryOf(s, ev)) return { ok: false, why: `Entries for this one closed ${ENTRY_WEEKS} weeks before. Enter events from the Calendar or an event's page at least ${ENTRY_WEEKS} weeks ahead.` };
     const e = entryFor(s, ev, w);
-    if (e === 'out') {
-      const L = CFG.entryList[ev.tier], r = myRank(s, w);
-      return { ok: false, why: `Your world ranking (${r ? `#${r}` : 'unranked'}) doesn’t get you in: the ${TIER_LABEL[ev.tier]} takes the top ${L.qual || L.direct}${L.qual ? ' (with qualifying)' : ''}.` };
-    }
+    if (e === 'out') return { ok: false, why: `The entry list was full of better-ranked players, so you didn’t get in.` };
     if (cantAfford(s, ev) && !hasQualifying(ev)) return { ok: false, why: `You need ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, and this event has no qualifying. Save up, or take a tour loan (Money tab).` };
     if (e === 'qual') return { ok: true, qual: true, why: `Your ranking puts you in qualifying: win two matches to reach the main draw (the event pays your travel and hotel if you get through).` };
     if (needsQualifying(s, ev)) return { ok: true, qual: true, why: `You can’t afford the ${money(travelCost(s, ev) + hotelCost(s, ev))} to go, so you’d go through qualifying: win two matches and the event pays your travel and hotel.` };
@@ -363,12 +365,62 @@ export function canEnter(s: CareerState, ev: TourEvent, w: World): { ok: boolean
 
 /** 5.0: where your ranking puts you on an event's entry list: the main draw, qualifying, or not in. */
 export function entryFor(s: CareerState, ev: TourEvent, w: World): 'direct' | 'qual' | 'out' {
+  if (getEdition() === 5 && ev.tier !== 'CLUB') {
+    const mine = entryOf(s, ev);
+    if (mine?.status) return mine.status;
+    return w.entryPlace(ev, s.year, s.homeCountry).status;
+  }
   const L = CFG.entryList[ev.tier];
   if (!L) return 'direct';
   const r = myRank(s, w) ?? 9999;
   if (r <= L.direct) return 'direct';
   if (hasQualifying(ev) && (r <= L.qual || L.qual >= 999)) return 'qual';
   return 'out';
+}
+
+// ── 5.0 (v5): entering ahead ──
+export const entryOf = (s: CareerState, ev: TourEvent) => s.entries?.find((x) => x.id === ev.id && x.year === s.year) ?? null;
+/** Entries are open until 2 weeks before the event. */
+export const entryOpen = (s: CareerState, ev: TourEvent) => ev.week - s.week >= ENTRY_WEEKS;
+/** Can you enter this event now (ahead of time)? `place` is where your ranking puts you on its list today. */
+export function canEnterAhead(s: CareerState, ev: TourEvent, w: World): { ok: boolean; why?: string; place?: number; status?: 'direct' | 'qual' | 'out' } {
+  if (ev.tier === 'CLUB') return { ok: false };
+  if (entryOf(s, ev)) return { ok: false, why: 'You’ve entered.' };
+  if (s.history.some((h) => h.year === s.year && h.tournamentId === ev.id)) return { ok: false, why: 'You’ve already played this event this season.' };
+  if (!entryOpen(s, ev)) return { ok: false, why: `Entries closed ${ENTRY_WEEKS} weeks before (week ${ev.week - ENTRY_WEEKS}).` };
+  const clash = (s.entries ?? []).find((x) => x.year === s.year && x.id !== ev.id && calendar(APP_VERSION_V5, s.year).find((v) => v.id === x.id)?.week === ev.week);
+  if (clash) return { ok: false, why: 'You’ve entered another event that week.' };
+  const p = w.entryPlace(ev, s.year, s.homeCountry);
+  if (p.status === 'out') return { ok: false, place: p.place, status: p.status, why: `Your ranking would put you #${p.place} on the entry list, and only ${p.of} get in${hasQualifying(ev) ? ` (${p.of + QUAL_PLACES_STATE} with qualifying)` : ''}.` };
+  return { ok: true, place: p.place, status: p.status };
+}
+export function enterAhead(s: CareerState, ev: TourEvent) { (s.entries ??= []).push({ id: ev.id, year: s.year }); }
+export function withdrawEntry(s: CareerState, ev: TourEvent) { s.entries = (s.entries ?? []).filter((x) => !(x.id === ev.id && x.year === s.year)); }
+/**
+ * When a week starts: entries that have just closed are settled by your ranking now (main draw, qualifying, or
+ * not in), and old ones are cleared. Returns true if it changed anything.
+ */
+export function settleEntries(s: CareerState, appVersion: string): boolean {
+  if (getEdition() !== 5 || !s.entries?.length) return false;
+  const cal = calendar(appVersion, s.year);
+  const before = JSON.stringify(s.entries);
+  s.entries = s.entries.filter((x) => x.year === s.year && (cal.find((v) => v.id === x.id)?.week ?? 0) >= s.week);
+  const due = s.entries.filter((x) => !x.status && (cal.find((v) => v.id === x.id)?.week ?? 0) - s.week < ENTRY_WEEKS);
+  if (due.length) {
+    const w = world(s, appVersion);
+    for (const x of due) {
+      const ev = cal.find((v) => v.id === x.id)!;
+      const p = w.entryPlace(ev, s.year, s.homeCountry);
+      if (p.status === 'out') {
+        s.entries = s.entries.filter((y) => y !== x);
+        pushNews(s, `Entries closed for the ${ev.name}: you were #${p.place} on the list and missed the cut.`, 'you');
+      } else {
+        x.status = p.status;
+        pushNews(s, `Entries closed for the ${ev.name}: you’re in ${p.status === 'qual' ? 'qualifying' : 'the main draw'}. The draw is made next week.`, 'you');
+      }
+    }
+  }
+  return JSON.stringify(s.entries) !== before;
 }
 
 /** 3.19: not enough money to go on tour to this event (or below the tour minimum): qualifying instead. */
@@ -420,7 +472,7 @@ export const findEvent = (s: CareerState, id: string, appVersion: string): TourE
 
 export function enter(s: CareerState, ev: TourEvent, w?: World) {
   // 3.19: can't afford it: qualifying (free; the event pays travel and hotel if you get through).
-  const qual = !!w && (needsQualifying(s, ev) || (getEdition() === 5 && entryFor(s, ev, w) === 'qual'));
+  const qual = !!w && (needsQualifying(s, ev) || (getEdition() === 5 && ev.tier !== 'CLUB' && entryFor(s, ev, w) === 'qual'));
   const travel = qual ? 0 : travelCost(s, ev);
   const cls = travelClassOf(s);
   if (travel) book(s, `Travel to ${ev.name}`, -travel);
@@ -430,6 +482,7 @@ export function enter(s: CareerState, ev: TourEvent, w?: World) {
     const rq = sp.request;
     if (rq && rq.eventId === ev.id && !rq.entered) { rq.entered = true; book(s, `${sp.name}: thanks for playing the ${ev.name}`, rq.enter); }
   }
+  if (s.entries) s.entries = s.entries.filter((x) => !(x.id === ev.id && x.year === s.year));
   s.current = { eventId: ev.id, year: s.year, week: s.week, as: s.characterId, round: roundsFor(ev.draw_size)[0], opponents: [], scores: [], travel, hotel: 0, business: cls === 'business', travelClass: cls, hotelTier: hotelOf(s), club: ev.tier === 'CLUB', shortEarly: true,
     ...(qual ? { qual: { stage: 1 as const, opps: qualifyingOpponents(s, w!, ev) }, covered: true } : {}) };
 }
@@ -633,6 +686,7 @@ export function advanceWeek(s: CareerState, action: WeekAction, appVersion: stri
     if (s.loan && s.sponsor?.perk !== 'loans') s.loan.owed = Math.round(s.loan.owed * (1 + CFG.loan.seasonInterest));
   }
   else s.week++;
+  settleEntries(s, appVersion);
 }
 
 /** 4.4: every sponsor you have: kit deal, main (perk) sponsor and money sponsor. */

@@ -236,8 +236,8 @@ export class Renderer {
         const pr = this.look.poweredBy, line = this.boardLine ?? (pr ? `POWERED BY ${pr.name.toUpperCase()}` : null);
         if (line) {
           ctx.fillStyle = this.look.accent;
-          ctx.font = `700 ${Math.max(5, 0.12 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
-          ctx.fillText(line.toUpperCase(), q.x, q.y + 0.25 * q.s);
+          ctx.font = `800 ${Math.max(7, 0.15 * q.s)}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillText(line.toUpperCase(), q.x, q.y + 0.27 * q.s);
         }
       }
     }

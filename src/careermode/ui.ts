@@ -14,9 +14,8 @@ import { CareerSaves, type Conflict } from './save';
 import {
   advanceWeek, canEnter, clubEvent, loanLimit, loanOptions, loanOwed, repayLoan, takeLoan, repairCurrent, coachModifier, currentPlan, energyModifier, enter, eventsThisWeek, findEvent, hotelCost, medalOf, milestones, newMilestones, retire, setStaff, skipByes, sponsorUpgrade, rescaleSponsor, perkText, tripPlan, rivalsOf, headToHead, pressAnswer, PRESS, entryFor, signSponsor, sponsorIn, type SponsorSlot, money, myRank, newCareer, semiFreshStart, migrate,
   nextMatch, payFor, DAY_NAMES, matchDrain, opponentRested, restedModifier, restedTier, roundDay, travelRestCost, shopModifier, staffWages, campCost, campGain, houseCost, teamCost, buy, trainingCamp, prizeFor, recordMatch, softLocked, travelCost, withdraw, world, type CareerState, type NewsItem, type LiveMatch,
-  type NextMatch,
-} from './state';
-import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World } from './world';
+  type NextMatch, entryOf, entryOpen, canEnterAhead, enterAhead, withdrawEntry } from './state';
+import { COUNTRIES, YOU, absWeek, calendar, pointsFor, countryName, hash, playOut, rng, roundsFor, simMatch, travelBand, type TourEvent, type World, ENTRY_WEEKS, DRAW_WEEKS } from './world';
 import { SIGNATURES } from './signatures';
 import { setWhere } from '../errorlog';
 import { Tour } from '../tour';
@@ -222,6 +221,23 @@ export function initCareer(d: CareerDeps) {
   }
   const NEWS_KIND: Record<NewsItem['kind'], string> = { you: 'You', world: 'Tour', rival: 'Rival', move: 'Moves', award: 'Awards' };
   const newsLi = (n: NewsItem, i: number, year?: boolean) => `<li class="n-${n.kind}${i === 0 ? ' lead' : ''}"><span class="v5-wk">${year ? `${n.year} · ` : ''}W${n.week}</span><span class="v5-kind">${NEWS_KIND[n.kind]}</span><p>${e(n.text)}</p></li>`;
+  /** 5.0: enter an event ahead, or see your entry. */
+  function entryCtl(v: TourEvent) {
+    const en = entryOf(s!, v);
+    if (en) return `<span class="v5-tag green">${en.status ? (en.status === 'qual' ? 'In qualifying' : 'In the main draw') : 'Entered'}</span>${entryOpen(s!, v) ? `<button class="edit" data-unenter="${v.id}">Withdraw entry</button>` : ''}`;
+    const c = canEnterAhead(s!, v, W());
+    if (c.ok) return `<button class="walk" data-enterahead="${v.id}">Enter ${playIcon()}</button><span class="v5-entry-note">Closes in week ${v.week - ENTRY_WEEKS}. Today you’d be #${c.place} on the list: ${c.status === 'qual' ? 'qualifying' : 'main draw'}.</span>`;
+    return `<span class="v5-entry-note">${e(c.why ?? '')}</span>`;
+  }
+  /** 5.0: the next few weeks' events and your entries. */
+  function entriesHtml() {
+    const soon = W().cal.filter((v) => v.week >= s!.week && v.week <= s!.week + 8 && !s!.history.some((h) => h.year === s!.year && h.tournamentId === v.id));
+    if (!soon.length) return '';
+    return `<section class="v5-panel v5-entries"><header class="v5-ph"><h3>Entries</h3><span class="v5-sub">Entries close ${ENTRY_WEEKS} weeks before · the draw is made ${DRAW_WEEKS} week before</span></header>
+      <div class="v5-entry-list">${soon.map((v) => `<div class="v5-entry-row${entryOf(s!, v) ? ' on' : ''}"><span class="v5-entry-wk">W${v.week}</span>
+        <button class="v5-entry-ev t-${v.tier.toLowerCase()}" data-detail="${v.id}"><b>${e(v.name)}</b><span>${TIER_LABEL[v.tier]} · ${v.draw_size} players</span></button>
+        <div class="v5-entry-ctl">${entryCtl(v)}</div></div>`).join('')}</div></section>`;
+  }
   function v5HubHtml() {
     const ids = rivalsOf(s!, W());
     const rank = (id: string) => { const l = W().rankingAt(absWeek(s!.year, s!.week)); const i = l.findIndex((x) => x.id === id); return i < 0 || l[i].pts <= 0 ? 'Unranked' : `#${i + 1}`; };
@@ -232,7 +248,7 @@ export function initCareer(d: CareerDeps) {
         <span class="v5-h2h" title="Your head-to-head"><b class="w">${w}</b><i>–</i><b class="l">${l}</b></span></li>`;
     }).join('');
     const news = (s!.news ?? []).slice(0, 5).map((n, i) => newsLi(n, i)).join('');
-    return `<div class="v5-hub">
+    return `${entriesHtml()}<div class="v5-hub">
       <section class="v5-panel v5-rivals"><header class="v5-ph"><h3>Rivals <em>${s!.year}</em></h3><button class="v5-more" data-ctab="rivals">All rivals ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button></header>
         ${rivals ? `<ol class="v5-rival-list">${rivals}</ol>` : '<p class="v5-empty-line">Your rivals are picked once you’re ranked.</p>'}
         <p class="v5-foot">Beat a rival for a bonus and a headline. Your head-to-head is on the right. <b>${(s!.fans ?? 0).toLocaleString('en-GB')}</b> fans.</p></section>
@@ -321,7 +337,7 @@ export function initCareer(d: CareerDeps) {
     } else if (next) {
       const weeks = next.week - s!.week;
       hero = `<p class="c-kicker">Next event in ${weeks} week${weeks === 1 ? '' : 's'} · ${TIER_LABEL[next.tier]}</p><h3 class="c-title">${e(next.name)}</h3>
-        <p class="c-lead">${e(countryName(next.host_country))} · week ${next.week}${canEnter(s!, next, W()).ok ? '' : ` · ${e(canEnter(s!, next, W()).why ?? '')}`}</p>
+        <p class="c-lead">${e(countryName(next.host_country))} · week ${next.week}${getEdition() === 5 || canEnter(s!, next, W()).ok ? '' : ` · ${e(canEnter(s!, next, W()).why ?? '')}`}</p>${getEdition() === 5 ? `<div class="v5-entry-box">${entryCtl(next)}</div>` : ''}
         <div class="c-cta"><button class="walk" data-skip>Go to week ${next.week} ${icon('<path d="M4 12h15M13 6l6 6-6 6"/>')}</button><button class="edit" data-week="next">Just one week</button></div>${recover()}`;
     } else {
       hero = `<p class="c-kicker">Season over</p><h3 class="c-title">That’s the ${s!.year} season</h3>
@@ -399,7 +415,11 @@ export function initCareer(d: CareerDeps) {
         const c = canEnter(s!, v, W()), entry = entryFor(s!, v, W()), trip = travelCost(s!, v);
         const h = s!.history.find((y) => y.year === s!.year && y.tournamentId === v.id);
         const rest = Math.max(0, Math.round(s!.energy) - travelRestCost(s!, v));
-        const [st, tag] = h ? ['done', `You: ${resultName(h)}`] : past ? ['out', 'Done'] : c.ok ? (c.qual ? ['qual', 'Qualifying'] : ['main', 'Main draw']) : entry === 'out' ? ['out', 'Not in'] : ['save', 'Save up'];
+        const en = entryOf(s!, v);
+        const [st, tag] = h ? ['done', `You: ${resultName(h)}`] : past ? ['out', 'Done']
+          : en ? (en.status === 'qual' ? ['qual', 'Qualifying'] : ['main', en.status ? 'Main draw' : 'Entered'])
+          : entryOpen(s!, v) ? (entry === 'out' ? ['out', 'Ranking too low'] : ['open', entry === 'qual' ? 'Enter: qualifying' : 'Can enter'])
+          : wk === s!.week && c.ok ? ['main', 'Main draw'] : ['out', 'Closed'];
         return `<button class="v5-ev t-${v.tier.toLowerCase()}" data-detail="${v.id}" title="${e(v.name)}"><span class="v5-ev-tier"><i></i>${TIER_LABEL[v.tier]}</span><b>${e(v.name.replace(/ (Open|Masters|International|Championships?)$/, ''))}</b><span class="v5-ev-st st-${st}">${e(tag)}</span>${past || h ? '' : `<span class="v5-ev-meta">${money(trip)} trip · ${rest}% rested</span>`}</button>`;
       }).join('')}</div>`);
     }
@@ -427,11 +447,11 @@ export function initCareer(d: CareerDeps) {
   }
   /** 5.0: the Calendar tab: the season week by week, and the same as a list. */
   function renderCalendar() {
-    const key = [['main', 'Main draw'], ['qual', 'Qualifying'], ['save', 'Save up'], ['out', 'Not in'], ['done', 'Your result']]
+    const key = [['open', 'Can enter'], ['main', 'Entered'], ['qual', 'Qualifying'], ['out', 'Closed or not in'], ['done', 'Your result']]
       .map(([k, l]) => `<span class="v5-ev-st st-${k}">${l}</span>`).join('');
     const tiers = ['S100', 'S300', 'S500', 'S750', 'S1000', 'WORLDS', 'OLYMPICS', 'WTF'].filter((x) => W().cal.some((v) => v.tier === x))
       .map((x) => `<span class="v5-ev-tier t-${x.toLowerCase()}"><i></i>${TIER_LABEL[x]}</span>`).join('');
-    body.innerHTML = `<section class="v5-page"><header class="v5-page-head"><h3>${s!.year} season</h3><p>${W().cal.length} tournaments. Every level is open: your world ranking decides if you go straight in, play qualifying or miss out. Click one for its prizes, draw and travel plan.</p></header>
+    body.innerHTML = `<section class="v5-page"><header class="v5-page-head"><h3>${s!.year} season</h3><p>${W().cal.length} tournaments. Enter at least ${ENTRY_WEEKS} weeks ahead: when entries close, your world ranking decides if you’re in the main draw, qualifying or out. The draw is made ${DRAW_WEEKS} week before. Click an event to enter.</p></header>
       <div class="v5-cal-key"><div>${tiers}</div><div>${key}</div></div>
       ${calendarGrid()}
       <details class="v5-cal-list"><summary>Show as a list</summary>${listTable()}</details></section>`;
@@ -523,8 +543,18 @@ export function initCareer(d: CareerDeps) {
       <p class="c-lead">${e(x.city ? `${x.city}, ` : '')}${e(countryName(x.host_country))} · ${x.draw_size} players: ${[...byRarity].map(([r, n]) => `${n} ${RARITY[r as Character['rarity']].label}`).join(', ')}${h ? ` · you reached the ${ROUND_LABEL[h.round].toLowerCase()}` : ''}</p>
       <table class="c-table"><tr><th>If you go out in</th><th>Prize</th><th>Ranking points</th></tr>${[...rounds, 'W' as Round].map((r) => `<tr><td>${r === 'W' ? 'Win it' : ROUND_LABEL[r]}</td><td>${money(prizeFor(x, r))}</td><td>${pointsFor(x.tier, r, x.draw_size)}</td></tr>`).join('')}</table>
       <div class="c-facts">${fact('Flight', money(travelCost(s!, x)))}${fact('Hotel a night', money(hotelCost(s!, x)))}</div>
-      <h3 class="c-title small">The draw</h3>${drawTable(x)}
+      ${getEdition() === 5 && !h && x.week >= s!.week ? `<div class="v5-entry-box">${entryCtl(x)}</div>` : ''}
+      <h3 class="c-title small">The draw</h3>${getEdition() === 5 && !h && s!.week < x.week - DRAW_WEEKS ? entryListHtml(x) : drawTable(x)}
       <div class="c-cta"><button class="edit" data-ctab="hub">← Back</button></div></section>`;
+  }
+  /** 5.0: before the draw is made, the entry list as it stands (best-ranked first). */
+  function entryListHtml(x: TourEvent) {
+    const at = W().entryAt(x, s!.year);
+    const rank = new Map(W().rankingAt(at).map((r, i) => [r.id, i + 1]));
+    const list = W().entrants(x, s!.year).slice(0, x.draw_size);
+    const me = W().entryPlace(x, s!.year, s!.homeCountry);
+    return `<p class="c-lead small">The draw and seeds are made in week ${x.week - DRAW_WEEKS}, from the world ranking then. The entry list today, best-ranked first (the top ${x.draw_size} get in${me.place ? `; you’d be #${me.place}` : ''}):</p>
+      <ol class="v5-entrylist">${list.map((id) => { const c = characterById(id); return `<li><span class="r">${rank.get(id) ? `#${rank.get(id)}` : '–'}</span><b>${e(c.name)}</b><span>${e(c.country)}</span></li>`; }).join('')}</ol>`;
   }
 
   function renderRanking() {
@@ -1272,6 +1302,18 @@ export function initCareer(d: CareerDeps) {
       enter(s, x, W()); if (!s.current?.qual) skipByes(s, W(), x); await save(); render(); return;
     }
     if (at('[data-club]')) { enter(s, clubEvent(s)); await save(); render(); return; }
+    // 5.0: enter ahead / withdraw an entry (from the hub, the calendar or an event's page).
+    const ea = at('[data-enterahead]')?.dataset.enterahead, ue = at('[data-unenter]')?.dataset.unenter;
+    if (ea || ue) {
+      const x = findEvent(s, (ea ?? ue)!, d.appVersion);
+      if (!x) return;
+      const onPage = !!body.querySelector('.v5-entrylist, .c-hero .v5-entry-box') && !!at('.c-hero');
+      if (ea) { if (!canEnterAhead(s, x, W()).ok) return; enterAhead(s, x); d.toast(`Entered: ${x.name}`, `Entries close in week ${x.week - ENTRY_WEEKS}; your ranking then decides main draw or qualifying.`); }
+      else { withdrawEntry(s, x); d.toast(`Entry withdrawn: ${x.name}`, ''); }
+      await save();
+      if (onPage && tab !== 'hub') renderDetail(x.id); else render();
+      return;
+    }
     const ln = at('[data-loan]')?.dataset.loan;
     if (ln) { const amt = Number(ln); if (confirm(`Borrow ${money(amt)}? You’ll owe ${money(loanOwed(amt))}, and ${Math.round(CFG.loan.repayShare * 100)}% of every prize goes to paying it back.`) && takeLoan(s, amt)) { d.toast(`Borrowed ${money(amt)}`, `You owe ${money(loanOwed(amt))}.`); await save(); render(); } return; }
     if (at('[data-repay]')) { repayLoan(s); d.toast(s.loan ? `You still owe ${money(s.loan.owed)}` : 'Loan paid off', ''); await save(); render(); return; }

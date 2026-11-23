@@ -5,6 +5,15 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.5.1',
+    title: 'Clearer cards and boards',
+    date: '23 Nov 2026',
+    changes: [
+      "The player cards during a match no longer have overlapping text: each stat's number and name sit on their own lines.",
+      'The small writing on the court billboards (the line under each sponsor and “Powered by” on the back board) is bigger and clearer.',
+    ],
+  },
+  {
     version: '4.5',
     title: 'More on screen, more courts',
     date: '23 Nov 2026',

@@ -287,16 +287,20 @@ export function brandBanner(b: Brand): BrandBanner {
   const c = cv.getContext('2d')!;
   c.fillStyle = b.bg; c.fillRect(0, 0, W, H);
   // 4.2.2: bigger name and logo so the boards read from the camera; the strapline is small underneath.
-  c.font = `900 ${H * 0.56}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
+  // 4.5.1: the strapline under the name is bigger, solid and spaced out, so it reads from the camera.
+  c.font = `900 ${H * 0.5}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
   const nameW = c.measureText(b.name).width;
-  const markR = H * 0.34, total = markR * 2 + 24 + nameW, x0 = Math.max(16, (W - Math.min(total, W - 32)) / 2);
-  drawMark(c, b.mark, x0 + markR, H * 0.46, markR, b.fg);
+  const markR = H * 0.32, total = markR * 2 + 24 + nameW, x0 = Math.max(16, (W - Math.min(total, W - 32)) / 2);
+  drawMark(c, b.mark, x0 + markR, H * 0.5, markR, b.fg);
   c.fillStyle = b.fg; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
-  c.font = `900 ${H * 0.56}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
-  c.fillText(b.name, x0 + markR * 2 + 24, H * 0.66, W - x0 - markR * 2 - 40);
-  c.globalAlpha = 0.7;
-  c.font = `700 ${H * 0.13}px ui-sans-serif, system-ui, sans-serif`;
-  c.fillText(b.line.toUpperCase(), x0 + markR * 2 + 26, H * 0.88, W - x0 - markR * 2 - 40);
+  c.font = `900 ${H * 0.5}px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
+  c.fillText(b.name, x0 + markR * 2 + 24, H * 0.56, W - x0 - markR * 2 - 40);
+  c.globalAlpha = 0.95;
+  c.font = `800 ${H * 0.2}px ui-sans-serif, system-ui, sans-serif`;
+  (c as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${Math.round(H * 0.025)}px`;
+  c.fillText(b.line.toUpperCase(), x0 + markR * 2 + 26, H * 0.86, W - x0 - markR * 2 - 40);
+  (c as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = '0px';
+  c.globalAlpha = 1;
   const out = { banner: cv, bg: b.bg };
   banners.set(b.id, out);
   return out;

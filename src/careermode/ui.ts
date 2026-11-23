@@ -678,7 +678,7 @@ export function initCareer(d: CareerDeps) {
     const countries = [...new Set(released.map((c) => c.country))].filter((c) => COUNTRIES[c]).sort((a, b) => countryName(a).localeCompare(countryName(b)));
     body.innerHTML = `<div class="c-card" role="group" aria-label="New career" data-form-type="other"><label class="c-field">Your name <input id="cName" name="skyline-career-player" type="text" maxlength="24" spellcheck="false" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" value="${e(acc.username.replace(/_/g, ' '))}"/></label>
       <label class="c-field">Home country <select id="cHome" name="skyline-career-base" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">${countries.map((c) => `<option value="${c}">${e(countryName(c))}</option>`).join('')}</select></label>
-      ${getEdition() === 5 ? `<div class="c-hero"><p class="c-kicker">v5 semi-fresh start</p><p class="c-lead">Bring your current career into v5: you keep your recruited players, your world ranking and up to ${money(CFG.v5MoneyCap)}. Titles, sponsors, the shop and houses start fresh. Your normal career isn’t changed.</p><div class="c-cta"><button class="walk" data-carry>Bring my career over</button></div><p class="c-lead small">Or start a brand-new career below.</p></div>` : ''}
+      
       <h3>Choose your player</h3><p class="sub">Everyone starts as a Common player with no signature ability. Finish in the top 3 (or win the bigger events) to recruit stronger ones.</p>
       <div id="cStarters" class="c-squad"></div>
       <div class="c-actions"><button class="primary" id="cBegin" disabled>Start career</button></div></div>`;

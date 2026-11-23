@@ -42,7 +42,9 @@ import { startGate } from './gate';
 import { setEdition, getEdition } from '../shared/characters';
 
 // ── 5.0 test area: a tab that entered the hidden v5 area runs as v5 (checked against the account below). ──
-const V5_KEY = 'badminton.v5';
+const V5_KEY = 'badminton.v5', V5_GO = 'badminton.v5go';
+/** Just went into v5: open career mode straight away (no welcome on the way). */
+const v5Go = (() => { try { const g = sessionStorage.getItem(V5_GO) === '1'; sessionStorage.removeItem(V5_GO); return g; } catch { return false; } })();
 try { if (sessionStorage.getItem(V5_KEY) === '1') setEdition(5); } catch { /* storage blocked */ }
 if (getEdition() === 5) {
   document.body.classList.add('v5');
@@ -1229,7 +1231,7 @@ document.getElementById('inviteDismiss')!.addEventListener('click', () => void c
 // Logged in on this browser before: restore the session (Supabase keeps it under this key).
 try {
   if (localStorage.getItem('badminton.account')) {
-    void loadAccount().then(async (m) => { const a = await m.current(); if (a) await afterLogin(a, false); });
+    void loadAccount().then(async (m) => { const a = await m.current(); if (a) await afterLogin(a, false); if (a && v5Go && getEdition() === 5) void careerUi.open('hub'); });
   }
 } catch { /* storage unavailable */ }
 
@@ -1440,7 +1442,7 @@ syncTourBadge();
 
 // First visit: controls first, then the welcome.
 if (!settings.controlsChosen) openControlsPick();
-else maybeWelcome();
+else if (!v5Go) maybeWelcome();
 
 // ── Online rooms (Court 2) ───────────────────────────────────────────────────
 const roomModal = document.getElementById('roomModal')!;
@@ -2624,7 +2626,7 @@ errlogBtn.addEventListener('click', async () => {
 // ── 5.0: the hidden test area. A faint dot in the footer asks for the test code (logged in only). ──
 const labModal = document.getElementById('labModal')!, labBody = document.getElementById('labBody')!;
 function enterV5(on: boolean) {
-  try { if (on) sessionStorage.setItem(V5_KEY, '1'); else sessionStorage.removeItem(V5_KEY); } catch { /* storage blocked */ }
+  try { if (on) { sessionStorage.setItem(V5_KEY, '1'); sessionStorage.setItem(V5_GO, '1'); } else sessionStorage.removeItem(V5_KEY); } catch { /* storage blocked */ }
   location.reload();
 }
 const LAB_ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';

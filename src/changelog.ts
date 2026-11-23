@@ -5,6 +5,14 @@
  */
 export const CHANGELOG: { version: string; title: string; date: string; changes: string[] }[] = [
   {
+    version: '4.4.10',
+    title: 'Right countries',
+    date: '23 Nov 2026',
+    changes: [
+      'Fixed: some players showed the wrong country on the Players screen and player cards (for example China as Switzerland, Denmark as Germany, Indonesia as India and Malaysia as Morocco).',
+    ],
+  },
+  {
     version: '4.4.9',
     title: 'Colour back, clearer buttons',
     date: '23 Nov 2026',

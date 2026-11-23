@@ -5,6 +5,10 @@ Newest first. The same list appears in the game under "What's new".
 Versioning: big updates move the middle number (2.4, 2.5); small fixes get a patch number (2.4.1), and a run
 of small fixes shares one entry (1.3.1–2). Whole numbers are for the biggest changes (2.0 brought online play).
 
+## 4.4.10: Right countries (23 Nov 2026)
+
+- Fixed: some players showed the wrong country on the Players screen and player cards (for example China as Switzerland, Denmark as Germany, Indonesia as India and Malaysia as Morocco).
+
 ## 4.4.9: Colour back, clearer buttons (23 Nov 2026)
 
 - The home page colours are back (red for Career, blue for Online, blue and purple tiles) without the clutter, and every button is easier to spot: bigger main buttons, filled second buttons with bright borders, a red Walk on, round start buttons on the Tutorial and Drills tiles, and a white Log in.

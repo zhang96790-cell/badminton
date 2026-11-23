@@ -161,9 +161,21 @@
           <div id="labBody" class="lab-body"></div>
         </div>
       </div>
+      <div id="v5Notes" class="fb-modal lab-modal hidden" role="dialog" aria-modal="true" aria-labelledby="v5NotesTitle">
+        <div class="lab-card v5-notes-card">
+          <div class="lab-stripes" aria-hidden="true"></div>
+          <header class="lab-head">
+            <span class="lab-v" aria-hidden="true">v5</span>
+            <div class="lab-name"><h2 id="v5NotesTitle">What’s new</h2><p>Everything in the v5 test so far.</p></div>
+            <button type="button" class="lab-x" data-notesclose aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+          </header>
+          <div id="v5NotesBody" class="v5-notes-body"></div>
+        </div>
+      </div>
       <div id="v5Banner" class="v5-banner" role="status">
         <span class="v5-slab">v5 test build</span>
         <span class="v5-note">Separate v5 career. Your normal career and stats aren’t touched.</span>
+        <button type="button" id="v5NotesBtn">What’s new in v5</button>
         <button type="button" id="v5Leave">Leave test <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
       </div>
 

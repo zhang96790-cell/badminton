@@ -446,7 +446,7 @@ export function initCareer(d: CareerDeps) {
           <div class="c-facts">${fact('World rank', rank)}${fact('Style', style.label)}${fact('Career strength', String(o.career_strength))}${fact('Plays like', `${LEVEL_LABEL[nm.level]} CPU`)}${fact('Kit', kitBrandOf(o.id).name)}</div>
           <p class="c-trait"><b>${e(style.label)}:</b> ${e(style.trait)}</p>
           ${s!.shop?.coach === 'tactical' || s!.shop?.coach === 'elite' ? `<p class="c-trait"><b>Scouting:</b> ${e(scouting(o))}</p>` : ''}
-          ${o.abilities.length ? o.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('') : '<p class="c-lead small">No signature ability.</p>'}
+          ${o.abilities.length ? o.abilities.map((ab) => `<p class="ability"><span class="ab-tier t-${ab.tier}">${ab.tier === 'U' ? 'Ultra' : ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('') : '<p class="c-lead small">No signature ability.</p>'}
           <p class="c-lead">${e(o.description)}</p>
         </div>
         <div class="c-pre-stats">
@@ -759,7 +759,7 @@ export function initCareer(d: CareerDeps) {
     const o = s!.pendingRecruitOffer!;
     body.innerHTML = `<div class="c-card"><h3>Recruit a player</h3><p class="sub">${o.place === 3 ? 'Third place!' : o.place === 2 ? 'Runner-up!' : 'You won!'} Three players from that draw want to join you${o.place === 2 ? ' (2nd place: a quarter off)' : o.place === 3 ? '' : ' (you won: Commons free, everyone else half price)'}${o.place && o.place > 1 ? ' (win the event for better odds of rarer players and cheaper recruits)' : ''}. Recruiting one adds them to your account for every mode. The offer lasts until you enter your next tournament.</p>
       <div class="c-offer">${o.candidates.map((id) => { const c = characterById(id); const price = recruitPrice(c.rarity, o.place); return `<div class="c-recruit">${card(c)}<canvas class="pentagon" data-pent="${id}"></canvas>
-        ${c.abilities.map((ab) => `<p class="ability"><span class="ab-tier">${ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('')}
+        ${c.abilities.map((ab) => `<p class="ability"><span class="ab-tier t-${ab.tier}">${ab.tier === 'U' ? 'Ultra' : ab.tier}</span><b>${e(ab.name)}</b> ${e(SIGNATURES.get(ab.id)?.text ?? ab.text)}</p>`).join('')}
         <button class="primary" data-recruit="${id}" ${s!.money < price ? 'disabled' : ''}>${price ? `Recruit for ${money(price)}` : 'Recruit for free'}</button></div>`; }).join('')}</div>
       <div class="c-actions">${o.rerolled ? '' : `<button data-reroll ${s!.money < CFG.rerollCost ? 'disabled' : ''}>New candidates (${money(CFG.rerollCost)})</button>`}<button data-offerskip>Not now</button><button data-offerlater>Decide later</button></div></div>`;
     const { drawPentagon } = await import('../pentagon');

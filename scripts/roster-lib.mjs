@@ -24,14 +24,14 @@ export const slugOf = (name) => String(name).normalize('NFD').replace(/[̀-ͯ]/g
  * Scale stats to add up to exactly `total`, each 10–35: proportional, then clamped, then the leftover
  * shared out by largest remainder (so the result is whole numbers with the exact total).
  */
-export function fitToTotal(stats, total) {
+export function fitToTotal(stats, total, MAX = 35) {
   const sum = stats.reduce((a, b) => a + b, 0);
   let raw = stats.map((s) => (s * total) / sum);
   for (let pass = 0; pass < 5; pass++) {
-    const fixed = raw.map((v) => v < 10 || v > 35);
-    raw = raw.map((v) => Math.min(35, Math.max(10, v)));
+    const fixed = raw.map((v) => v < 10 || v > MAX);
+    raw = raw.map((v) => Math.min(MAX, Math.max(10, v)));
     const left = total - raw.reduce((a, b) => a + b, 0);
-    const free = raw.map((_, i) => !fixed[i] && raw[i] > 10 && raw[i] < 35);
+    const free = raw.map((_, i) => !fixed[i] && raw[i] > 10 && raw[i] < MAX);
     const freeSum = raw.reduce((a, v, i) => a + (free[i] ? v : 0), 0);
     if (Math.abs(left) < 1e-9 || !freeSum) break;
     raw = raw.map((v, i) => (free[i] ? v + (left * v) / freeSum : v));
@@ -39,7 +39,7 @@ export function fitToTotal(stats, total) {
   const out = raw.map(Math.floor);
   let left = total - out.reduce((a, b) => a + b, 0);
   const order = raw.map((v, i) => [v - Math.floor(v), i]).sort((a, b) => b[0] - a[0]);
-  for (const [, i] of order) { if (left <= 0) break; if (out[i] < 35) { out[i]++; left--; } }
+  for (const [, i] of order) { if (left <= 0) break; if (out[i] < MAX) { out[i]++; left--; } }
   return out;
 }
 
@@ -47,12 +47,12 @@ export function fitToTotal(stats, total) {
 export function parseAbility(text) {
   const t = String(text ?? '').trim();
   if (!t) return undefined;
-  const m = t.match(/^\[(SS|S)\]\s*(.*)$/i);
+  const m = t.match(/^\[(SS|S|U|ULTRA)\]\s*(.*)$/i);
   if (!m) return { tier: 'S', name: t.split(/\s+[—–-]\s+/)[0].trim(), text: t.split(/\s+[—–-]\s+/).slice(1).join(' — ').trim() };
   const rest = m[2].trim();
   if (!rest) return null;
   const [name, ...more] = rest.split(/\s+[—–-]\s+/);
-  return { tier: m[1].toUpperCase(), name: name.trim(), text: more.join(' — ').trim() };
+  return { tier: m[1].toUpperCase().startsWith('U') ? 'U' : m[1].toUpperCase(), name: name.trim(), text: more.join(' — ').trim() };
 }
 
 const truthy = (v) => (typeof v === 'boolean' ? v : !/^(false|no|0)$/i.test(String(v ?? '').trim()));
@@ -121,7 +121,7 @@ export function normalise(rows) {
 }
 
 /** Errors (the roster can't be used) as plain sentences. */
-export function problems(roster) {
+export function problems(roster, MAX = 35) {
   const out = [];
   const list = roster.characters;
   if (!Array.isArray(list)) return ['"characters" must be a list'];
@@ -142,7 +142,7 @@ export function problems(roster) {
     if (!/^[A-Z]{3}$/.test(c.country ?? '')) out.push(`${who}: country must be a 3-letter code like GBR`);
     for (const [label, st] of [['stats', c.base_stats ?? c.stats], ['ranked stats', c.stats]]) {
       if (!Array.isArray(st) || st.length !== 5 || st.some((v) => !Number.isInteger(v))) out.push(`${who}: ${label} must be 5 whole numbers (Power, Speed, Net, Defence, Stamina)`);
-      else if (st.some((v) => v < 10 || v > 35)) out.push(`${who}: every stat must be between 10 and 35`);
+      else if (st.some((v) => v < 10 || v > MAX)) out.push(`${who}: every stat must be between 10 and ${MAX}`);
     }
     if (c.id !== PLACEHOLDER && Array.isArray(c.base_stats) && c.ranked_stat_total !== undefined) {
       const total = c.base_stats.reduce((a, b) => a + b, 0);

@@ -1,5 +1,5 @@
 {
- "note": "Signature abilities (career and the daily challenge; off in ranked and friendly until balance sims are clean). trigger = when it fires, effect = what changes, magnitude = how much (0.1 = 10%), duration in seconds (0 = that shot), cooldown in seconds. Never changes net-fault rules or the net-kill/net-spin thresholds. from_sheet = numbers from the owner's roster sheet.",
+ "note": "Signature abilities (career and the daily challenge; off in ranked and friendly until balance sims are clean). trigger = when it fires, effect = what changes, magnitude = how much (0.1 = 10%), duration in seconds (0 = that shot), cooldown in seconds. Never changes net-fault rules or the net-kill/net-spin thresholds. from_sheet = numbers from the owner's roster sheet. 5.0: Ultra (U) signatures have narrow triggers (perfect timing, a full lunge, a set-up shot) and much bigger effects; top-tier players only.",
  "abilities": [
   {
    "id": "counterstrike",
@@ -359,6 +359,102 @@
    "duration": 0,
    "cooldown": 0,
    "text": "A 15% wider perfect-timing window on net shots (net rules and tumbling are unchanged).",
+   "from_sheet": false
+  },
+  {
+   "id": "sky_hammer",
+   "name": "Sky Hammer",
+   "tier": "U",
+   "trigger": "perfectSmash",
+   "effect": "smash",
+   "magnitude": 0.15,
+   "duration": 0,
+   "cooldown": 6,
+   "text": "A perfectly timed smash is up to 15% faster (within the game’s smash limit).",
+   "from_sheet": false
+  },
+  {
+   "id": "killer_instinct",
+   "name": "Killer Instinct",
+   "tier": "U",
+   "trigger": "netThenSmash",
+   "effect": "shotSpeed",
+   "magnitude": 0.16,
+   "duration": 0,
+   "cooldown": 6,
+   "text": "A smash straight after your own net shot is 16% faster (within the smash limit).",
+   "from_sheet": false
+  },
+  {
+   "id": "second_wind",
+   "name": "Second Wind",
+   "tier": "U",
+   "trigger": "perfectRetrieve",
+   "effect": "move",
+   "magnitude": 0.16,
+   "duration": 3,
+   "cooldown": 9,
+   "text": "A perfectly timed retrieval of a hard shot: 16% faster movement for 3 seconds.",
+   "from_sheet": false
+  },
+  {
+   "id": "silk_web",
+   "name": "Silk Web",
+   "tier": "U",
+   "trigger": "lungeNet",
+   "effect": "netAim",
+   "magnitude": 0.35,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Net shots played from a full lunge are 35% more accurate.",
+   "from_sheet": false
+  },
+  {
+   "id": "phantom_veil",
+   "name": "Phantom Veil",
+   "tier": "U",
+   "trigger": "perfectDrop",
+   "effect": "deceive",
+   "magnitude": 0.28,
+   "duration": 0,
+   "cooldown": 5,
+   "text": "A perfectly timed drop wrong-foots the opponent badly.",
+   "from_sheet": false
+  },
+  {
+   "id": "lightning_counter",
+   "name": "Lightning Counter",
+   "tier": "U",
+   "trigger": "perfectCounter",
+   "effect": "shotSpeed",
+   "magnitude": 0.2,
+   "duration": 0,
+   "cooldown": 8,
+   "text": "A perfectly timed drive or push off a 180+ km/h smash comes back 20% faster.",
+   "from_sheet": false
+  },
+  {
+   "id": "precision_strike",
+   "name": "Precision Strike",
+   "tier": "U",
+   "trigger": "earlyCross",
+   "effect": "aim",
+   "magnitude": 0.35,
+   "duration": 0,
+   "cooldown": 0,
+   "text": "Crosscourt attacking shots taken early are 35% more accurate.",
+   "from_sheet": false
+  },
+  {
+   "id": "iron_curtain",
+   "name": "Iron Curtain",
+   "tier": "U",
+   "trigger": "perfectBlock",
+   "effect": "oppSmash",
+   "magnitude": 0.18,
+   "duration": 3,
+   "cooldown": 10,
+   "text": "A perfectly timed block or lift off a hard smash: the opponent’s smashes are 18% slower for 3 seconds (never below the smash floor).",
    "from_sheet": false
   }
  ]

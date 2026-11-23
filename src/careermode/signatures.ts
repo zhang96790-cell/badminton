@@ -4,7 +4,7 @@
 import data from '../../data/signatures.json';
 import type { Character, Modifier } from '../../shared/characters';
 
-export interface SigDef { id: string; name: string; tier: 'S' | 'SS'; trigger: string; effect: string; magnitude: number; duration: number; cooldown: number; text: string; from_sheet: boolean }
+export interface SigDef { id: string; name: string; tier: 'S' | 'SS' | 'U'; trigger: string; effect: string; magnitude: number; duration: number; cooldown: number; text: string; from_sheet: boolean }
 export const SIGNATURES = new Map((data.abilities as SigDef[]).map((a) => [a.id, a]));
 /** Abilities in ranked and friendly matches: off until the balance simulations are clean. */
 export const signaturesInRanked = false;
@@ -40,11 +40,18 @@ const matches = (trigger: string, x: ShotCtx): boolean => {
     case 'crosscourt': return x.crosscourt && x.kind !== 'serve';
     case 'crosscourtDrop': return x.crosscourt && x.kind === 'drop';
     case 'smash': case 'clear': case 'drop': case 'net': case 'drive': case 'lift': return x.kind === trigger;
+    // 5.0 Ultra: narrow triggers.
+    case 'perfectSmash': return x.kind === 'smash' && x.perfect;
+    case 'netThenSmash': return x.kind === 'smash' && x.prev === 'net';
+    case 'lungeNet': return x.kind === 'net' && x.lunged;
+    case 'perfectDrop': return x.kind === 'drop' && x.perfect;
+    case 'perfectCounter': return x.perfect && x.incomingKmh >= 180 && (x.kind === 'drive' || x.kind === 'push');
+    case 'earlyCross': return x.early && x.crosscourt && ATTACK.includes(x.kind);
     default: return false;
   }
 };
 /** Fired after the shot is played (timed effects). */
-const AFTER = new Set(['retrieve', 'block']);
+const AFTER = new Set(['retrieve', 'block', 'perfectRetrieve', 'perfectBlock']);
 const isRetrieve = (x: ShotCtx) => x.kind !== 'serve' && (x.incomingKmh >= 180 || x.lunged);
 const isBlock = (x: ShotCtx) => x.incomingKmh >= 180 && (x.kind === 'block' || x.kind === 'lift');
 
@@ -127,7 +134,9 @@ export class Signatures {
     this.prev[i] = x.kind;
     for (const d of this.list[i] ?? []) {
       if (!this.ready(i, d)) continue;
-      const hit = d.trigger === 'retrieve' ? isRetrieve(x) : d.trigger === 'block' ? isBlock(x) : d.trigger === 'clear' && d.effect === 'oppMove' ? x.kind === 'clear' : false;
+      const hit = d.trigger === 'retrieve' ? isRetrieve(x) : d.trigger === 'block' ? isBlock(x)
+        : d.trigger === 'perfectRetrieve' ? isRetrieve(x) && x.perfect : d.trigger === 'perfectBlock' ? isBlock(x) && x.perfect
+        : d.trigger === 'clear' && d.effect === 'oppMove' ? x.kind === 'clear' : false;
       if (!hit) continue;
       const opps = this.list.map((_, j) => j).filter((j) => this.teamOf(j) !== this.teamOf(i));
       if (d.effect === 'oppSmash') for (const j of opps) this.timed.push({ player: j, mods: { smash: 1 - d.magnitude }, t: d.duration });

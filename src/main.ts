@@ -33,6 +33,8 @@ import { tierIndex, tierOf, toNext, TIERS } from './rating';
 import { drawRatingGraph, rankBarHtml } from './rankbar';
 import { PresenceLink, type PresenceCounts } from './presence';
 import { initCareer } from './careermode/ui';
+import { countryName as careerCountryName } from './careermode/world';
+import { V5_NOTES } from './v5notes';
 import { clearLog, installErrorLog, logText, readLog } from './errorlog';
 import { SHOT_KINDS, addCareer, careerDelta, evaluate, loadLocalCareer, saveLocalCareer, statGroups, type Career } from './career';
 import { BIND_ACTIONS, bind, bindProblem, keyFor, keyLabel, type BindAction } from './keys';
@@ -636,7 +638,8 @@ let ownedIds = new Set<string>([DEFAULT_CHARACTER]);
 let featuredIds = new Set<string>();
 let selectedPlayer = DEFAULT_CHARACTER;
 let comparePlayer: string | null = null;
-const canUse = (id: string) => id === DEFAULT_CHARACTER || ownedIds.has(id) || featuredIds.has(id);
+/** 5.0 test: every player is unlocked for testers, so the balance can be checked. */
+const canUse = (id: string) => getEdition() === 5 || id === DEFAULT_CHARACTER || ownedIds.has(id) || featuredIds.has(id);
 /** Your player for the next match (falls back to the Club Player if you can't use the one saved). */
 const myCharacter = () => (settings.character && canUse(settings.character) ? settings.character : DEFAULT_CHARACTER);
 
@@ -651,13 +654,11 @@ async function refreshOwned() {
   }
 }
 
-const countryName = (code: string) => {
-  if (code === 'XXX') return '—';
-  try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code.slice(0, 2)) ?? code; } catch { return code; }
-};
+// The game's own country list (3-letter sports codes: CHN, DEN, INA, MAS…), not 2-letter ISO guesses.
+const countryName = (code: string) => (code === 'XXX' ? '—' : careerCountryName(code));
 
 /** Players out in this version of the game (later ones stay hidden). */
-const VISIBLE = rosterFor(CHANGELOG[0].version);
+const VISIBLE = rosterFor(getEdition() === 5 ? '5.0' : CHANGELOG[0].version);
 /** 5.0: the names follow the edition (v5: Reach and Accuracy). */
 const statLabels = () => statNames();
 const pf = { q: '', rarity: '', style: '', country: '', hand: '', owned: '', sort: 'rarity' };
@@ -710,7 +711,7 @@ function drawPlayerGrid() {
     return `<button type="button" class="pcard${use ? '' : ' locked'}${c.id === selectedPlayer ? ' on' : ''}" data-player="${c.id}" style="--rar:${r.color}">
       <span class="rar">${r.label}</span><b>${hubEsc(c.name)}</b>
       <span class="sub">${c.country !== 'XXX' ? `${c.country} · ` : ''}${hubEsc(c.style)}${c.handedness === 'left' ? ' · left' : ''}</span>
-      <span class="tag">${c.id === mine ? 'Your player' : featuredIds.has(c.id) ? 'Free this season' : use ? 'Owned' : 'Locked'}${c.abilities.length ? ` · ${c.abilities.map((a) => a.tier).join('+')}` : ''}</span>
+      <span class="tag">${c.id === mine ? 'Your player' : featuredIds.has(c.id) ? 'Free this season' : use ? 'Owned' : 'Locked'}${c.abilities.length ? ` · ${c.abilities.map((a) => (a.tier === 'U' ? 'Ultra' : a.tier)).join('+')}` : ''}</span>
     </button>`;
   }).join('') || '<p class="coming">No players match.</p>';
 }
@@ -740,7 +741,7 @@ function renderPlayerDetail() {
     <p class="sub">${hubEsc(c.style)} · ${c.handedness === 'left' ? 'left-handed' : 'right-handed'} · stats total ${statTotal(c)}${c.id !== DEFAULT_CHARACTER ? ` · career strength ${c.career_strength}` : ''}</p>
     <table class="pstats"><tr><th></th><th>${hubEsc(c.name.split(' ')[0])}</th>${cmp ? `<th>${hubEsc(cmp.name.split(' ')[0])}</th><th></th>` : ''}</tr>${rowsHtml}</table>
     ${careerLine}
-    ${c.abilities.map((a) => `<p class="ability"><span class="ab-tier">${a.tier}</span><b>${hubEsc(a.name)}</b>${a.text ? ` ${hubEsc(a.text)}` : ''}</p>`).join('')}
+    ${c.abilities.map((a) => `<p class="ability"><span class="ab-tier t-${a.tier}">${a.tier === 'U' ? 'Ultra' : a.tier}</span><b>${hubEsc(a.name)}</b>${a.text ? ` ${hubEsc(a.text)}` : ''}</p>`).join('')}
     <p>${hubEsc(c.description)}</p>
     <p class="sub">With this player: ${wins} won, ${losses} lost</p>
     <label class="cmp">Compare with <input id="playerCompare" list="playerNames" placeholder="Type a name" value="${cmp ? hubEsc(cmp.name) : ''}" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" /></label>
@@ -2487,7 +2488,7 @@ const careerUi = initCareer({
   get appVersion() { return getEdition() === 5 ? '5.0' : CHANGELOG[0].version; },
   account: () => account ?? (import.meta.env.DEV && devFake?.fakeOn() ? devFake.fakeAccount : null),
   loadAccount: async () => (import.meta.env.DEV && !account && devFake?.fakeOn() ? ({ ...(await loadAccount()), ...devFake.fakeModule() } as Awaited<ReturnType<typeof loadAccount>>) : loadAccount()),
-  owned: async () => { if (import.meta.env.DEV && !account && devFake?.fakeOn()) return devFake.fakeOwned(); await refreshOwned(); return ownedIds; },
+  owned: async () => { if (getEdition() === 5) return new Set(rosterFor('5.0').map((c) => c.id)); if (import.meta.env.DEV && !account && devFake?.fakeOn()) return devFake.fakeOwned(); await refreshOwned(); return ownedIds; },
   play: async (o) => {
     if (o.walkOn) {
       if (walkingOn) return;
@@ -2678,6 +2679,15 @@ labModal.addEventListener('click', async (e) => {
   }
 });
 document.getElementById('v5Leave')?.addEventListener('click', () => enterV5(false));
+// 5.0 test: "What's new in v5" from the banner.
+const v5Notes = document.getElementById('v5Notes')!;
+document.getElementById('v5NotesBtn')?.addEventListener('click', () => {
+  document.getElementById('v5NotesBody')!.innerHTML = V5_NOTES.map((n) => `<section class="v5-note-build"><h3>${hubEsc(n.title)}<span>${hubEsc(n.date)}</span></h3>
+    <ul class="lab-list">${n.items.map(([h, x]) => `<li><b>${hubEsc(h)}</b><span>${hubEsc(x)}</span></li>`).join('')}</ul></section>`).join('');
+  v5Notes.classList.remove('hidden');
+});
+v5Notes.addEventListener('click', (e) => { const t = e.target as HTMLElement; if (t === v5Notes || t.closest('[data-notesclose]')) v5Notes.classList.add('hidden'); });
+addEventListener('keydown', (e) => { if (e.code === 'Escape' && !v5Notes.classList.contains('hidden')) v5Notes.classList.add('hidden'); });
 // A v5 tab checks the account is still allowed (a tester, or v5 open to all); if not, back to normal.
 if (getEdition() === 5) {
   const check = async () => {

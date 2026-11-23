@@ -43,7 +43,7 @@ export const STYLES = ['all-rounder', 'attacker', 'defender', 'net player', 'dec
 export type CharStyle = (typeof STYLES)[number];
 
 /** A signature or skill: what it's called and its plain-language text (numbers live in data/signatures.json). */
-export interface Ability { id: string; tier: 'S' | 'SS'; name: string; text: string; slot: 'signature' | 'skill' }
+export interface Ability { id: string; tier: 'S' | 'SS' | 'U'; name: string; text: string; slot: 'signature' | 'skill' }
 
 export interface Character {
   /** Made from the name: lowercase letters and underscores (stats are saved under it). */
@@ -186,7 +186,17 @@ export const CAREER = {
 };
 
 /** 5.0: Accuracy's aim change per point (ranked, career), and how much Reach's extra reach counts in career. */
-export const V5_STATS = { acc: 0.01, accCareer: 0.016, reachCareer: 1.5 };
+export const V5_STATS = {
+  acc: 0.01, accCareer: 0.016, reachCareer: 1.5,
+  /** 5.0: stat totals go up to 200 (Champion), so a stat can reach 50 (was 35). */
+  maxStat: 50,
+  /** Past 35 every point counts this much (so 200-total players are stronger, not absurd). */
+  softFrom: 15, softRate: 0.6,
+  /** Speed: past 30 each point counts half (as before), past 40 a quarter. */
+  speedSoft2: 20, speedRate2: 0.25,
+  /** A little more room at the top than 4.x, so the best players stand out against hard CPUs. */
+  rankedMoveLim: 0.12, rankedSmashHi: 1.11, careerSmashHi: 1.14, otherLimMult: 1.2,
+};
 
 export const careerMult = (c: Character) => 1 + ((c.career_strength - 100) / 100) * CAREER.k;
 
@@ -201,14 +211,21 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
   const career = mode === 'career';
   const P = career ? CAREER.perPoint : PER_POINT;
   const lim = career ? CAREER.clamp : 0.1;
-  const [smLo, smHi] = career ? CAREER.smash : [0.95, 1.08];
+  const v5 = edition === 5, V = V5_STATS;
+  const [smLo, smHi0] = career ? CAREER.smash : [0.95, 1.08];
+  const smHi = v5 ? (career ? V.careerSmashHi : V.rankedSmashHi) : smHi0;
+  const top = v5 ? V.maxStat : 35;
   const src = career ? (c.base_stats ?? c.stats).map((v) => v * careerMult(c)) : c.stats;
-  const [p, sp0, n, d, st0] = src.map((v) => clamp(v, 10, career ? 35 * careerMult(c) : 35) - 20);
+  // 5.0: high stats count less past 35 (soft cap), so the 200-total players aren't absurd.
+  const soft = (x: number) => (!v5 || x <= V.softFrom ? x : V.softFrom + (x - V.softFrom) * V.softRate);
+  const raw = src.map((v) => clamp(v, 10, career ? top * careerMult(c) : top) - 20);
+  const [p, , n, d, st0] = raw.map(soft);
   // 5.0: slot 3 is Reach (Defence's jobs, plus extra reach in career too), slot 4 is Accuracy (aim on every
   // shot; Stamina's tiring is gone: the Rested bar and coaches do that now).
-  const v5 = edition === 5, acc = v5 ? st0 : 0, st = v5 ? 0 : st0;
-  // 4.1: diminishing returns on Speed above 30: each point past it counts half.
-  const sp = sp0 <= 10 ? sp0 : 10 + (sp0 - 10) * 0.5;
+  const acc = v5 ? st0 : 0, st = v5 ? 0 : st0;
+  // 4.1: diminishing returns on Speed above 30: each point past it counts half. 5.0: past 40, a quarter.
+  const sp0 = raw[1];
+  const sp = sp0 <= 10 ? sp0 : !v5 || sp0 <= V.speedSoft2 ? 10 + (sp0 - 10) * 0.5 : 15 + (sp0 - V.speedSoft2) * V.speedRate2;
   const J = STAT_JOBS;
   const e: Effective = {
     smash: 1 + P.power * p,
@@ -236,8 +253,9 @@ export function getEffectiveStats(c: Character, modifiers: Modifier[] = [], mode
       : k === 'heavy' ? clamp(e[k], ...J.heavy)
       : k === 'fatigue' ? clamp(e[k], ...J.fatigue)
       : k === 'move' && career ? clamp(e[k], 1 - lim, 1 + CAREER.moveMax)
+      : (k === 'move' || k === 'swingWait') && !career && v5 ? clamp(e[k], 1 - V.rankedMoveLim, 1 + V.rankedMoveLim)
       : k === 'move' || k === 'swingWait' || career ? clamp(e[k], 1 - lim, 1 + lim)
-      : clamp(e[k], 1 - J.otherLim, 1 + J.otherLim);
+      : clamp(e[k], 1 - J.otherLim * (v5 ? V.otherLimMult : 1), 1 + J.otherLim * (v5 ? V.otherLimMult : 1));
   }
   return e;
 }

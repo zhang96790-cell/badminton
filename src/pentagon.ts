@@ -1,7 +1,7 @@
 // The five-stat pentagon (radar) chart for player cards, drawn on a canvas.
-import { statNames, type Stats } from '../shared/characters';
+import { getEdition, statNames, type Stats } from '../shared/characters';
 
-/** Draw stats (10–35 each) as a filled pentagon; `compare` is drawn as an outline on top. */
+/** Draw stats (10–35 each; 10–50 in v5) as a filled pentagon; `compare` is drawn as an outline on top. */
 export function drawPentagon(canvas: HTMLCanvasElement, stats: Stats, color: string, compare?: { stats: Stats; color: string }) {
   const dpr = window.devicePixelRatio || 1, W = canvas.clientWidth || 180, H = canvas.clientHeight || 180;
   canvas.width = Math.round(W * dpr);
@@ -9,7 +9,7 @@ export function drawPentagon(canvas: HTMLCanvasElement, stats: Stats, color: str
   const ctx = canvas.getContext('2d')!;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
-  const cx = W / 2, cy = H / 2 + 6, R = Math.min(W, H) / 2 - 26;
+  const cx = W / 2, cy = H / 2 + 6, R = Math.min(W, H) / 2 - 26, TOP = getEdition() === 5 ? 50 : 35;
   const at = (i: number, r: number) => {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
     return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
@@ -25,14 +25,14 @@ export function drawPentagon(canvas: HTMLCanvasElement, stats: Stats, color: str
   };
   ctx.strokeStyle = 'rgba(120,130,150,0.35)';
   ctx.lineWidth = 1;
-  for (const v of [10, 30]) ring(v / 35, []);
+  for (const v of [10, 30]) ring(v / TOP, []);
   ctx.strokeStyle = 'rgba(120,130,150,0.7)';
-  ring(20 / 35, [3, 3]);
+  ring(20 / TOP, [3, 3]);
   ctx.strokeStyle = 'rgba(120,130,150,0.3)';
   for (let i = 0; i < 5; i++) { const p = at(i, R); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(p.x, p.y); ctx.stroke(); }
   const shape = (s: Stats, fill: string | null, stroke: string, width: number) => {
     ctx.beginPath();
-    s.forEach((v, i) => { const p = at(i, (R * Math.max(0, Math.min(35, v))) / 35); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
+    s.forEach((v, i) => { const p = at(i, (R * Math.max(0, Math.min(TOP, v))) / TOP); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
     ctx.closePath();
     if (fill) { ctx.fillStyle = fill; ctx.fill(); }
     ctx.strokeStyle = stroke;
